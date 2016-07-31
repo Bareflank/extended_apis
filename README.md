@@ -46,7 +46,7 @@ Target: Janurary 2017
 - IO Bitmaps
 - Extended Page Tables (EPT)
 - Guest Support
-- LibVMI Support
+- [LibVMI](https://github.com/libvmi/libvmi) Support
 
 ### Version 1.3
 
