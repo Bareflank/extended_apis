@@ -27,7 +27,7 @@ build your hypervisors from. Some of these APIs include:
 - Extended Page Tables (EPT)
 - Event Injection
 - Guest Support
-- LibVMI Support
+- [LibVMI](https://github.com/libvmi/libvmi) Support
 
 ## Links
 
