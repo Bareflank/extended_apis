@@ -45,16 +45,16 @@ Target: Janurary 2017
 - MSR Bitmaps
 - IO Bitmaps
 - Extended Page Tables (EPT)
-- Guest Support
+- Event Injection
+- Basic Guest Support
 - [LibVMI](https://github.com/libvmi/libvmi) Support
 
 ### Version 1.3
 
 Target: June 2017
 
-- Event Injection
-- Guest to Hypervisor
-- Nest Virtualization
+- Guest to Hypervisor Comms
+- Nested Virtualization
 - Control Register Emulation
 - Trap Flag Monitoring
 
