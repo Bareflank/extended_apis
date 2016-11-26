@@ -36,27 +36,7 @@ build your hypervisors from. Some of these APIs include:
 
 ## Roadmap
 
-### Version 1.2
-
-Target: Janurary 2017
-
-- VPID
-- CPUID Emulation
-- MSR Bitmaps
-- IO Bitmaps
-- Extended Page Tables (EPT)
-- Event Injection
-- Basic Guest Support
-- [LibVMI](https://github.com/libvmi/libvmi) Support
-
-### Version 1.3
-
-Target: June 2017
-
-- Guest to Hypervisor Comms
-- Nested Virtualization
-- Control Register Emulation
-- Trap Flag Monitoring
+The project roadmap can be located [here](https://github.com/Bareflank/hypervisor/projects)
 
 ## Contributing
 
