@@ -14,7 +14,7 @@ It is our goal to provide a hypervisor that others can extend to create
 their own hypervisors. To this end, it is likely that when creating your
 own hypervisor, some tasks will be redundant. For example, Windows 
 makes a lot of MSR accesses. When running Bareflank this is obvious as
-Windows takes a significant performance penalty with running Bareflank 
+Windows takes a significant performance penalty 
 since all MSR accesses are emulated. The first step most people will take 
 on an Intel platform is to enable VPID and MSR bitmaps to increase 
 performance. The process of setting up these resources is the same, 
