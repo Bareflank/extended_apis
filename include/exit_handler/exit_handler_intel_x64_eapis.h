@@ -19,11 +19,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef EXIT_HANDLER_INTEL_X64_EAPIS
-#define EXIT_HANDLER_INTEL_X64_EAPIS
+#ifndef EXIT_HANDLER_INTEL_X64_EAPIS_H
+#define EXIT_HANDLER_INTEL_X64_EAPIS_H
 
 #include <vmcs/vmcs_intel_x64_eapis.h>
+
 #include <exit_handler/exit_handler_intel_x64.h>
+#include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 
 #include <intrinsics/portio_x64.h>
 
@@ -79,9 +81,21 @@ protected:
         vmcall_registers_t &regs, const json &str,
         const bfn::unique_map_ptr_x64<char> &omap) override;
 
+    bool handle_vmcall_json__verifiers(
+        vmcall_registers_t &regs, const json &str,
+        const bfn::unique_map_ptr_x64<char> &omap);
+
     bool handle_vmcall_json__io_instruction(
         vmcall_registers_t &regs, const json &str,
         const bfn::unique_map_ptr_x64<char> &omap);
+
+protected:
+
+    void handle_vmcall__dump_policy(
+        vmcall_registers_t &regs, const bfn::unique_map_ptr_x64<char> &omap);
+
+    void handle_vmcall__dump_denials(
+        vmcall_registers_t &regs, const bfn::unique_map_ptr_x64<char> &omap);
 
 protected:
 
@@ -121,6 +135,16 @@ private:
     bool m_io_access_log_enabled;
     x64::portio::port_addr_type m_trapped_port;
     std::map<x64::portio::port_addr_type, count_type> m_io_access_log;
+
+private:
+
+    template <class T>
+    T *get_verifier(vp::index_type index)
+    { return static_cast<T *>(m_verifiers[index].get()); }
+
+    void init_policy();
+    std::vector<std::string> m_denials;
+    std::map<vp::index_type, std::unique_ptr<vmcall_verifier>> m_verifiers;
 
 private:
 
