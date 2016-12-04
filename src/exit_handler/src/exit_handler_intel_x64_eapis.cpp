@@ -33,7 +33,9 @@ exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis() :
     m_io_access_log_enabled(false),
     m_trapped_port(0),
     m_vmcs_eapis(nullptr)
-{ }
+{
+    init_policy();
+}
 
 void
 exit_handler_intel_x64_eapis::resume()
@@ -84,6 +86,9 @@ exit_handler_intel_x64_eapis::handle_vmcall_data_string_json(
     vmcall_registers_t &regs, const json &str,
     const bfn::unique_map_ptr_x64<char> &omap)
 {
+    if (handle_vmcall_json__verifiers(regs, str, omap))
+        return;
+
     if (handle_vmcall_json__io_instruction(regs, str, omap))
         return;
 
