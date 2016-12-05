@@ -31,7 +31,7 @@ exit_handler_intel_x64_eapis::init_policy()
     m_verifiers[vp::index_trap_on_io_access] = std::make_unique<default_verifier__trap_on_io_access>();
     m_verifiers[vp::index_trap_on_all_io_accesses] = std::make_unique<default_verifier__trap_on_all_io_accesses>();
     m_verifiers[vp::index_pass_through_io_access] = std::make_unique<default_verifier__pass_through_io_access>();
-    m_verifiers[vp::index_pass_through_all_io_accessed] = std::make_unique<default_verifier__pass_through_all_io_accessed>();
+    m_verifiers[vp::index_pass_through_all_io_accesses] = std::make_unique<default_verifier__pass_through_all_io_accesses>();
     m_verifiers[vp::index_whitelist_io_access] = std::make_unique<default_verifier__whitelist_io_access>();
     m_verifiers[vp::index_blacklist_io_access] = std::make_unique<default_verifier__blacklist_io_access>();
     m_verifiers[vp::index_log_io_access] = std::make_unique<default_verifier__log_io_access>();

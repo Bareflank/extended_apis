@@ -55,11 +55,11 @@ public:
     { (void) port; return default_verify(); }
 };
 
-class default_verifier__pass_through_all_io_accessed : public vmcall_verifier
+class default_verifier__pass_through_all_io_accesses : public vmcall_verifier
 {
 public:
-    default_verifier__pass_through_all_io_accessed() = default;
-    ~default_verifier__pass_through_all_io_accessed() override = default;
+    default_verifier__pass_through_all_io_accesses() = default;
+    ~default_verifier__pass_through_all_io_accesses() override = default;
 
     verifier_result verify()
     { return default_verify(); }

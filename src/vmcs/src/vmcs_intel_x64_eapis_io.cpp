@@ -60,7 +60,7 @@ vmcs_intel_x64_eapis::pass_through_io_access(x64::portio::port_addr_type port)
 }
 
 void
-vmcs_intel_x64_eapis::pass_through_all_io_accessed()
+vmcs_intel_x64_eapis::pass_through_all_io_accesses()
 {
     __builtin_memset(m_io_bitmapa.get(), 0, x64::page_size);
     __builtin_memset(m_io_bitmapb.get(), 0, x64::page_size);
@@ -77,7 +77,7 @@ vmcs_intel_x64_eapis::whitelist_io_access(const std::vector<x64::portio::port_ad
 void
 vmcs_intel_x64_eapis::blacklist_io_access(const std::vector<x64::portio::port_addr_type> &ports)
 {
-    pass_through_all_io_accessed();
+    pass_through_all_io_accesses();
     for (auto port : ports)
         trap_on_io_access(port);
 }

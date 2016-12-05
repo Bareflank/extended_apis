@@ -53,7 +53,26 @@ public:
     ///
     ~exit_handler_intel_x64_eapis() override = default;
 
+    /// Resume
+    ///
+    /// Resumes the guest associated with this exit handler.
+    /// Note that this is the same as running:
+    ///
+    /// @code
+    /// eapis_vmcs()->resume();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
     void resume();
+
+    /// Advance and Resume
+    ///
+    /// Same as resume(), but prior to resuming the guest,
+    /// the guest's instruction pointer is advanced. If an
+    /// instruction is being emulated, this
+    ///
     void advance_and_resume();
 
     void register_monitor_trap(monitor_trap_callback callback);
@@ -107,7 +126,7 @@ protected:
     void handle_vmcall__pass_through_io_access(
         x64::portio::port_addr_type port);
 
-    void handle_vmcall__pass_through_all_io_accessed();
+    void handle_vmcall__pass_through_all_io_accesses();
 
     void handle_vmcall__whitelist_io_access(
         std::vector<x64::portio::port_addr_type> ports);

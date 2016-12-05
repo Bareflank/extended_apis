@@ -75,14 +75,14 @@ enum eapis_vmcall_functions
     eapis_fun__pass_through_io_access = 0x3,
 
     /**
-     * pass_through_all_io_accessed
+     * pass_through_all_io_accesses
      *
      * r2 = eapis_cat__io_instruction
-     * r3 = eapis_fun__pass_through_all_io_accessed
+     * r3 = eapis_fun__pass_through_all_io_accesses
      *
-     * calls: vmcs::pass_through_all_io_accessed
+     * calls: vmcs::pass_through_all_io_accesses
      */
-    eapis_fun__pass_through_all_io_accessed = 0x4,
+    eapis_fun__pass_through_all_io_accesses = 0x4,
 };
 
 #ifdef __cplusplus

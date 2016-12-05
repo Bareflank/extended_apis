@@ -47,8 +47,8 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers__io_instruction(
             handle_vmcall__trap_on_io_access(gsl::narrow_cast<portio::port_addr_type>(regs.r04));
             break;
 
-        case eapis_fun__pass_through_all_io_accessed:
-            handle_vmcall__pass_through_all_io_accessed();
+        case eapis_fun__pass_through_all_io_accesses:
+            handle_vmcall__pass_through_all_io_accesses();
             break;
 
         default:
@@ -160,12 +160,12 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_io_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_io_accessed()
+exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_io_accesses()
 {
-    if (policy(pass_through_all_io_accessed)->verify() != vmcall_verifier::allow)
-        policy(pass_through_all_io_accessed)->deny_vmcall();
+    if (policy(pass_through_all_io_accesses)->verify() != vmcall_verifier::allow)
+        policy(pass_through_all_io_accesses)->deny_vmcall();
 
-    eapis_vmcs()->pass_through_all_io_accessed();
+    eapis_vmcs()->pass_through_all_io_accesses();
     bfdebug << "trap_on_all_io_accesses: success" << bfendl;
 }
 

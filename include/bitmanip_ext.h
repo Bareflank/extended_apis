@@ -52,11 +52,11 @@ auto get_bit_from_span(const gsl::span<T> &view, B b) noexcept
 template<class T, class B,
          class = typename std::enable_if<std::is_integral<B>::value>::type>
 auto is_bit_set_from_span(T t, B b) noexcept
-{ return get_bit_from_span(t, b) != 0; }
+{ return get_bit_from_span(t, b) != gsl::narrow_cast<gsl::byte>(0); }
 
 template<class T, class B,
          class = typename std::enable_if<std::is_integral<B>::value>::type>
 auto is_bit_cleared_from_span(T t, B b) noexcept
-{ return get_bit_from_span(t, b) == 0; }
+{ return get_bit_from_span(t, b) == gsl::narrow_cast<gsl::byte>(0); }
 
 #endif
