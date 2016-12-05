@@ -35,6 +35,7 @@ extern "C" {
 enum eapis_vmcall_categories
 {
     eapis_cat__io_instruction = 0x1000,
+    eapis_cat__vpid = 0x2000,
 };
 
 /*
@@ -75,14 +76,34 @@ enum eapis_vmcall_functions
     eapis_fun__pass_through_io_access = 0x3,
 
     /**
-     * pass_through_all_io_accessed
+     * pass_through_all_io_accesses
      *
      * r2 = eapis_cat__io_instruction
-     * r3 = eapis_fun__pass_through_all_io_accessed
+     * r3 = eapis_fun__pass_through_all_io_accesses
      *
-     * calls: vmcs::pass_through_all_io_accessed
+     * calls: vmcs::pass_through_all_io_accesses
      */
-    eapis_fun__pass_through_all_io_accessed = 0x4,
+    eapis_fun__pass_through_all_io_accesses = 0x4,
+
+    /**
+     * enable_vpid
+     *
+     * r2 = eapis_cat__vpid
+     * r3 = eapis_fun__enable_vpid
+     *
+     * calls: vmcs::enable_vpid
+     */
+    eapis_fun__enable_vpid = 0x1,
+
+    /**
+     * disable_vpid
+     *
+     * r2 = eapis_cat__vpid
+     * r3 = eapis_fun__disable_vpid
+     *
+     * calls: vmcs::disable_vpid
+     */
+    eapis_fun__disable_vpid = 0x2,
 };
 
 #ifdef __cplusplus

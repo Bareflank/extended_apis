@@ -33,7 +33,10 @@ vmcs_intel_x64_eapis::vmcs_intel_x64_eapis() :
     m_io_bitmapb{std::make_unique<char[]>(x64::page_size)},
     m_io_bitmapa_view{m_io_bitmapa, x64::page_size},
     m_io_bitmapb_view{m_io_bitmapb, x64::page_size}
-{ }
+{
+    static vmcs::value_type g_vpid = 1;
+    m_vpid = g_vpid++;
+}
 
 void
 vmcs_intel_x64_eapis::write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
@@ -45,5 +48,6 @@ vmcs_intel_x64_eapis::write_fields(gsl::not_null<vmcs_intel_x64_state *> host_st
     address_of_io_bitmap_b::set(g_mm->virtptr_to_physint(m_io_bitmapb.get()));
     primary_processor_based_vm_execution_controls::use_io_bitmaps::enable();
 
-    pass_through_all_io_accessed();
+    this->disable_vpid();
+    this->pass_through_all_io_accesses();
 }

@@ -69,6 +69,7 @@ SOURCES+=exit_handler_intel_x64_eapis_verifiers_vmcall.cpp
 SOURCES+=exit_handler_intel_x64_eapis_io_instruction_emulation.cpp
 SOURCES+=exit_handler_intel_x64_eapis_io_instruction_vmcall.cpp
 SOURCES+=exit_handler_intel_x64_eapis_monitor_trap_emulation.cpp
+SOURCES+=exit_handler_intel_x64_eapis_vpid_vmcall.cpp
 
 INCLUDE_PATHS+=../../../include
 INCLUDE_PATHS+=%HYPER_ABS%/include/

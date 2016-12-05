@@ -53,7 +53,26 @@ public:
     ///
     ~exit_handler_intel_x64_eapis() override = default;
 
+    /// Resume
+    ///
+    /// Resumes the guest associated with this exit handler.
+    /// Note that this is the same as running:
+    ///
+    /// @code
+    /// eapis_vmcs()->resume();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
     void resume();
+
+    /// Advance and Resume
+    ///
+    /// Same as resume(), but prior to resuming the guest,
+    /// the guest's instruction pointer is advanced. If an
+    /// instruction is being emulated, this
+    ///
     void advance_and_resume();
 
     void register_monitor_trap(monitor_trap_callback callback);
@@ -66,6 +85,8 @@ protected:
 
     void handle_exit(intel_x64::vmcs::value_type reason) override;
 
+private:
+
     void handle_exit__monitor_trap_flag();
     void handle_exit__io_instruction();
 
@@ -73,13 +94,14 @@ protected:
 
     void handle_vmcall_registers(vmcall_registers_t &regs) override;
 
-    void handle_vmcall_registers__io_instruction(vmcall_registers_t &regs);
-
-protected:
-
     void handle_vmcall_data_string_json(
         vmcall_registers_t &regs, const json &str,
         const bfn::unique_map_ptr_x64<char> &omap) override;
+
+private:
+
+    void handle_vmcall_registers__io_instruction(vmcall_registers_t &regs);
+    void handle_vmcall_registers__vpid(vmcall_registers_t &regs);
 
     bool handle_vmcall_json__verifiers(
         vmcall_registers_t &regs, const json &str,
@@ -89,7 +111,11 @@ protected:
         vmcall_registers_t &regs, const json &str,
         const bfn::unique_map_ptr_x64<char> &omap);
 
-protected:
+    bool handle_vmcall_json__vpid(
+        vmcall_registers_t &regs, const json &str,
+        const bfn::unique_map_ptr_x64<char> &omap);
+
+private:
 
     void handle_vmcall__dump_policy(
         vmcall_registers_t &regs, const bfn::unique_map_ptr_x64<char> &omap);
@@ -97,7 +123,7 @@ protected:
     void handle_vmcall__dump_denials(
         vmcall_registers_t &regs, const bfn::unique_map_ptr_x64<char> &omap);
 
-protected:
+private:
 
     void handle_vmcall__trap_on_io_access(
         x64::portio::port_addr_type port);
@@ -107,7 +133,7 @@ protected:
     void handle_vmcall__pass_through_io_access(
         x64::portio::port_addr_type port);
 
-    void handle_vmcall__pass_through_all_io_accessed();
+    void handle_vmcall__pass_through_all_io_accesses();
 
     void handle_vmcall__whitelist_io_access(
         std::vector<x64::portio::port_addr_type> ports);
@@ -125,6 +151,10 @@ protected:
 
 private:
 
+    void handle_vmcall__enable_vpid(bool enabled);
+
+private:
+
     void unhandled_monitor_trap_callback();
     monitor_trap_callback m_monitor_trap_callback;
 
@@ -133,7 +163,6 @@ private:
     void trap_on_io_access_callback();
 
     bool m_io_access_log_enabled;
-    x64::portio::port_addr_type m_trapped_port;
     std::map<x64::portio::port_addr_type, count_type> m_io_access_log;
 
 private:

@@ -31,7 +31,6 @@ using namespace vmcs;
 exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis() :
     m_monitor_trap_callback(&exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback),
     m_io_access_log_enabled(false),
-    m_trapped_port(0),
     m_vmcs_eapis(nullptr)
 {
     init_policy();
