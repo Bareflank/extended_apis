@@ -24,9 +24,9 @@ The purpose of this repository, is to provide an extended set of APIs to
 build your hypervisors from. Some of these APIs include:
 
 - MSR / IO Bitmaps
-- Extended Page Tables (EPT)
+- VPID / Extended Page Tables (EPT)
 - Event Injection
-- Guest Support
+- Monitor Traps
 - [LibVMI](https://github.com/libvmi/libvmi) Support
 
 ## Links
