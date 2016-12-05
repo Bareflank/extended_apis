@@ -110,6 +110,8 @@ constexpr const auto index_blacklist_io_access                 = 0x0001006UL;
 constexpr const auto index_log_io_access                       = 0x0001007UL;
 constexpr const auto index_clear_io_access_log                 = 0x0001008UL;
 constexpr const auto index_io_access_log                       = 0x0001009UL;
+
+constexpr const auto index_enable_vpid                         = 0x0002001UL;
 }
 
 #define policy(a) \
@@ -119,5 +121,6 @@ constexpr const auto index_io_access_log                       = 0x0001009UL;
     deny_vmcall_with_args(__FUNC__, m_denials)
 
 #include <exit_handler/exit_handler_intel_x64_eapis_io_instruction_verifiers.h>
+#include <exit_handler/exit_handler_intel_x64_eapis_vpid_verifiers.h>
 
 #endif

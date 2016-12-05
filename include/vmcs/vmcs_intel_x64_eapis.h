@@ -50,6 +50,9 @@ public:
     ///
     ~vmcs_intel_x64_eapis() override  = default;
 
+    void enable_vpid();
+    void disable_vpid();
+
     /// Trap On IO Access
     ///
     /// Sets a '1' in IO bitmaps corresponding with the provided port. All
@@ -168,6 +171,8 @@ protected:
                       gsl::not_null<vmcs_intel_x64_state *> guest_state) override;
 
 private:
+
+    intel_x64::vmcs::value_type m_vpid;
 
     std::unique_ptr<char[]> m_io_bitmapa;
     std::unique_ptr<char[]> m_io_bitmapb;
