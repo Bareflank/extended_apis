@@ -21,10 +21,13 @@
 
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
+#include <exit_handler/exit_handler_intel_x64_eapis_io_instruction_verifiers.h>
+#include <exit_handler/exit_handler_intel_x64_eapis_vpid_verifiers.h>
 
 void
 exit_handler_intel_x64_eapis::init_policy()
 {
+    m_verifiers[vp::index_clear_denials] = std::make_unique<default_verifier__clear_denials>();
     m_verifiers[vp::index_dump_policy] = std::make_unique<default_verifier__dump_policy>();
     m_verifiers[vp::index_dump_denials] = std::make_unique<default_verifier__dump_denials>();
 
@@ -37,4 +40,6 @@ exit_handler_intel_x64_eapis::init_policy()
     m_verifiers[vp::index_log_io_access] = std::make_unique<default_verifier__log_io_access>();
     m_verifiers[vp::index_clear_io_access_log] = std::make_unique<default_verifier__clear_io_access_log>();
     m_verifiers[vp::index_io_access_log] = std::make_unique<default_verifier__io_access_log>();
+
+    m_verifiers[vp::index_enable_vpid] = std::make_unique<default_verifier__enable_vpid>();
 }

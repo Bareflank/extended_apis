@@ -19,20 +19,54 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef EXIT_HANDLER_INTEL_X64_EAPIS_VPID_VERIFIERS_H
-#define EXIT_HANDLER_INTEL_X64_EAPIS_VPID_VERIFIERS_H
-
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 
-class default_verifier__enable_vpid : public vmcall_verifier
-{
-public:
-    default_verifier__enable_vpid() = default;
-    ~default_verifier__enable_vpid() override = default;
+//#define ENABLE_VMCALL_DENIALS 1 // Enables Deny All
+//#define ENABLE_VMCALL_DENIALS 2 // Enabled Logging
 
-    verifier_result verify(bool enabled)
-    { (void) enabled; return default_verify(); }
-};
-
+#if ENABLE_VMCALL_DENIALS == 1
+bool g_deny_all = true;
+bool g_log_denials = true;
+#elif ENABLE_VMCALL_DENIALS == 2
+bool g_deny_all = false;
+bool g_log_denials = true;
+#else
+bool g_deny_all = false;
+bool g_log_denials = false;
 #endif
+
+std::string
+vmcall_verifier::to_string() const
+{
+    if (g_deny_all) return "deny all";
+    if (g_log_denials) return "ignore and log all";
+
+    return "allow all";
+}
+
+vmcall_verifier::verifier_result
+vmcall_verifier::default_verify()
+{
+    if (g_deny_all) return deny;
+    if (g_log_denials) return log;
+
+    return allow;
+}
+
+void
+vmcall_verifier::deny_vmcall_with_args(const char *func, denial_list_type &list)
+{
+    auto msg = "vmcall denied ["_s + func + "]: "_s + to_string();
+
+    if (g_log_denials)
+    {
+        if (list.size() >= DENIAL_LOG_SIZE)
+            list.erase(list.begin());
+
+        list.push_back(msg);
+    }
+
+    if (g_deny_all)
+        throw std::runtime_error(msg);
+}

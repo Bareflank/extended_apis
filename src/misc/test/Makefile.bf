@@ -23,50 +23,47 @@
 # Target Information
 ################################################################################
 
-TARGET_NAME:=vcpu_factory
-TARGET_TYPE:=lib
-TARGET_COMPILER:=cross
+TARGET_NAME:=test
+TARGET_TYPE:=bin
+TARGET_COMPILER:=native
 
 ################################################################################
 # Compiler Flags
 ################################################################################
 
-CROSS_CCFLAGS+=
-CROSS_CXXFLAGS+=
-CROSS_ASMFLAGS+=
-CROSS_LDFLAGS+=
-CROSS_ARFLAGS+=
-CROSS_DEFINES+=
+NATIVE_CCFLAGS+=
+NATIVE_CXXFLAGS+=
+NATIVE_ASMFLAGS+=
+NATIVE_LDFLAGS+=
+NATIVE_ARFLAGS+=
+NATIVE_DEFINES+=
 
 ################################################################################
 # Output
 ################################################################################
 
-CROSS_OBJDIR+=%BUILD_REL%/.build
-CROSS_OUTDIR+=%BUILD_REL%/../bin
+NATIVE_OBJDIR+=%BUILD_REL%/.build
+NATIVE_OUTDIR+=%BUILD_REL%/../bin
 
 ################################################################################
 # Sources
 ################################################################################
 
-SOURCES+=vcpu_factory.cpp
+SOURCES+=test.cpp
+SOURCES+=test_bitmanip_ext.cpp
 
+INCLUDE_PATHS+=./
 INCLUDE_PATHS+=../../../include
 INCLUDE_PATHS+=%HYPER_ABS%/include/
 INCLUDE_PATHS+=%HYPER_ABS%/bfvmm/include/
 
 LIBS+=
 
-LIBRARY_PATHS+=
+LIBRARY_PATHS+=%BUILD_REL%/../bin/native
 
 ################################################################################
 # Environment Specific
 ################################################################################
-
-VMM_SOURCES+=
-VMM_INCLUDE_PATHS+=
-VMM_LIBS+=
-VMM_LIBRARY_PATHS+=
 
 WINDOWS_SOURCES+=
 WINDOWS_INCLUDE_PATHS+=

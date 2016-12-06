@@ -29,8 +29,8 @@ using namespace intel_x64;
 using namespace vmcs;
 
 vmcs_intel_x64_eapis::vmcs_intel_x64_eapis() :
-    m_io_bitmapa{std::make_unique<char[]>(x64::page_size)},
-    m_io_bitmapb{std::make_unique<char[]>(x64::page_size)},
+    m_io_bitmapa{std::make_unique<uint8_t[]>(x64::page_size)},
+    m_io_bitmapb{std::make_unique<uint8_t[]>(x64::page_size)},
     m_io_bitmapa_view{m_io_bitmapa, x64::page_size},
     m_io_bitmapb_view{m_io_bitmapb, x64::page_size}
 {

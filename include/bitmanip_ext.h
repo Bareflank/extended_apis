@@ -27,7 +27,7 @@
 
 template<class T, class B,
          class = typename std::enable_if<std::is_integral<B>::value>::type>
-auto set_bit_from_span(gsl::span<T> &view, B b) noexcept
+auto set_bit_from_span(gsl::span<T> &view, B b)
 {
     auto &&byte_view = gsl::as_writeable_bytes(view);
     byte_view.at(b >> 3) |= gsl::narrow_cast<gsl::byte>((1 << (b & 7)));
@@ -35,7 +35,7 @@ auto set_bit_from_span(gsl::span<T> &view, B b) noexcept
 
 template<class T, class B,
          class = typename std::enable_if<std::is_integral<B>::value>::type>
-auto clear_bit_from_span(gsl::span<T> &view, B b) noexcept
+auto clear_bit_from_span(gsl::span<T> &view, B b)
 {
     auto &&byte_view = gsl::as_writeable_bytes(view);
     byte_view.at(b >> 3) &= gsl::narrow_cast<gsl::byte>(~(1 << (b & 7)));
@@ -43,7 +43,7 @@ auto clear_bit_from_span(gsl::span<T> &view, B b) noexcept
 
 template<class T, class B,
          class = typename std::enable_if<std::is_integral<B>::value>::type>
-auto get_bit_from_span(const gsl::span<T> &view, B b) noexcept
+auto get_bit_from_span(const gsl::span<T> &view, B b)
 {
     auto &&byte_view = gsl::as_writeable_bytes(view);
     return byte_view.at(b >> 3) & gsl::narrow_cast<gsl::byte>((1 << (b & 7)));
@@ -51,12 +51,12 @@ auto get_bit_from_span(const gsl::span<T> &view, B b) noexcept
 
 template<class T, class B,
          class = typename std::enable_if<std::is_integral<B>::value>::type>
-auto is_bit_set_from_span(T t, B b) noexcept
+auto is_bit_set_from_span(T t, B b)
 { return get_bit_from_span(t, b) != gsl::narrow_cast<gsl::byte>(0); }
 
 template<class T, class B,
          class = typename std::enable_if<std::is_integral<B>::value>::type>
-auto is_bit_cleared_from_span(T t, B b) noexcept
+auto is_bit_cleared_from_span(T t, B b)
 { return get_bit_from_span(t, b) == gsl::narrow_cast<gsl::byte>(0); }
 
 #endif

@@ -23,7 +23,7 @@
 #include <vmcs/vmcs_intel_x64_eapis.h>
 
 void
-vmcs_intel_x64_eapis::trap_on_io_access(x64::portio::port_addr_type port)
+vmcs_intel_x64_eapis::trap_on_io_access(port_type port)
 {
     if (port < 0x8000)
     {
@@ -45,7 +45,7 @@ vmcs_intel_x64_eapis::trap_on_all_io_accesses()
 }
 
 void
-vmcs_intel_x64_eapis::pass_through_io_access(x64::portio::port_addr_type port)
+vmcs_intel_x64_eapis::pass_through_io_access(port_type port)
 {
     if (port < 0x8000)
     {
@@ -67,7 +67,7 @@ vmcs_intel_x64_eapis::pass_through_all_io_accesses()
 }
 
 void
-vmcs_intel_x64_eapis::whitelist_io_access(const std::vector<x64::portio::port_addr_type> &ports)
+vmcs_intel_x64_eapis::whitelist_io_access(const port_list_type &ports)
 {
     trap_on_all_io_accesses();
     for (auto port : ports)
@@ -75,7 +75,7 @@ vmcs_intel_x64_eapis::whitelist_io_access(const std::vector<x64::portio::port_ad
 }
 
 void
-vmcs_intel_x64_eapis::blacklist_io_access(const std::vector<x64::portio::port_addr_type> &ports)
+vmcs_intel_x64_eapis::blacklist_io_access(const port_list_type &ports)
 {
     pass_through_all_io_accesses();
     for (auto port : ports)

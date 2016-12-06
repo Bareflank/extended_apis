@@ -20,8 +20,10 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_vmcall_interface.h>
+
+#include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
+#include <exit_handler/exit_handler_intel_x64_eapis_vpid_verifiers.h>
 
 using namespace x64;
 using namespace intel_x64;
@@ -48,17 +50,16 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers__vpid(
 
 bool
 exit_handler_intel_x64_eapis::handle_vmcall_json__vpid(
-    vmcall_registers_t &regs, const json &str,
-    const bfn::unique_map_ptr_x64<char> &omap)
+    const json &ijson, json &ojson)
 {
-    auto set = str.value("set", std::string());
+    auto set = ijson.value("set", std::string());
 
     if (!set.empty())
     {
         if (set == "vpid")
         {
-            handle_vmcall__enable_vpid(str.value("enabled", false));
-            reply_with_string(regs, "success", omap);
+            handle_vmcall__enable_vpid(ijson.at("enabled"));
+            ojson = {"success"};
             return true;
         }
     }

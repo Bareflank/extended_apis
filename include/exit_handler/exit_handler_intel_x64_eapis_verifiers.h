@@ -22,23 +22,17 @@
 #ifndef EXIT_HANDLER_INTEL_X64_EAPIS_VERIFIERS_H
 #define EXIT_HANDLER_INTEL_X64_EAPIS_VERIFIERS_H
 
-//#define ENABLE_VMCALL_DENIALS 1 // Enables Deny All
-//#define ENABLE_VMCALL_DENIALS 2 // Enabled Logging
-
-#if ENABLE_VMCALL_DENIALS == 1
-constexpr const auto g_deny_all = true;
-constexpr const auto g_log_denials = true;
-#elif ENABLE_VMCALL_DENIALS == 2
-constexpr const auto g_deny_all = false;
-constexpr const auto g_log_denials = true;
-#else
-constexpr const auto g_deny_all = false;
-constexpr const auto g_log_denials = false;
+#ifndef DENIAL_LOG_SIZE
+#define DENIAL_LOG_SIZE 25
 #endif
+
+#include <string>
 
 class vmcall_verifier
 {
 public:
+
+    using denial_list_type = std::vector<std::string>;
 
     enum verifier_result
     {
@@ -51,27 +45,20 @@ public:
     vmcall_verifier() = default;
     virtual ~vmcall_verifier() = default;
 
-    virtual std::string to_string() const
-    { return g_deny_all ? "deny all" : "ignore all"; }
+    virtual std::string to_string() const;
 
-    verifier_result default_verify()
-    {
-        if (g_deny_all) return deny;
-        if (g_log_denials) return log;
+    verifier_result default_verify();
+    void deny_vmcall_with_args(const char *func, denial_list_type &list);
+};
 
-        return allow;
-    }
+class default_verifier__clear_denials : public vmcall_verifier
+{
+public:
+    default_verifier__clear_denials() = default;
+    ~default_verifier__clear_denials() override = default;
 
-    void deny_vmcall_with_args(const char *func, std::vector<std::string> &list)
-    {
-        auto msg = "vmcall denied ["_s + func + "]: "_s + to_string();
-
-        if (g_log_denials)
-            list.push_back(msg);
-
-        if (g_deny_all)
-            throw std::runtime_error(msg);
-    }
+    verifier_result verify()
+    { return default_verify(); }
 };
 
 class default_verifier__dump_policy : public vmcall_verifier
@@ -96,10 +83,12 @@ public:
 
 namespace vp
 {
+
 using index_type = uint64_t;
 
-constexpr const auto index_dump_policy                         = 0x0000001UL;
-constexpr const auto index_dump_denials                        = 0x0000002UL;
+constexpr const auto index_clear_denials                       = 0x0000001UL;
+constexpr const auto index_dump_policy                         = 0x0000002UL;
+constexpr const auto index_dump_denials                        = 0x0000003UL;
 
 constexpr const auto index_trap_on_io_access                   = 0x0001001UL;
 constexpr const auto index_trap_on_all_io_accesses             = 0x0001002UL;
@@ -112,6 +101,7 @@ constexpr const auto index_clear_io_access_log                 = 0x0001008UL;
 constexpr const auto index_io_access_log                       = 0x0001009UL;
 
 constexpr const auto index_enable_vpid                         = 0x0002001UL;
+
 }
 
 #define policy(a) \
@@ -119,8 +109,5 @@ constexpr const auto index_enable_vpid                         = 0x0002001UL;
 
 #define deny_vmcall() \
     deny_vmcall_with_args(__FUNC__, m_denials)
-
-#include <exit_handler/exit_handler_intel_x64_eapis_io_instruction_verifiers.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_vpid_verifiers.h>
 
 #endif

@@ -1,0 +1,7 @@
+parsers:
+  gcov:
+    branch_detection:
+      conditional: off
+      loop: off
+      method: off
+      macro: off
