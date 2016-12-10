@@ -82,10 +82,8 @@ There are also a number of tests that can be run that demonstrate the various
 different vmcalls that are provided. For example:
 
 ```
-cd ~/extended_apis/tests/
-ls
-
-./test_vpid.sh
+cd ~/hypervisor
+../extended_apis/tests/test_vpid.sh
 ```
 
 The `test_vpid.sh` enables / disables VPID using JSON based vmcalls on
