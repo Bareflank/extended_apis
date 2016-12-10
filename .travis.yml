@@ -1,0 +1,207 @@
+#
+# Configuration
+#
+
+language: cpp
+
+dist: trusty
+sudo: required
+
+#
+# Build Matrix
+#
+matrix:
+  include:
+
+  #
+  # Astyle
+  #
+  - os: linux
+    env:
+      - TEST="Astyle"
+    before_install:
+      - cd ..
+      - git clone https://github.com/bareflank/hypervisor.git
+      - mv extended_apis hypervisor/
+      - cd hypervisor
+    script:
+      - if [[ -n $(./tools/astyle/run.sh | grep Formatted) ]]; then echo "You must run astyle before submitting a pull request"; exit -1; fi
+
+  #
+  # Doxygen
+  #
+  - os: linux
+    env:
+      - TEST="Doxygen"
+    before_install:
+      - cd ..
+      - git clone https://github.com/bareflank/hypervisor.git
+      - mv extended_apis hypervisor/
+      - cd hypervisor
+    script:
+      - ./configure
+      - make doxygen
+      - if cat doc/doxygen_warnings.txt | grep FIX; then echo "You must fix doxygen before submitting a pull request"; exit -1; fi
+
+  #
+  # Git Check
+  #
+  - os: linux
+    env:
+      - TEST="Git Check"
+    script:
+      - if [[ -n $(git diff --check HEAD^) ]]; then echo "You must remove whitespace before submitting a pull request"; exit -1; fi
+
+  #
+  # Codecov
+  #
+  - os: linux
+    env:
+      - TEST="Codecov"
+    services:
+      - docker
+    before_install:
+      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+      - sudo add-apt-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.8 main" -y
+      - sudo apt-get update
+      - sudo apt-get install --yes clang-3.8
+      - sudo apt-get install --yes llvm-3.8
+      - cd ..
+      - git clone https://github.com/bareflank/hypervisor.git
+      - mv extended_apis hypervisor/
+      - cd hypervisor
+    install:
+      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh
+    script:
+      - CC=clang-3.8 CXX=clang++-3.8 COVERALLS=true make
+      - make test
+    after_success:
+      - cd extended_apis
+      - ./tools/codecov/codecov.sh -s . -p ../makefiles/extended_apis/ -c -x ./tools/codecov/llvm-gcov.sh
+
+  #
+  # Clang Tidy
+  #
+  - os: linux
+    env:
+      - TEST="Clang Tidy"
+    services:
+      - docker
+    before_install:
+      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+      - sudo add-apt-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.8 main" -y
+      - sudo apt-get update
+      - sudo apt-get install --yes clang-3.8
+      - sudo apt-get install --yes clang-tidy-3.8
+      - sudo apt-get install --yes llvm-3.8
+      - cd ..
+      - git clone https://github.com/bareflank/hypervisor.git
+      - mv extended_apis hypervisor/
+      - cd hypervisor
+    install:
+      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh
+      - git clone https://github.com/rizsotto/bear.git
+      - pushd bear; cmake .; make; sudo make install; popd
+      - sudo ln -s /usr/bin/clang-tidy-3.8 /usr/bin/clang-tidy
+    script:
+      - STATIC_ANALYSIS_ENABLED=true bear make
+      - make tidy
+
+  #
+  # Google Sanitizers
+  #
+  - os: linux
+    env:
+      - TEST="Google Sanitizers"
+    services:
+      - docker
+    before_install:
+      - cd ..
+      - git clone https://github.com/bareflank/hypervisor.git
+      - mv extended_apis hypervisor/
+      - cd hypervisor
+    install:
+      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh
+    script:
+      - DYNAMIC_ANALYSIS_ENABLED=true make
+      - make test
+
+  #
+  # GCC 6.1.0
+  #
+  - os: linux
+    env:
+      - TEST="GCC 6.1.0"
+    services:
+      - docker
+    before_install:
+      - cd ..
+      - git clone https://github.com/bareflank/hypervisor.git
+      - mv extended_apis hypervisor/
+      - cd hypervisor
+    install:
+      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh --compiler gcc_610
+      - cat env.sh
+    script:
+      - make
+      - make test
+
+  #
+  # GCC 6.2.0
+  #
+  - os: linux
+    env:
+      - TEST="GCC 6.2.0"
+    services:
+      - docker
+    before_install:
+      - cd ..
+      - git clone https://github.com/bareflank/hypervisor.git
+      - mv extended_apis hypervisor/
+      - cd hypervisor
+    install:
+      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh --compiler gcc_620
+      - cat env.sh
+    script:
+      - make
+      - make test
+
+  #
+  # Clang 3.8
+  #
+  - os: linux
+    env:
+      - TEST="Clang 3.8"
+    services:
+      - docker
+    before_install:
+      - cd ..
+      - git clone https://github.com/bareflank/hypervisor.git
+      - mv extended_apis hypervisor/
+      - cd hypervisor
+    install:
+      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh --compiler clang_38
+      - cat env.sh
+    script:
+      - make
+      - make test
+
+  #
+  # Clang 3.9
+  #
+  - os: linux
+    env:
+      - TEST="Clang 3.9"
+    services:
+      - docker
+    before_install:
+      - cd ..
+      - git clone https://github.com/bareflank/hypervisor.git
+      - mv extended_apis hypervisor/
+      - cd hypervisor
+    install:
+      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh --compiler clang_39
+      - cat env.sh
+    script:
+      - make
+      - make test

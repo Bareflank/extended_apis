@@ -22,7 +22,7 @@
 #ifndef EXIT_HANDLER_INTEL_X64_EAPIS_IO_INSTRUCTION_VERIFIERS_H
 #define EXIT_HANDLER_INTEL_X64_EAPIS_IO_INSTRUCTION_VERIFIERS_H
 
-#include <intrinsics/portio_x64.h>
+#include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 
 class default_verifier__trap_on_io_access : public vmcall_verifier
@@ -31,7 +31,7 @@ public:
     default_verifier__trap_on_io_access() = default;
     ~default_verifier__trap_on_io_access() override = default;
 
-    verifier_result verify(x64::portio::port_addr_type port)
+    verifier_result verify(exit_handler_intel_x64_eapis::port_type port)
     { (void) port; return default_verify(); }
 };
 
@@ -51,7 +51,7 @@ public:
     default_verifier__pass_through_io_access() = default;
     ~default_verifier__pass_through_io_access() override = default;
 
-    verifier_result verify(x64::portio::port_addr_type port)
+    verifier_result verify(exit_handler_intel_x64_eapis::port_type port)
     { (void) port; return default_verify(); }
 };
 
@@ -71,7 +71,7 @@ public:
     default_verifier__whitelist_io_access() = default;
     ~default_verifier__whitelist_io_access() override = default;
 
-    verifier_result verify(std::vector<x64::portio::port_addr_type> ports)
+    verifier_result verify(exit_handler_intel_x64_eapis::port_list_type ports)
     { (void) ports; return default_verify(); }
 };
 
@@ -81,7 +81,7 @@ public:
     default_verifier__blacklist_io_access() = default;
     ~default_verifier__blacklist_io_access() override = default;
 
-    verifier_result verify(std::vector<x64::portio::port_addr_type> ports)
+    verifier_result verify(exit_handler_intel_x64_eapis::port_list_type ports)
     { (void) ports; return default_verify(); }
 };
 

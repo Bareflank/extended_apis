@@ -38,7 +38,9 @@ exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis() :
 
 void
 exit_handler_intel_x64_eapis::resume()
-{ eapis_vmcs()->resume(); }
+{
+    eapis_vmcs()->resume();
+}
 
 void
 exit_handler_intel_x64_eapis::advance_and_resume()
@@ -75,6 +77,10 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers(vmcall_registers_t &regs)
             handle_vmcall_registers__io_instruction(regs);
             break;
 
+        case eapis_cat__vpid:
+            handle_vmcall_registers__vpid(regs);
+            break;
+
         default:
             throw std::runtime_error("unknown vmcall category");
     }
@@ -82,13 +88,15 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers(vmcall_registers_t &regs)
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall_data_string_json(
-    vmcall_registers_t &regs, const json &str,
-    const bfn::unique_map_ptr_x64<char> &omap)
+    const json &ijson, json &ojson)
 {
-    if (handle_vmcall_json__verifiers(regs, str, omap))
+    if (handle_vmcall_json__verifiers(ijson, ojson))
         return;
 
-    if (handle_vmcall_json__io_instruction(regs, str, omap))
+    if (handle_vmcall_json__io_instruction(ijson, ojson))
+        return;
+
+    if (handle_vmcall_json__vpid(ijson, ojson))
         return;
 
     throw std::runtime_error("unknown JSON command");

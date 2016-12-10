@@ -1,5 +1,5 @@
 //
-// Bareflank Hypervisor Examples
+// Bareflank Hypervisor
 //
 // Copyright (C) 2015 Assured Information Security, Inc.
 // Author: Rian Quinn        <quinnr@ainfosec.com>
@@ -19,31 +19,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
+#include <test.h>
 
-#include <vmcs/vmcs_intel_x64_32bit_control_fields.h>
-#include <vmcs/vmcs_intel_x64_32bit_read_only_data_fields.h>
-#include <vmcs/vmcs_intel_x64_natural_width_read_only_data_fields.h>
-
-using namespace intel_x64;
-using namespace vmcs;
-
-void
-exit_handler_intel_x64_eapis::clear_monitor_trap()
+eapis_ut::eapis_ut()
 {
-    primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
-    m_monitor_trap_callback = &exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback;
 }
 
-void
-exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback()
-{ throw std::logic_error("unhandled_monitor_trap_callback called!!!"); }
-
-void
-exit_handler_intel_x64_eapis::handle_exit__monitor_trap_flag()
+bool
+eapis_ut::init()
 {
-    auto callback = m_monitor_trap_callback;
+    return true;
+}
 
-    clear_monitor_trap();
-    (this->*callback)();
+bool
+eapis_ut::fini()
+{
+    return true;
+}
+
+bool
+eapis_ut::list()
+{
+    this->test_set_bit_from_span();
+    this->test_clear_bit_from_span();
+    this->test_is_bit();
+
+    return true;
+}
+
+int
+main(int argc, char *argv[])
+{
+    return RUN_ALL_TESTS(eapis_ut);
 }

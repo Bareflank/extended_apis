@@ -19,8 +19,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef VMCS_INTEL_X64_EAPIS
-#define VMCS_INTEL_X64_EAPIS
+#ifndef VMCS_INTEL_X64_EAPIS_H
+#define VMCS_INTEL_X64_EAPIS_H
 
 #include <gsl/gsl>
 
@@ -36,6 +36,9 @@ class vmcs_intel_x64_eapis : public vmcs_intel_x64
 {
 public:
 
+    using port_type = x64::portio::port_addr_type;
+    using port_list_type = std::vector<port_type>;
+
     /// Default Constructor
     ///
     /// @expects
@@ -50,8 +53,35 @@ public:
     ///
     ~vmcs_intel_x64_eapis() override  = default;
 
-    void enable_vpid();
-    void disable_vpid();
+    /// Enable VPID
+    ///
+    /// Enables VPID. VPIDs cannot be reused. Re-Enabling VPID
+    /// will not consume an additional VPID, but creating a new
+    /// VMCS will, so reuse VMCS structures if possible.
+    ///
+    /// Example:
+    /// @code
+    /// this->enable_vpid();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    virtual void enable_vpid();
+
+    /// Disable VPID
+    ///
+    /// Disables VPID, and sets the VPID in the VMCS to 0.
+    ///
+    /// Example:
+    /// @code
+    /// this->disable_vpid();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    virtual void disable_vpid();
 
     /// Trap On IO Access
     ///
@@ -70,7 +100,7 @@ public:
     ///
     /// @param port the port to trap on
     ///
-    void trap_on_io_access(x64::portio::port_addr_type port);
+    virtual void trap_on_io_access(port_type port);
 
     /// Trap On All IO Access
     ///
@@ -87,7 +117,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    void trap_on_all_io_accesses();
+    virtual void trap_on_all_io_accesses();
 
     /// Pass Through IO Access
     ///
@@ -104,9 +134,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param the port to pass through
+    /// @param port the port to pass through
     ///
-    void pass_through_io_access(x64::portio::port_addr_type port);
+    virtual void pass_through_io_access(port_type port);
 
     /// Pass Through All IO Access
     ///
@@ -123,7 +153,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    void pass_through_all_io_accesses();
+    virtual void pass_through_all_io_accesses();
 
     /// White List IO Access
     ///
@@ -143,7 +173,7 @@ public:
     ///
     /// @param ports the ports to whitelist
     ///
-    void whitelist_io_access(const std::vector<x64::portio::port_addr_type> &ports);
+    virtual void whitelist_io_access(const port_list_type &ports);
 
     /// Black List IO Access
     ///
@@ -163,7 +193,7 @@ public:
     ///
     /// @param ports the ports to blacklist
     ///
-    void blacklist_io_access(const std::vector<x64::portio::port_addr_type> &ports);
+    virtual void blacklist_io_access(const port_list_type &ports);
 
 protected:
 
@@ -172,12 +202,14 @@ protected:
 
 private:
 
+    friend class eapis_ut;
+
     intel_x64::vmcs::value_type m_vpid;
 
-    std::unique_ptr<char[]> m_io_bitmapa;
-    std::unique_ptr<char[]> m_io_bitmapb;
-    gsl::span<char> m_io_bitmapa_view;
-    gsl::span<char> m_io_bitmapb_view;
+    std::unique_ptr<uint8_t[]> m_io_bitmapa;
+    std::unique_ptr<uint8_t[]> m_io_bitmapb;
+    gsl::span<uint8_t> m_io_bitmapa_view;
+    gsl::span<uint8_t> m_io_bitmapb_view;
 };
 
 #endif

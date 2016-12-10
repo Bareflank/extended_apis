@@ -22,8 +22,10 @@
 #include <to_string.h>
 
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_vmcall_interface.h>
+
+#include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
+#include <exit_handler/exit_handler_intel_x64_eapis_io_instruction_verifiers.h>
 
 using namespace x64;
 using namespace intel_x64;
@@ -36,7 +38,7 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers__io_instruction(
     switch (regs.r03)
     {
         case eapis_fun__trap_on_io_access:
-            handle_vmcall__trap_on_io_access(gsl::narrow_cast<portio::port_addr_type>(regs.r04));
+            handle_vmcall__trap_on_io_access(gsl::narrow_cast<port_type>(regs.r04));
             break;
 
         case eapis_fun__trap_on_all_io_accesses:
@@ -44,7 +46,7 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers__io_instruction(
             break;
 
         case eapis_fun__pass_through_io_access:
-            handle_vmcall__trap_on_io_access(gsl::narrow_cast<portio::port_addr_type>(regs.r04));
+            handle_vmcall__pass_through_io_access(gsl::narrow_cast<port_type>(regs.r04));
             break;
 
         case eapis_fun__pass_through_all_io_accesses:
@@ -58,68 +60,67 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers__io_instruction(
 
 bool
 exit_handler_intel_x64_eapis::handle_vmcall_json__io_instruction(
-    vmcall_registers_t &regs, const json &str,
-    const bfn::unique_map_ptr_x64<char> &omap)
+    const json &ijson, json &ojson)
 {
-    auto set = str.value("set", std::string());
+    auto set = ijson.value("set", std::string());
 
     if (!set.empty())
     {
         if (set == "trap_on_io_access")
         {
-            handle_vmcall__trap_on_io_access(json_hex_or_dec<portio::port_addr_type>(str, "port"));
-            reply_with_string(regs, "success", omap);
+            handle_vmcall__trap_on_io_access(json_hex_or_dec<port_type>(ijson, "port"));
+            ojson = {"success"};
             return true;
         }
 
         if (set == "pass_through_io_access")
         {
-            handle_vmcall__pass_through_io_access(json_hex_or_dec<portio::port_addr_type>(str, "port"));
-            reply_with_string(regs, "success", omap);
+            handle_vmcall__pass_through_io_access(json_hex_or_dec<port_type>(ijson, "port"));
+            ojson = {"success"};
             return true;
         }
 
         if (set == "whitelist_io_access")
         {
-            handle_vmcall__whitelist_io_access(json_hex_or_dec_array<portio::port_addr_type>(str, "ports"));
-            reply_with_string(regs, "success", omap);
+            handle_vmcall__whitelist_io_access(json_hex_or_dec_array<port_type>(ijson, "ports"));
+            ojson = {"success"};
             return true;
         }
 
         if (set == "blacklist_io_access")
         {
-            handle_vmcall__blacklist_io_access(json_hex_or_dec_array<portio::port_addr_type>(str, "ports"));
-            reply_with_string(regs, "success", omap);
+            handle_vmcall__blacklist_io_access(json_hex_or_dec_array<port_type>(ijson, "ports"));
+            ojson = {"success"};
             return true;
         }
 
         if (set == "log_io_access")
         {
-            handle_vmcall__log_io_access(str.value("enabled", false));
-            reply_with_string(regs, "success", omap);
+            handle_vmcall__log_io_access(ijson.at("enabled"));
+            ojson = {"success"};
             return true;
         }
     }
 
-    auto run = str.value("run", std::string());
+    auto run = ijson.value("run", std::string());
 
     if (!run.empty())
     {
         if (run == "clear_io_access_log")
         {
             handle_vmcall__clear_io_access_log();
-            reply_with_string(regs, "success", omap);
+            ojson = {"success"};
             return true;
         }
     }
 
-    auto get = str.value("get", std::string());
+    auto get = ijson.value("get", std::string());
 
     if (!get.empty())
     {
         if (get == "io_access_log")
         {
-            handle_vmcall__io_access_log(regs, omap);
+            handle_vmcall__io_access_log(ojson);
             return true;
         }
     }
@@ -129,7 +130,7 @@ exit_handler_intel_x64_eapis::handle_vmcall_json__io_instruction(
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__trap_on_io_access(
-    portio::port_addr_type port)
+    port_type port)
 {
     if (policy(trap_on_io_access)->verify(port) != vmcall_verifier::allow)
         policy(trap_on_io_access)->deny_vmcall();
@@ -150,7 +151,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_all_io_accesses()
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__pass_through_io_access(
-    portio::port_addr_type port)
+    port_type port)
 {
     if (policy(pass_through_io_access)->verify(port) != vmcall_verifier::allow)
         policy(pass_through_io_access)->deny_vmcall();
@@ -171,7 +172,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_io_accesses()
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__whitelist_io_access(
-    std::vector<portio::port_addr_type> ports)
+    const port_list_type &ports)
 {
     if (policy(whitelist_io_access)->verify(ports) != vmcall_verifier::allow)
         policy(whitelist_io_access)->deny_vmcall();
@@ -185,7 +186,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__whitelist_io_access(
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__blacklist_io_access(
-    std::vector<portio::port_addr_type> ports)
+    const port_list_type &ports)
 {
     if (policy(blacklist_io_access)->verify(ports) != vmcall_verifier::allow)
         policy(blacklist_io_access)->deny_vmcall();
@@ -219,17 +220,13 @@ exit_handler_intel_x64_eapis::handle_vmcall__clear_io_access_log()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__io_access_log(
-    vmcall_registers_t &regs, const bfn::unique_map_ptr_x64<char> &omap)
+exit_handler_intel_x64_eapis::handle_vmcall__io_access_log(json &ojson)
 {
     if (policy(io_access_log)->verify() != vmcall_verifier::allow)
         policy(io_access_log)->deny_vmcall();
 
-    json log = {};
-
     for (auto pair : m_io_access_log)
-        log[bfn::to_string(pair.first, 16)] = pair.second;
+        ojson[bfn::to_string(pair.first, 16)] = pair.second;
 
-    reply_with_json(regs, log, omap);
     bfdebug << "dump io_access_log: success" << bfendl;
 }

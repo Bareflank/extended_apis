@@ -1,5 +1,5 @@
 //
-// Bareflank Hypervisor Examples
+// Bareflank Hypervisor
 //
 // Copyright (C) 2015 Assured Information Security, Inc.
 // Author: Rian Quinn        <quinnr@ainfosec.com>
@@ -19,31 +19,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
+#ifndef TEST_H
+#define TEST_H
 
-#include <vmcs/vmcs_intel_x64_32bit_control_fields.h>
-#include <vmcs/vmcs_intel_x64_32bit_read_only_data_fields.h>
-#include <vmcs/vmcs_intel_x64_natural_width_read_only_data_fields.h>
+#include <unittest.h>
 
-using namespace intel_x64;
-using namespace vmcs;
-
-void
-exit_handler_intel_x64_eapis::clear_monitor_trap()
+class eapis_ut : public unittest
 {
-    primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
-    m_monitor_trap_callback = &exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback;
-}
+public:
 
-void
-exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback()
-{ throw std::logic_error("unhandled_monitor_trap_callback called!!!"); }
+    eapis_ut();
+    ~eapis_ut() override = default;
 
-void
-exit_handler_intel_x64_eapis::handle_exit__monitor_trap_flag()
-{
-    auto callback = m_monitor_trap_callback;
+protected:
 
-    clear_monitor_trap();
-    (this->*callback)();
-}
+    bool init() override;
+    bool fini() override;
+    bool list() override;
+
+private:
+
+    void test_set_bit_from_span();
+    void test_clear_bit_from_span();
+    void test_is_bit();
+};
+
+#endif

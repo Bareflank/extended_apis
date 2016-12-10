@@ -28,22 +28,33 @@ using namespace intel_x64;
 
 bool
 exit_handler_intel_x64_eapis::handle_vmcall_json__verifiers(
-    vmcall_registers_t &regs, const json &str,
-    const bfn::unique_map_ptr_x64<char> &omap)
+    const json &ijson, json &ojson)
 {
-    auto dump = str.value("dump", std::string());
+    auto run = ijson.value("run", std::string());
+
+    if (!run.empty())
+    {
+        if (run == "clear_denials")
+        {
+            handle_vmcall__clear_denials();
+            ojson = {"success"};
+            return true;
+        }
+    }
+
+    auto dump = ijson.value("dump", std::string());
 
     if (!dump.empty())
     {
         if (dump == "policy")
         {
-            handle_vmcall__dump_policy(regs, omap);
+            handle_vmcall__dump_policy(ojson);
             return true;
         }
 
         if (dump == "denials")
         {
-            handle_vmcall__dump_denials(regs, omap);
+            handle_vmcall__dump_denials(ojson);
             return true;
         }
     }
@@ -56,33 +67,35 @@ std::string get_typename(const T &t)
 { return typeid(t).name(); }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__dump_policy(
-    vmcall_registers_t &regs, const bfn::unique_map_ptr_x64<char> &omap)
+exit_handler_intel_x64_eapis::handle_vmcall__clear_denials()
+{
+    if (policy(clear_denials)->verify() != vmcall_verifier::allow)
+        policy(clear_denials)->deny_vmcall();
+
+    this->clear_denials();
+    bfdebug << "clear_denials: success" << bfendl;
+}
+
+void
+exit_handler_intel_x64_eapis::handle_vmcall__dump_policy(json &ojson)
 {
     if (policy(dump_policy)->verify() != vmcall_verifier::allow)
         policy(dump_policy)->deny_vmcall();
 
-    json result = {};
-
     for (const auto &pair : m_verifiers)
-        result[get_typename(*pair.second)] = pair.second->to_string();
+        ojson[get_typename(*pair.second)] = pair.second->to_string();
 
-    reply_with_json(regs, result, omap);
     bfdebug << "dump_policy: success" << bfendl;
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__dump_denials(
-    vmcall_registers_t &regs, const bfn::unique_map_ptr_x64<char> &omap)
+exit_handler_intel_x64_eapis::handle_vmcall__dump_denials(json &ojson)
 {
     if (policy(dump_denials)->verify() != vmcall_verifier::allow)
         policy(dump_denials)->deny_vmcall();
 
-    json result;
-
     for (const auto &str : m_denials)
-        result.push_back(str);
+        ojson.push_back(str);
 
-    reply_with_json(regs, result, omap);
     bfdebug << "dump_denials: success" << bfendl;
 }

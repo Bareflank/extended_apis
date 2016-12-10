@@ -22,7 +22,10 @@
 #ifndef EXIT_HANDLER_INTEL_X64_EAPIS_H
 #define EXIT_HANDLER_INTEL_X64_EAPIS_H
 
+#include <vector>
+
 #include <vmcs/vmcs_intel_x64_eapis.h>
+#include <vmcs/vmcs_intel_x64_32bit_control_fields.h>
 
 #include <exit_handler/exit_handler_intel_x64.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
@@ -38,6 +41,11 @@ public:
 public:
 
     using count_type = uint64_t;
+    using port_type = x64::portio::port_addr_type;
+    using port_list_type = std::vector<port_type>;
+    using port_log_type = std::map<port_type, count_type>;
+    using denial_list_type = std::vector<std::string>;
+    using policy_type = std::map<vp::index_type, std::unique_ptr<vmcall_verifier>>;
 
     /// Default Constructor
     ///
@@ -70,15 +78,98 @@ public:
     /// Advance and Resume
     ///
     /// Same as resume(), but prior to resuming the guest,
-    /// the guest's instruction pointer is advanced. If an
-    /// instruction is being emulated, this
+    /// the guest's instruction pointer is advanced.
+    ///
+    /// Example:
+    /// @code
+    /// this->advance_and_resume();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
     ///
     void advance_and_resume();
 
-    void register_monitor_trap(monitor_trap_callback callback);
+    /// Register Monitor Trap
+    ///
+    /// Registers a callback function that will be called
+    /// after the next instruction is executed by the guest
+    /// by setting the monitor trap flag, and storing the
+    /// callback to be called on the next VM exit associated
+    /// with the monitor trap flag.
+    ///
+    /// @note: the callback must be a member function of the
+    ///     exit_handler (and it's subclasses)
+    ///
+    /// Example:
+    /// @code
+    ///
+    /// class my_exit_handler : public exit_handler_intel_x64_eapis
+    /// {
+    /// public:
+    ///     void monitor_trap_callback()
+    ///     { <do awesome stuff here> }
+    /// };
+    ///
+    /// ehlr->register_monitor_trap(&my_exit_handler::monitor_trap_callback);
+    ///
+    /// @endcode
+    ///
+    /// @expects callback == exit handler (or subclass) member function
+    /// @ensures
+    ///
+    /// @param callback the function to be called on a monitor trap VM exit
+    ///
+    template<class T, typename = typename std::enable_if<std::is_member_function_pointer<T>::value>>
+    void register_monitor_trap(T callback)
+    {
+        intel_x64::vmcs::primary_processor_based_vm_execution_controls::monitor_trap_flag::enable();
+        m_monitor_trap_callback = static_cast<monitor_trap_callback>(callback);
+    }
+
+    /// Clear Monitor Trap
+    ///
+    /// Clears the monitor trap flag in the VMCS and registers an unhandled
+    /// callback. This is used internally to disabled the monitor trap
+    /// prior to calling a registered callback, but it can be used to
+    /// cancel an existing registered callback.
+    ///
+    /// @code
+    /// ehlr->clear_monitor_trap();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
     void clear_monitor_trap();
 
+    /// Log IO Access
+    ///
+    /// Enables / disables IO access logging.
+    ///
+    /// @code
+    /// ehlr->log_io_access(true);
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param enable set to true to enable IO access logging, false otherwise
+    ///
     void log_io_access(bool enable);
+
+    /// Clear IO Access Log
+    ///
+    /// Clears the IO access log. All previously logged IO accesses will be
+    /// removed.
+    ///
+    /// @code
+    /// ehlr->clear_io_access_log();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
     void clear_io_access_log();
 
 protected:
@@ -93,61 +184,34 @@ private:
 protected:
 
     void handle_vmcall_registers(vmcall_registers_t &regs) override;
-
-    void handle_vmcall_data_string_json(
-        vmcall_registers_t &regs, const json &str,
-        const bfn::unique_map_ptr_x64<char> &omap) override;
+    void handle_vmcall_data_string_json(const json &ijson, json &ojson) override;
 
 private:
 
     void handle_vmcall_registers__io_instruction(vmcall_registers_t &regs);
     void handle_vmcall_registers__vpid(vmcall_registers_t &regs);
 
-    bool handle_vmcall_json__verifiers(
-        vmcall_registers_t &regs, const json &str,
-        const bfn::unique_map_ptr_x64<char> &omap);
-
-    bool handle_vmcall_json__io_instruction(
-        vmcall_registers_t &regs, const json &str,
-        const bfn::unique_map_ptr_x64<char> &omap);
-
-    bool handle_vmcall_json__vpid(
-        vmcall_registers_t &regs, const json &str,
-        const bfn::unique_map_ptr_x64<char> &omap);
+    bool handle_vmcall_json__verifiers(const json &ijson, json &ojson);
+    bool handle_vmcall_json__io_instruction(const json &ijson, json &ojson);
+    bool handle_vmcall_json__vpid(const json &ijson, json &ojson);
 
 private:
 
-    void handle_vmcall__dump_policy(
-        vmcall_registers_t &regs, const bfn::unique_map_ptr_x64<char> &omap);
-
-    void handle_vmcall__dump_denials(
-        vmcall_registers_t &regs, const bfn::unique_map_ptr_x64<char> &omap);
+    void handle_vmcall__clear_denials();
+    void handle_vmcall__dump_policy(json &ojson);
+    void handle_vmcall__dump_denials(json &ojson);
 
 private:
 
-    void handle_vmcall__trap_on_io_access(
-        x64::portio::port_addr_type port);
-
+    void handle_vmcall__trap_on_io_access(port_type port);
     void handle_vmcall__trap_on_all_io_accesses();
-
-    void handle_vmcall__pass_through_io_access(
-        x64::portio::port_addr_type port);
-
+    void handle_vmcall__pass_through_io_access(port_type port);
     void handle_vmcall__pass_through_all_io_accesses();
-
-    void handle_vmcall__whitelist_io_access(
-        std::vector<x64::portio::port_addr_type> ports);
-
-    void handle_vmcall__blacklist_io_access(
-        std::vector<x64::portio::port_addr_type> ports);
-
-    void handle_vmcall__log_io_access(
-        bool enabled);
-
+    void handle_vmcall__whitelist_io_access(const port_list_type &ports);
+    void handle_vmcall__blacklist_io_access(const port_list_type &ports);
+    void handle_vmcall__log_io_access(bool enabled);
     void handle_vmcall__clear_io_access_log();
-
-    void handle_vmcall__io_access_log(
-        vmcall_registers_t &regs, const bfn::unique_map_ptr_x64<char> &omap);
+    void handle_vmcall__io_access_log(json &ojson);
 
 private:
 
@@ -163,21 +227,30 @@ private:
     void trap_on_io_access_callback();
 
     bool m_io_access_log_enabled;
-    std::map<x64::portio::port_addr_type, count_type> m_io_access_log;
+    port_log_type m_io_access_log;
 
 private:
+
+    void clear_denials()
+    { m_denials.clear(); }
 
     template <class T>
     T *get_verifier(vp::index_type index)
     { return static_cast<T *>(m_verifiers[index].get()); }
 
     void init_policy();
-    std::vector<std::string> m_denials;
-    std::map<vp::index_type, std::unique_ptr<vmcall_verifier>> m_verifiers;
+    denial_list_type m_denials;
+    policy_type m_verifiers;
 
-private:
+public:
 
-    vmcs_intel_x64_eapis *eapis_vmcs()
+    // The following are only marked public for unit testing. Do not use
+    // these APIs directly as they may change at any time, and their direct
+    // use may be unstable. You have been warned.
+
+    vmcs_intel_x64_eapis *m_vmcs_eapis;
+
+    auto eapis_vmcs()
     {
         if (m_vmcs_eapis == nullptr)
             m_vmcs_eapis = dynamic_cast<vmcs_intel_x64_eapis *>(m_vmcs);
@@ -185,7 +258,12 @@ private:
         return m_vmcs_eapis;
     }
 
-    vmcs_intel_x64_eapis *m_vmcs_eapis;
+public:
+
+    friend class eapis_ut;
+
+    exit_handler_intel_x64_eapis(const exit_handler_intel_x64_eapis &) = delete;
+    exit_handler_intel_x64_eapis &operator=(const exit_handler_intel_x64_eapis &) = delete;
 };
 
 #endif
