@@ -50,7 +50,43 @@ eapis_ut::list()
     this->test_pass_through_all_io_accesses();
     this->test_whitelist_io_access();
     this->test_blacklist_io_access();
+    this->test_enable_ept();
+    this->test_disable_ept();
+    this->test_map_1g();
+    this->test_map_2m();
+    this->test_map_4k();
+    this->test_map_invalid();
+    this->test_setup_ept_identity_map_1g_invalid();
+    this->test_setup_ept_identity_map_1g_valid();
+    this->test_setup_ept_identity_map_2m_invalid();
+    this->test_setup_ept_identity_map_2m_valid();
+    this->test_setup_ept_identity_map_4k_invalid();
+    this->test_setup_ept_identity_map_4k_valid();
 
+    this->test_ept_entry_intel_x64_invalid();
+    this->test_ept_entry_intel_x64_read_access();
+    this->test_ept_entry_intel_x64_write_access();
+    this->test_ept_entry_intel_x64_execute_access();
+    this->test_ept_entry_intel_x64_memory_type();
+    this->test_ept_entry_intel_x64_ignore_pat();
+    this->test_ept_entry_intel_x64_entry_type();
+    this->test_ept_entry_intel_x64_accessed();
+    this->test_ept_entry_intel_x64_dirty();
+    this->test_ept_entry_intel_x64_execute_access_user();
+    this->test_ept_entry_intel_x64_phys_addr();
+    this->test_ept_entry_intel_x64_suppress_ve();
+    this->test_ept_entry_intel_x64_trap_on_access();
+    this->test_ept_entry_intel_x64_pass_through_access();
+    this->test_ept_entry_intel_x64_clear();
+
+    this->test_ept_intel_x64_no_entry();
+    this->test_ept_intel_x64_with_entry();
+    this->test_ept_intel_x64_add_remove_page_1g_success();
+    this->test_ept_intel_x64_add_remove_page_2m_success();
+    this->test_ept_intel_x64_add_remove_page_4k_success();
+    this->test_ept_intel_x64_add_page_twice_failure();
+    this->test_ept_intel_x64_remove_page_twice_failure();
+    this->test_ept_intel_x64_remove_page_unknown_failure();
 
     return true;
 }

@@ -62,16 +62,16 @@ LIBS+=vmcall_policy
 LIBS+=vmcs_intel_x64_eapis
 LIBS+=exit_handler
 LIBS+=vmcs
-LIBS+=intrinsics
 LIBS+=memory_manager
+LIBS+=intrinsics
 
 LIBRARY_PATHS+=%BUILD_REL%/../bin/native
 LIBRARY_PATHS+=%BUILD_REL%/../../vmcall_policy/bin/native
 LIBRARY_PATHS+=%BUILD_REL%/../../vmcs/bin/native
 LIBRARY_PATHS+=%BUILD_ABS%/makefiles/bfvmm/src/exit_handler/bin/native
 LIBRARY_PATHS+=%BUILD_ABS%/makefiles/bfvmm/src/vmcs/bin/native
-LIBRARY_PATHS+=%BUILD_ABS%/makefiles/bfvmm/src/intrinsics/bin/native
 LIBRARY_PATHS+=%BUILD_ABS%/makefiles/bfvmm/src/memory_manager/bin/native
+LIBRARY_PATHS+=%BUILD_ABS%/makefiles/bfvmm/src/intrinsics/bin/native
 
 ################################################################################
 # Environment Specific

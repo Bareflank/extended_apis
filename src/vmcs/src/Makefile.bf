@@ -65,8 +65,11 @@ NATIVE_OUTDIR+=%BUILD_REL%/../bin
 ################################################################################
 
 SOURCES+=vmcs_intel_x64_eapis.cpp
+SOURCES+=vmcs_intel_x64_eapis_ept.cpp
 SOURCES+=vmcs_intel_x64_eapis_io.cpp
 SOURCES+=vmcs_intel_x64_eapis_vpid.cpp
+SOURCES+=ept_intel_x64.cpp
+SOURCES+=ept_entry_intel_x64.cpp
 
 INCLUDE_PATHS+=../../../include
 INCLUDE_PATHS+=%HYPER_ABS%/include/
