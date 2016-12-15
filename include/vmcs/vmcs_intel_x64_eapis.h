@@ -24,12 +24,17 @@
 
 #include <gsl/gsl>
 
+#include <mutex>
 #include <vector>
 #include <memory>
 
 #include <vmcs/vmcs_intel_x64.h>
 
+#include <vmcs/ept_intel_x64.h>
+#include <vmcs/ept_attr_intel_x64.h>
+
 #include <intrinsics/x64.h>
+#include <intrinsics/msrs_x64.h>
 #include <intrinsics/portio_x64.h>
 
 class vmcs_intel_x64_eapis : public vmcs_intel_x64
@@ -38,6 +43,11 @@ public:
 
     using port_type = x64::portio::port_addr_type;
     using port_list_type = std::vector<port_type>;
+    using msr_type = x64::msrs::field_type;
+    using msr_list_type = std::vector<msr_type>;
+    using integer_pointer = uintptr_t;
+    using attr_type = intel_x64::ept::memory_attr::attr_type;
+    using size_type = size_t;
 
     /// Default Constructor
     ///
@@ -195,12 +205,193 @@ public:
     ///
     virtual void blacklist_io_access(const port_list_type &ports);
 
+    /// Enable EPT
+    ///
+    /// Enables EPT, and sets up the EPT Pointer (EPTP) in the VMCS.
+    /// By default, the EPTP is setup with the paging structures to use
+    /// write_back memory, and the accessed / dirty bits are disabled.
+    /// Once enabling EPT, you can change these values if desired.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void enable_ept();
+
+    /// Disable EPT
+    ///
+    /// Disables EPT, and sets the EPT Pointer (EPTP) in the VMCS to 0.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void disable_ept();
+
+    /// Map (1 Gigabytes)
+    ///
+    /// Maps 1 gigabyte of memory in the extended page tables given a guest
+    /// physical address, the actual physical address and a set of attributes.
+    ///
+    /// @note: the user should ensure that this level of page granularity is
+    ///     supported by hardware using intel_x64::msrs::ia32_vmx_ept_vpid_cap
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param gpa the guest physical address to map
+    /// @param phys_addr the physical address to map the gpa to
+    /// @param attr describes how to map the gpa
+    ///
+    void map_1g(integer_pointer gpa, integer_pointer phys_addr, attr_type attr)
+    { this->map(gpa, phys_addr, attr, intel_x64::ept::pdpt::size_bytes); }
+
+    /// Map (2 Megabytes)
+    ///
+    /// Maps 2 megabytes of memory in the extended page tables given a guest
+    /// physical address, the actual physical address and a set of attributes.
+    ///
+    /// @note: the user should ensure that this level of page granularity is
+    ///     supported by hardware using intel_x64::msrs::ia32_vmx_ept_vpid_cap
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param gpa the guest physical address to map
+    /// @param phys_addr the physical address to map the gpa to
+    /// @param attr describes how to map the gpa
+    ///
+    void map_2m(integer_pointer gpa, integer_pointer phys_addr, attr_type attr)
+    { this->map(gpa, phys_addr, attr, intel_x64::ept::pd::size_bytes); }
+
+    /// Map (1 Kilobytes)
+    ///
+    /// Maps 4 kilobytes of memory in the extended page tables given a guest
+    /// physical address, the actual physical address and a set of attributes.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param gpa the guest physical address to map
+    /// @param phys_addr the physical address to map the gpa to
+    /// @param attr describes how to map the gpa
+    ///
+    void map_4k(integer_pointer gpa, integer_pointer phys_addr, attr_type attr)
+    { this->map(gpa, phys_addr, attr, intel_x64::ept::pt::size_bytes); }
+
+    /// Unmap
+    ///
+    /// Unmaps memory in the extended page tables give a guest
+    /// physical address.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param gpa the guest physical address to unmap
+    ///
+    void unmap(integer_pointer gpa) noexcept;
+
+    /// Setup EPT Identify Map (1 Gigabyte Granularity)
+    ///
+    /// Sets up an identify map in the extended page tables using 1 gigabyte
+    /// of memory granularity. Lower granularity takes up far less memory,
+    /// but could result in poor performance if too many EPT Violations are
+    /// occurring as a result. In addition, not all granularities are supported
+    /// by hardware, and thus the user should detect hardware support prior
+    /// to using this function. Higher granularity consumes more memory but
+    /// could result in better performance in certain situations, and is likely
+    /// better supported on hardware. Users should consider:
+    /// - How much memory is available for EPT entries
+    /// - Virt -> Guest Phys -> Phys translation time (the deeper the pages go,
+    ///   the longer it takes to translate an address)
+    /// - Hardware support
+    /// - EPT Violation frequency (trapping on a specific address will generate
+    ///   more unnecessary VM exits on lower granularities)
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param saddr the starting address for the identify map
+    /// @param eaddr the ending address for the identify map
+    ///
+    void setup_ept_identity_map_1g(integer_pointer saddr, integer_pointer eaddr);
+
+    /// Setup EPT Identify Map (2 Megabyte Granularity)
+    ///
+    /// Sets up an identify map in the extended page tables using 2 megabytes
+    /// of memory granularity. Lower granularity takes up far less memory,
+    /// but could result in poor performance if too many EPT Violations are
+    /// occurring as a result. In addition, not all granularities are supported
+    /// by hardware, and thus the user should detect hardware support prior
+    /// to using this function. Higher granularity consumes more memory but
+    /// could result in better performance in certain situations, and is likely
+    /// better supported on hardware. Users should consider:
+    /// - How much memory is available for EPT entries
+    /// - Virt -> Guest Phys -> Phys translation time (the deeper the pages go,
+    ///   the longer it takes to translate an address)
+    /// - Hardware support
+    /// - EPT Violation frequency (trapping on a specific address will generate
+    ///   more unnecessary VM exits on lower granularities)
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param saddr the starting address for the identify map
+    /// @param eaddr the ending address for the identify map
+    ///
+    void setup_ept_identity_map_2m(integer_pointer saddr, integer_pointer eaddr);
+
+    /// Setup EPT Identify Map (4 Kilobyte Granularity)
+    ///
+    /// Sets up an identify map in the extended page tables using 4 kilobyte
+    /// of memory granularity. Lower granularity takes up far less memory,
+    /// but could result in poor performance if too many EPT Violations are
+    /// occurring as a result. In addition, not all granularities are supported
+    /// by hardware, and thus the user should detect hardware support prior
+    /// to using this function. Higher granularity consumes more memory but
+    /// could result in better performance in certain situations, and is likely
+    /// better supported on hardware. Users should consider:
+    /// - How much memory is available for EPT entries
+    /// - Virt -> Guest Phys -> Phys translation time (the deeper the pages go,
+    ///   the longer it takes to translate an address)
+    /// - Hardware support
+    /// - EPT Violation frequency (trapping on a specific address will generate
+    ///   more unnecessary VM exits on lower granularities)
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param saddr the starting address for the identify map
+    /// @param eaddr the ending address for the identify map
+    ///
+    void setup_ept_identity_map_4k(integer_pointer saddr, integer_pointer eaddr);
+
+    /// Guest Physical Address To Extended Page Table Entry
+    ///
+    /// Locates the extended page table entry given a guest physical
+    /// address. The entry is guaranteed not to be null (or an exception is
+    /// thrown). This function can be used to access an EPTE, enabling the
+    /// user to modify any part of the EPTE as desired. It should be noted
+    /// that the extended page table owns the EPTE. Unmapping an EPTE
+    /// invalidates the EPTE returned by this function.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param gpa the guest physical address to lookup
+    /// @return the resulting EPTE
+    ///
+    gsl::not_null<ept_entry_intel_x64 *> gpa_to_epte(integer_pointer gpa);
+
 protected:
 
     void write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
                       gsl::not_null<vmcs_intel_x64_state *> guest_state) override;
 
-private:
+    virtual std::mutex &eptp_mutex() const;
+    virtual gsl::not_null<ept_intel_x64 *> eptp() const;
+
+    void map(integer_pointer gpa, integer_pointer phys_addr, attr_type attr, size_type size);
+
+protected:
 
     friend class eapis_ut;
 

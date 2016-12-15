@@ -51,6 +51,8 @@ NATIVE_OUTDIR+=%BUILD_REL%/../bin
 
 SOURCES+=test.cpp
 SOURCES+=test_vmcs_intel_x64_eapis.cpp
+SOURCES+=test_ept_intel_x64.cpp
+SOURCES+=test_ept_entry_intel_x64.cpp
 
 INCLUDE_PATHS+=./
 INCLUDE_PATHS+=../../../include

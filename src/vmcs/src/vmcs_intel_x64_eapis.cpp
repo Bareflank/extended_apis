@@ -48,6 +48,7 @@ vmcs_intel_x64_eapis::write_fields(gsl::not_null<vmcs_intel_x64_state *> host_st
     address_of_io_bitmap_b::set(g_mm->virtptr_to_physint(m_io_bitmapb.get()));
     primary_processor_based_vm_execution_controls::use_io_bitmaps::enable();
 
+    this->disable_ept();
     this->disable_vpid();
     this->pass_through_all_io_accesses();
 }
