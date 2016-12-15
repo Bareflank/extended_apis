@@ -6,3 +6,4 @@
 - Added VPID support: [RFC](https://github.com/Bareflank/hypervisor/issues/372)
 - Added Monitor Trap Flag support: [RFC](https://github.com/Bareflank/hypervisor/issues/366)
 - Added VMCall Denial support: [RFC](https://github.com/Bareflank/hypervisor/issues/363)
+- Added EPT support: [RFC](https://github.com/Bareflank/hypervisor/issues/374)
