@@ -97,13 +97,6 @@ public:
     using integer_pointer = uintptr_t;
     using memory_type_type = uint64_t;
 
-    /// Invalid Constructor
-    ///
-    /// @expects none
-    /// @ensures none
-    ///
-    ept_entry_intel_x64() noexcept;
-
     /// Default Constructor
     ///
     /// @expects pte != nullptr
@@ -111,14 +104,14 @@ public:
     ///
     /// @param pte the pte that this page table entry encapsulates.
     ///
-    ept_entry_intel_x64(const gsl::not_null<pointer> &pte) noexcept;
+    ept_entry_intel_x64(gsl::not_null<pointer> pte) noexcept;
 
     /// Destructor
     ///
     /// @expects none
     /// @ensures none
     ///
-    virtual ~ept_entry_intel_x64() = default;
+    ~ept_entry_intel_x64() = default;
 
     /// Read Access
     ///

@@ -29,9 +29,19 @@ using namespace vmcs;
 void
 vmcs_intel_x64_eapis::enable_ept()
 {
+    // Note: Before we can get the EPTP entry, which has the physical
+    //       address that we can about, we need to make sure that EPT has
+    //       been initialized. We do this by calling the EPTP function
+    //       which performs the initialization on it's first use. Note that
+    //       we don't do this initialization by default to prevent
+    //       a bunch of resources from being allocated if they are never used.
+
+    (void) eptp();
+    auto &&entry = ept_entry_intel_x64{this->eptp_entry()};
+
     ept_pointer::memory_type::set(ept_pointer::memory_type::write_back);
     ept_pointer::page_walk_length_minus_one::set(3UL);
-    ept_pointer::phys_addr::set(eptp()->phys_addr());
+    ept_pointer::phys_addr::set(entry.phys_addr());
 
     secondary_processor_based_vm_execution_controls::enable_ept::enable();
     intel_x64::vmx::invept_global();
@@ -62,8 +72,8 @@ vmcs_intel_x64_eapis::setup_ept_identity_map_1g(
     expects((saddr & (ept::pdpt::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pdpt::size_bytes - 1)) == 0);
 
-    for (auto virt = saddr; virt < eaddr; virt += ept::pdpt::size_bytes)
-        this->map_1g(virt, virt, ept::memory_attr::pt_wb);
+    for (auto phys = saddr; phys < eaddr; phys += ept::pdpt::size_bytes)
+        this->map_1g(phys, phys, ept::memory_attr::pt_wb);
 }
 
 void
@@ -73,8 +83,8 @@ vmcs_intel_x64_eapis::setup_ept_identity_map_2m(
     expects((saddr & (ept::pd::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pd::size_bytes - 1)) == 0);
 
-    for (auto virt = saddr; virt < eaddr; virt += ept::pd::size_bytes)
-        this->map_2m(virt, virt, ept::memory_attr::pt_wb);
+    for (auto phys = saddr; phys < eaddr; phys += ept::pd::size_bytes)
+        this->map_2m(phys, phys, ept::memory_attr::pt_wb);
 }
 
 void
@@ -84,15 +94,48 @@ vmcs_intel_x64_eapis::setup_ept_identity_map_4k(
     expects((saddr & (ept::pt::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pt::size_bytes - 1)) == 0);
 
-    for (auto virt = saddr; virt < eaddr; virt += ept::pt::size_bytes)
-        this->map_4k(virt, virt, ept::memory_attr::pt_wb);
+    for (auto phys = saddr; phys < eaddr; phys += ept::pt::size_bytes)
+        this->map_4k(phys, phys, ept::memory_attr::pt_wb);
 }
 
-gsl::not_null<ept_entry_intel_x64 *>
+void
+vmcs_intel_x64_eapis::unmap_ept_identity_map_1g(
+    integer_pointer saddr, integer_pointer eaddr)
+{
+    expects((saddr & (ept::pdpt::size_bytes - 1)) == 0);
+    expects((eaddr & (ept::pdpt::size_bytes - 1)) == 0);
+
+    for (auto phys = saddr; phys < eaddr; phys += ept::pdpt::size_bytes)
+        this->unmap(phys);
+}
+
+void
+vmcs_intel_x64_eapis::unmap_ept_identity_map_2m(
+    integer_pointer saddr, integer_pointer eaddr)
+{
+    expects((saddr & (ept::pd::size_bytes - 1)) == 0);
+    expects((eaddr & (ept::pd::size_bytes - 1)) == 0);
+
+    for (auto phys = saddr; phys < eaddr; phys += ept::pd::size_bytes)
+        this->unmap(phys);
+}
+
+void
+vmcs_intel_x64_eapis::unmap_ept_identity_map_4k(
+    integer_pointer saddr, integer_pointer eaddr)
+{
+    expects((saddr & (ept::pt::size_bytes - 1)) == 0);
+    expects((eaddr & (ept::pt::size_bytes - 1)) == 0);
+
+    for (auto phys = saddr; phys < eaddr; phys += ept::pt::size_bytes)
+        this->unmap(phys);
+}
+
+ept_entry_intel_x64
 vmcs_intel_x64_eapis::gpa_to_epte(integer_pointer gpa)
 {
     std::lock_guard<std::mutex> guard(eptp_mutex());
-    return eptp()->find_epte(gpa);
+    return eptp()->phys_to_epte(gpa);
 }
 
 std::mutex &
@@ -102,76 +145,73 @@ vmcs_intel_x64_eapis::eptp_mutex() const
     return g_ept_map_mutex;
 }
 
+gsl::not_null<vmcs_intel_x64_eapis::integer_pointer *>
+vmcs_intel_x64_eapis::eptp_entry() const
+{
+    static integer_pointer g_eptp_entry = 0;
+    return &g_eptp_entry;
+}
+
 gsl::not_null<ept_intel_x64 *>
 vmcs_intel_x64_eapis::eptp() const
 {
     static std::unique_ptr<ept_intel_x64> g_eptp;
 
     if (!g_eptp)
-        g_eptp = std::make_unique<ept_intel_x64>();
+        g_eptp = std::make_unique<ept_intel_x64>(eptp_entry());
 
     return g_eptp.get();
+}
+
+ept_entry_intel_x64
+vmcs_intel_x64_eapis::add_page(integer_pointer gpa, size_type size)
+{
+    switch (size)
+    {
+        case ept::pdpt::size_bytes:
+            return eptp()->add_page_1g(gpa);
+
+        case ept::pd::size_bytes:
+            return eptp()->add_page_2m(gpa);
+
+        case ept::pt::size_bytes:
+            return eptp()->add_page_4k(gpa);
+
+        default:
+            throw std::logic_error("invalid ept size");
+    }
 }
 
 void
 vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_type attr, size_type size)
 {
-    ept_entry_intel_x64 *entry = nullptr;
     std::lock_guard<std::mutex> guard(eptp_mutex());
 
-    switch (size)
-    {
-        case ept::pdpt::size_bytes:
-        {
-            gpa &= ~(ept::pdpt::size_bytes - 1);
-            phys_addr &= ~(ept::pdpt::size_bytes - 1);
-
-            if ((entry = eptp()->add_page_1g(gpa)) != nullptr)
-            {
-                entry->clear();
-                entry->set_phys_addr(phys_addr);
-                entry->set_entry_type(true);
-            }
-
-            break;
-        }
-
-        case ept::pd::size_bytes:
-        {
-            gpa &= ~(ept::pd::size_bytes - 1);
-            phys_addr &= ~(ept::pd::size_bytes - 1);
-
-            if ((entry = eptp()->add_page_2m(gpa)) != nullptr)
-            {
-                entry->clear();
-                entry->set_phys_addr(phys_addr);
-                entry->set_entry_type(true);
-            }
-
-            break;
-        }
-
-        case ept::pt::size_bytes:
-        {
-            gpa &= ~(ept::pt::size_bytes - 1);
-            phys_addr &= ~(ept::pt::size_bytes - 1);
-
-            if ((entry = eptp()->add_page_4k(gpa)) != nullptr)
-            {
-                entry->clear();
-                entry->set_phys_addr(phys_addr);
-            }
-
-            break;
-        }
-    }
-
-    if (entry == nullptr)
-        throw std::logic_error("failed to add page to EPTP");
+    auto &&entry = add_page(gpa, size);
 
     auto ___ = gsl::on_failure([&]
     { eptp()->remove_page(gpa); });
 
+    switch (size)
+    {
+        case ept::pdpt::size_bytes:
+            entry.clear();
+            entry.set_phys_addr(phys_addr & ~(ept::pdpt::size_bytes - 1));
+            entry.set_entry_type(true);
+            break;
+
+        case ept::pd::size_bytes:
+            entry.clear();
+            entry.set_phys_addr(phys_addr & ~(ept::pd::size_bytes - 1));
+            entry.set_entry_type(true);
+            break;
+
+        case ept::pt::size_bytes:
+            entry.clear();
+            entry.set_phys_addr(phys_addr & ~(ept::pt::size_bytes - 1));
+            break;
+    }
+
     switch (attr)
     {
         case ept::memory_attr::rw_uc:
@@ -179,7 +219,7 @@ vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_t
         case ept::memory_attr::eo_uc:
         case ept::memory_attr::pt_uc:
         case ept::memory_attr::tp_uc:
-            entry->set_memory_type(ept::memory_type::uc);
+            entry.set_memory_type(ept::memory_type::uc);
             break;
 
         case ept::memory_attr::rw_wc:
@@ -187,7 +227,7 @@ vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_t
         case ept::memory_attr::eo_wc:
         case ept::memory_attr::pt_wc:
         case ept::memory_attr::tp_wc:
-            entry->set_memory_type(ept::memory_type::wc);
+            entry.set_memory_type(ept::memory_type::wc);
             break;
 
         case ept::memory_attr::rw_wt:
@@ -195,7 +235,7 @@ vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_t
         case ept::memory_attr::eo_wt:
         case ept::memory_attr::pt_wt:
         case ept::memory_attr::tp_wt:
-            entry->set_memory_type(ept::memory_type::wt);
+            entry.set_memory_type(ept::memory_type::wt);
             break;
 
         case ept::memory_attr::rw_wp:
@@ -203,7 +243,7 @@ vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_t
         case ept::memory_attr::eo_wp:
         case ept::memory_attr::pt_wp:
         case ept::memory_attr::tp_wp:
-            entry->set_memory_type(ept::memory_type::wp);
+            entry.set_memory_type(ept::memory_type::wp);
             break;
 
         case ept::memory_attr::rw_wb:
@@ -211,7 +251,7 @@ vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_t
         case ept::memory_attr::eo_wb:
         case ept::memory_attr::pt_wb:
         case ept::memory_attr::tp_wb:
-            entry->set_memory_type(ept::memory_type::wb);
+            entry.set_memory_type(ept::memory_type::wb);
             break;
     }
 
@@ -222,9 +262,9 @@ vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_t
         case ept::memory_attr::rw_wt:
         case ept::memory_attr::rw_wp:
         case ept::memory_attr::rw_wb:
-            entry->set_read_access(true);
-            entry->set_write_access(true);
-            entry->set_execute_access(false);
+            entry.set_read_access(true);
+            entry.set_write_access(true);
+            entry.set_execute_access(false);
             break;
 
         case ept::memory_attr::re_uc:
@@ -232,9 +272,9 @@ vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_t
         case ept::memory_attr::re_wt:
         case ept::memory_attr::re_wp:
         case ept::memory_attr::re_wb:
-            entry->set_read_access(true);
-            entry->set_write_access(false);
-            entry->set_execute_access(true);
+            entry.set_read_access(true);
+            entry.set_write_access(false);
+            entry.set_execute_access(true);
             break;
 
         case ept::memory_attr::eo_uc:
@@ -242,9 +282,9 @@ vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_t
         case ept::memory_attr::eo_wt:
         case ept::memory_attr::eo_wp:
         case ept::memory_attr::eo_wb:
-            entry->set_read_access(false);
-            entry->set_write_access(false);
-            entry->set_execute_access(true);
+            entry.set_read_access(false);
+            entry.set_write_access(false);
+            entry.set_execute_access(true);
             break;
 
         case ept::memory_attr::pt_uc:
@@ -252,9 +292,9 @@ vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_t
         case ept::memory_attr::pt_wt:
         case ept::memory_attr::pt_wp:
         case ept::memory_attr::pt_wb:
-            entry->set_read_access(true);
-            entry->set_write_access(true);
-            entry->set_execute_access(true);
+            entry.set_read_access(true);
+            entry.set_write_access(true);
+            entry.set_execute_access(true);
             break;
 
         case ept::memory_attr::tp_uc:
@@ -262,9 +302,9 @@ vmcs_intel_x64_eapis::map(integer_pointer gpa, integer_pointer phys_addr, attr_t
         case ept::memory_attr::tp_wt:
         case ept::memory_attr::tp_wp:
         case ept::memory_attr::tp_wb:
-            entry->set_read_access(false);
-            entry->set_write_access(false);
-            entry->set_execute_access(false);
+            entry.set_read_access(false);
+            entry.set_write_access(false);
+            entry.set_execute_access(false);
             break;
 
         default:

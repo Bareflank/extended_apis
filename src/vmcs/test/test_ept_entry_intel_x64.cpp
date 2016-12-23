@@ -27,12 +27,6 @@
 using epte_type = ept_entry_intel_x64::integer_pointer;
 
 void
-eapis_ut::test_ept_entry_intel_x64_invalid()
-{
-    std::make_unique<ept_entry_intel_x64>();
-}
-
-void
 eapis_ut::test_ept_entry_intel_x64_read_access()
 {
     epte_type entry = 0;

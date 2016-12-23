@@ -25,15 +25,9 @@
 #include <intrinsics/x64.h>
 using namespace x64;
 
-static ept_entry_intel_x64::integer_pointer g_invalid_epte = 0;
-
-ept_entry_intel_x64::ept_entry_intel_x64() noexcept :
-    m_epte(&g_invalid_epte)
-{ *m_epte = 0; }
-
-ept_entry_intel_x64::ept_entry_intel_x64(const gsl::not_null<pointer> &pte) noexcept :
+ept_entry_intel_x64::ept_entry_intel_x64(gsl::not_null<pointer> pte) noexcept :
     m_epte(pte.get())
-{ *m_epte = 0; }
+{ }
 
 bool
 ept_entry_intel_x64::read_access() const noexcept
