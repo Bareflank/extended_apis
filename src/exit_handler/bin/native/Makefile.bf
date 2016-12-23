@@ -33,6 +33,5 @@ LIBRARY_PATH := $(LIBRARY_PATH):%BUILD_ABS%/makefiles/extended_apis/src/exit_han
 LIBRARY_PATH := $(LIBRARY_PATH):%BUILD_ABS%/makefiles/extended_apis/src/vcpu_factory/bin/native
 LIBRARY_PATH := $(LIBRARY_PATH):%BUILD_ABS%/makefiles/extended_apis/src/vmcall_policy/bin/native
 LIBRARY_PATH := $(LIBRARY_PATH):%BUILD_ABS%/makefiles/extended_apis/src/vmcs/bin/native
-LIBRARY_PATH := $(LIBRARY_PATH):%BUILD_ABS%/makefiles/extended_apis/src/vmcall_policy/bin/native
 
 include %HYPER_ABS%/common/common_test.mk

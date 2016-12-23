@@ -117,8 +117,6 @@ private:
     void test_handle_vmcall_json_verifiers_dump_denials_allowed();
     void test_handle_vmcall_json_verifiers_dump_denials_logged();
     void test_handle_vmcall_json_verifiers_dump_denials_denied();
-
 };
-
 
 #endif

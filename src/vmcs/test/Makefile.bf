@@ -66,11 +66,10 @@ LIBS+=intrinsics
 LIBS+=memory_manager
 
 LIBRARY_PATHS+=%BUILD_REL%/../bin/native
-LIBRARY_PATHS+=%BUILD_ABS%/makefiles/bfvmm/src/exit_handler/bin/native
 LIBRARY_PATHS+=%BUILD_ABS%/makefiles/bfvmm/src/vmcs/bin/native
+LIBRARY_PATHS+=%BUILD_ABS%/makefiles/bfvmm/src/exit_handler/bin/native
 LIBRARY_PATHS+=%BUILD_ABS%/makefiles/bfvmm/src/intrinsics/bin/native
 LIBRARY_PATHS+=%BUILD_ABS%/makefiles/bfvmm/src/memory_manager/bin/native
-
 
 ################################################################################
 # Environment Specific
