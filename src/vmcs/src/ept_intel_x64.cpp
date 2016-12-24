@@ -26,105 +26,127 @@
 using namespace x64;
 using namespace intel_x64;
 
-ept_intel_x64::ept_intel_x64(pointer epte) :
-    ept_entry_intel_x64(epte != nullptr ? epte : (&m_bitbucket)),
-    m_size(0),
-    m_bitbucket(0),
-    m_eptes(ept::num_entries)
+ept_intel_x64::ept_intel_x64(pointer epte)
 {
-    m_ept_owner = std::make_unique<integer_pointer[]>(ept::num_entries);
-    m_ept = gsl::span<integer_pointer>(m_ept_owner, ept::num_entries);
+    m_ept = std::make_unique<integer_pointer[]>(ept::num_entries);
 
-    this->clear();
-    this->set_phys_addr(g_mm->virtptr_to_physint(m_ept_owner.get()));
-    this->set_read_access(true);
-    this->set_write_access(true);
-    this->set_execute_access(true);
+    auto &&entry = ept_entry_intel_x64(epte);
+    entry.clear();
+    entry.set_phys_addr(g_mm->virtptr_to_physint(m_ept.get()));
+    entry.set_read_access(true);
+    entry.set_write_access(true);
+    entry.set_execute_access(true);
+}
+
+ept_entry_intel_x64
+ept_intel_x64::add_page(integer_pointer addr, integer_pointer bits, integer_pointer end)
+{
+    auto &&index = ept::index(addr, bits);
+
+    if (bits > end)
+    {
+        if (m_epts.empty())
+            m_epts = std::vector<std::unique_ptr<ept_intel_x64>>(ept::num_entries);
+
+        auto &&iter = bfn::find(m_epts, index);
+        if (!(*iter))
+        {
+            auto &&view = gsl::make_span(m_ept, ept::num_entries);
+            (*iter) = std::make_unique<ept_intel_x64>(&view.at(index));
+        }
+
+        return (*iter)->add_page(addr, bits - ept::pt::size, end);
+    }
+
+    if (!m_epts.empty())
+    {
+        m_epts.clear();
+        m_epts.shrink_to_fit();
+    }
+
+    auto &&view = gsl::make_span(m_ept, ept::num_entries);
+    return ept_entry_intel_x64(&view.at(index));
+}
+
+void
+ept_intel_x64::remove_page(integer_pointer addr, integer_pointer bits)
+{
+    auto &&index = ept::index(addr, bits);
+
+    if (!m_epts.empty())
+    {
+        auto &&iter = bfn::find(m_epts, index);
+        if (auto epte = (*iter).get())
+        {
+            epte->remove_page(addr, bits - ept::pt::size);
+            if (epte->empty())
+            {
+                (*iter) = nullptr;
+
+                auto &&view = gsl::make_span(m_ept, ept::num_entries);
+                view.at(index) = 0;
+            }
+        }
+    }
+    else
+    {
+        auto &&view = gsl::make_span(m_ept, ept::num_entries);
+        view.at(index) = 0;
+
+        return;
+    }
+}
+
+ept_entry_intel_x64
+ept_intel_x64::phys_to_epte(integer_pointer addr, integer_pointer bits)
+{
+    auto &&index = ept::index(addr, bits);
+
+    if (!m_epts.empty())
+    {
+        auto &&iter = bfn::find(m_epts, index);
+        if (auto epte = (*iter).get())
+            return epte->phys_to_epte(addr, bits - ept::pt::size);
+
+        throw std::runtime_error("unable to locate epte. invalid address");
+    }
+
+    auto &&view = gsl::make_span(m_ept, ept::num_entries);
+    return ept_entry_intel_x64(&view.at(index));
+}
+
+bool
+ept_intel_x64::empty() const noexcept
+{
+    auto size = 0UL;
+
+    for (auto i = 0U; i < ept::num_entries; i++)
+        size += m_ept[i] != 0 ? 1U : 0U;
+
+    return size == 0;
 }
 
 ept_intel_x64::size_type
 ept_intel_x64::global_size() const noexcept
 {
-    auto size = m_size;
+    auto size = 0UL;
 
-    for (const auto &epte : m_eptes)
-    {
-        if (auto pt = dynamic_cast<ept_intel_x64 *>(epte.get()))
-            size += pt->global_size();
-    }
+    for (auto i = 0U; i < ept::num_entries; i++)
+        size += m_ept[i] != 0 ? 1U : 0U;
+
+    for (const auto &pt : m_epts)
+        if (pt != nullptr) size += pt->global_size();
 
     return size;
 }
 
-template<class T> std::unique_ptr<T>
-ept_intel_x64::add_epte(pointer p)
+ept_intel_x64::size_type
+ept_intel_x64::global_capacity() const noexcept
 {
-    m_size++;
-    return std::make_unique<T>(p);
-}
+    auto size = m_epts.capacity();
 
-template<class T> std::unique_ptr<T>
-ept_intel_x64::remove_epte()
-{
-    m_size--;
-    return nullptr;
-}
+    for (const auto &pt : m_epts)
+        if (pt != nullptr) size += pt->global_capacity();
 
-gsl::not_null<ept_entry_intel_x64 *>
-ept_intel_x64::add_page(
-    integer_pointer addr, integer_pointer bits, integer_pointer end_bits)
-{
-    auto &&index = ept::index(addr, bits);
-
-    if (bits > end_bits)
-    {
-        auto &&iter = bfn::find(m_eptes, index);
-        if (!*iter)
-            *iter = add_epte<ept_intel_x64>(&m_ept.at(index));
-
-        if (auto epte = dynamic_cast<ept_intel_x64 *>(iter->get()))
-            return epte->add_page(addr, bits - ept::pt::size, end_bits);
-    }
-
-    auto &&iter = bfn::find(m_eptes, index);
-    if (*iter)
-        throw std::runtime_error("add_page: page mapping already exists");
-
-    *iter = add_epte<ept_entry_intel_x64>(&m_ept.at(index));
-    return iter->get();
-}
-
-void
-ept_intel_x64::remove_page(
-    integer_pointer addr, integer_pointer bits)
-{
-    auto &&iter = bfn::find(m_eptes, ept::index(addr, bits));
-    if (!*iter)
-        throw std::runtime_error("remove_page: invalid address");
-
-    if (auto epte = dynamic_cast<ept_intel_x64 *>(iter->get()))
-    {
-        epte->remove_page(addr, bits - ept::pt::size);
-
-        if (epte->empty())
-            *iter = remove_epte<ept_entry_intel_x64>();
-    }
-    else
-    {
-        *iter = remove_epte<ept_entry_intel_x64>();
-    }
-}
-
-gsl::not_null<ept_entry_intel_x64 *>
-ept_intel_x64::find_epte(
-    integer_pointer addr, integer_pointer bits)
-{
-    auto &&iter = bfn::find(m_eptes, ept::index(addr, bits));
-    if (!*iter)
-        throw std::runtime_error("find_epte: invalid address");
-
-    if (auto epte = dynamic_cast<ept_intel_x64 *>(iter->get()))
-        return epte->find_epte(addr, bits - ept::pt::size);
-
-    return iter->get();
+    return size;
 }

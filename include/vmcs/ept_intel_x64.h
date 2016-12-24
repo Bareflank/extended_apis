@@ -28,7 +28,7 @@
 #include <memory>
 #include <vmcs/ept_entry_intel_x64.h>
 
-class ept_intel_x64 : public ept_entry_intel_x64
+class ept_intel_x64
 {
 public:
 
@@ -55,19 +55,9 @@ public:
     /// @expects none
     /// @ensures none
     ///
-    ~ept_intel_x64() override = default;
+    ~ept_intel_x64() = default;
 
-    /// Global Size
-    ///
-    /// @expects none
-    /// @ensures none
-    ///
-    /// @return returns the number of entries in the entire ept
-    ///     tree. Note that this function is expensive.
-    ///
-    size_type global_size() const noexcept;
-
-    /// Add Page (1 Gigabyte Granularity)
+    /// Add Page (1g Granularity)
     ///
     /// Adds a page to the extended page table structure. Note that this is the
     /// public function, and should only be used to add pages to the
@@ -82,10 +72,10 @@ public:
     /// @return the resulting epte. Note that this epte is blank, and its
     ///     properties should be set by the caller
     ///
-    gsl::not_null<ept_entry_intel_x64 *> add_page_1g(integer_pointer addr)
+    ept_entry_intel_x64 add_page_1g(integer_pointer addr)
     { return add_page(addr, intel_x64::ept::pml4::from, intel_x64::ept::pdpt::from); }
 
-    /// Add Page (2 Megabyte Granularity)
+    /// Add Page (2m Granularity)
     ///
     /// Adds a page to the extended page table structure. Note that this is the
     /// public function, and should only be used to add pages to the
@@ -100,10 +90,10 @@ public:
     /// @return the resulting epte. Note that this epte is blank, and its
     ///     properties should be set by the caller
     ///
-    gsl::not_null<ept_entry_intel_x64 *> add_page_2m(integer_pointer addr)
+    ept_entry_intel_x64 add_page_2m(integer_pointer addr)
     { return add_page(addr, intel_x64::ept::pml4::from, intel_x64::ept::pd::from); }
 
-    /// Add Page (4 Kilobyte Granularity)
+    /// Add Page (4k Granularity)
     ///
     /// Adds a page to the extended page table structure. Note that this is the
     /// public function, and should only be used to add pages to the
@@ -118,7 +108,7 @@ public:
     /// @return the resulting epte. Note that this epte is blank, and its
     ///     properties should be set by the caller
     ///
-    gsl::not_null<ept_entry_intel_x64 *> add_page_4k(integer_pointer addr)
+    ept_entry_intel_x64 add_page_4k(integer_pointer addr)
     { return add_page(addr, intel_x64::ept::pml4::from, intel_x64::ept::pt::from); }
 
     /// Remove Page
@@ -146,32 +136,25 @@ public:
     ///
     /// @param addr the virtual address of the page to lookup
     ///
-    gsl::not_null<ept_entry_intel_x64 *> find_epte(integer_pointer addr)
-    { return find_epte(addr, intel_x64::ept::pml4::from); }
+    ept_entry_intel_x64 phys_to_epte(integer_pointer addr)
+    { return phys_to_epte(addr, intel_x64::ept::pml4::from); }
 
 private:
 
-    template<class T> std::unique_ptr<T> add_epte(pointer p);
-    template<class T> std::unique_ptr<T> remove_epte();
+    ept_entry_intel_x64 add_page(integer_pointer addr, integer_pointer bits, integer_pointer end);
+    void remove_page(integer_pointer addr, integer_pointer bits);
+    ept_entry_intel_x64 phys_to_epte(integer_pointer addr, integer_pointer bits);
 
-    gsl::not_null<ept_entry_intel_x64 *> add_page(
-        integer_pointer addr, integer_pointer bits, integer_pointer end_bits);
-    void remove_page(
-        integer_pointer addr, integer_pointer bits);
-    gsl::not_null<ept_entry_intel_x64 *> find_epte(
-        integer_pointer addr, integer_pointer bits);
-
-    auto empty() const noexcept
-    { return m_size == 0; }
+    bool empty() const noexcept;
+    size_type global_size() const noexcept;
+    size_type global_capacity() const noexcept;
 
 private:
 
-    gsl::span<integer_pointer> m_ept;
-    std::unique_ptr<integer_pointer[]> m_ept_owner;
+    friend class eapis_ut;
 
-    size_type m_size;
-    integer_pointer m_bitbucket;
-    std::vector<std::unique_ptr<ept_entry_intel_x64>> m_eptes;
+    std::unique_ptr<integer_pointer[]> m_ept;
+    std::vector<std::unique_ptr<ept_intel_x64>> m_epts;
 
 public:
 

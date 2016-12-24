@@ -274,10 +274,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::rw_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -285,10 +285,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::rw_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -296,10 +296,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::rw_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -307,10 +307,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::rw_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -318,10 +318,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::rw_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -330,10 +330,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::re_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -341,10 +341,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::re_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -352,10 +352,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::re_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -363,10 +363,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::re_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -374,10 +374,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::re_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -386,10 +386,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::eo_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -397,10 +397,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::eo_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -408,10 +408,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::eo_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -419,10 +419,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::eo_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -430,10 +430,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::eo_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -442,10 +442,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::pt_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -453,10 +453,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::pt_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -464,10 +464,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::pt_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -475,10 +475,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::pt_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -486,10 +486,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::pt_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -498,10 +498,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::tp_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -509,10 +509,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::tp_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -520,10 +520,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::tp_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -531,10 +531,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::tp_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -542,10 +542,10 @@ eapis_ut::test_map_1g()
     {
         vmcs->map_1g(0x1000UL, 0x1000UL, ept::memory_attr::tp_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -562,10 +562,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::rw_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -573,10 +573,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::rw_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -584,10 +584,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::rw_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -595,10 +595,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::rw_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -606,10 +606,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::rw_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -618,10 +618,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::re_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -629,10 +629,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::re_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -640,10 +640,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::re_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -651,10 +651,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::re_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -662,10 +662,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::re_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -674,10 +674,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::eo_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -685,10 +685,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::eo_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -696,10 +696,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::eo_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -707,10 +707,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::eo_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -718,10 +718,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::eo_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -730,10 +730,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::pt_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -741,10 +741,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::pt_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -752,10 +752,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::pt_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -763,10 +763,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::pt_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -774,10 +774,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::pt_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -786,10 +786,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::tp_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -797,10 +797,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::tp_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -808,10 +808,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::tp_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -819,10 +819,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::tp_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -830,10 +830,10 @@ eapis_ut::test_map_2m()
     {
         vmcs->map_2m(0x1000UL, 0x1000UL, ept::memory_attr::tp_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -850,10 +850,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::rw_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -861,10 +861,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::rw_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -872,10 +872,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::rw_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -883,10 +883,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::rw_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -894,10 +894,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::rw_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -906,10 +906,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::re_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -917,10 +917,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::re_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -928,10 +928,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::re_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -939,10 +939,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::re_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -950,10 +950,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::re_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -962,10 +962,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::eo_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -973,10 +973,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::eo_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -984,10 +984,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::eo_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -995,10 +995,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::eo_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1006,10 +1006,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::eo_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1018,10 +1018,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1029,10 +1029,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1040,10 +1040,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1051,10 +1051,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1062,10 +1062,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_true(entry->read_access());
-        this->expect_true(entry->write_access());
-        this->expect_true(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_true(entry.read_access());
+        this->expect_true(entry.write_access());
+        this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1074,10 +1074,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::tp_uc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 0);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1085,10 +1085,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::tp_wc);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 1);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1096,10 +1096,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::tp_wt);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 4);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1107,10 +1107,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::tp_wp);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 5);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1118,10 +1118,10 @@ eapis_ut::test_map_4k()
     {
         vmcs->map_4k(0x1000UL, 0x1000UL, ept::memory_attr::tp_wb);
         auto &&entry = vmcs->gpa_to_epte(0x1000UL);
-        this->expect_false(entry->read_access());
-        this->expect_false(entry->write_access());
-        this->expect_false(entry->execute_access());
-        this->expect_true(entry->memory_type() == 6);
+        this->expect_false(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
         vmcs->unmap(0x1000UL);
         this->expect_exception([&] { vmcs->gpa_to_epte(0x1000UL); }, ""_ut_ree);
     }
@@ -1147,6 +1147,8 @@ eapis_ut::test_setup_ept_identity_map_1g_invalid()
 
     this->expect_exception([&] { vmcs->setup_ept_identity_map_1g(0x1, 0x40000000); }, ""_ut_ffe);
     this->expect_exception([&] { vmcs->setup_ept_identity_map_1g(0x0, 0x40000001); }, ""_ut_ffe);
+    this->expect_exception([&] { vmcs->unmap_ept_identity_map_1g(0x1, 0x40000000); }, ""_ut_ffe);
+    this->expect_exception([&] { vmcs->unmap_ept_identity_map_1g(0x0, 0x40000001); }, ""_ut_ffe);
 }
 
 void
@@ -1157,9 +1159,7 @@ eapis_ut::test_setup_ept_identity_map_1g_valid()
     auto &&vmcs = setup_vmcs();
 
     this->expect_no_exception([&] { vmcs->setup_ept_identity_map_1g(0x0, 0x40000000); });
-
-    for (auto virt = 0x0UL; virt < 0x40000000UL; virt += ept::pdpt::size_bytes)
-        vmcs->unmap(virt);
+    this->expect_no_exception([&] { vmcs->unmap_ept_identity_map_1g(0x0, 0x40000000); });
 }
 
 void
@@ -1169,8 +1169,10 @@ eapis_ut::test_setup_ept_identity_map_2m_invalid()
     setup_mm(mocks);
     auto &&vmcs = setup_vmcs();
 
-    this->expect_exception([&] { vmcs->setup_ept_identity_map_2m(0x1, 0x40000000); }, ""_ut_ffe);
-    this->expect_exception([&] { vmcs->setup_ept_identity_map_2m(0x0, 0x40000001); }, ""_ut_ffe);
+    this->expect_exception([&] { vmcs->setup_ept_identity_map_2m(0x1, 0x200000); }, ""_ut_ffe);
+    this->expect_exception([&] { vmcs->setup_ept_identity_map_2m(0x0, 0x200001); }, ""_ut_ffe);
+    this->expect_exception([&] { vmcs->unmap_ept_identity_map_2m(0x1, 0x200000); }, ""_ut_ffe);
+    this->expect_exception([&] { vmcs->unmap_ept_identity_map_2m(0x0, 0x200001); }, ""_ut_ffe);
 }
 
 void
@@ -1180,10 +1182,8 @@ eapis_ut::test_setup_ept_identity_map_2m_valid()
     setup_mm(mocks);
     auto &&vmcs = setup_vmcs();
 
-    this->expect_no_exception([&] { vmcs->setup_ept_identity_map_2m(0x0, 0x40000000); });
-
-    for (auto virt = 0x0UL; virt < 0x40000000UL; virt += ept::pd::size_bytes)
-        vmcs->unmap(virt);
+    this->expect_no_exception([&] { vmcs->setup_ept_identity_map_2m(0x0, 0x200000); });
+    this->expect_no_exception([&] { vmcs->unmap_ept_identity_map_2m(0x0, 0x200000); });
 }
 
 void
@@ -1193,8 +1193,10 @@ eapis_ut::test_setup_ept_identity_map_4k_invalid()
     setup_mm(mocks);
     auto &&vmcs = setup_vmcs();
 
-    this->expect_exception([&] { vmcs->setup_ept_identity_map_4k(0x1, 0x40000000); }, ""_ut_ffe);
-    this->expect_exception([&] { vmcs->setup_ept_identity_map_4k(0x0, 0x40000001); }, ""_ut_ffe);
+    this->expect_exception([&] { vmcs->setup_ept_identity_map_4k(0x1, 0x1000); }, ""_ut_ffe);
+    this->expect_exception([&] { vmcs->setup_ept_identity_map_4k(0x0, 0x1001); }, ""_ut_ffe);
+    this->expect_exception([&] { vmcs->unmap_ept_identity_map_4k(0x1, 0x1000); }, ""_ut_ffe);
+    this->expect_exception([&] { vmcs->unmap_ept_identity_map_4k(0x0, 0x1001); }, ""_ut_ffe);
 }
 
 void
@@ -1204,8 +1206,6 @@ eapis_ut::test_setup_ept_identity_map_4k_valid()
     setup_mm(mocks);
     auto &&vmcs = setup_vmcs();
 
-    this->expect_no_exception([&] { vmcs->setup_ept_identity_map_4k(0x0, 0x40000000); });
-
-    for (auto virt = 0x0UL; virt < 0x40000000UL; virt += ept::pt::size_bytes)
-        vmcs->unmap(virt);
+    this->expect_no_exception([&] { vmcs->setup_ept_identity_map_4k(0x0, 0x1000); });
+    this->expect_no_exception([&] { vmcs->unmap_ept_identity_map_4k(0x0, 0x1000); });
 }

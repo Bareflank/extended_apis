@@ -289,7 +289,7 @@ public:
     ///
     void unmap(integer_pointer gpa) noexcept;
 
-    /// Setup EPT Identify Map (1 Gigabyte Granularity)
+    /// Setup EPT Identify Map (1g Granularity)
     ///
     /// Sets up an identify map in the extended page tables using 1 gigabyte
     /// of memory granularity. Lower granularity takes up far less memory,
@@ -314,7 +314,7 @@ public:
     ///
     void setup_ept_identity_map_1g(integer_pointer saddr, integer_pointer eaddr);
 
-    /// Setup EPT Identify Map (2 Megabyte Granularity)
+    /// Setup EPT Identify Map (2m Granularity)
     ///
     /// Sets up an identify map in the extended page tables using 2 megabytes
     /// of memory granularity. Lower granularity takes up far less memory,
@@ -339,7 +339,7 @@ public:
     ///
     void setup_ept_identity_map_2m(integer_pointer saddr, integer_pointer eaddr);
 
-    /// Setup EPT Identify Map (4 Kilobyte Granularity)
+    /// Setup EPT Identify Map (4k Granularity)
     ///
     /// Sets up an identify map in the extended page tables using 4 kilobyte
     /// of memory granularity. Lower granularity takes up far less memory,
@@ -364,6 +364,45 @@ public:
     ///
     void setup_ept_identity_map_4k(integer_pointer saddr, integer_pointer eaddr);
 
+    /// Unmap EPT Identify Map (1g Granularity)
+    ///
+    /// Unmaps an identity map previously mapped using the
+    /// setup_ept_identity_map_1g function.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param saddr the starting address for the identify map
+    /// @param eaddr the ending address for the identify map
+    ///
+    void unmap_ept_identity_map_1g(integer_pointer saddr, integer_pointer eaddr);
+
+    /// Unmap EPT Identify Map (2m Granularity)
+    ///
+    /// Unmaps an identity map previously mapped using the
+    /// setup_ept_identity_map_2m function.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param saddr the starting address for the identify map
+    /// @param eaddr the ending address for the identify map
+    ///
+    void unmap_ept_identity_map_2m(integer_pointer saddr, integer_pointer eaddr);
+
+    /// Unmap EPT Identify Map (4k Granularity)
+    ///
+    /// Unmaps an identity map previously mapped using the
+    /// setup_ept_identity_map_4k function.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param saddr the starting address for the identify map
+    /// @param eaddr the ending address for the identify map
+    ///
+    void unmap_ept_identity_map_4k(integer_pointer saddr, integer_pointer eaddr);
+
     /// Guest Physical Address To Extended Page Table Entry
     ///
     /// Locates the extended page table entry given a guest physical
@@ -379,7 +418,7 @@ public:
     /// @param gpa the guest physical address to lookup
     /// @return the resulting EPTE
     ///
-    gsl::not_null<ept_entry_intel_x64 *> gpa_to_epte(integer_pointer gpa);
+    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa);
 
 protected:
 
@@ -387,8 +426,10 @@ protected:
                       gsl::not_null<vmcs_intel_x64_state *> guest_state) override;
 
     virtual std::mutex &eptp_mutex() const;
+    virtual gsl::not_null<integer_pointer *> eptp_entry() const;
     virtual gsl::not_null<ept_intel_x64 *> eptp() const;
 
+    ept_entry_intel_x64 add_page(integer_pointer gpa, size_type size);
     void map(integer_pointer gpa, integer_pointer phys_addr, attr_type attr, size_type size);
 
 protected:

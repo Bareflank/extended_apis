@@ -26,7 +26,7 @@
 #include <memory_manager/memory_manager_x64.h>
 
 bool virt_to_phys_return_nullptr = false;
-constexpr ept_intel_x64::integer_pointer virt = 0x0000123456780000UL;
+constexpr ept_intel_x64::integer_pointer virt = 0x0000100000000000UL;
 
 static auto
 setup_mm(MockRepository &mocks)
@@ -39,51 +39,39 @@ setup_mm(MockRepository &mocks)
 }
 
 void
-eapis_ut::test_ept_intel_x64_no_entry()
+eapis_ut::test_ept_intel_x64_add_remove_page_success_without_setting()
 {
     MockRepository mocks;
     setup_mm(mocks);
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        auto &&pt = std::make_unique<ept_intel_x64>();
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
 
-        this->expect_true(pt->phys_addr() != 0);
-        this->expect_true(pt->read_access());
-        this->expect_true(pt->write_access());
-        this->expect_true(pt->execute_access());
-        this->expect_true(pt->memory_type() == 0);
-        this->expect_false(pt->ignore_pat());
-        this->expect_false(pt->entry_type());
-        this->expect_false(pt->accessed());
-        this->expect_false(pt->dirty());
-        this->expect_false(pt->execute_access_user());
-        this->expect_false(pt->suppress_ve());
-    });
-}
+        eptp->add_page_4k(virt);
+        this->expect_true(eptp->global_size() == 3);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
 
-void
-eapis_ut::test_ept_intel_x64_with_entry()
-{
-    MockRepository mocks;
-    setup_mm(mocks);
+        eptp->add_page_4k(virt + 0x1000);
+        this->expect_true(eptp->global_size() == 3);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
 
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        ept_intel_x64::integer_pointer entry = 0;
-        auto &&pt = std::make_unique<ept_intel_x64>(&entry);
+        eptp->add_page_4k(virt + 0x10000);
+        this->expect_true(eptp->global_size() == 3);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
 
-        this->expect_true(pt->phys_addr() != 0);
-        this->expect_true(pt->read_access());
-        this->expect_true(pt->write_access());
-        this->expect_true(pt->execute_access());
-        this->expect_true(pt->memory_type() == 0);
-        this->expect_false(pt->ignore_pat());
-        this->expect_false(pt->entry_type());
-        this->expect_false(pt->accessed());
-        this->expect_false(pt->dirty());
-        this->expect_false(pt->execute_access_user());
-        this->expect_false(pt->suppress_ve());
+        eptp->remove_page(virt);
+        this->expect_true(eptp->global_size() == 0);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
+
+        eptp->remove_page(virt + 0x1000);
+        this->expect_true(eptp->global_size() == 0);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
+
+        eptp->remove_page(virt + 0x10000);
+        this->expect_true(eptp->global_size() == 0);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
     });
 }
 
@@ -95,31 +83,40 @@ eapis_ut::test_ept_intel_x64_add_remove_page_1g_success()
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        auto &&eptp = std::make_unique<ept_intel_x64>();
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
 
-        eptp->add_page_1g(virt);
+        auto &&entry1 = eptp->add_page_1g(virt);
+        entry1.set_read_access(true);
         this->expect_true(eptp->global_size() == 2);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
 
-        eptp->add_page_1g(virt + 0x40000000);
+        auto &&entry2 = eptp->add_page_1g(virt + 0x100);
+        entry2.set_read_access(true);
+        this->expect_true(eptp->global_size() == 2);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
+
+        auto &&entry3 = eptp->add_page_1g(virt + 0x40000000);
+        entry3.set_read_access(true);
         this->expect_true(eptp->global_size() == 3);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
 
-        eptp->add_page_1g(virt + 0x40000000000);
-        this->expect_true(eptp->global_size() == 5);
-
-        this->expect_no_exception([&]{ eptp->find_epte(virt); });
-        this->expect_no_exception([&]{ eptp->find_epte(virt + 0x1000); });
-        this->expect_no_exception([&]{ eptp->find_epte(virt + 0x40000000); });
-        this->expect_no_exception([&]{ eptp->find_epte(virt + 0x40000000000); });
-        this->expect_exception([&]{ eptp->find_epte(virt + 0x80000000000); }, ""_ut_ree);
+        auto &&entry4 = eptp->add_page_1g(virt + 0x400000000);
+        entry4.set_read_access(true);
+        this->expect_true(eptp->global_size() == 4);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
 
         eptp->remove_page(virt);
-        this->expect_true(eptp->global_size() == 4);
+        this->expect_true(eptp->global_size() == 3);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
 
         eptp->remove_page(virt + 0x40000000);
         this->expect_true(eptp->global_size() == 2);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
 
-        eptp->remove_page(virt + 0x40000000000);
+        eptp->remove_page(virt + 0x400000000);
         this->expect_true(eptp->global_size() == 0);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
     });
 }
 
@@ -131,31 +128,40 @@ eapis_ut::test_ept_intel_x64_add_remove_page_2m_success()
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        auto &&eptp = std::make_unique<ept_intel_x64>();
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
 
-        eptp->add_page_2m(virt);
+        auto &&entry1 = eptp->add_page_2m(virt);
+        entry1.set_read_access(true);
         this->expect_true(eptp->global_size() == 3);
+        this->expect_true(eptp->global_capacity() == 512 * 2);
 
-        eptp->add_page_2m(virt + 0x200000);
+        auto &&entry2 = eptp->add_page_2m(virt + 0x100);
+        entry2.set_read_access(true);
+        this->expect_true(eptp->global_size() == 3);
+        this->expect_true(eptp->global_capacity() == 512 * 2);
+
+        auto &&entry3 = eptp->add_page_2m(virt + 0x200000);
+        entry3.set_read_access(true);
         this->expect_true(eptp->global_size() == 4);
+        this->expect_true(eptp->global_capacity() == 512 * 2);
 
-        eptp->add_page_2m(virt + 0x20000000);
+        auto &&entry4 = eptp->add_page_2m(virt + 0x2000000);
+        entry4.set_read_access(true);
         this->expect_true(eptp->global_size() == 5);
-
-        this->expect_no_exception([&]{ eptp->find_epte(virt); });
-        this->expect_no_exception([&]{ eptp->find_epte(virt + 0x1000); });
-        this->expect_no_exception([&]{ eptp->find_epte(virt + 0x200000); });
-        this->expect_no_exception([&]{ eptp->find_epte(virt + 0x20000000); });
-        this->expect_exception([&]{ eptp->find_epte(virt + 0x80000000000); }, ""_ut_ree);
+        this->expect_true(eptp->global_capacity() == 512 * 2);
 
         eptp->remove_page(virt);
         this->expect_true(eptp->global_size() == 4);
+        this->expect_true(eptp->global_capacity() == 512 * 2);
 
         eptp->remove_page(virt + 0x200000);
         this->expect_true(eptp->global_size() == 3);
+        this->expect_true(eptp->global_capacity() == 512 * 2);
 
-        eptp->remove_page(virt + 0x20000000);
+        eptp->remove_page(virt + 0x2000000);
         this->expect_true(eptp->global_size() == 0);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
     });
 }
 
@@ -167,63 +173,125 @@ eapis_ut::test_ept_intel_x64_add_remove_page_4k_success()
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        auto &&eptp = std::make_unique<ept_intel_x64>();
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
 
-        eptp->add_page_4k(virt);
+        auto &&entry1 = eptp->add_page_4k(virt);
+        entry1.set_read_access(true);
         this->expect_true(eptp->global_size() == 4);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
 
-        eptp->add_page_4k(virt + 0x1000);
+        auto &&entry2 = eptp->add_page_4k(virt + 0x100);
+        entry2.set_read_access(true);
+        this->expect_true(eptp->global_size() == 4);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
+
+        auto &&entry3 = eptp->add_page_4k(virt + 0x1000);
+        entry3.set_read_access(true);
         this->expect_true(eptp->global_size() == 5);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
 
-        eptp->add_page_4k(virt + 0x1000000);
-        this->expect_true(eptp->global_size() == 7);
-
-        this->expect_no_exception([&]{ eptp->find_epte(virt); });
-        this->expect_no_exception([&]{ eptp->find_epte(virt + 0x1000); });
-        this->expect_no_exception([&]{ eptp->find_epte(virt + 0x1000000); });
-        this->expect_exception([&]{ eptp->find_epte(virt + 0x80000000000); }, ""_ut_ree);
+        auto &&entry4 = eptp->add_page_4k(virt + 0x10000);
+        entry4.set_read_access(true);
+        this->expect_true(eptp->global_size() == 6);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
 
         eptp->remove_page(virt);
-        this->expect_true(eptp->global_size() == 6);
+        this->expect_true(eptp->global_size() == 5);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
 
         eptp->remove_page(virt + 0x1000);
         this->expect_true(eptp->global_size() == 4);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
 
-        eptp->remove_page(virt + 0x1000000);
+        eptp->remove_page(virt + 0x10000);
         this->expect_true(eptp->global_size() == 0);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
     });
 }
 
 void
-eapis_ut::test_ept_intel_x64_add_page_twice_failure()
+eapis_ut::test_ept_intel_x64_add_remove_page_swap_success()
 {
     MockRepository mocks;
     setup_mm(mocks);
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        auto &&eptp = std::make_unique<ept_intel_x64>();
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
+
+        auto &&entry1 = eptp->add_page_4k(virt);
+        entry1.set_read_access(true);
+        this->expect_true(eptp->global_size() == 4);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
+
+        eptp->remove_page(virt);
+        this->expect_true(eptp->global_size() == 0);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
+
+        auto &&entry2 = eptp->add_page_2m(virt);
+        entry2.set_read_access(true);
+        this->expect_true(eptp->global_size() == 3);
+        this->expect_true(eptp->global_capacity() == 512 * 2);
+
+        eptp->remove_page(virt);
+        this->expect_true(eptp->global_size() == 0);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
+
+        auto &&entry3 = eptp->add_page_4k(virt);
+        entry3.set_read_access(true);
+        this->expect_true(eptp->global_size() == 4);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
+
+        auto &&entry4 = eptp->add_page_2m(virt);
+        entry4.set_read_access(true);
+        this->expect_true(eptp->global_size() == 3);
+        this->expect_true(eptp->global_capacity() == 512 * 2);
+
+        auto &&entry5 = eptp->add_page_4k(virt);
+        entry5.set_read_access(true);
+        this->expect_true(eptp->global_size() == 4);
+        this->expect_true(eptp->global_capacity() == 512 * 3);
+
+        eptp->remove_page(virt);
+        this->expect_true(eptp->global_size() == 0);
+        this->expect_true(eptp->global_capacity() == 512 * 1);
+    });
+}
+
+void
+eapis_ut::test_ept_intel_x64_add_page_twice_success()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
 
         eptp->add_page_4k(virt);
-        this->expect_exception([&]{ eptp->add_page_4k(virt); }, ""_ut_ree);
+        this->expect_no_exception([&]{ eptp->add_page_4k(virt); });
     });
 }
 
 void
-eapis_ut::test_ept_intel_x64_remove_page_twice_failure()
+eapis_ut::test_ept_intel_x64_remove_page_twice_success()
 {
     MockRepository mocks;
     setup_mm(mocks);
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        auto &&eptp = std::make_unique<ept_intel_x64>();
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
 
         eptp->add_page_4k(virt);
         eptp->add_page_4k(virt + 0x1000);
 
         eptp->remove_page(virt);
-        this->expect_exception([&]{ eptp->remove_page(virt); }, ""_ut_ree);
+        this->expect_no_exception([&]{ eptp->remove_page(virt); });
         eptp->remove_page(virt + 0x1000);
 
         this->expect_true(eptp->global_size() == 0);
@@ -231,14 +299,54 @@ eapis_ut::test_ept_intel_x64_remove_page_twice_failure()
 }
 
 void
-eapis_ut::test_ept_intel_x64_remove_page_unknown_failure()
+eapis_ut::test_ept_intel_x64_remove_page_unknown_success()
 {
     MockRepository mocks;
     setup_mm(mocks);
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        auto &&eptp = std::make_unique<ept_intel_x64>();
-        this->expect_exception([&]{ eptp->remove_page(virt); }, ""_ut_ree);
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
+        this->expect_no_exception([&]{ eptp->remove_page(virt); });
+    });
+}
+
+void
+eapis_ut::test_ept_intel_x64_phys_to_epte_invalid()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
+
+        eptp->add_page_4k(virt);
+
+        this->expect_exception([&]{ eptp->phys_to_epte(virt + 0x40000000); }, ""_ut_ree);
+
+        eptp->remove_page(virt);
+        this->expect_true(eptp->global_size() == 0);
+    });
+}
+
+void
+eapis_ut::test_ept_intel_x64_phys_to_epte_success()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
+
+        eptp->add_page_4k(virt);
+        this->expect_no_exception([&]{ eptp->phys_to_epte(virt); });
+
+        eptp->remove_page(virt);
+        this->expect_true(eptp->global_size() == 0);
     });
 }

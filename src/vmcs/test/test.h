@@ -62,7 +62,6 @@ private:
     void test_setup_ept_identity_map_4k_invalid();
     void test_setup_ept_identity_map_4k_valid();
 
-    void test_ept_entry_intel_x64_invalid();
     void test_ept_entry_intel_x64_read_access();
     void test_ept_entry_intel_x64_write_access();
     void test_ept_entry_intel_x64_execute_access();
@@ -78,16 +77,16 @@ private:
     void test_ept_entry_intel_x64_pass_through_access();
     void test_ept_entry_intel_x64_clear();
 
-    void test_ept_intel_x64_no_entry();
-    void test_ept_intel_x64_with_entry();
+    void test_ept_intel_x64_add_remove_page_success_without_setting();
     void test_ept_intel_x64_add_remove_page_1g_success();
     void test_ept_intel_x64_add_remove_page_2m_success();
     void test_ept_intel_x64_add_remove_page_4k_success();
-    void test_ept_intel_x64_add_page_twice_failure();
-    void test_ept_intel_x64_remove_page_twice_failure();
-    void test_ept_intel_x64_remove_page_unknown_failure();
-
-
+    void test_ept_intel_x64_add_remove_page_swap_success();
+    void test_ept_intel_x64_add_page_twice_success();
+    void test_ept_intel_x64_remove_page_twice_success();
+    void test_ept_intel_x64_remove_page_unknown_success();
+    void test_ept_intel_x64_phys_to_epte_invalid();
+    void test_ept_intel_x64_phys_to_epte_success();
 };
 
 #endif
