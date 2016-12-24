@@ -39,26 +39,20 @@ build your hypervisors from. Some of these APIs include:
 
 ## Compilation / Usage
 
-To setup the extended_apis, we can either clone the extension into the Bareflank
-root folder and run make, or we can use the configure script to create an
-out-of-tree build environment that has our extension setup for easy development.
-Note that using the later approach, we can have more than one build
-environment (the following assumes this is running on Linux).
+To setup the extended_apis, we must clone the extension into the Bareflank
+root folder and run make (the following assumes this is running on Linux).
 
 ```
 cd ~/
 git clone https://github.com/Bareflank/hypervisor.git
-git clone https://github.com/Bareflank/extended_apis.git
 cd ~/hypervisor
+git clone https://github.com/Bareflank/extended_apis.git
 
 ./tools/scripts/setup-<xxx>.sh --no-configure
 sudo reboot
 
-cd ~/
-mkdir build
-cd ~/build
-
-~/hypervisor/configure -m ~/extended_apis/bin/extended_apis.modules -e ~/extended_apis
+cd ~/hypervisor
+./configure -m ./extended_apis/bin/extended_apis.modules
 
 make
 make test
@@ -68,14 +62,14 @@ To test out the extended version of Bareflank, all we need to do is run the
 make shortcuts as usual:
 
 ```
-make linux_load
+make driver_load
 make quick
 
 make status
 make dump
 
 make stop
-make linux_unload
+make driver_unload
 ```
 
 There are also a number of tests that can be run that demonstrate the various

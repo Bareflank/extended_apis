@@ -262,6 +262,9 @@ public:
 
     friend class eapis_ut;
 
+    exit_handler_intel_x64_eapis(exit_handler_intel_x64_eapis &&) = default;
+    exit_handler_intel_x64_eapis &operator=(exit_handler_intel_x64_eapis &&) = default;
+
     exit_handler_intel_x64_eapis(const exit_handler_intel_x64_eapis &) = delete;
     exit_handler_intel_x64_eapis &operator=(const exit_handler_intel_x64_eapis &) = delete;
 };

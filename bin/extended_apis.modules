@@ -15,11 +15,11 @@
         "%BUILD_ABS%/makefiles/bfvmm/src/misc/bin/cross/libmisc.so",
         "%BUILD_ABS%/makefiles/bfvmm/src/serial/bin/cross/libserial.so",
         "%BUILD_ABS%/makefiles/bfvmm/src/vcpu/bin/cross/libvcpu.so",
-        "%BUILD_ABS%/makefiles/extended_apis/src/vcpu_factory/bin/cross/libvcpu_factory.so",
         "%BUILD_ABS%/makefiles/bfvmm/src/vmcs/bin/cross/libvmcs.so",
         "%BUILD_ABS%/makefiles/bfvmm/src/vmxon/bin/cross/libvmxon.so",
-        "%BUILD_ABS%/makefiles/extended_apis/src/vmcs/bin/cross/libvmcs_intel_x64_eapis.so",
         "%BUILD_ABS%/makefiles/extended_apis/src/exit_handler/bin/cross/libexit_handler_intel_x64_eapis.so",
-        "%BUILD_ABS%/makefiles/extended_apis/src/vmcall_policy/bin/cross/libvmcall_policy.so"
+        "%BUILD_ABS%/makefiles/extended_apis/src/vcpu_factory/bin/cross/libvcpu_factory.so",
+        "%BUILD_ABS%/makefiles/extended_apis/src/vmcall_policy/bin/cross/libvmcall_policy.so",
+        "%BUILD_ABS%/makefiles/extended_apis/src/vmcs/bin/cross/libvmcs_intel_x64_eapis.so"
     ]
 }

@@ -105,7 +105,7 @@ matrix:
       - sudo ln -s /usr/bin/clang-tidy-3.8 /usr/bin/clang-tidy
     script:
       - STATIC_ANALYSIS_ENABLED=true bear make
-      - make tidy
+      - EXTENDED_APIS_EXTENSION=true make tidy
 
   #
   # Google Sanitizers

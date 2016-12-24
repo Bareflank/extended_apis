@@ -434,14 +434,22 @@ protected:
 
 protected:
 
-    friend class eapis_ut;
-
     intel_x64::vmcs::value_type m_vpid;
 
     std::unique_ptr<uint8_t[]> m_io_bitmapa;
     std::unique_ptr<uint8_t[]> m_io_bitmapb;
     gsl::span<uint8_t> m_io_bitmapa_view;
     gsl::span<uint8_t> m_io_bitmapb_view;
+
+public:
+
+    friend class eapis_ut;
+
+    vmcs_intel_x64_eapis(vmcs_intel_x64_eapis &&) = default;
+    vmcs_intel_x64_eapis &operator=(vmcs_intel_x64_eapis &&) = default;
+
+    vmcs_intel_x64_eapis(const vmcs_intel_x64_eapis &) = delete;
+    vmcs_intel_x64_eapis &operator=(const vmcs_intel_x64_eapis &) = delete;
 };
 
 #endif
