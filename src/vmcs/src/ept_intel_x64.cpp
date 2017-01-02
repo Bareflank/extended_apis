@@ -39,9 +39,9 @@ ept_intel_x64::ept_intel_x64(pointer epte)
 }
 
 ept_entry_intel_x64
-ept_intel_x64::add_page(integer_pointer addr, integer_pointer bits, integer_pointer end)
+ept_intel_x64::add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end)
 {
-    auto &&index = ept::index(addr, bits);
+    auto &&index = ept::index(gpa, bits);
 
     if (bits > end)
     {
@@ -55,7 +55,7 @@ ept_intel_x64::add_page(integer_pointer addr, integer_pointer bits, integer_poin
             (*iter) = std::make_unique<ept_intel_x64>(&view.at(index));
         }
 
-        return (*iter)->add_page(addr, bits - ept::pt::size, end);
+        return (*iter)->add_page(gpa, bits - ept::pt::size, end);
     }
 
     if (!m_epts.empty())
@@ -69,16 +69,16 @@ ept_intel_x64::add_page(integer_pointer addr, integer_pointer bits, integer_poin
 }
 
 void
-ept_intel_x64::remove_page(integer_pointer addr, integer_pointer bits)
+ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
 {
-    auto &&index = ept::index(addr, bits);
+    auto &&index = ept::index(gpa, bits);
 
     if (!m_epts.empty())
     {
         auto &&iter = bfn::find(m_epts, index);
         if (auto epte = (*iter).get())
         {
-            epte->remove_page(addr, bits - ept::pt::size);
+            epte->remove_page(gpa, bits - ept::pt::size);
             if (epte->empty())
             {
                 (*iter) = nullptr;
@@ -98,17 +98,17 @@ ept_intel_x64::remove_page(integer_pointer addr, integer_pointer bits)
 }
 
 ept_entry_intel_x64
-ept_intel_x64::phys_to_epte(integer_pointer addr, integer_pointer bits)
+ept_intel_x64::gpa_to_epte(integer_pointer gpa, integer_pointer bits)
 {
-    auto &&index = ept::index(addr, bits);
+    auto &&index = ept::index(gpa, bits);
 
     if (!m_epts.empty())
     {
         auto &&iter = bfn::find(m_epts, index);
         if (auto epte = (*iter).get())
-            return epte->phys_to_epte(addr, bits - ept::pt::size);
+            return epte->gpa_to_epte(gpa, bits - ept::pt::size);
 
-        throw std::runtime_error("unable to locate epte. invalid address");
+        throw std::runtime_error("unable to locate epte. invalid gpaess");
     }
 
     auto &&view = gsl::make_span(m_ept, ept::num_entries);

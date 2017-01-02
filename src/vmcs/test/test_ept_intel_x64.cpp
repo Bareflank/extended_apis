@@ -313,7 +313,7 @@ eapis_ut::test_ept_intel_x64_remove_page_unknown_success()
 }
 
 void
-eapis_ut::test_ept_intel_x64_phys_to_epte_invalid()
+eapis_ut::test_ept_intel_x64_gpa_to_epte_invalid()
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -325,7 +325,7 @@ eapis_ut::test_ept_intel_x64_phys_to_epte_invalid()
 
         eptp->add_page_4k(virt);
 
-        this->expect_exception([&]{ eptp->phys_to_epte(virt + 0x40000000); }, ""_ut_ree);
+        this->expect_exception([&]{ eptp->gpa_to_epte(virt + 0x40000000); }, ""_ut_ree);
 
         eptp->remove_page(virt);
         this->expect_true(eptp->global_size() == 0);
@@ -333,7 +333,7 @@ eapis_ut::test_ept_intel_x64_phys_to_epte_invalid()
 }
 
 void
-eapis_ut::test_ept_intel_x64_phys_to_epte_success()
+eapis_ut::test_ept_intel_x64_gpa_to_epte_success()
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -344,7 +344,7 @@ eapis_ut::test_ept_intel_x64_phys_to_epte_success()
         auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
 
         eptp->add_page_4k(virt);
-        this->expect_no_exception([&]{ eptp->phys_to_epte(virt); });
+        this->expect_no_exception([&]{ eptp->gpa_to_epte(virt); });
 
         eptp->remove_page(virt);
         this->expect_true(eptp->global_size() == 0);

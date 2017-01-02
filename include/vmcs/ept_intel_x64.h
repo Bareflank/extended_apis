@@ -62,54 +62,54 @@ public:
     /// Adds a page to the extended page table structure. Note that this is the
     /// public function, and should only be used to add pages to the
     /// PML4 extended page table. This function will call a private version that
-    /// will parse through the different levels making sure the virtual
+    /// will parse through the different levels making sure the guest physical
     /// address provided is valid.
     ///
     /// @expects none
     /// @ensures none
     ///
-    /// @param addr the virtual address to the page to add
+    /// @param gpa the guest physical address of the page to add
     /// @return the resulting epte. Note that this epte is blank, and its
     ///     properties should be set by the caller
     ///
-    ept_entry_intel_x64 add_page_1g(integer_pointer addr)
-    { return add_page(addr, intel_x64::ept::pml4::from, intel_x64::ept::pdpt::from); }
+    ept_entry_intel_x64 add_page_1g(integer_pointer gpa)
+    { return add_page(gpa, intel_x64::ept::pml4::from, intel_x64::ept::pdpt::from); }
 
     /// Add Page (2m Granularity)
     ///
     /// Adds a page to the extended page table structure. Note that this is the
     /// public function, and should only be used to add pages to the
     /// PML4 extended page table. This function will call a private version that
-    /// will parse through the different levels making sure the virtual
+    /// will parse through the different levels making sure the guest physical
     /// address provided is valid.
     ///
     /// @expects none
     /// @ensures none
     ///
-    /// @param addr the virtual address to the page to add
+    /// @param gpa the guest physical address of the page to add
     /// @return the resulting epte. Note that this epte is blank, and its
     ///     properties should be set by the caller
     ///
-    ept_entry_intel_x64 add_page_2m(integer_pointer addr)
-    { return add_page(addr, intel_x64::ept::pml4::from, intel_x64::ept::pd::from); }
+    ept_entry_intel_x64 add_page_2m(integer_pointer gpa)
+    { return add_page(gpa, intel_x64::ept::pml4::from, intel_x64::ept::pd::from); }
 
     /// Add Page (4k Granularity)
     ///
     /// Adds a page to the extended page table structure. Note that this is the
     /// public function, and should only be used to add pages to the
     /// PML4 extended page table. This function will call a private version that
-    /// will parse through the different levels making sure the virtual
+    /// will parse through the different levels making sure the guest physical
     /// address provided is valid.
     ///
     /// @expects none
     /// @ensures none
     ///
-    /// @param addr the virtual address to the page to add
+    /// @param gpa the guest physical address of the page to add
     /// @return the resulting epte. Note that this epte is blank, and its
     ///     properties should be set by the caller
     ///
-    ept_entry_intel_x64 add_page_4k(integer_pointer addr)
-    { return add_page(addr, intel_x64::ept::pml4::from, intel_x64::ept::pt::from); }
+    ept_entry_intel_x64 add_page_4k(integer_pointer gpa)
+    { return add_page(gpa, intel_x64::ept::pml4::from, intel_x64::ept::pt::from); }
 
     /// Remove Page
     ///
@@ -122,10 +122,10 @@ public:
     /// @expects none
     /// @ensures none
     ///
-    /// @param addr the virtual address of the page to remove
+    /// @param gpa the guest physical address of the page to remove
     ///
-    void remove_page(integer_pointer addr)
-    { remove_page(addr, intel_x64::ept::pml4::from); }
+    void remove_page(integer_pointer gpa)
+    { remove_page(gpa, intel_x64::ept::pml4::from); }
 
     /// Find Extended Page Table Entry
     ///
@@ -134,16 +134,16 @@ public:
     /// @expects none
     /// @ensures none
     ///
-    /// @param addr the virtual address of the page to lookup
+    /// @param gpa the guest physical address of the page to lookup
     ///
-    ept_entry_intel_x64 phys_to_epte(integer_pointer addr)
-    { return phys_to_epte(addr, intel_x64::ept::pml4::from); }
+    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa)
+    { return gpa_to_epte(gpa, intel_x64::ept::pml4::from); }
 
 private:
 
-    ept_entry_intel_x64 add_page(integer_pointer addr, integer_pointer bits, integer_pointer end);
-    void remove_page(integer_pointer addr, integer_pointer bits);
-    ept_entry_intel_x64 phys_to_epte(integer_pointer addr, integer_pointer bits);
+    ept_entry_intel_x64 add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end);
+    void remove_page(integer_pointer gpa, integer_pointer bits);
+    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa, integer_pointer bits);
 
     bool empty() const noexcept;
     size_type global_size() const noexcept;
