@@ -52,16 +52,7 @@ eapis_ut::list()
     this->test_blacklist_io_access();
     this->test_enable_ept();
     this->test_disable_ept();
-    this->test_map_1g();
-    this->test_map_2m();
-    this->test_map_4k();
-    this->test_map_invalid();
-    this->test_setup_ept_identity_map_1g_invalid();
-    this->test_setup_ept_identity_map_1g_valid();
-    this->test_setup_ept_identity_map_2m_invalid();
-    this->test_setup_ept_identity_map_2m_valid();
-    this->test_setup_ept_identity_map_4k_invalid();
-    this->test_setup_ept_identity_map_4k_valid();
+    this->test_set_eptp();
 
     this->test_ept_entry_intel_x64_read_access();
     this->test_ept_entry_intel_x64_write_access();
@@ -86,8 +77,21 @@ eapis_ut::list()
     this->test_ept_intel_x64_add_page_twice_success();
     this->test_ept_intel_x64_remove_page_twice_success();
     this->test_ept_intel_x64_remove_page_unknown_success();
-    this->test_ept_intel_x64_phys_to_epte_invalid();
-    this->test_ept_intel_x64_phys_to_epte_success();
+    this->test_ept_intel_x64_gpa_to_epte_invalid();
+    this->test_ept_intel_x64_gpa_to_epte_success();
+
+    this->test_root_ept_intel_x64_eptp();
+    this->test_root_ept_intel_x64_map_1g();
+    this->test_root_ept_intel_x64_map_2m();
+    this->test_root_ept_intel_x64_map_4k();
+    this->test_root_ept_intel_x64_map_invalid();
+    this->test_root_ept_intel_x64_map_unmap_twice_success();
+    this->test_root_ept_intel_x64_setup_identity_map_1g_invalid();
+    this->test_root_ept_intel_x64_setup_identity_map_1g_valid();
+    this->test_root_ept_intel_x64_setup_identity_map_2m_invalid();
+    this->test_root_ept_intel_x64_setup_identity_map_2m_valid();
+    this->test_root_ept_intel_x64_setup_identity_map_4k_invalid();
+    this->test_root_ept_intel_x64_setup_identity_map_4k_valid();
 
     return true;
 }

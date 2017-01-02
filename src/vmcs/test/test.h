@@ -51,16 +51,7 @@ private:
     void test_blacklist_io_access();
     void test_enable_ept();
     void test_disable_ept();
-    void test_map_1g();
-    void test_map_2m();
-    void test_map_4k();
-    void test_map_invalid();
-    void test_setup_ept_identity_map_1g_invalid();
-    void test_setup_ept_identity_map_1g_valid();
-    void test_setup_ept_identity_map_2m_invalid();
-    void test_setup_ept_identity_map_2m_valid();
-    void test_setup_ept_identity_map_4k_invalid();
-    void test_setup_ept_identity_map_4k_valid();
+    void test_set_eptp();
 
     void test_ept_entry_intel_x64_read_access();
     void test_ept_entry_intel_x64_write_access();
@@ -85,8 +76,21 @@ private:
     void test_ept_intel_x64_add_page_twice_success();
     void test_ept_intel_x64_remove_page_twice_success();
     void test_ept_intel_x64_remove_page_unknown_success();
-    void test_ept_intel_x64_phys_to_epte_invalid();
-    void test_ept_intel_x64_phys_to_epte_success();
+    void test_ept_intel_x64_gpa_to_epte_invalid();
+    void test_ept_intel_x64_gpa_to_epte_success();
+
+    void test_root_ept_intel_x64_eptp();
+    void test_root_ept_intel_x64_map_1g();
+    void test_root_ept_intel_x64_map_2m();
+    void test_root_ept_intel_x64_map_4k();
+    void test_root_ept_intel_x64_map_invalid();
+    void test_root_ept_intel_x64_map_unmap_twice_success();
+    void test_root_ept_intel_x64_setup_identity_map_1g_invalid();
+    void test_root_ept_intel_x64_setup_identity_map_1g_valid();
+    void test_root_ept_intel_x64_setup_identity_map_2m_invalid();
+    void test_root_ept_intel_x64_setup_identity_map_2m_valid();
+    void test_root_ept_intel_x64_setup_identity_map_4k_invalid();
+    void test_root_ept_intel_x64_setup_identity_map_4k_valid();
 };
 
 #endif

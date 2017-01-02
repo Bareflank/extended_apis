@@ -51,24 +51,24 @@ namespace ept
     // 1 GB per page entry
     namespace pdpt
     {
-        constexpr const auto size = 9U;
         constexpr const auto from = 30U;
+        constexpr const auto size = 9U;
         constexpr const auto size_bytes = 0x40000000UL;
     }
 
     // 2 MB per page entry
     namespace pd
     {
-        constexpr const auto size = 9U;
         constexpr const auto from = 21U;
+        constexpr const auto size = 9U;
         constexpr const auto size_bytes = 0x200000UL;
     }
 
     // 4 KB per page entry
     namespace pt
     {
-        constexpr const auto size = 9U;
         constexpr const auto from = 12U;
+        constexpr const auto size = 9U;
         constexpr const auto size_bytes = 0x1000UL;
     }
 
