@@ -1,5 +1,5 @@
 #
-# Bareflank Hypervisor Examples
+# Bareflank Extended APIs
 #
 # Copyright (C) 2015 Assured Information Security, Inc.
 # Author: Rian Quinn        <quinnr@ainfosec.com>
