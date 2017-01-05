@@ -25,7 +25,9 @@
 #include <gsl/gsl>
 
 #include <mutex>
+#include <vector>
 
+#include <memory.h>
 #include <vmcs/ept_intel_x64.h>
 #include <vmcs/ept_attr_intel_x64.h>
 
@@ -48,6 +50,7 @@ public:
     using eptp_type = uint64_t;
     using attr_type = intel_x64::ept::memory_attr::attr_type;
     using size_type = size_t;
+    using memory_descriptor_list = ept_intel_x64::memory_descriptor_list;
 
     /// Default Constructor
     ///
@@ -231,7 +234,21 @@ public:
     /// @param gpa the guest physical address to lookup
     /// @return the resulting EPTE
     ///
-    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa);
+    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa) const;
+
+    /// Extended Page Table to Memory Descriptor List
+    ///
+    /// This function converts the internal page table tree structure into a
+    /// linear, memory descriptor list. Page table entry information is not
+    /// provide, only the page tables.
+    /// pages.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return memory descriptor list
+    ///
+    memory_descriptor_list ept_to_mdl() const;
 
 private:
 

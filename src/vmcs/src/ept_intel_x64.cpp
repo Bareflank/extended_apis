@@ -76,10 +76,10 @@ ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
     if (!m_epts.empty())
     {
         auto &&iter = bfn::find(m_epts, index);
-        if (auto epte = (*iter).get())
+        if (auto pt = (*iter).get())
         {
-            epte->remove_page(gpa, bits - ept::pt::size);
-            if (epte->empty())
+            pt->remove_page(gpa, bits - ept::pt::size);
+            if (pt->empty())
             {
                 (*iter) = nullptr;
 
@@ -98,15 +98,15 @@ ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
 }
 
 ept_entry_intel_x64
-ept_intel_x64::gpa_to_epte(integer_pointer gpa, integer_pointer bits)
+ept_intel_x64::gpa_to_epte(integer_pointer gpa, integer_pointer bits) const
 {
     auto &&index = ept::index(gpa, bits);
 
     if (!m_epts.empty())
     {
-        auto &&iter = bfn::find(m_epts, index);
-        if (auto epte = (*iter).get())
-            return epte->gpa_to_epte(gpa, bits - ept::pt::size);
+        auto &&iter = bfn::cfind(m_epts, index);
+        if (auto pt = (*iter).get())
+            return pt->gpa_to_epte(gpa, bits - ept::pt::size);
 
         throw std::runtime_error("unable to locate epte. invalid gpaess");
     }
@@ -115,13 +115,29 @@ ept_intel_x64::gpa_to_epte(integer_pointer gpa, integer_pointer bits)
     return ept_entry_intel_x64(&view.at(index));
 }
 
+ept_intel_x64::memory_descriptor_list
+ept_intel_x64::ept_to_mdl(memory_descriptor_list &mdl) const
+{
+    auto &&virt = reinterpret_cast<uintptr_t>(m_ept.get());
+    auto &&phys = g_mm->virtint_to_physint(virt);
+    auto &&type = MEMORY_TYPE_R | MEMORY_TYPE_W;
+
+    mdl.push_back({phys, virt, type});
+
+    for (const auto &pt : m_epts)
+        if (pt != nullptr) pt->ept_to_mdl(mdl);
+
+    return mdl;
+}
+
 bool
 ept_intel_x64::empty() const noexcept
 {
     auto size = 0UL;
 
-    for (auto i = 0U; i < ept::num_entries; i++)
-        size += m_ept[i] != 0 ? 1U : 0U;
+    auto &&view = gsl::make_span(m_ept, ept::num_entries);
+    for (auto element : view)
+        size += element != 0 ? 1U : 0U;
 
     return size == 0;
 }
@@ -131,8 +147,9 @@ ept_intel_x64::global_size() const noexcept
 {
     auto size = 0UL;
 
-    for (auto i = 0U; i < ept::num_entries; i++)
-        size += m_ept[i] != 0 ? 1U : 0U;
+    auto &&view = gsl::make_span(m_ept, ept::num_entries);
+    for (auto element : view)
+        size += element != 0 ? 1U : 0U;
 
     for (const auto &pt : m_epts)
         if (pt != nullptr) size += pt->global_size();

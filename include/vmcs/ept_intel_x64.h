@@ -26,6 +26,8 @@
 
 #include <vector>
 #include <memory>
+
+#include <memory.h>
 #include <vmcs/ept_entry_intel_x64.h>
 
 class ept_intel_x64
@@ -35,6 +37,7 @@ public:
     using pointer = uintptr_t *;
     using integer_pointer = uintptr_t;
     using size_type = std::size_t;
+    using memory_descriptor_list = std::vector<memory_descriptor>;
 
     /// Constructor
     ///
@@ -136,14 +139,30 @@ public:
     ///
     /// @param gpa the guest physical address of the page to lookup
     ///
-    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa)
+    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa) const
     { return gpa_to_epte(gpa, intel_x64::ept::pml4::from); }
+
+    /// Extended Page Table to Memory Descriptor List
+    ///
+    /// This function converts the internal page table tree structure into a
+    /// linear, memory descriptor list. Page table entry information is not
+    /// provide, only the page tables.
+    /// pages.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return memory descriptor list
+    ///
+    memory_descriptor_list ept_to_mdl() const
+    { memory_descriptor_list mdl; return ept_to_mdl(mdl); }
 
 private:
 
     ept_entry_intel_x64 add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end);
     void remove_page(integer_pointer gpa, integer_pointer bits);
-    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa, integer_pointer bits);
+    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa, integer_pointer bits) const;
+    memory_descriptor_list ept_to_mdl(memory_descriptor_list &mdl) const;
 
     bool empty() const noexcept;
     size_type global_size() const noexcept;
