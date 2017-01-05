@@ -60,10 +60,6 @@ __vmptrld(void *ptr) noexcept
 { (void)ptr; return true; }
 
 extern "C" bool
-__vmlaunch(uint64_t arg1, uint64_t arg2) noexcept
-{ (void)arg1; (void)arg2; return true; }
-
-extern "C" bool
 __vmlaunch_demote(void) noexcept
 { return true; }
 
