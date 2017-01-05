@@ -33,6 +33,7 @@ setup_mm(MockRepository &mocks)
     auto mm = mocks.Mock<memory_manager_x64>();
     mocks.OnCallFunc(memory_manager_x64::instance).Return(mm);
     mocks.OnCall(mm, memory_manager_x64::virtptr_to_physint).Return(0x0000000ABCDEF0000);
+    mocks.OnCall(mm, memory_manager_x64::virtint_to_physint).Return(0x0000000ABCDEF0000);
 
     return mm;
 }
@@ -161,6 +162,62 @@ eapis_ut::test_root_ept_intel_x64_map_1g()
         this->expect_true(entry.read_access());
         this->expect_false(entry.write_access());
         this->expect_true(entry.execute_access());
+        this->expect_true(entry.memory_type() == 6);
+        root_ept.unmap(0x1000UL);
+        this->expect_exception([&] { root_ept.gpa_to_epte(0x1000UL); }, ""_ut_ree);
+    }
+
+    // Read Only
+    {
+        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::ro_uc);
+        auto &&entry = root_ept.gpa_to_epte(0x1000UL);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 0);
+        root_ept.unmap(0x1000UL);
+        this->expect_exception([&] { root_ept.gpa_to_epte(0x1000UL); }, ""_ut_ree);
+    }
+
+    {
+        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::ro_wc);
+        auto &&entry = root_ept.gpa_to_epte(0x1000UL);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 1);
+        root_ept.unmap(0x1000UL);
+        this->expect_exception([&] { root_ept.gpa_to_epte(0x1000UL); }, ""_ut_ree);
+    }
+
+    {
+        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::ro_wt);
+        auto &&entry = root_ept.gpa_to_epte(0x1000UL);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 4);
+        root_ept.unmap(0x1000UL);
+        this->expect_exception([&] { root_ept.gpa_to_epte(0x1000UL); }, ""_ut_ree);
+    }
+
+    {
+        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::ro_wp);
+        auto &&entry = root_ept.gpa_to_epte(0x1000UL);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
+        this->expect_true(entry.memory_type() == 5);
+        root_ept.unmap(0x1000UL);
+        this->expect_exception([&] { root_ept.gpa_to_epte(0x1000UL); }, ""_ut_ree);
+    }
+
+    {
+        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::ro_wb);
+        auto &&entry = root_ept.gpa_to_epte(0x1000UL);
+        this->expect_true(entry.read_access());
+        this->expect_false(entry.write_access());
+        this->expect_false(entry.execute_access());
         this->expect_true(entry.memory_type() == 6);
         root_ept.unmap(0x1000UL);
         this->expect_exception([&] { root_ept.gpa_to_epte(0x1000UL); }, ""_ut_ree);
@@ -1008,4 +1065,14 @@ eapis_ut::test_root_ept_intel_x64_setup_identity_map_4k_valid()
 
     this->expect_no_exception([&] { root_ept.setup_identity_map_4k(0x0, 0x1000); });
     this->expect_no_exception([&] { root_ept.unmap_identity_map_4k(0x0, 0x1000); });
+}
+
+void
+eapis_ut::test_root_page_table_x64_pt_to_mdl()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&root_ept = root_ept_intel_x64{};
+
+    this->expect_no_exception([&] { root_ept.ept_to_mdl(); });
 }
