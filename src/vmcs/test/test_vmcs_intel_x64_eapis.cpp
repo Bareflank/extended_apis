@@ -67,13 +67,13 @@ extern "C" bool
 __vmlaunch_demote(void) noexcept
 { return true; }
 
-extern "C" void
+extern "C" bool
 __invept(uint64_t type, void *ptr) noexcept
-{ (void) type; (void) ptr; }
+{ (void) type; (void) ptr; return true; }
 
-extern "C" void
-__invvipd(uint64_t type, void *ptr) noexcept
-{ (void) type; (void) ptr; }
+extern "C" bool
+__invvpid(uint64_t type, void *ptr) noexcept
+{ (void) type; (void) ptr; return true; }
 
 uintptr_t
 virtptr_to_physint(void *ptr)
