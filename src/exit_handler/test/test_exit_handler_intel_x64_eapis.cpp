@@ -70,13 +70,13 @@ extern "C" void
 __stop(void) noexcept
 { }
 
-extern "C" void
+extern "C" bool
 __invept(uint64_t type, void *ptr) noexcept
-{ (void) type; (void) ptr; }
+{ (void) type; (void) ptr; return true; }
 
-extern "C" void
-__invvipd(uint64_t type, void *ptr) noexcept
-{ (void) type; (void) ptr; }
+extern "C" bool
+__invvpid(uint64_t type, void *ptr) noexcept
+{ (void) type; (void) ptr; return true; }
 
 class exit_handler_ut : public exit_handler_intel_x64_eapis
 {
