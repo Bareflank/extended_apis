@@ -250,6 +250,20 @@ public:
     ///
     memory_descriptor_list ept_to_mdl() const;
 
+    /// Extended Page Table to Memory Descriptor List
+    ///
+    /// This function converts the internal page table tree structure into a
+    /// linear, memory descriptor list. Page table entry information is not
+    /// provide, only the page tables.
+    /// pages.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return memory descriptor list
+    ///
+    memory_descriptor_list ept_to_mdl() const;
+
 private:
 
     ept_entry_intel_x64 add_page(integer_pointer gpa, size_type size);
