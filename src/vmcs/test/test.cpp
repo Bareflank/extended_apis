@@ -79,6 +79,7 @@ eapis_ut::list()
     this->test_ept_intel_x64_remove_page_unknown_success();
     this->test_ept_intel_x64_gpa_to_epte_invalid();
     this->test_ept_intel_x64_gpa_to_epte_success();
+    this->test_ept_intel_x64_ept_to_mdl_success();
 
     this->test_root_ept_intel_x64_eptp();
     this->test_root_ept_intel_x64_map_1g();
@@ -92,6 +93,7 @@ eapis_ut::list()
     this->test_root_ept_intel_x64_setup_identity_map_2m_valid();
     this->test_root_ept_intel_x64_setup_identity_map_4k_invalid();
     this->test_root_ept_intel_x64_setup_identity_map_4k_valid();
+    this->test_root_page_table_x64_pt_to_mdl();
 
     return true;
 }

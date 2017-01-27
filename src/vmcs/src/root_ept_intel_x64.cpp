@@ -111,10 +111,17 @@ root_ept_intel_x64::unmap_identity_map_4k(
 }
 
 ept_entry_intel_x64
-root_ept_intel_x64::gpa_to_epte(integer_pointer gpa)
+root_ept_intel_x64::gpa_to_epte(integer_pointer gpa) const
 {
     std::lock_guard<std::mutex> guard(m_mutex);
     return m_ept->gpa_to_epte(gpa);
+}
+
+root_ept_intel_x64::memory_descriptor_list
+root_ept_intel_x64::ept_to_mdl() const
+{
+    std::lock_guard<std::mutex> guard(m_mutex);
+    return m_ept->ept_to_mdl();
 }
 
 ept_entry_intel_x64
@@ -170,6 +177,7 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
     {
         case ept::memory_attr::rw_uc:
         case ept::memory_attr::re_uc:
+        case ept::memory_attr::ro_uc:
         case ept::memory_attr::eo_uc:
         case ept::memory_attr::pt_uc:
         case ept::memory_attr::tp_uc:
@@ -178,6 +186,7 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
 
         case ept::memory_attr::rw_wc:
         case ept::memory_attr::re_wc:
+        case ept::memory_attr::ro_wc:
         case ept::memory_attr::eo_wc:
         case ept::memory_attr::pt_wc:
         case ept::memory_attr::tp_wc:
@@ -186,6 +195,7 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
 
         case ept::memory_attr::rw_wt:
         case ept::memory_attr::re_wt:
+        case ept::memory_attr::ro_wt:
         case ept::memory_attr::eo_wt:
         case ept::memory_attr::pt_wt:
         case ept::memory_attr::tp_wt:
@@ -194,6 +204,7 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
 
         case ept::memory_attr::rw_wp:
         case ept::memory_attr::re_wp:
+        case ept::memory_attr::ro_wp:
         case ept::memory_attr::eo_wp:
         case ept::memory_attr::pt_wp:
         case ept::memory_attr::tp_wp:
@@ -202,6 +213,7 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
 
         case ept::memory_attr::rw_wb:
         case ept::memory_attr::re_wb:
+        case ept::memory_attr::ro_wb:
         case ept::memory_attr::eo_wb:
         case ept::memory_attr::pt_wb:
         case ept::memory_attr::tp_wb:
@@ -229,6 +241,16 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
             entry.set_read_access(true);
             entry.set_write_access(false);
             entry.set_execute_access(true);
+            break;
+
+        case ept::memory_attr::ro_uc:
+        case ept::memory_attr::ro_wc:
+        case ept::memory_attr::ro_wt:
+        case ept::memory_attr::ro_wp:
+        case ept::memory_attr::ro_wb:
+            entry.set_read_access(true);
+            entry.set_write_access(false);
+            entry.set_execute_access(false);
             break;
 
         case ept::memory_attr::eo_uc:

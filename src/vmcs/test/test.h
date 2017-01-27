@@ -78,6 +78,7 @@ private:
     void test_ept_intel_x64_remove_page_unknown_success();
     void test_ept_intel_x64_gpa_to_epte_invalid();
     void test_ept_intel_x64_gpa_to_epte_success();
+    void test_ept_intel_x64_ept_to_mdl_success();
 
     void test_root_ept_intel_x64_eptp();
     void test_root_ept_intel_x64_map_1g();
@@ -91,6 +92,7 @@ private:
     void test_root_ept_intel_x64_setup_identity_map_2m_valid();
     void test_root_ept_intel_x64_setup_identity_map_4k_invalid();
     void test_root_ept_intel_x64_setup_identity_map_4k_valid();
+    void test_root_page_table_x64_pt_to_mdl();
 };
 
 #endif

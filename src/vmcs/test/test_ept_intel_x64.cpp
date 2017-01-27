@@ -34,6 +34,7 @@ setup_mm(MockRepository &mocks)
     auto mm = mocks.Mock<memory_manager_x64>();
     mocks.OnCallFunc(memory_manager_x64::instance).Return(mm);
     mocks.OnCall(mm, memory_manager_x64::virtptr_to_physint).Return(0x0000000ABCDEF0000);
+    mocks.OnCall(mm, memory_manager_x64::virtint_to_physint).Return(0x0000000ABCDEF0000);
 
     return mm;
 }
@@ -347,6 +348,30 @@ eapis_ut::test_ept_intel_x64_gpa_to_epte_success()
         this->expect_no_exception([&]{ eptp->gpa_to_epte(virt); });
 
         eptp->remove_page(virt);
+        this->expect_true(eptp->global_size() == 0);
+    });
+}
+
+void
+eapis_ut::test_ept_intel_x64_ept_to_mdl_success()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        auto &&scr3 = 0x0UL;
+        auto &&eptp = std::make_unique<ept_intel_x64>(&scr3);
+
+        this->expect_true(eptp->ept_to_mdl().size() == 1);
+        eptp->add_page_1g(0x1000);
+        this->expect_true(eptp->ept_to_mdl().size() == 2);
+        eptp->add_page_2m(0x1000);
+        this->expect_true(eptp->ept_to_mdl().size() == 3);
+        eptp->add_page_4k(0x1000);
+        this->expect_true(eptp->ept_to_mdl().size() == 4);
+
+        eptp->remove_page(0x1000);
         this->expect_true(eptp->global_size() == 0);
     });
 }

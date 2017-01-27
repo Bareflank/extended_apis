@@ -127,46 +127,6 @@ matrix:
       - make test
 
   #
-  # GCC 6.1.0
-  #
-  - os: linux
-    env:
-      - TEST="GCC 6.1.0"
-    services:
-      - docker
-    before_install:
-      - cd ..
-      - git clone https://github.com/bareflank/hypervisor.git
-      - mv extended_apis hypervisor/
-      - cd hypervisor
-    install:
-      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh --compiler gcc_610
-      - cat env.sh
-    script:
-      - make
-      - make test
-
-  #
-  # GCC 6.2.0
-  #
-  - os: linux
-    env:
-      - TEST="GCC 6.2.0"
-    services:
-      - docker
-    before_install:
-      - cd ..
-      - git clone https://github.com/bareflank/hypervisor.git
-      - mv extended_apis hypervisor/
-      - cd hypervisor
-    install:
-      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh --compiler gcc_620
-      - cat env.sh
-    script:
-      - make
-      - make test
-
-  #
   # Clang 3.8
   #
   - os: linux
