@@ -35,7 +35,8 @@ build your hypervisors from. Some of these APIs include:
 - VPID / Extended Page Tables (EPT)
 - Event Injection
 - Monitor Traps
-- [LibVMI](https://github.com/libvmi/libvmi) Support
+- Preemption Timer
+- ACPI / Timers
 
 ## Compilation / Usage
 
