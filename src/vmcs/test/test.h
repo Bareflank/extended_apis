@@ -43,6 +43,8 @@ private:
     void test_launch();
     void test_enable_vpid();
     void test_disable_vpid();
+    void test_enable_io_bitmaps();
+    void test_disable_io_bitmaps();
     void test_trap_on_io_access();
     void test_trap_on_all_io_accesses();
     void test_pass_through_io_access();
@@ -52,6 +54,20 @@ private:
     void test_enable_ept();
     void test_disable_ept();
     void test_set_eptp();
+    void test_enable_msr_bitmap();
+    void test_disable_msr_bitmap();
+    void test_trap_on_rdmsr_access();
+    void test_trap_on_all_rdmsr_accesses();
+    void test_pass_through_rdmsr_access();
+    void test_pass_through_all_rdmsr_accesses();
+    void test_whitelist_rdmsr_access();
+    void test_blacklist_rdmsr_access();
+    void test_trap_on_wrmsr_access();
+    void test_trap_on_all_wrmsr_accesses();
+    void test_pass_through_wrmsr_access();
+    void test_pass_through_all_wrmsr_accesses();
+    void test_whitelist_wrmsr_access();
+    void test_blacklist_wrmsr_access();
 
     void test_ept_entry_intel_x64_read_access();
     void test_ept_entry_intel_x64_write_access();

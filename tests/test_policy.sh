@@ -20,25 +20,73 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-ARGS="--cpuid 0 string json '{\"run\":\"clear_denials\"}'" make vmcall > /dev/null
+# ------------------------------------------------------------------------------
+# Colors
+# ------------------------------------------------------------------------------
 
-echo "----------------------------------------"
-echo "run vmcalls"
-ARGS="--cpuid 0 string json '{\"set\":\"vpid\", \"enabled\": false}'" make vmcall > /dev/null
-ARGS="--cpuid 0 string json '{\"set\":\"vpid\", \"enabled\": true}'" make vmcall > /dev/null
-ARGS="--cpuid 0 string json '{\"set\":\"vpid\", \"enabled\": false}'" make vmcall > /dev/null
-echo ""
+CB='\033[1;35m'
+CC='\033[1;36m'
+CG='\033[1;32m'
+CE='\033[0m'
 
-echo "----------------------------------------"
-echo "dump policy"
-echo ""
-ARGS="--cpuid 0 string json '{\"dump\":\"policy\"}'" make vmcall
-echo ""
+# ------------------------------------------------------------------------------
+# Environment
+# ------------------------------------------------------------------------------
 
-echo "----------------------------------------"
-echo "dump denials"
-echo ""
-ARGS="--cpuid 0 string json '{\"dump\":\"denials\"}'" make vmcall
-echo ""
+NUM_CORES=`grep -c ^processor /proc/cpuinfo`
 
-ARGS="--cpuid 0 string json '{\"run\":\"clear_denials\"}'" make vmcall > /dev/null
+# ------------------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------------------
+
+header() {
+    echo "----------------------------------------"
+    echo $1
+}
+
+footer() {
+    echo ""
+}
+
+run_on_all_cores() {
+    for (( core=0; core<$NUM_CORES; core++ ))
+    do
+        if [[ $2 == "true" ]]; then
+            echo -e "$CC""core:$CB #$core$CE"
+            ARGS="--cpuid $core string json $1" make vmcall
+            echo -e ""
+        else
+            ARGS="--cpuid $core string json $1" make vmcall > /dev/null
+        fi
+    done
+}
+
+# ------------------------------------------------------------------------------
+# Init
+# ------------------------------------------------------------------------------
+
+run_on_all_cores "'{\"command\":\"clear_denials\"}'"
+
+# ------------------------------------------------------------------------------
+# Tests
+# ------------------------------------------------------------------------------
+
+header "run vmcalls"
+run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": false}'"
+run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": true}'"
+run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": false}'"
+footer
+
+header "dump policy"
+footer
+run_on_all_cores "'{\"command\":\"dump_policy\"}'" "true"
+
+header "dump denials"
+footer
+run_on_all_cores "'{\"command\":\"dump_denials\"}'" "true"
+
+# ------------------------------------------------------------------------------
+# Fini
+# ------------------------------------------------------------------------------
+
+run_on_all_cores "'{\"command\":\"clear_denials\"}'"

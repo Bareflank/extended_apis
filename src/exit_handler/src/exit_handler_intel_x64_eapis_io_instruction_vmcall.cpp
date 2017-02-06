@@ -32,11 +32,70 @@ using namespace intel_x64;
 using namespace vmcs;
 
 void
+exit_handler_intel_x64_eapis::register_json_vmcall__io_instruction()
+{
+    m_json_commands["enable_io_bitmaps"] = [&](const auto & ijson, auto & ojson)
+    {
+        this->handle_vmcall__enable_io_bitmaps(ijson.at("enabled"));
+        this->json_success(ojson);
+    };
+
+    m_json_commands["trap_on_io_access"] = [&](const auto & ijson, auto & ojson)
+    {
+        this->handle_vmcall__trap_on_io_access(json_hex_or_dec<port_type>(ijson, "port"));
+        this->json_success(ojson);
+    };
+
+    m_json_commands["pass_through_io_access"] = [&](const auto & ijson, auto & ojson)
+    {
+        this->handle_vmcall__pass_through_io_access(json_hex_or_dec<port_type>(ijson, "port"));
+        this->json_success(ojson);
+    };
+
+    m_json_commands["whitelist_io_access"] = [&](const auto & ijson, auto & ojson)
+    {
+        this->handle_vmcall__whitelist_io_access(json_hex_or_dec_array<port_type>(ijson, "ports"));
+        this->json_success(ojson);
+    };
+
+    m_json_commands["blacklist_io_access"] = [&](const auto & ijson, auto & ojson)
+    {
+        this->handle_vmcall__blacklist_io_access(json_hex_or_dec_array<port_type>(ijson, "ports"));
+        this->json_success(ojson);
+    };
+
+    m_json_commands["log_io_access"] = [&](const auto & ijson, auto & ojson)
+    {
+        this->handle_vmcall__log_io_access(ijson.at("enabled"));
+        this->json_success(ojson);
+    };
+
+    m_json_commands["clear_io_access_log"] = [&](const auto &, auto & ojson)
+    {
+        this->handle_vmcall__clear_io_access_log();
+        this->json_success(ojson);
+    };
+
+    m_json_commands["io_access_log"] = [&](const auto &, auto & ojson)
+    {
+        this->handle_vmcall__io_access_log(ojson);
+    };
+}
+
+void
 exit_handler_intel_x64_eapis::handle_vmcall_registers__io_instruction(
     vmcall_registers_t &regs)
 {
     switch (regs.r03)
     {
+        case eapis_fun__enable_io_bitmaps:
+            handle_vmcall__enable_io_bitmaps(true);
+            break;
+
+        case eapis_fun__disable_io_bitmaps:
+            handle_vmcall__enable_io_bitmaps(false);
+            break;
+
         case eapis_fun__trap_on_io_access:
             handle_vmcall__trap_on_io_access(gsl::narrow_cast<port_type>(regs.r04));
             break;
@@ -58,74 +117,23 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers__io_instruction(
     }
 }
 
-bool
-exit_handler_intel_x64_eapis::handle_vmcall_json__io_instruction(
-    const json &ijson, json &ojson)
+void
+exit_handler_intel_x64_eapis::handle_vmcall__enable_io_bitmaps(
+    bool enabled)
 {
-    auto set = ijson.value("set", std::string());
+    if (policy(enable_io_bitmaps)->verify(enabled) != vmcall_verifier::allow)
+        policy(enable_io_bitmaps)->deny_vmcall();
 
-    if (!set.empty())
+    if (enabled)
     {
-        if (set == "trap_on_io_access")
-        {
-            handle_vmcall__trap_on_io_access(json_hex_or_dec<port_type>(ijson, "port"));
-            ojson = {"success"};
-            return true;
-        }
-
-        if (set == "pass_through_io_access")
-        {
-            handle_vmcall__pass_through_io_access(json_hex_or_dec<port_type>(ijson, "port"));
-            ojson = {"success"};
-            return true;
-        }
-
-        if (set == "whitelist_io_access")
-        {
-            handle_vmcall__whitelist_io_access(json_hex_or_dec_array<port_type>(ijson, "ports"));
-            ojson = {"success"};
-            return true;
-        }
-
-        if (set == "blacklist_io_access")
-        {
-            handle_vmcall__blacklist_io_access(json_hex_or_dec_array<port_type>(ijson, "ports"));
-            ojson = {"success"};
-            return true;
-        }
-
-        if (set == "log_io_access")
-        {
-            handle_vmcall__log_io_access(ijson.at("enabled"));
-            ojson = {"success"};
-            return true;
-        }
+        m_vmcs_eapis->enable_io_bitmaps();
+        vmcall_debug << "enable_io_bitmaps: success" << bfendl;
     }
-
-    auto run = ijson.value("run", std::string());
-
-    if (!run.empty())
+    else
     {
-        if (run == "clear_io_access_log")
-        {
-            handle_vmcall__clear_io_access_log();
-            ojson = {"success"};
-            return true;
-        }
+        m_vmcs_eapis->disable_io_bitmaps();
+        vmcall_debug << "disable_io_bitmaps: success" << bfendl;
     }
-
-    auto get = ijson.value("get", std::string());
-
-    if (!get.empty())
-    {
-        if (get == "io_access_log")
-        {
-            handle_vmcall__io_access_log(ojson);
-            return true;
-        }
-    }
-
-    return false;
 }
 
 void
@@ -135,8 +143,8 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_io_access(
     if (policy(trap_on_io_access)->verify(port) != vmcall_verifier::allow)
         policy(trap_on_io_access)->deny_vmcall();
 
-    eapis_vmcs()->trap_on_io_access(port);
-    bfdebug << "trap_on_io_access: " << std::hex << std::uppercase << "0x" << port << bfendl;
+    m_vmcs_eapis->trap_on_io_access(port);
+    vmcall_debug << "trap_on_io_access: " << std::hex << std::uppercase << "0x" << port << bfendl;
 }
 
 void
@@ -145,8 +153,8 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_all_io_accesses()
     if (policy(trap_on_all_io_accesses)->verify() != vmcall_verifier::allow)
         policy(trap_on_all_io_accesses)->deny_vmcall();
 
-    eapis_vmcs()->trap_on_all_io_accesses();
-    bfdebug << "trap_on_all_io_accesses: success" << bfendl;
+    m_vmcs_eapis->trap_on_all_io_accesses();
+    vmcall_debug << "trap_on_all_io_accesses: success" << bfendl;
 }
 
 void
@@ -156,8 +164,8 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_io_access(
     if (policy(pass_through_io_access)->verify(port) != vmcall_verifier::allow)
         policy(pass_through_io_access)->deny_vmcall();
 
-    eapis_vmcs()->pass_through_io_access(port);
-    bfdebug << "pass_through_io_access: " << std::hex << std::uppercase << "0x" << port << bfendl;
+    m_vmcs_eapis->pass_through_io_access(port);
+    vmcall_debug << "pass_through_io_access: " << std::hex << std::uppercase << "0x" << port << bfendl;
 }
 
 void
@@ -166,8 +174,8 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_io_accesses()
     if (policy(pass_through_all_io_accesses)->verify() != vmcall_verifier::allow)
         policy(pass_through_all_io_accesses)->deny_vmcall();
 
-    eapis_vmcs()->pass_through_all_io_accesses();
-    bfdebug << "trap_on_all_io_accesses: success" << bfendl;
+    m_vmcs_eapis->pass_through_all_io_accesses();
+    vmcall_debug << "trap_on_all_io_accesses: success" << bfendl;
 }
 
 void
@@ -177,11 +185,11 @@ exit_handler_intel_x64_eapis::handle_vmcall__whitelist_io_access(
     if (policy(whitelist_io_access)->verify(ports) != vmcall_verifier::allow)
         policy(whitelist_io_access)->deny_vmcall();
 
-    eapis_vmcs()->whitelist_io_access(ports);
+    m_vmcs_eapis->whitelist_io_access(ports);
 
-    bfdebug << "whitelist_io_access: " << bfendl;
+    vmcall_debug << "whitelist_io_access: " << bfendl;
     for (auto port : ports)
-        bfdebug << "  - " << std::hex << std::uppercase << "0x" << port << bfendl;
+        vmcall_debug << "  - " << std::hex << std::uppercase << "0x" << port << bfendl;
 }
 
 void
@@ -191,11 +199,11 @@ exit_handler_intel_x64_eapis::handle_vmcall__blacklist_io_access(
     if (policy(blacklist_io_access)->verify(ports) != vmcall_verifier::allow)
         policy(blacklist_io_access)->deny_vmcall();
 
-    eapis_vmcs()->blacklist_io_access(ports);
+    m_vmcs_eapis->blacklist_io_access(ports);
 
-    bfdebug << "blacklist_io_access: " << bfendl;
+    vmcall_debug << "blacklist_io_access: " << bfendl;
     for (auto port : ports)
-        bfdebug << "  - " << std::hex << std::uppercase << "0x" << port << bfendl;
+        vmcall_debug << "  - " << std::hex << std::uppercase << "0x" << port << bfendl;
 }
 
 void
@@ -206,7 +214,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__log_io_access(
         policy(log_io_access)->deny_vmcall();
 
     log_io_access(enabled);
-    bfdebug << "log_io_access: " << std::boolalpha << enabled << bfendl;
+    vmcall_debug << "log_io_access: " << std::boolalpha << enabled << bfendl;
 }
 
 void
@@ -216,7 +224,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__clear_io_access_log()
         policy(clear_io_access_log)->deny_vmcall();
 
     clear_io_access_log();
-    bfdebug << "clear_io_access_log: success" << bfendl;
+    vmcall_debug << "clear_io_access_log: success" << bfendl;
 }
 
 void
@@ -228,5 +236,5 @@ exit_handler_intel_x64_eapis::handle_vmcall__io_access_log(json &ojson)
     for (auto pair : m_io_access_log)
         ojson[bfn::to_string(pair.first, 16)] = pair.second;
 
-    bfdebug << "dump io_access_log: success" << bfendl;
+    vmcall_debug << "dump io_access_log: success" << bfendl;
 }

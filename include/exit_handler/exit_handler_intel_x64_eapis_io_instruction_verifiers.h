@@ -25,6 +25,16 @@
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 
+class default_verifier__enable_io_bitmaps : public vmcall_verifier
+{
+public:
+    default_verifier__enable_io_bitmaps() = default;
+    ~default_verifier__enable_io_bitmaps() override = default;
+
+    verifier_result verify(bool enabled)
+    { (void) enabled; return default_verify(); }
+};
+
 class default_verifier__trap_on_io_access : public vmcall_verifier
 {
 public:

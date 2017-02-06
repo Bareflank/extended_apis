@@ -86,21 +86,44 @@ namespace vp
 
 using index_type = uint64_t;
 
-constexpr const auto index_clear_denials                       = 0x0000001UL;
-constexpr const auto index_dump_policy                         = 0x0000002UL;
-constexpr const auto index_dump_denials                        = 0x0000003UL;
+constexpr const auto index_clear_denials                          = 0x0000001UL;
+constexpr const auto index_dump_policy                            = 0x0000002UL;
+constexpr const auto index_dump_denials                           = 0x0000003UL;
 
-constexpr const auto index_trap_on_io_access                   = 0x0001001UL;
-constexpr const auto index_trap_on_all_io_accesses             = 0x0001002UL;
-constexpr const auto index_pass_through_io_access              = 0x0001003UL;
-constexpr const auto index_pass_through_all_io_accesses        = 0x0001004UL;
-constexpr const auto index_whitelist_io_access                 = 0x0001005UL;
-constexpr const auto index_blacklist_io_access                 = 0x0001006UL;
-constexpr const auto index_log_io_access                       = 0x0001007UL;
-constexpr const auto index_clear_io_access_log                 = 0x0001008UL;
-constexpr const auto index_io_access_log                       = 0x0001009UL;
+constexpr const auto index_enable_io_bitmaps                      = 0x0001001UL;
+constexpr const auto index_trap_on_io_access                      = 0x0001002UL;
+constexpr const auto index_trap_on_all_io_accesses                = 0x0001003UL;
+constexpr const auto index_pass_through_io_access                 = 0x0001004UL;
+constexpr const auto index_pass_through_all_io_accesses           = 0x0001005UL;
+constexpr const auto index_whitelist_io_access                    = 0x0001006UL;
+constexpr const auto index_blacklist_io_access                    = 0x0001007UL;
+constexpr const auto index_log_io_access                          = 0x0001008UL;
+constexpr const auto index_clear_io_access_log                    = 0x0001009UL;
+constexpr const auto index_io_access_log                          = 0x000100AUL;
 
-constexpr const auto index_enable_vpid                         = 0x0002001UL;
+constexpr const auto index_enable_vpid                            = 0x0002001UL;
+
+constexpr const auto index_enable_msr_bitmap                      = 0x0003001UL;
+
+constexpr const auto index_trap_on_rdmsr_access                   = 0x0004001UL;
+constexpr const auto index_trap_on_all_rdmsr_accesses             = 0x0004002UL;
+constexpr const auto index_pass_through_rdmsr_access              = 0x0004003UL;
+constexpr const auto index_pass_through_all_rdmsr_accesses        = 0x0004004UL;
+constexpr const auto index_whitelist_rdmsr_access                 = 0x0004005UL;
+constexpr const auto index_blacklist_rdmsr_access                 = 0x0004006UL;
+constexpr const auto index_log_rdmsr_access                       = 0x0004007UL;
+constexpr const auto index_clear_rdmsr_access_log                 = 0x0004008UL;
+constexpr const auto index_rdmsr_access_log                       = 0x0004009UL;
+
+constexpr const auto index_trap_on_wrmsr_access                   = 0x0004001UL;
+constexpr const auto index_trap_on_all_wrmsr_accesses             = 0x0004002UL;
+constexpr const auto index_pass_through_wrmsr_access              = 0x0004003UL;
+constexpr const auto index_pass_through_all_wrmsr_accesses        = 0x0004004UL;
+constexpr const auto index_whitelist_wrmsr_access                 = 0x0004005UL;
+constexpr const auto index_blacklist_wrmsr_access                 = 0x0004006UL;
+constexpr const auto index_log_wrmsr_access                       = 0x0004007UL;
+constexpr const auto index_clear_wrmsr_access_log                 = 0x0004008UL;
+constexpr const auto index_wrmsr_access_log                       = 0x0004009UL;
 
 }
 

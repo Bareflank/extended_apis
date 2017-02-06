@@ -43,7 +43,11 @@ state_save_intel_x64 g_state_save{};
 auto g_monitor_trap_callback_called = false;
 
 bool g_enable_vpid = false;
+bool g_enable_io_bitmaps = false;
+bool g_enable_msr_bitmap = false;
 exit_handler_intel_x64_eapis::port_type g_port = 0;
+exit_handler_intel_x64_eapis::msr_type g_rdmsr = 0;
+exit_handler_intel_x64_eapis::msr_type g_wrmsr = 0;
 
 extern bool g_deny_all;
 extern bool g_log_denials;
@@ -65,6 +69,10 @@ __vmwrite(uint64_t field, uint64_t val) noexcept
 extern "C" uint64_t
 __read_msr(uint32_t addr) noexcept
 { return g_msrs[addr]; }
+
+extern "C" void
+__write_msr(uint32_t addr, uint64_t val) noexcept
+{ g_msrs[addr] = val; }
 
 extern "C" void
 __stop(void) noexcept
@@ -98,12 +106,29 @@ setup_vmcs(MockRepository &mocks, vmcs::value_type reason)
 
     mocks.OnCall(vmcs, vmcs_intel_x64_eapis::enable_vpid).Do([&] { g_enable_vpid = true; });
     mocks.OnCall(vmcs, vmcs_intel_x64_eapis::disable_vpid).Do([&] { g_enable_vpid = false; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::enable_io_bitmaps).Do([&] { g_enable_io_bitmaps = true; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::disable_io_bitmaps).Do([&] { g_enable_io_bitmaps = false; });
     mocks.OnCall(vmcs, vmcs_intel_x64_eapis::trap_on_io_access).Do([&](auto port) { g_port = port; });
     mocks.OnCall(vmcs, vmcs_intel_x64_eapis::trap_on_all_io_accesses).Do([&]() { g_port = 42; });
     mocks.OnCall(vmcs, vmcs_intel_x64_eapis::pass_through_io_access).Do([&](auto port) { g_port = port; });
     mocks.OnCall(vmcs, vmcs_intel_x64_eapis::pass_through_all_io_accesses).Do([&]() { g_port = 42; });
     mocks.OnCall(vmcs, vmcs_intel_x64_eapis::whitelist_io_access).Do([&](auto ports) { g_port = ports[0]; });
     mocks.OnCall(vmcs, vmcs_intel_x64_eapis::blacklist_io_access).Do([&](auto ports) { g_port = ports[0]; });
+
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::enable_msr_bitmap).Do([&] { g_enable_msr_bitmap = true; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::disable_msr_bitmap).Do([&] { g_enable_msr_bitmap = false; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::trap_on_rdmsr_access).Do([&](auto msr) { g_rdmsr = msr; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::trap_on_wrmsr_access).Do([&](auto msr) { g_wrmsr = msr; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::trap_on_all_rdmsr_accesses).Do([&]() { g_rdmsr = 42; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::trap_on_all_wrmsr_accesses).Do([&]() { g_wrmsr = 42; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::pass_through_rdmsr_access).Do([&](auto msr) { g_rdmsr = msr; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::pass_through_wrmsr_access).Do([&](auto msr) { g_wrmsr = msr; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::pass_through_all_rdmsr_accesses).Do([&]() { g_rdmsr = 42; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::pass_through_all_wrmsr_accesses).Do([&]() { g_wrmsr = 42; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::whitelist_rdmsr_access).Do([&](auto msrs) { g_rdmsr = msrs[0]; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::whitelist_wrmsr_access).Do([&](auto msrs) { g_wrmsr = msrs[0]; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::blacklist_rdmsr_access).Do([&](auto msrs) { g_rdmsr = msrs[0]; });
+    mocks.OnCall(vmcs, vmcs_intel_x64_eapis::blacklist_wrmsr_access).Do([&](auto msrs) { g_wrmsr = msrs[0]; });
 
     g_msrs[intel_x64::msrs::ia32_vmx_procbased_ctls2::addr] = 0xFFFFFFFF00000000UL;
     g_msrs[intel_x64::msrs::ia32_vmx_true_pinbased_ctls::addr] = 0xFFFFFFFF00000000UL;
@@ -199,6 +224,40 @@ eapis_ut::test_handle_exit_io_instruction()
     {
         this->expect_no_exception([&] { ehlr->dispatch(); });
         this->expect_true(ehlr->m_io_access_log[42] == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_exit_rdmsr()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::rdmsr);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    ehlr->log_rdmsr_access(true);
+    ehlr->m_state_save->rcx = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&] { ehlr->dispatch(); });
+        this->expect_true(ehlr->m_rdmsr_access_log[42] == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_exit_wrmsr()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::wrmsr);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    ehlr->log_wrmsr_access(true);
+    ehlr->m_state_save->rcx = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&] { ehlr->dispatch(); });
+        this->expect_true(ehlr->m_wrmsr_access_log[42] == 1);
     });
 }
 
@@ -307,7 +366,7 @@ eapis_ut::test_handle_vmcall_overrun_denials_buffer()
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"set", "vpid"}, {"enabled", false}};
+    json ijson = {{"command", "enable_vpid"}, {"enabled", false}};
     json ojson = {};
 
     g_deny_all = false;
@@ -321,6 +380,10 @@ eapis_ut::test_handle_vmcall_overrun_denials_buffer()
         this->expect_true(ehlr->m_denials.size() == DENIAL_LOG_SIZE);
     });
 }
+
+// -----------------------------------------------------------------------------
+// REGISTER
+// -----------------------------------------------------------------------------
 
 void
 eapis_ut::test_handle_vmcall_registers_unknown()
@@ -352,6 +415,156 @@ eapis_ut::test_handle_vmcall_registers_io_instruction_unknown()
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
         this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_io_instruction_enable_io_bitmaps_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__io_instruction;
+    regs.r03 = eapis_fun__enable_io_bitmaps;
+
+    g_enable_io_bitmaps = false;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_enable_io_bitmaps);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_io_instruction_enable_io_bitmaps_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__io_instruction;
+    regs.r03 = eapis_fun__enable_io_bitmaps;
+
+    g_enable_io_bitmaps = false;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_enable_io_bitmaps);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_io_instruction_enable_io_bitmaps_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__io_instruction;
+    regs.r03 = eapis_fun__enable_io_bitmaps;
+
+    g_enable_io_bitmaps = false;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_false(g_enable_io_bitmaps);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_io_instruction_disable_io_bitmaps_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__io_instruction;
+    regs.r03 = eapis_fun__disable_io_bitmaps;
+
+    g_enable_io_bitmaps = true;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_false(g_enable_io_bitmaps);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_io_instruction_disable_io_bitmaps_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__io_instruction;
+    regs.r03 = eapis_fun__disable_io_bitmaps;
+
+    g_enable_io_bitmaps = true;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_false(g_enable_io_bitmaps);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_io_instruction_disable_io_bitmaps_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__io_instruction;
+    regs.r03 = eapis_fun__disable_io_bitmaps;
+
+    g_enable_io_bitmaps = true;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_true(g_enable_io_bitmaps);
+        this->expect_true(ehlr->m_denials.empty());
     });
 }
 
@@ -662,762 +875,6 @@ eapis_ut::test_handle_vmcall_registers_io_instruction_pass_through_all_io_access
 }
 
 void
-eapis_ut::test_handle_vmcall_json_unknown()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"set", "unknown_api"}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ree);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_trap_on_io_access_missing_port()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"set", "trap_on_io_access"}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_trap_on_io_access_invalid_port()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "trap_on_io_access"}, {"port", "bad port"}};
-    json ijson2 = {{"set", "trap_on_io_access"}, {"port_hex", 10}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_trap_on_io_access_allowed()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "trap_on_io_access"}, {"port", 42}};
-    json ijson2 = {{"set", "trap_on_io_access"}, {"port_hex", "0x2A"}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_trap_on_io_access_logged()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "trap_on_io_access"}, {"port", 42}};
-    json ijson2 = {{"set", "trap_on_io_access"}, {"port_hex", "0x2A"}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = true;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-        this->expect_true(ehlr->m_denials.size() == 1);
-
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-        this->expect_true(ehlr->m_denials.size() == 2);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_trap_on_io_access_denied()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "trap_on_io_access"}, {"port", 42}};
-    json ijson2 = {{"set", "trap_on_io_access"}, {"port_hex", "0x2A"}};
-    json ojson = {};
-
-    g_deny_all = true;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"success\"]");
-        this->expect_true(g_port == 0);
-
-        g_port = 0;
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"success\"]");
-        this->expect_true(g_port == 0);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_pass_through_io_access_missing_port()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"set", "pass_through_io_access"}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_pass_through_io_access_invalid_port()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "pass_through_io_access"}, {"port", "bad port"}};
-    json ijson2 = {{"set", "pass_through_io_access"}, {"port_hex", 10}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_pass_through_io_access_allowed()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "pass_through_io_access"}, {"port", 42}};
-    json ijson2 = {{"set", "pass_through_io_access"}, {"port_hex", "0x2A"}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_pass_through_io_access_logged()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "pass_through_io_access"}, {"port", 42}};
-    json ijson2 = {{"set", "pass_through_io_access"}, {"port_hex", "0x2A"}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = true;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-        this->expect_true(ehlr->m_denials.size() == 1);
-
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-        this->expect_true(ehlr->m_denials.size() == 2);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_pass_through_io_access_denied()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "pass_through_io_access"}, {"port", 42}};
-    json ijson2 = {{"set", "pass_through_io_access"}, {"port_hex", "0x2A"}};
-    json ojson = {};
-
-    g_deny_all = true;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"success\"]");
-        this->expect_true(g_port == 0);
-
-        g_port = 0;
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"success\"]");
-        this->expect_true(g_port == 0);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_whitelist_io_access_missing_ports()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"set", "whitelist_io_access"}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_whitelist_io_access_invalid_ports()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "whitelist_io_access"}, {"ports", "bad port"}};
-    json ijson2 = {{"set", "whitelist_io_access"}, {"ports_hex", 10}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_whitelist_io_access_allowed()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "whitelist_io_access"}, {"ports", {42}}};
-    json ijson2 = {{"set", "whitelist_io_access"}, {"ports_hex", {"0x2A"}}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_whitelist_io_access_logged()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "whitelist_io_access"}, {"ports", {42}}};
-    json ijson2 = {{"set", "whitelist_io_access"}, {"ports_hex", {"0x2A"}}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = true;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-        this->expect_true(ehlr->m_denials.size() == 1);
-
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-        this->expect_true(ehlr->m_denials.size() == 2);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_whitelist_io_access_denied()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "whitelist_io_access"}, {"ports", {42}}};
-    json ijson2 = {{"set", "whitelist_io_access"}, {"ports_hex", {"0x2A"}}};
-    json ojson = {};
-
-    g_deny_all = true;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"success\"]");
-        this->expect_true(g_port == 0);
-
-        g_port = 0;
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"success\"]");
-        this->expect_true(g_port == 0);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_blacklist_io_access_missing_ports()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"set", "blacklist_io_access"}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_blacklist_io_access_invalid_ports()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "blacklist_io_access"}, {"ports", "bad port"}};
-    json ijson2 = {{"set", "blacklist_io_access"}, {"ports_hex", 10}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_blacklist_io_access_allowed()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "blacklist_io_access"}, {"ports", {42}}};
-    json ijson2 = {{"set", "blacklist_io_access"}, {"ports_hex", {"0x2A"}}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_blacklist_io_access_logged()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "blacklist_io_access"}, {"ports", {42}}};
-    json ijson2 = {{"set", "blacklist_io_access"}, {"ports_hex", {"0x2A"}}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = true;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-        this->expect_true(ehlr->m_denials.size() == 1);
-
-        g_port = 0;
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(g_port == 42);
-        this->expect_true(ehlr->m_denials.size() == 2);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_blacklist_io_access_denied()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson1 = {{"set", "blacklist_io_access"}, {"ports", {42}}};
-    json ijson2 = {{"set", "blacklist_io_access"}, {"ports_hex", {"0x2A"}}};
-    json ojson = {};
-
-    g_deny_all = true;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        g_port = 0;
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"success\"]");
-        this->expect_true(g_port == 0);
-
-        g_port = 0;
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"success\"]");
-        this->expect_true(g_port == 0);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_log_io_access_missing_enabled()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"set", "log_io_access"}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_log_io_access_invalid_enabled()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"set", "log_io_access"}, {"enabled", "not a bool"}};
-    json ojson = {};
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_dme);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_log_io_access_allowed()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"set", "log_io_access"}, {"enabled", false}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_log_io_access_logged()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"set", "log_io_access"}, {"enabled", false}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = true;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(ehlr->m_denials.size() == 1);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_log_io_access_denied()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"set", "log_io_access"}, {"enabled", false}};
-    json ojson = {};
-
-    g_deny_all = true;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"success\"]");
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_clear_io_access_log_allowed()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"run", "clear_io_access_log"}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_clear_io_access_log_logged()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"run", "clear_io_access_log"}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = true;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
-        this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(ehlr->m_denials.size() == 1);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_clear_io_access_log_denied()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"run", "clear_io_access_log"}};
-    json ojson = {};
-
-    g_deny_all = true;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"success\"]");
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_io_access_log_allowed()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"get", "io_access_log"}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-    ehlr->m_io_access_log[42] = 42;
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
-        this->expect_true(ojson.dump() == "{\"0x2A\":42}");
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_io_access_log_logged()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"get", "io_access_log"}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = true;
-
-    ehlr->clear_denials();
-    ehlr->m_io_access_log[42] = 42;
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
-        this->expect_true(ojson.dump() == "{\"0x2A\":42}");
-        this->expect_true(ehlr->m_denials.size() == 1);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_io_instruction_io_access_log_denied()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"get", "io_access_log"}};
-    json ojson = {};
-
-    g_deny_all = true;
-    g_log_denials = false;
-
-    ehlr->clear_denials();
-    ehlr->m_io_access_log[42] = 42;
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "{\"0x2A\":42}");
-    });
-}
-
-void
 eapis_ut::test_handle_vmcall_registers_vpid_unknown()
 {
     MockRepository mocks;
@@ -1585,13 +1042,1918 @@ eapis_ut::test_handle_vmcall_registers_vpid_disable_vpid_denied()
 }
 
 void
+eapis_ut::test_handle_vmcall_registers_msr_unknown()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__msr;
+    regs.r03 = 0xDEADBEEF;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_msr_enable_msr_bitmap_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__msr;
+    regs.r03 = eapis_fun__enable_msr_bitmap;
+
+    g_enable_msr_bitmap = false;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_enable_msr_bitmap);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_msr_enable_msr_bitmap_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__msr;
+    regs.r03 = eapis_fun__enable_msr_bitmap;
+
+    g_enable_msr_bitmap = false;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_enable_msr_bitmap);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_msr_enable_msr_bitmap_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__msr;
+    regs.r03 = eapis_fun__enable_msr_bitmap;
+
+    g_enable_msr_bitmap = false;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_false(g_enable_msr_bitmap);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_msr_disable_msr_bitmap_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__msr;
+    regs.r03 = eapis_fun__disable_msr_bitmap;
+
+    g_enable_msr_bitmap = true;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_false(g_enable_msr_bitmap);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_msr_disable_msr_bitmap_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__msr;
+    regs.r03 = eapis_fun__disable_msr_bitmap;
+
+    g_enable_msr_bitmap = true;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_false(g_enable_msr_bitmap);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_msr_disable_msr_bitmap_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__msr;
+    regs.r03 = eapis_fun__disable_msr_bitmap;
+
+    g_enable_msr_bitmap = true;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_true(g_enable_msr_bitmap);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_unknown()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = 0xDEADBEEF;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_trap_on_rdmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__trap_on_rdmsr_access;
+    regs.r04 = 42;
+
+    g_rdmsr = 0;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_trap_on_rdmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__trap_on_rdmsr_access;
+    regs.r04 = 42;
+
+    g_rdmsr = 0;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_trap_on_rdmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__trap_on_rdmsr_access;
+    regs.r04 = 42;
+
+    g_rdmsr = 0;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_true(g_rdmsr == 0);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_trap_on_all_rdmsr_accesses_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__trap_on_all_rdmsr_accesses;
+
+    g_rdmsr = 0;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_trap_on_all_rdmsr_accesses_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__trap_on_all_rdmsr_accesses;
+
+    g_rdmsr = 0;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_trap_on_all_rdmsr_accesses_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__trap_on_all_rdmsr_accesses;
+
+    g_rdmsr = 0;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_true(g_rdmsr == 0);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_pass_through_rdmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__pass_through_rdmsr_access;
+    regs.r04 = 42;
+
+    g_rdmsr = 0;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_pass_through_rdmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__pass_through_rdmsr_access;
+    regs.r04 = 42;
+
+    g_rdmsr = 0;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_pass_through_rdmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__pass_through_rdmsr_access;
+    regs.r04 = 42;
+
+    g_rdmsr = 0;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_true(g_rdmsr == 0);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_pass_through_all_rdmsr_accesses_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__pass_through_all_rdmsr_accesses;
+
+    g_rdmsr = 0;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_pass_through_all_rdmsr_accesses_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__pass_through_all_rdmsr_accesses;
+
+    g_rdmsr = 0;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_rdmsr_pass_through_all_rdmsr_accesses_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__rdmsr;
+    regs.r03 = eapis_fun__pass_through_all_rdmsr_accesses;
+
+    g_rdmsr = 0;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_true(g_rdmsr == 0);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_unknown()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = 0xDEADBEEF;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_trap_on_wrmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__trap_on_wrmsr_access;
+    regs.r04 = 42;
+
+    g_wrmsr = 0;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_trap_on_wrmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__trap_on_wrmsr_access;
+    regs.r04 = 42;
+
+    g_wrmsr = 0;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_trap_on_wrmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__trap_on_wrmsr_access;
+    regs.r04 = 42;
+
+    g_wrmsr = 0;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_true(g_wrmsr == 0);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_trap_on_all_wrmsr_accesses_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__trap_on_all_wrmsr_accesses;
+
+    g_wrmsr = 0;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_trap_on_all_wrmsr_accesses_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__trap_on_all_wrmsr_accesses;
+
+    g_wrmsr = 0;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_trap_on_all_wrmsr_accesses_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__trap_on_all_wrmsr_accesses;
+
+    g_wrmsr = 0;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_true(g_wrmsr == 0);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_pass_through_wrmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__pass_through_wrmsr_access;
+    regs.r04 = 42;
+
+    g_wrmsr = 0;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_pass_through_wrmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__pass_through_wrmsr_access;
+    regs.r04 = 42;
+
+    g_wrmsr = 0;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_pass_through_wrmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__pass_through_wrmsr_access;
+    regs.r04 = 42;
+
+    g_wrmsr = 0;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_true(g_wrmsr == 0);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_pass_through_all_wrmsr_accesses_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__pass_through_all_wrmsr_accesses;
+
+    g_wrmsr = 0;
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_pass_through_all_wrmsr_accesses_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__pass_through_all_wrmsr_accesses;
+
+    g_wrmsr = 0;
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_registers(regs); });
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_registers_wrmsr_pass_through_all_wrmsr_accesses_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    vmcall_registers_t regs = {};
+    regs.r02 = eapis_cat__wrmsr;
+    regs.r03 = eapis_fun__pass_through_all_wrmsr_accesses;
+
+    g_wrmsr = 0;
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_registers(regs); }, ""_ut_ree);
+        this->expect_true(g_wrmsr == 0);
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+// -----------------------------------------------------------------------------
+// JSON
+// -----------------------------------------------------------------------------
+
+void
+eapis_ut::test_handle_vmcall_json_unknown()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "unknown_api"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_verifiers_clear_denials_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_denials"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+    ehlr->m_denials.push_back("fake denial");
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_verifiers_clear_denials_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_denials"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+    ehlr->m_denials.push_back("fake denial");
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(ehlr->m_denials.empty());
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_verifiers_clear_denials_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_denials"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+    ehlr->m_denials.push_back("fake denial");
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_verifiers_dump_policy_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "dump_policy"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_verifiers_dump_policy_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "dump_policy"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_verifiers_dump_policy_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "dump_policy"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_verifiers_dump_denials_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "dump_denials"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+    ehlr->m_denials.push_back("fake denial");
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"fake denial\"]");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_verifiers_dump_denials_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "dump_denials"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+    ehlr->m_denials.push_back("fake denial");
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_verifiers_dump_denials_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "dump_denials"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+    ehlr->m_denials.push_back("fake denial");
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"fake denial\"]");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_enable_io_bitmaps_missing_enabled()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "enable_io_bitmaps"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_enable_io_bitmaps_invalid_enabled()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "enable_io_bitmaps"}, {"enabled", "not a bool"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_dme);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_enable_io_bitmaps_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "enable_io_bitmaps"}, {"enabled", true}};
+    json ijson2 = {{"command", "enable_io_bitmaps"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_enable_io_bitmaps = false;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_enable_io_bitmaps);
+
+        g_enable_io_bitmaps = true;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_false(g_enable_io_bitmaps);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_enable_io_bitmaps_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "enable_io_bitmaps"}, {"enabled", true}};
+    json ijson2 = {{"command", "enable_io_bitmaps"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_enable_io_bitmaps = false;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_enable_io_bitmaps);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_enable_io_bitmaps = true;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_false(g_enable_io_bitmaps);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_enable_io_bitmaps_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "enable_io_bitmaps"}, {"enabled", true}};
+    json ijson2 = {{"command", "enable_io_bitmaps"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_enable_io_bitmaps = false;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_false(g_enable_io_bitmaps);
+
+        g_enable_io_bitmaps = true;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_enable_io_bitmaps);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_trap_on_io_access_missing_port()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "trap_on_io_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_trap_on_io_access_invalid_port()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "trap_on_io_access"}, {"port", "bad port"}};
+    json ijson2 = {{"command", "trap_on_io_access"}, {"port_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_trap_on_io_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "trap_on_io_access"}, {"port", 42}};
+    json ijson2 = {{"command", "trap_on_io_access"}, {"port_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_trap_on_io_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "trap_on_io_access"}, {"port", 42}};
+    json ijson2 = {{"command", "trap_on_io_access"}, {"port_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_trap_on_io_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "trap_on_io_access"}, {"port", 42}};
+    json ijson2 = {{"command", "trap_on_io_access"}, {"port_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_port == 0);
+
+        g_port = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_port == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_pass_through_io_access_missing_port()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "pass_through_io_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_pass_through_io_access_invalid_port()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_io_access"}, {"port", "bad port"}};
+    json ijson2 = {{"command", "pass_through_io_access"}, {"port_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_pass_through_io_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_io_access"}, {"port", 42}};
+    json ijson2 = {{"command", "pass_through_io_access"}, {"port_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_pass_through_io_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_io_access"}, {"port", 42}};
+    json ijson2 = {{"command", "pass_through_io_access"}, {"port_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_pass_through_io_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_io_access"}, {"port", 42}};
+    json ijson2 = {{"command", "pass_through_io_access"}, {"port_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_port == 0);
+
+        g_port = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_port == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_whitelist_io_access_missing_ports()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "whitelist_io_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_whitelist_io_access_invalid_ports()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_io_access"}, {"ports", "bad port"}};
+    json ijson2 = {{"command", "whitelist_io_access"}, {"ports_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_whitelist_io_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_io_access"}, {"ports", {42}}};
+    json ijson2 = {{"command", "whitelist_io_access"}, {"ports_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_whitelist_io_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_io_access"}, {"ports", {42}}};
+    json ijson2 = {{"command", "whitelist_io_access"}, {"ports_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_whitelist_io_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_io_access"}, {"ports", {42}}};
+    json ijson2 = {{"command", "whitelist_io_access"}, {"ports_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_port == 0);
+
+        g_port = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_port == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_blacklist_io_access_missing_ports()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "blacklist_io_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_blacklist_io_access_invalid_ports()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_io_access"}, {"ports", "bad port"}};
+    json ijson2 = {{"command", "blacklist_io_access"}, {"ports_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_blacklist_io_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_io_access"}, {"ports", {42}}};
+    json ijson2 = {{"command", "blacklist_io_access"}, {"ports_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_blacklist_io_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_io_access"}, {"ports", {42}}};
+    json ijson2 = {{"command", "blacklist_io_access"}, {"ports_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_port = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_port == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_blacklist_io_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_io_access"}, {"ports", {42}}};
+    json ijson2 = {{"command", "blacklist_io_access"}, {"ports_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_port = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_port == 0);
+
+        g_port = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_port == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_log_io_access_missing_enabled()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_io_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_log_io_access_invalid_enabled()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_io_access"}, {"enabled", "not a bool"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_dme);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_log_io_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_io_access"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_log_io_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_io_access"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_log_io_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_io_access"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_clear_io_access_log_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_io_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_clear_io_access_log_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_io_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_clear_io_access_log_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_io_access_log"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_io_access_log_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "io_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+    ehlr->m_io_access_log[42] = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "{\"0x2A\":42}");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_io_access_log_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "io_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+    ehlr->m_io_access_log[42] = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "{\"0x2A\":42}");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_io_instruction_io_access_log_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "io_access_log"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+    ehlr->m_io_access_log[42] = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "{\"0x2A\":42}");
+    });
+}
+
+void
 eapis_ut::test_handle_vmcall_json_vpid_enable_vpid_missing_enabled()
 {
     MockRepository mocks;
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"set", "vpid"}};
+    json ijson = {{"command", "enable_vpid"}};
     json ojson = {};
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
@@ -1607,7 +2969,7 @@ eapis_ut::test_handle_vmcall_json_vpid_enable_vpid_invalid_enabled()
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"set", "vpid"}, {"enabled", "not a bool"}};
+    json ijson = {{"command", "enable_vpid"}, {"enabled", "not a bool"}};
     json ojson = {};
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
@@ -1623,7 +2985,7 @@ eapis_ut::test_handle_vmcall_json_vpid_enable_vpid_allowed()
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"set", "vpid"}, {"enabled", false}};
+    json ijson = {{"command", "enable_vpid"}, {"enabled", false}};
     json ojson = {};
 
     g_enable_vpid = true;
@@ -1647,7 +3009,7 @@ eapis_ut::test_handle_vmcall_json_vpid_enable_vpid_logged()
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"set", "vpid"}, {"enabled", false}};
+    json ijson = {{"command", "enable_vpid"}, {"enabled", false}};
     json ojson = {};
 
     g_enable_vpid = true;
@@ -1672,7 +3034,7 @@ eapis_ut::test_handle_vmcall_json_vpid_enable_vpid_denied()
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"set", "vpid"}, {"enabled", false}};
+    json ijson = {{"command", "enable_vpid"}, {"enabled", false}};
     json ojson = {};
 
     g_enable_vpid = true;
@@ -1690,189 +3052,1655 @@ eapis_ut::test_handle_vmcall_json_vpid_enable_vpid_denied()
 }
 
 void
-eapis_ut::test_handle_vmcall_json_verifiers_clear_denials_allowed()
+eapis_ut::test_handle_vmcall_json_msr_enable_msr_bitmap_missing_enabled()
 {
     MockRepository mocks;
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"run", "clear_denials"}};
+    json ijson = {{"command", "enable_msr_bitmap"}};
     json ojson = {};
 
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_msr_enable_msr_bitmap_invalid_enabled()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "enable_msr_bitmap"}, {"enabled", "not a bool"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_dme);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_msr_enable_msr_bitmap_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "enable_msr_bitmap"}, {"enabled", false}};
+    json ojson = {};
+
+    g_enable_msr_bitmap = true;
     g_deny_all = false;
     g_log_denials = false;
-    ehlr->m_denials.push_back("fake denial");
+
+    ehlr->clear_denials();
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
         this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
         this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(ehlr->m_denials.empty());
+        this->expect_false(g_enable_msr_bitmap);
     });
 }
 
 void
-eapis_ut::test_handle_vmcall_json_verifiers_clear_denials_logged()
+eapis_ut::test_handle_vmcall_json_msr_enable_msr_bitmap_logged()
 {
     MockRepository mocks;
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"run", "clear_denials"}};
+    json ijson = {{"command", "enable_msr_bitmap"}, {"enabled", false}};
     json ojson = {};
 
+    g_enable_msr_bitmap = true;
     g_deny_all = false;
     g_log_denials = true;
-    ehlr->m_denials.push_back("fake denial");
+
+    ehlr->clear_denials();
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
         this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
         this->expect_true(ojson.dump() == "[\"success\"]");
-        this->expect_true(ehlr->m_denials.empty());
+        this->expect_true(ehlr->m_denials.size() == 1);
+        this->expect_false(g_enable_msr_bitmap);
     });
 }
 
 void
-eapis_ut::test_handle_vmcall_json_verifiers_clear_denials_denied()
+eapis_ut::test_handle_vmcall_json_msr_enable_msr_bitmap_denied()
 {
     MockRepository mocks;
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"run", "clear_denials"}};
+    json ijson = {{"command", "enable_msr_bitmap"}, {"enabled", false}};
     json ojson = {};
 
+    g_enable_msr_bitmap = true;
     g_deny_all = true;
     g_log_denials = false;
-    ehlr->m_denials.push_back("fake denial");
+
+    ehlr->clear_denials();
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
         this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
         this->expect_true(ojson.dump() != "[\"success\"]");
-        this->expect_true(ehlr->m_denials.size() == 1);
+        this->expect_true(g_enable_msr_bitmap);
     });
 }
 
 void
-eapis_ut::test_handle_vmcall_json_verifiers_dump_policy_allowed()
+eapis_ut::test_handle_vmcall_json_rdmsr_trap_on_rdmsr_access_missing_msr()
 {
     MockRepository mocks;
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"dump", "policy"}};
+    json ijson = {{"command", "trap_on_rdmsr_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_trap_on_rdmsr_access_invalid_msr()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "trap_on_rdmsr_access"}, {"msr", "bad msr"}};
+    json ijson2 = {{"command", "trap_on_rdmsr_access"}, {"msr_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_trap_on_rdmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "trap_on_rdmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "trap_on_rdmsr_access"}, {"msr_hex", "0x2A"}};
     json ojson = {};
 
     g_deny_all = false;
     g_log_denials = false;
 
+    ehlr->clear_denials();
+
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
     });
 }
 
 void
-eapis_ut::test_handle_vmcall_json_verifiers_dump_policy_logged()
+eapis_ut::test_handle_vmcall_json_rdmsr_trap_on_rdmsr_access_logged()
 {
     MockRepository mocks;
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"dump", "policy"}};
+    json ijson1 = {{"command", "trap_on_rdmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "trap_on_rdmsr_access"}, {"msr_hex", "0x2A"}};
     json ojson = {};
 
     g_deny_all = false;
     g_log_denials = true;
 
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_verifiers_dump_policy_denied()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"dump", "policy"}};
-    json ojson = {};
-
-    g_deny_all = true;
-    g_log_denials = false;
+    ehlr->clear_denials();
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
-    });
-}
-
-void
-eapis_ut::test_handle_vmcall_json_verifiers_dump_denials_allowed()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"dump", "denials"}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = false;
-    ehlr->m_denials.push_back("fake denial");
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
-        this->expect_true(ojson.dump() == "[\"fake denial\"]");
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
         this->expect_true(ehlr->m_denials.size() == 1);
-    });
-}
 
-void
-eapis_ut::test_handle_vmcall_json_verifiers_dump_denials_logged()
-{
-    MockRepository mocks;
-    auto &&vmcs = setup_vmcs(mocks, 0x0);
-    auto &&ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"dump", "denials"}};
-    json ojson = {};
-
-    g_deny_all = false;
-    g_log_denials = true;
-    ehlr->m_denials.push_back("fake denial");
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
         this->expect_true(ehlr->m_denials.size() == 2);
     });
 }
 
 void
-eapis_ut::test_handle_vmcall_json_verifiers_dump_denials_denied()
+eapis_ut::test_handle_vmcall_json_rdmsr_trap_on_rdmsr_access_denied()
 {
     MockRepository mocks;
     auto &&vmcs = setup_vmcs(mocks, 0x0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    json ijson = {{"dump", "denials"}};
+    json ijson1 = {{"command", "trap_on_rdmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "trap_on_rdmsr_access"}, {"msr_hex", "0x2A"}};
     json ojson = {};
 
     g_deny_all = true;
     g_log_denials = false;
-    ehlr->m_denials.push_back("fake denial");
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_rdmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_rdmsr == 0);
+
+        g_rdmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_rdmsr == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_pass_through_rdmsr_access_missing_rdmsr()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "pass_through_rdmsr_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_pass_through_rdmsr_access_invalid_msr()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_rdmsr_access"}, {"msr", "bad msr"}};
+    json ijson2 = {{"command", "pass_through_rdmsr_access"}, {"msr_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_pass_through_rdmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_rdmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "pass_through_rdmsr_access"}, {"msr_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_pass_through_rdmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_rdmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "pass_through_rdmsr_access"}, {"msr_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_pass_through_rdmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_rdmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "pass_through_rdmsr_access"}, {"msr_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_rdmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_rdmsr == 0);
+
+        g_rdmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_rdmsr == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_whitelist_rdmsr_access_missing_rdmsrs()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "whitelist_rdmsr_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_whitelist_rdmsr_access_invalid_msrs()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_rdmsr_access"}, {"msrs", "bad msr"}};
+    json ijson2 = {{"command", "whitelist_rdmsr_access"}, {"msrs_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_whitelist_rdmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_rdmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "whitelist_rdmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_whitelist_rdmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_rdmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "whitelist_rdmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_whitelist_rdmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_rdmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "whitelist_rdmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_rdmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_rdmsr == 0);
+
+        g_rdmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_rdmsr == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_blacklist_rdmsr_access_missing_rdmsrs()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "blacklist_rdmsr_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_blacklist_rdmsr_access_invalid_msrs()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_rdmsr_access"}, {"msrs", "bad msr"}};
+    json ijson2 = {{"command", "blacklist_rdmsr_access"}, {"msrs_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_blacklist_rdmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_rdmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "blacklist_rdmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_blacklist_rdmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_rdmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "blacklist_rdmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_rdmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_rdmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_blacklist_rdmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_rdmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "blacklist_rdmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_rdmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_rdmsr == 0);
+
+        g_rdmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_rdmsr == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_log_rdmsr_access_missing_enabled()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_rdmsr_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_log_rdmsr_access_invalid_enabled()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_rdmsr_access"}, {"enabled", "not a bool"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_dme);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_log_rdmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_rdmsr_access"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_log_rdmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_rdmsr_access"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_log_rdmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_rdmsr_access"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
         this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
-        this->expect_true(ojson.dump() != "[\"fake denial\"]");
+        this->expect_true(ojson.dump() != "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_clear_rdmsr_access_log_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_rdmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_clear_rdmsr_access_log_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_rdmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
         this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_clear_rdmsr_access_log_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_rdmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_rdmsr_access_log_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "rdmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+    ehlr->m_rdmsr_access_log[42] = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "{\"0x2A\":42}");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_rdmsr_access_log_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "rdmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+    ehlr->m_rdmsr_access_log[42] = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "{\"0x2A\":42}");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_rdmsr_rdmsr_access_log_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "rdmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+    ehlr->m_rdmsr_access_log[42] = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "{\"0x2A\":42}");
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_trap_on_wrmsr_access_missing_msr()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "trap_on_wrmsr_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_trap_on_wrmsr_access_invalid_msr()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "trap_on_wrmsr_access"}, {"msr", "bad msr"}};
+    json ijson2 = {{"command", "trap_on_wrmsr_access"}, {"msr_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_trap_on_wrmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "trap_on_wrmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "trap_on_wrmsr_access"}, {"msr_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_trap_on_wrmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "trap_on_wrmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "trap_on_wrmsr_access"}, {"msr_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_trap_on_wrmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "trap_on_wrmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "trap_on_wrmsr_access"}, {"msr_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_wrmsr == 0);
+
+        g_wrmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_wrmsr == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_pass_through_wrmsr_access_missing_wrmsr()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "pass_through_wrmsr_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_pass_through_wrmsr_access_invalid_msr()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_wrmsr_access"}, {"msr", "bad msr"}};
+    json ijson2 = {{"command", "pass_through_wrmsr_access"}, {"msr_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_pass_through_wrmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_wrmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "pass_through_wrmsr_access"}, {"msr_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_pass_through_wrmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_wrmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "pass_through_wrmsr_access"}, {"msr_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_pass_through_wrmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "pass_through_wrmsr_access"}, {"msr", 42}};
+    json ijson2 = {{"command", "pass_through_wrmsr_access"}, {"msr_hex", "0x2A"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_wrmsr == 0);
+
+        g_wrmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_wrmsr == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_whitelist_wrmsr_access_missing_wrmsrs()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "whitelist_wrmsr_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_whitelist_wrmsr_access_invalid_msrs()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_wrmsr_access"}, {"msrs", "bad msr"}};
+    json ijson2 = {{"command", "whitelist_wrmsr_access"}, {"msrs_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_whitelist_wrmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_wrmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "whitelist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_whitelist_wrmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_wrmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "whitelist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_whitelist_wrmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "whitelist_wrmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "whitelist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_wrmsr == 0);
+
+        g_wrmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_wrmsr == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_blacklist_wrmsr_access_missing_wrmsrs()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "blacklist_wrmsr_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_blacklist_wrmsr_access_invalid_msrs()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_wrmsr_access"}, {"msrs", "bad msr"}};
+    json ijson2 = {{"command", "blacklist_wrmsr_access"}, {"msrs_hex", 10}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); }, ""_ut_ree);
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_blacklist_wrmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_wrmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "blacklist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_blacklist_wrmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_wrmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "blacklist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 1);
+
+        g_wrmsr = 0;
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(g_wrmsr == 42);
+        this->expect_true(ehlr->m_denials.size() == 2);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_blacklist_wrmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson1 = {{"command", "blacklist_wrmsr_access"}, {"msrs", {42}}};
+    json ijson2 = {{"command", "blacklist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        g_wrmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson1, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_wrmsr == 0);
+
+        g_wrmsr = 0;
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson2, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+        this->expect_true(g_wrmsr == 0);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_log_wrmsr_access_missing_enabled()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_wrmsr_access"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_ore);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_log_wrmsr_access_invalid_enabled()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_wrmsr_access"}, {"enabled", "not a bool"}};
+    json ojson = {};
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); }, ""_ut_dme);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_log_wrmsr_access_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_wrmsr_access"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_log_wrmsr_access_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_wrmsr_access"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_log_wrmsr_access_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "log_wrmsr_access"}, {"enabled", false}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_clear_wrmsr_access_log_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_wrmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_clear_wrmsr_access_log_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_wrmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "[\"success\"]");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_clear_wrmsr_access_log_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "clear_wrmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "[\"success\"]");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_wrmsr_access_log_allowed()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "wrmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+    ehlr->m_wrmsr_access_log[42] = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "{\"0x2A\":42}");
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_wrmsr_access_log_logged()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "wrmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = false;
+    g_log_denials = true;
+
+    ehlr->clear_denials();
+    ehlr->m_wrmsr_access_log[42] = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); });
+        this->expect_true(ojson.dump() == "{\"0x2A\":42}");
+        this->expect_true(ehlr->m_denials.size() == 1);
+    });
+}
+
+void
+eapis_ut::test_handle_vmcall_json_wrmsr_wrmsr_access_log_denied()
+{
+    MockRepository mocks;
+    auto &&vmcs = setup_vmcs(mocks, 0x0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    json ijson = {{"command", "wrmsr_access_log"}};
+    json ojson = {};
+
+    g_deny_all = true;
+    g_log_denials = false;
+
+    ehlr->clear_denials();
+    ehlr->m_wrmsr_access_log[42] = 42;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_exception([&]{ ehlr->handle_vmcall_data_string_json(ijson, ojson); },  ""_ut_ree);
+        this->expect_true(ojson.dump() != "{\"0x2A\":42}");
     });
 }

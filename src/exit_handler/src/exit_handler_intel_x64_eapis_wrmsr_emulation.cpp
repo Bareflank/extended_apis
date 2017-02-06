@@ -19,22 +19,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <vmcs/vmcs_intel_x64_eapis.h>
-
-vmcs_intel_x64_eapis::vmcs_intel_x64_eapis()
-{
-    static intel_x64::vmcs::value_type g_vpid = 1;
-    m_vpid = g_vpid++;
-}
+#include <exit_handler/exit_handler_intel_x64_eapis.h>
 
 void
-vmcs_intel_x64_eapis::write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
-                                   gsl::not_null<vmcs_intel_x64_state *> guest_state)
-{
-    vmcs_intel_x64::write_fields(host_state, guest_state);
+exit_handler_intel_x64_eapis::log_wrmsr_access(bool enable)
+{ m_wrmsr_access_log_enabled = enable; }
 
-    this->disable_ept();
-    this->disable_vpid();
-    this->disable_io_bitmaps();
-    this->enable_msr_bitmap();
+void
+exit_handler_intel_x64_eapis::clear_wrmsr_access_log()
+{ m_wrmsr_access_log.clear(); }
+
+void
+exit_handler_intel_x64_eapis::handle_exit__wrmsr()
+{
+    if (m_wrmsr_access_log_enabled)
+        m_wrmsr_access_log[static_cast<msr_type>(m_state_save->rcx)]++;
+
+    this->handle_wrmsr();
+    this->resume();
 }

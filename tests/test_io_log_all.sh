@@ -20,26 +20,78 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-ARGS="--cpuid 0 string json '{\"set\":\"blacklist_io_access\", \"ports\": []}'" make vmcall > /dev/null
-ARGS="--cpuid 0 string json '{\"set\":\"log_io_access\", \"enabled\": true}'" make vmcall > /dev/null
-ARGS="--cpuid 0 string json '{\"run\":\"clear_io_access_log\"}'" make vmcall > /dev/null
+# ------------------------------------------------------------------------------
+# Colors
+# ------------------------------------------------------------------------------
 
-echo "----------------------------------------"
-echo "without hypervisor"
+CB='\033[1;35m'
+CC='\033[1;36m'
+CG='\033[1;32m'
+CE='\033[0m'
+
+# ------------------------------------------------------------------------------
+# Environment
+# ------------------------------------------------------------------------------
+
+NUM_CORES=`grep -c ^processor /proc/cpuinfo`
+
+# ------------------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------------------
+
+header() {
+    echo "----------------------------------------"
+    echo $1
+}
+
+footer() {
+    echo ""
+}
+
+run_on_all_cores() {
+    for (( core=0; core<$NUM_CORES; core++ ))
+    do
+        if [[ $2 == "true" ]]; then
+            echo -e "$CC""core:$CB #$core$CE"
+            ARGS="--cpuid $core string json $1" make vmcall
+            echo -e ""
+        else
+            ARGS="--cpuid $core string json $1" make vmcall > /dev/null
+        fi
+    done
+}
+
+# ------------------------------------------------------------------------------
+# Init
+# ------------------------------------------------------------------------------
+
+run_on_all_cores "'{\"command\":\"enable_io_bitmaps\", \"enabled\": true}'"
+run_on_all_cores "'{\"command\":\"clear_io_access_log\"}'"
+run_on_all_cores "'{\"command\":\"log_io_access\", \"enabled\": true}'"
+run_on_all_cores "'{\"command\":\"blacklist_io_access\", \"ports\": []}'"
+
+# ------------------------------------------------------------------------------
+# Tests
+# ------------------------------------------------------------------------------
+
+header "without hypervisor"
 time lspci > /dev/null
-echo ""
+footer
 
-echo "----------------------------------------"
-echo "with hypervisor"
-ARGS="--cpuid 0 string json '{\"set\":\"whitelist_io_access\", \"ports\": []}'" make vmcall > /dev/null
+header "with hypervisor"
+run_on_all_cores "'{\"command\":\"whitelist_io_access\", \"ports\": []}'"
 time lspci > /dev/null
-echo ""
+footer
 
-echo "----------------------------------------"
-echo "io access log"
-echo ""
-ARGS="--cpuid 0 string json '{\"get\":\"io_access_log\"}'" make vmcall
+header "io access log"
+footer
+run_on_all_cores "'{\"command\":\"io_access_log\"}'" "true"
 
-ARGS="--cpuid 0 string json '{\"set\":\"blacklist_io_access\", \"ports\": []}'" make vmcall > /dev/null
-ARGS="--cpuid 0 string json '{\"set\":\"log_io_access\", \"enabled\": false}'" make vmcall > /dev/null
-ARGS="--cpuid 0 string json '{\"run\":\"clear_io_access_log\"}'" make vmcall > /dev/null
+# ------------------------------------------------------------------------------
+# Fini
+# ------------------------------------------------------------------------------
+
+run_on_all_cores "'{\"command\":\"blacklist_io_access\", \"ports\": []}'"
+run_on_all_cores "'{\"command\":\"log_io_access\", \"enabled\": false}'"
+run_on_all_cores "'{\"command\":\"clear_io_access_log\"}'"
+run_on_all_cores "'{\"command\":\"enable_io_bitmaps\", \"enabled\": false}'"

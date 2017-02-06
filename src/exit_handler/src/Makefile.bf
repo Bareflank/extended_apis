@@ -41,7 +41,7 @@ NATIVE_CXXFLAGS+=
 NATIVE_ASMFLAGS+=
 NATIVE_LDFLAGS+=
 NATIVE_ARFLAGS+=
-NATIVE_DEFINES+=
+NATIVE_DEFINES+=SHOW_VMCALLS
 
 CROSS_CCFLAGS+=
 CROSS_CXXFLAGS+=
@@ -71,6 +71,11 @@ SOURCES+=exit_handler_intel_x64_eapis_io_instruction_emulation.cpp
 SOURCES+=exit_handler_intel_x64_eapis_io_instruction_vmcall.cpp
 SOURCES+=exit_handler_intel_x64_eapis_monitor_trap_emulation.cpp
 SOURCES+=exit_handler_intel_x64_eapis_vpid_vmcall.cpp
+SOURCES+=exit_handler_intel_x64_eapis_msr_vmcall.cpp
+SOURCES+=exit_handler_intel_x64_eapis_rdmsr_emulation.cpp
+SOURCES+=exit_handler_intel_x64_eapis_rdmsr_vmcall.cpp
+SOURCES+=exit_handler_intel_x64_eapis_wrmsr_emulation.cpp
+SOURCES+=exit_handler_intel_x64_eapis_wrmsr_vmcall.cpp
 
 INCLUDE_PATHS+=../../../include
 INCLUDE_PATHS+=%HYPER_ABS%/include/

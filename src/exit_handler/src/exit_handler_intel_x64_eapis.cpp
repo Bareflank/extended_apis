@@ -34,19 +34,26 @@ exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis() :
     m_vmcs_eapis(nullptr)
 {
     init_policy();
+
+    register_json_vmcall__verifiers();
+    register_json_vmcall__io_instruction();
+    register_json_vmcall__vpid();
+    register_json_vmcall__msr();
+    register_json_vmcall__rdmsr();
+    register_json_vmcall__wrmsr();
 }
 
 void
 exit_handler_intel_x64_eapis::resume()
 {
-    eapis_vmcs()->resume();
+    m_vmcs_eapis->resume();
 }
 
 void
 exit_handler_intel_x64_eapis::advance_and_resume()
 {
     this->advance_rip();
-    eapis_vmcs()->resume();
+    m_vmcs_eapis->resume();
 }
 
 void
@@ -60,6 +67,14 @@ exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
 
         case exit_reason::basic_exit_reason::io_instruction:
             handle_exit__io_instruction();
+            break;
+
+        case vmcs::exit_reason::basic_exit_reason::rdmsr:
+            handle_exit__rdmsr();
+            break;
+
+        case vmcs::exit_reason::basic_exit_reason::wrmsr:
+            handle_exit__wrmsr();
             break;
 
         default:
@@ -81,6 +96,18 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers(vmcall_registers_t &regs)
             handle_vmcall_registers__vpid(regs);
             break;
 
+        case eapis_cat__msr:
+            handle_vmcall_registers__msr(regs);
+            break;
+
+        case eapis_cat__rdmsr:
+            handle_vmcall_registers__rdmsr(regs);
+            break;
+
+        case eapis_cat__wrmsr:
+            handle_vmcall_registers__wrmsr(regs);
+            break;
+
         default:
             throw std::runtime_error("unknown vmcall category");
     }
@@ -90,14 +117,9 @@ void
 exit_handler_intel_x64_eapis::handle_vmcall_data_string_json(
     const json &ijson, json &ojson)
 {
-    if (handle_vmcall_json__verifiers(ijson, ojson))
-        return;
-
-    if (handle_vmcall_json__io_instruction(ijson, ojson))
-        return;
-
-    if (handle_vmcall_json__vpid(ijson, ojson))
-        return;
-
-    throw std::runtime_error("unknown JSON command");
+    m_json_commands.at(ijson.at("command"))(ijson, ojson);
 }
+
+void
+exit_handler_intel_x64_eapis::json_success(json &ojson)
+{ ojson = {"success"}; }

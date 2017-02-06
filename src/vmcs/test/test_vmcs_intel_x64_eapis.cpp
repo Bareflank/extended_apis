@@ -99,6 +99,7 @@ setup_vmcs()
     return std::move(vmcs);
 }
 
+
 void
 eapis_ut::test_construction()
 {
@@ -114,12 +115,6 @@ eapis_ut::test_launch()
     auto &&vmss = std::make_unique<vmcs_intel_x64_state>();
 
     vmcs->launch(vmss.get(), vmss.get());
-
-    this->expect_true(primary_processor_based_vm_execution_controls::use_io_bitmaps::is_enabled());
-    this->expect_true(address_of_io_bitmap_a::get() != 0);
-    this->expect_true(address_of_io_bitmap_b::get() != 0);
-
-    this->expect_true(secondary_processor_based_vm_execution_controls::enable_vpid::is_disabled());
 }
 
 void
@@ -147,11 +142,55 @@ eapis_ut::test_disable_vpid()
 }
 
 void
+eapis_ut::test_enable_io_bitmaps()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->enable_io_bitmaps();
+
+    this->expect_true(vmcs->m_io_bitmapa != nullptr);
+    this->expect_true(vmcs->m_io_bitmapb != nullptr);
+    this->expect_true(vmcs->m_io_bitmapa_view.data() != nullptr);
+    this->expect_true(vmcs->m_io_bitmapa_view.size() == static_cast<std::ptrdiff_t>(x64::page_size));
+    this->expect_true(vmcs->m_io_bitmapb_view.data() != nullptr);
+    this->expect_true(vmcs->m_io_bitmapb_view.size() == static_cast<std::ptrdiff_t>(x64::page_size));
+    this->expect_true(address_of_io_bitmap_a::get() != 0);
+    this->expect_true(address_of_io_bitmap_b::get() != 0);
+    this->expect_true(primary_processor_based_vm_execution_controls::use_io_bitmaps::is_enabled());
+}
+
+void
+eapis_ut::test_disable_io_bitmaps()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->disable_io_bitmaps();
+
+    this->expect_true(vmcs->m_io_bitmapa == nullptr);
+    this->expect_true(vmcs->m_io_bitmapb == nullptr);
+    this->expect_true(vmcs->m_io_bitmapa_view.data() == nullptr);
+    this->expect_true(vmcs->m_io_bitmapa_view.size() == 0);
+    this->expect_true(vmcs->m_io_bitmapb_view.data() == nullptr);
+    this->expect_true(vmcs->m_io_bitmapb_view.size() == 0);
+    this->expect_true(address_of_io_bitmap_a::get() == 0);
+    this->expect_true(address_of_io_bitmap_b::get() == 0);
+    this->expect_true(primary_processor_based_vm_execution_controls::use_io_bitmaps::is_disabled());
+}
+
+void
 eapis_ut::test_trap_on_io_access()
 {
     MockRepository mocks;
+    setup_mm(mocks);
     auto &&vmcs = setup_vmcs();
 
+    this->expect_exception([&] { vmcs->trap_on_io_access(0x42); }, ""_ut_ree);
+
+    vmcs->enable_io_bitmaps();
     vmcs->trap_on_io_access(0x42);
     vmcs->trap_on_io_access(0x8042);
 
@@ -163,8 +202,12 @@ void
 eapis_ut::test_trap_on_all_io_accesses()
 {
     MockRepository mocks;
+    setup_mm(mocks);
     auto &&vmcs = setup_vmcs();
 
+    this->expect_exception([&] { vmcs->trap_on_all_io_accesses(); }, ""_ut_ree);
+
+    vmcs->enable_io_bitmaps();
     vmcs->trap_on_all_io_accesses();
 
     auto all_seta = 0xFF;
@@ -174,7 +217,7 @@ eapis_ut::test_trap_on_all_io_accesses()
     this->expect_true(all_seta == 0xFF);
 
     auto all_setb = 0xFF;
-    for (auto val : vmcs->m_io_bitmapa_view)
+    for (auto val : vmcs->m_io_bitmapb_view)
         all_setb &= val;
 
     this->expect_true(all_setb == 0xFF);
@@ -184,8 +227,12 @@ void
 eapis_ut::test_pass_through_io_access()
 {
     MockRepository mocks;
+    setup_mm(mocks);
     auto &&vmcs = setup_vmcs();
 
+    this->expect_exception([&] { vmcs->pass_through_io_access(0x42); }, ""_ut_ree);
+
+    vmcs->enable_io_bitmaps();
     vmcs->trap_on_all_io_accesses();
     vmcs->pass_through_io_access(0x42);
     vmcs->pass_through_io_access(0x8042);
@@ -198,8 +245,12 @@ void
 eapis_ut::test_pass_through_all_io_accesses()
 {
     MockRepository mocks;
+    setup_mm(mocks);
     auto &&vmcs = setup_vmcs();
 
+    this->expect_exception([&] { vmcs->pass_through_all_io_accesses(); }, ""_ut_ree);
+
+    vmcs->enable_io_bitmaps();
     vmcs->pass_through_all_io_accesses();
 
     auto all_seta = 0x0;
@@ -209,7 +260,7 @@ eapis_ut::test_pass_through_all_io_accesses()
     this->expect_true(all_seta == 0x0);
 
     auto all_setb = 0x0;
-    for (auto val : vmcs->m_io_bitmapa_view)
+    for (auto val : vmcs->m_io_bitmapb_view)
         all_setb |= val;
 
     this->expect_true(all_setb == 0x0);
@@ -219,8 +270,12 @@ void
 eapis_ut::test_whitelist_io_access()
 {
     MockRepository mocks;
+    setup_mm(mocks);
     auto &&vmcs = setup_vmcs();
 
+    this->expect_exception([&] { vmcs->whitelist_io_access({0x42, 0x8042}); }, ""_ut_ree);
+
+    vmcs->enable_io_bitmaps();
     vmcs->whitelist_io_access({0x42, 0x8042});
     this->expect_true(vmcs->m_io_bitmapa_view[8] == 0xFB);
     this->expect_true(vmcs->m_io_bitmapb_view[8] == 0xFB);
@@ -230,8 +285,12 @@ void
 eapis_ut::test_blacklist_io_access()
 {
     MockRepository mocks;
+    setup_mm(mocks);
     auto &&vmcs = setup_vmcs();
 
+    this->expect_exception([&] { vmcs->blacklist_io_access({0x42, 0x8042}); }, ""_ut_ree);
+
+    vmcs->enable_io_bitmaps();
     vmcs->blacklist_io_access({0x42, 0x8042});
     this->expect_true(vmcs->m_io_bitmapa_view[8] == 0x4);
     this->expect_true(vmcs->m_io_bitmapb_view[8] == 0x4);
@@ -271,4 +330,288 @@ eapis_ut::test_set_eptp()
     this->expect_true(ept_pointer::memory_type::get() == ept_pointer::memory_type::write_back);
     this->expect_true(ept_pointer::page_walk_length_minus_one::get() == 3UL);
     this->expect_true(ept_pointer::phys_addr::get() == 0x0000000ABCDEF0000);
+}
+
+void
+eapis_ut::test_enable_msr_bitmap()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->enable_msr_bitmap();
+
+    this->expect_true(vmcs->m_msr_bitmap != nullptr);
+    this->expect_true(vmcs->m_msr_bitmap_view.data() != nullptr);
+    this->expect_true(vmcs->m_msr_bitmap_view.size() == static_cast<std::ptrdiff_t>(x64::page_size));
+    this->expect_true(address_of_msr_bitmap::get() != 0);
+    this->expect_true(primary_processor_based_vm_execution_controls::use_msr_bitmap::is_enabled());
+}
+
+void
+eapis_ut::test_disable_msr_bitmap()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->disable_msr_bitmap();
+
+    this->expect_true(vmcs->m_msr_bitmap == nullptr);
+    this->expect_true(vmcs->m_msr_bitmap_view.data() == nullptr);
+    this->expect_true(vmcs->m_msr_bitmap_view.size() == 0);
+    this->expect_true(address_of_msr_bitmap::get() == 0);
+    this->expect_true(primary_processor_based_vm_execution_controls::use_msr_bitmap::is_disabled());
+}
+
+void
+eapis_ut::test_trap_on_rdmsr_access()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->trap_on_rdmsr_access(0x42); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->trap_on_rdmsr_access(0x42);
+    vmcs->trap_on_rdmsr_access(0xC0000042UL);
+
+    this->expect_true(vmcs->m_msr_bitmap_view[8] == 0x4);
+    this->expect_true(vmcs->m_msr_bitmap_view[0x408] == 0x4);
+
+    this->expect_exception([&] { vmcs->trap_on_rdmsr_access(0x4000); }, ""_ut_ree);
+    this->expect_exception([&] { vmcs->trap_on_rdmsr_access(0xC0004000UL); }, ""_ut_ree);
+}
+
+void
+eapis_ut::test_trap_on_all_rdmsr_accesses()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->trap_on_all_rdmsr_accesses(); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->trap_on_all_rdmsr_accesses();
+
+    auto all_set_1 = 0xFF;
+    for (auto i = 0x0; i < 0x800; i++)
+        all_set_1 &= vmcs->m_msr_bitmap_view[i];
+
+    this->expect_true(all_set_1 == 0xFF);
+
+    auto all_set_0 = 0x0;
+    for (auto i = 0x800; i < 0x1000; i++)
+        all_set_0 |= vmcs->m_msr_bitmap_view[i];
+
+    this->expect_true(all_set_0 == 0x0);
+}
+
+void
+eapis_ut::test_pass_through_rdmsr_access()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->pass_through_rdmsr_access(0x42); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->trap_on_all_rdmsr_accesses();
+
+    vmcs->pass_through_rdmsr_access(0x42);
+    vmcs->pass_through_rdmsr_access(0xC0000042UL);
+
+    this->expect_true(vmcs->m_msr_bitmap_view[8] == 0xFB);
+    this->expect_true(vmcs->m_msr_bitmap_view[0x408] == 0xFB);
+
+    this->expect_exception([&] { vmcs->pass_through_rdmsr_access(0x4000); }, ""_ut_ree);
+    this->expect_exception([&] { vmcs->pass_through_rdmsr_access(0xC0004000UL); }, ""_ut_ree);
+}
+
+void
+eapis_ut::test_pass_through_all_rdmsr_accesses()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->pass_through_all_rdmsr_accesses(); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->trap_on_all_rdmsr_accesses();
+    vmcs->trap_on_all_wrmsr_accesses();
+    vmcs->pass_through_all_rdmsr_accesses();
+
+    auto all_set_0 = 0x0;
+    for (auto i = 0x0; i < 0x800; i++)
+        all_set_0 |= vmcs->m_msr_bitmap_view[i];
+
+    this->expect_true(all_set_0 == 0x0);
+
+    auto all_set_1 = 0xFF;
+    for (auto i = 0x800; i < 0x1000; i++)
+        all_set_1 &= vmcs->m_msr_bitmap_view[i];
+
+    this->expect_true(all_set_1 == 0xFF);
+}
+
+void
+eapis_ut::test_whitelist_rdmsr_access()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->whitelist_rdmsr_access({0x42, 0xC0000042UL}); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->whitelist_rdmsr_access({0x42, 0xC0000042UL});
+
+    this->expect_true(vmcs->m_msr_bitmap_view[8] == 0xFB);
+    this->expect_true(vmcs->m_msr_bitmap_view[0x408] == 0xFB);
+}
+
+void
+eapis_ut::test_blacklist_rdmsr_access()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->blacklist_rdmsr_access({0x42, 0xC0000042UL}); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->blacklist_rdmsr_access({0x42, 0xC0000042UL});
+
+    this->expect_true(vmcs->m_msr_bitmap_view[8] == 0x4);
+    this->expect_true(vmcs->m_msr_bitmap_view[0x408] == 0x4);
+}
+
+void
+eapis_ut::test_trap_on_wrmsr_access()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->trap_on_wrmsr_access(0x42); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->trap_on_wrmsr_access(0x42);
+    vmcs->trap_on_wrmsr_access(0xC0000042UL);
+
+    this->expect_true(vmcs->m_msr_bitmap_view[0x808] == 0x4);
+    this->expect_true(vmcs->m_msr_bitmap_view[0xC08] == 0x4);
+
+    this->expect_exception([&] { vmcs->trap_on_wrmsr_access(0x4000); }, ""_ut_ree);
+    this->expect_exception([&] { vmcs->trap_on_wrmsr_access(0xC0004000UL); }, ""_ut_ree);
+}
+
+void
+eapis_ut::test_trap_on_all_wrmsr_accesses()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->trap_on_all_wrmsr_accesses(); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->trap_on_all_wrmsr_accesses();
+
+    auto all_set_1 = 0xFF;
+    for (auto i = 0x800; i < 0x1000; i++)
+        all_set_1 &= vmcs->m_msr_bitmap_view[i];
+
+    this->expect_true(all_set_1 == 0xFF);
+
+    auto all_set_0 = 0x0;
+    for (auto i = 0x0; i < 0x800; i++)
+        all_set_0 |= vmcs->m_msr_bitmap_view[i];
+
+    this->expect_true(all_set_0 == 0x0);
+}
+
+void
+eapis_ut::test_pass_through_wrmsr_access()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->pass_through_wrmsr_access(0x42); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->trap_on_all_wrmsr_accesses();
+
+    vmcs->pass_through_wrmsr_access(0x42);
+    vmcs->pass_through_wrmsr_access(0xC0000042UL);
+
+    this->expect_true(vmcs->m_msr_bitmap_view[0x808] == 0xFB);
+    this->expect_true(vmcs->m_msr_bitmap_view[0xC08] == 0xFB);
+
+    this->expect_exception([&] { vmcs->pass_through_wrmsr_access(0x4000); }, ""_ut_ree);
+    this->expect_exception([&] { vmcs->pass_through_wrmsr_access(0xC0004000UL); }, ""_ut_ree);
+}
+
+void
+eapis_ut::test_pass_through_all_wrmsr_accesses()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->pass_through_all_wrmsr_accesses(); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->trap_on_all_rdmsr_accesses();
+    vmcs->trap_on_all_wrmsr_accesses();
+    vmcs->pass_through_all_wrmsr_accesses();
+
+    auto all_set_0 = 0x0;
+    for (auto i = 0x800; i < 0x1000; i++)
+        all_set_0 |= vmcs->m_msr_bitmap_view[i];
+
+    this->expect_true(all_set_0 == 0x0);
+
+    auto all_set_1 = 0xFF;
+    for (auto i = 0x0; i < 0x800; i++)
+        all_set_1 &= vmcs->m_msr_bitmap_view[i];
+
+    this->expect_true(all_set_1 == 0xFF);
+}
+
+void
+eapis_ut::test_whitelist_wrmsr_access()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->whitelist_wrmsr_access({0x42, 0xC0000042UL}); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->whitelist_wrmsr_access({0x42, 0xC0000042UL});
+
+    this->expect_true(vmcs->m_msr_bitmap_view[0x808] == 0xFB);
+    this->expect_true(vmcs->m_msr_bitmap_view[0xC08] == 0xFB);
+}
+
+void
+eapis_ut::test_blacklist_wrmsr_access()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    this->expect_exception([&] { vmcs->blacklist_wrmsr_access({0x42, 0xC0000042UL}); }, ""_ut_ree);
+
+    vmcs->enable_msr_bitmap();
+    vmcs->blacklist_wrmsr_access({0x42, 0xC0000042UL});
+
+    this->expect_true(vmcs->m_msr_bitmap_view[0x808] == 0x4);
+    this->expect_true(vmcs->m_msr_bitmap_view[0xC08] == 0x4);
 }
