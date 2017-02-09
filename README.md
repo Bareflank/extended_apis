@@ -33,9 +33,8 @@ build your hypervisors from. Some of these APIs include:
 
 - MSR / IO Bitmaps
 - VPID / Extended Page Tables (EPT)
-- Event Injection
 - Monitor Traps
-- Preemption Timer
+- Virtual APIC / Interrupt Management
 - ACPI / Timers
 
 ## Compilation / Usage
@@ -78,15 +77,22 @@ different vmcalls that are provided. For example:
 
 ```
 cd ~/hypervisor
-../extended_apis/tests/test_vpid.sh
+./extended_apis/tests/test_vpid.sh
 ```
 
 The `test_vpid.sh` enables / disables VPID using JSON based vmcalls on
-the bootstrap processor (core 0) as follows
+all of the cores as follows
 
 ```
-ARGS="--cpuid 0 string json '{\"set\":\"vpid\", \"enabled\": true}'" make vmcall
-ARGS="--cpuid 0 string json '{\"set\":\"vpid\", \"enabled\": false}'" make vmcall
+run_on_all_cores() {
+    for (( core=0; core<$NUM_CORES; core++ ))
+    do
+        ARGS="--cpuid $core string json $1" make vmcall > /dev/null
+    done
+}
+
+run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": false}'"
+run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": true}'"
 ```
 
 ## Links

@@ -23,6 +23,7 @@
 #define EXIT_HANDLER_INTEL_X64_EAPIS_H
 
 #include <vector>
+#include <functional>
 
 #include <vmcs/vmcs_intel_x64_eapis.h>
 #include <vmcs/vmcs_intel_x64_32bit_control_fields.h>
@@ -30,7 +31,14 @@
 #include <exit_handler/exit_handler_intel_x64.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 
+#include <debug.h>
 #include <intrinsics/portio_x64.h>
+
+#ifdef SHOW_VMCALLS
+#define vmcall_debug bfdebug
+#else
+#define vmcall_debug if (0) bfdebug
+#endif
 
 class exit_handler_intel_x64_eapis : public exit_handler_intel_x64
 {
@@ -46,6 +54,9 @@ public:
     using port_log_type = std::map<port_type, count_type>;
     using denial_list_type = std::vector<std::string>;
     using policy_type = std::map<vp::index_type, std::unique_ptr<vmcall_verifier>>;
+    using msr_type = x64::msrs::field_type;
+    using msr_list_type = std::vector<msr_type>;
+    using msr_log_type = std::map<msr_type, count_type>;
 
     /// Default Constructor
     ///
@@ -111,7 +122,7 @@ public:
     ///     { <do awesome stuff here> }
     /// };
     ///
-    /// ehlr->register_monitor_trap(&my_exit_handler::monitor_trap_callback);
+    /// this->register_monitor_trap(&my_exit_handler::monitor_trap_callback);
     ///
     /// @endcode
     ///
@@ -134,8 +145,9 @@ public:
     /// prior to calling a registered callback, but it can be used to
     /// cancel an existing registered callback.
     ///
+    /// Example:
     /// @code
-    /// ehlr->clear_monitor_trap();
+    /// this->clear_monitor_trap();
     /// @endcode
     ///
     /// @expects
@@ -147,8 +159,9 @@ public:
     ///
     /// Enables / disables IO access logging.
     ///
+    /// Example:
     /// @code
-    /// ehlr->log_io_access(true);
+    /// this->log_io_access(true);
     /// @endcode
     ///
     /// @expects
@@ -163,14 +176,79 @@ public:
     /// Clears the IO access log. All previously logged IO accesses will be
     /// removed.
     ///
+    /// Example:
     /// @code
-    /// ehlr->clear_io_access_log();
+    /// this->clear_io_access_log();
     /// @endcode
     ///
     /// @expects
     /// @ensures
     ///
     void clear_io_access_log();
+
+    /// Log Read MSR Access
+    ///
+    /// Enables / disables read MSR access logging.
+    ///
+    /// Example:
+    /// @code
+    /// this->log_rdmsr_access(true);
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param enable set to true to enable read MSR access logging,
+    ///     false otherwise
+    ///
+    void log_rdmsr_access(bool enable);
+
+    /// Log Write MSR Access
+    ///
+    /// Enables / disables write MSR access logging.
+    ///
+    /// Example:
+    /// @code
+    /// this->log_wrmsr_access(true);
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param enable set to true to enable write MSR access logging,
+    ///     false otherwise
+    ///
+    void log_wrmsr_access(bool enable);
+
+    /// Clear Read MSR Access Log
+    ///
+    /// Clears the read MSR access log. All previously logged read MSR
+    /// accesses will be removed.
+    ///
+    /// Example:
+    /// @code
+    /// this->clear_rdmsr_access_log();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void clear_rdmsr_access_log();
+
+    /// Clear Write MSR Access Log
+    ///
+    /// Clears the write MSR access log. All previously logged write MSR
+    /// accesses will be removed.
+    ///
+    /// Example:
+    /// @code
+    /// this->clear_wrmsr_access_log();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void clear_wrmsr_access_log();
 
 protected:
 
@@ -180,6 +258,8 @@ private:
 
     void handle_exit__monitor_trap_flag();
     void handle_exit__io_instruction();
+    void handle_exit__rdmsr();
+    void handle_exit__wrmsr();
 
 protected:
 
@@ -190,10 +270,9 @@ private:
 
     void handle_vmcall_registers__io_instruction(vmcall_registers_t &regs);
     void handle_vmcall_registers__vpid(vmcall_registers_t &regs);
-
-    bool handle_vmcall_json__verifiers(const json &ijson, json &ojson);
-    bool handle_vmcall_json__io_instruction(const json &ijson, json &ojson);
-    bool handle_vmcall_json__vpid(const json &ijson, json &ojson);
+    void handle_vmcall_registers__msr(vmcall_registers_t &regs);
+    void handle_vmcall_registers__rdmsr(vmcall_registers_t &regs);
+    void handle_vmcall_registers__wrmsr(vmcall_registers_t &regs);
 
 private:
 
@@ -203,6 +282,7 @@ private:
 
 private:
 
+    void handle_vmcall__enable_io_bitmaps(bool enabled);
     void handle_vmcall__trap_on_io_access(port_type port);
     void handle_vmcall__trap_on_all_io_accesses();
     void handle_vmcall__pass_through_io_access(port_type port);
@@ -219,6 +299,30 @@ private:
 
 private:
 
+    void handle_vmcall__enable_msr_bitmap(bool enabled);
+
+    void handle_vmcall__trap_on_rdmsr_access(msr_type msr);
+    void handle_vmcall__trap_on_all_rdmsr_accesses();
+    void handle_vmcall__pass_through_rdmsr_access(msr_type msr);
+    void handle_vmcall__pass_through_all_rdmsr_accesses();
+    void handle_vmcall__whitelist_rdmsr_access(msr_list_type msrs);
+    void handle_vmcall__blacklist_rdmsr_access(msr_list_type msrs);
+    void handle_vmcall__log_rdmsr_access(bool enabled);
+    void handle_vmcall__clear_rdmsr_access_log();
+    void handle_vmcall__rdmsr_access_log(json &ojson);
+
+    void handle_vmcall__trap_on_wrmsr_access(msr_type msr);
+    void handle_vmcall__trap_on_all_wrmsr_accesses();
+    void handle_vmcall__pass_through_wrmsr_access(msr_type msr);
+    void handle_vmcall__pass_through_all_wrmsr_accesses();
+    void handle_vmcall__whitelist_wrmsr_access(msr_list_type msrs);
+    void handle_vmcall__blacklist_wrmsr_access(msr_list_type msrs);
+    void handle_vmcall__log_wrmsr_access(bool enabled);
+    void handle_vmcall__clear_wrmsr_access_log();
+    void handle_vmcall__wrmsr_access_log(json &ojson);
+
+private:
+
     void unhandled_monitor_trap_callback();
     monitor_trap_callback m_monitor_trap_callback;
 
@@ -228,6 +332,13 @@ private:
 
     bool m_io_access_log_enabled;
     port_log_type m_io_access_log;
+
+private:
+
+    bool m_rdmsr_access_log_enabled;
+    bool m_wrmsr_access_log_enabled;
+    msr_log_type m_rdmsr_access_log;
+    msr_log_type m_wrmsr_access_log;
 
 private:
 
@@ -242,21 +353,32 @@ private:
     denial_list_type m_denials;
     policy_type m_verifiers;
 
+private:
+
+    void json_success(json &ojson);
+
+    void register_json_vmcall__verifiers();
+    void register_json_vmcall__io_instruction();
+    void register_json_vmcall__vpid();
+    void register_json_vmcall__msr();
+    void register_json_vmcall__rdmsr();
+    void register_json_vmcall__wrmsr();
+
+    std::map<std::string, std::function<void(const json &ijson, json &ojson)>> m_json_commands;
+
 public:
 
     // The following are only marked public for unit testing. Do not use
     // these APIs directly as they may change at any time, and their direct
     // use may be unstable. You have been warned.
 
-    vmcs_intel_x64_eapis *m_vmcs_eapis;
-
-    auto eapis_vmcs()
+    void set_vmcs(gsl::not_null<vmcs_intel_x64 *> vmcs) override
     {
-        if (m_vmcs_eapis == nullptr)
-            m_vmcs_eapis = dynamic_cast<vmcs_intel_x64_eapis *>(m_vmcs);
-
-        return m_vmcs_eapis;
+        m_vmcs = vmcs;
+        m_vmcs_eapis = dynamic_cast<vmcs_intel_x64_eapis *>(m_vmcs);
     }
+
+    vmcs_intel_x64_eapis *m_vmcs_eapis;
 
 public:
 
