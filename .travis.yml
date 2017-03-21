@@ -8,6 +8,42 @@ dist: trusty
 sudo: required
 
 #
+# Compilers
+#
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-trusty-3.8
+      - llvm-toolchain-trusty-3.9
+    packages:
+      - clang-3.8
+      - clang-3.9
+      - clang-tidy-3.8
+      - clang-tidy-3.9
+      - gcc-5
+      - g++-5
+      - nasm
+
+#
+# Update Build Environment
+#
+before_install:
+  - mkdir $HOME/usr
+  - export PATH="$HOME/usr/bin:$PATH"
+  - wget https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.sh
+  - chmod +x cmake-3.7.2-Linux-x86_64.sh
+  - ./cmake-3.7.2-Linux-x86_64.sh --prefix=$HOME/usr --exclude-subdir --skip-license
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 100
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 100
+  - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-5 100
+  - sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-3.8 100
+  - cd ..
+  - git clone https://github.com/bareflank/hypervisor.git
+  - mv extended_apis hypervisor/
+  - cd hypervisor
+
+#
 # Build Matrix
 #
 matrix:
@@ -19,11 +55,6 @@ matrix:
   - os: linux
     env:
       - TEST="Astyle"
-    before_install:
-      - cd ..
-      - git clone https://github.com/bareflank/hypervisor.git
-      - mv extended_apis hypervisor/
-      - cd hypervisor
     script:
       - if [[ -n $(./tools/astyle/run.sh | grep Formatted) ]]; then echo "You must run astyle before submitting a pull request"; exit -1; fi
 
@@ -33,11 +64,6 @@ matrix:
   - os: linux
     env:
       - TEST="Doxygen"
-    before_install:
-      - cd ..
-      - git clone https://github.com/bareflank/hypervisor.git
-      - mv extended_apis hypervisor/
-      - cd hypervisor
     script:
       - ./configure
       - make doxygen
@@ -58,21 +84,8 @@ matrix:
   - os: linux
     env:
       - TEST="Codecov"
-    services:
-      - docker
-    before_install:
-      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-      - sudo add-apt-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.8 main" -y
-      - sudo apt-get update
-      - sudo apt-get install --yes clang-3.8
-      - sudo apt-get install --yes llvm-3.8
-      - cd ..
-      - git clone https://github.com/bareflank/hypervisor.git
-      - mv extended_apis hypervisor/
-      - cd hypervisor
-    install:
-      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh
     script:
+      - ./configure --compiler clang-3.8
       - CC=clang-3.8 CXX=clang++-3.8 COVERALLS=true make
       - make test
     after_success:
@@ -85,27 +98,13 @@ matrix:
   - os: linux
     env:
       - TEST="Clang Tidy"
-    services:
-      - docker
-    before_install:
-      - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-      - sudo add-apt-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.8 main" -y
-      - sudo apt-get update
-      - sudo apt-get install --yes clang-3.8
-      - sudo apt-get install --yes clang-tidy-3.8
-      - sudo apt-get install --yes llvm-3.8
-      - cd ..
-      - git clone https://github.com/bareflank/hypervisor.git
-      - mv extended_apis hypervisor/
-      - cd hypervisor
     install:
-      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh
       - git clone https://github.com/rizsotto/bear.git
       - pushd bear; cmake .; make; sudo make install; popd
-      - sudo ln -s /usr/bin/clang-tidy-3.8 /usr/bin/clang-tidy
     script:
+      - ./configure --compiler clang-3.8
       - STATIC_ANALYSIS_ENABLED=true bear make
-      - EXTENDED_APIS_EXTENSION=true make tidy
+      - HYPERKERNEL_EXTENSION=true make tidy
 
   #
   # Google Sanitizers
@@ -113,16 +112,8 @@ matrix:
   - os: linux
     env:
       - TEST="Google Sanitizers"
-    services:
-      - docker
-    before_install:
-      - cd ..
-      - git clone https://github.com/bareflank/hypervisor.git
-      - mv extended_apis hypervisor/
-      - cd hypervisor
-    install:
-      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh
     script:
+      - ./configure --compiler clang-3.8
       - DYNAMIC_ANALYSIS_ENABLED=true make
       - make test
 
@@ -132,17 +123,8 @@ matrix:
   - os: linux
     env:
       - TEST="Clang 3.8"
-    services:
-      - docker
-    before_install:
-      - cd ..
-      - git clone https://github.com/bareflank/hypervisor.git
-      - mv extended_apis hypervisor/
-      - cd hypervisor
-    install:
-      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh --compiler clang_38
-      - cat env.sh
     script:
+      - ./configure --compiler clang-3.8
       - make
       - make test
 
@@ -152,16 +134,7 @@ matrix:
   - os: linux
     env:
       - TEST="Clang 3.9"
-    services:
-      - docker
-    before_install:
-      - cd ..
-      - git clone https://github.com/bareflank/hypervisor.git
-      - mv extended_apis hypervisor/
-      - cd hypervisor
-    install:
-      - travis_wait 40 ./tools/scripts/setup_ubuntu.sh --compiler clang_39
-      - cat env.sh
     script:
+      - ./configure --compiler clang-3.9
       - make
       - make test
