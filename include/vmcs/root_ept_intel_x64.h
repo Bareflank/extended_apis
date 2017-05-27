@@ -143,8 +143,8 @@ public:
 
     /// Setup Identify Map (1g Granularity)
     ///
-    /// Sets up an identify map in the extended page tables using 1 gigabyte
-    /// of memory granularity.
+    /// Sets up an identify map in the extended page tables using 1gb
+    /// granularity.
     ///
     /// @expects
     /// @ensures
@@ -156,8 +156,8 @@ public:
 
     /// Setup Identify Map (2m Granularity)
     ///
-    /// Sets up an identify map in the extended page tables using 1 gigabyte
-    /// of memory granularity.
+    /// Sets up an identify map in the extended page tables using 2mb
+    /// granularity.
     ///
     /// @expects
     /// @ensures
@@ -169,8 +169,8 @@ public:
 
     /// Setup Identify Map (4k Granularity)
     ///
-    /// Sets up an identify map in the extended page tables using 1 gigabyte
-    /// of memory granularity.
+    /// Sets up an identify map in the extended page tables using 4k
+    /// granularity.
     ///
     /// @expects
     /// @ensures
