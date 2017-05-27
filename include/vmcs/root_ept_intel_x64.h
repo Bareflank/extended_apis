@@ -266,8 +266,7 @@ public:
     ///
     /// This function converts the internal page table tree structure into a
     /// linear, memory descriptor list. Page table entry information is not
-    /// provide, only the page tables.
-    /// pages.
+    /// provided, only the page tables.
     ///
     /// @expects
     /// @ensures
