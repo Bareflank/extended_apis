@@ -68,6 +68,7 @@ SOURCES+=vmcs_intel_x64_eapis.cpp
 SOURCES+=vmcs_intel_x64_eapis_ept.cpp
 SOURCES+=vmcs_intel_x64_eapis_io.cpp
 SOURCES+=vmcs_intel_x64_eapis_vpid.cpp
+SOURCES+=vmcs_intel_x64_eapis_cr_access_hooks.cpp
 SOURCES+=vmcs_intel_x64_eapis_preemption.cpp
 SOURCES+=vmcs_intel_x64_eapis_msr.cpp
 SOURCES+=ept_intel_x64.cpp

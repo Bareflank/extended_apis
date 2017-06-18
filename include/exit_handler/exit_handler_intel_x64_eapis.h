@@ -40,6 +40,14 @@
 #define vmcall_debug if (0) bfdebug
 #endif
 
+
+using namespace x64;
+using namespace intel_x64;
+
+using cr0_value_type = cr0::value_type;
+using cr3_value_type = cr3::value_type;
+using cr4_value_type = cr4::value_type;
+
 class exit_handler_intel_x64_eapis : public exit_handler_intel_x64
 {
 public:
@@ -260,6 +268,7 @@ private:
     void handle_exit__io_instruction();
     void handle_exit__rdmsr();
     void handle_exit__wrmsr();
+    void handle_exit__ctl_reg_access();
 
 protected:
 
@@ -339,6 +348,11 @@ private:
     bool m_wrmsr_access_log_enabled;
     msr_log_type m_rdmsr_access_log;
     msr_log_type m_wrmsr_access_log;
+
+public:
+
+    uint64_t get_gpr_value_by_index_reg(uint64_t index_gpr);
+    void set_gpr_value_by_index_reg(uint64_t index_gpr, uint64_t new_value);
 
 private:
 

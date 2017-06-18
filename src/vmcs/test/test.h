@@ -109,6 +109,22 @@ private:
     void test_root_ept_intel_x64_setup_identity_map_4k_invalid();
     void test_root_ept_intel_x64_setup_identity_map_4k_valid();
     void test_root_page_table_x64_pt_to_mdl();
+
+    void test_enable_cr0_load_hook();
+    void test_disable_cr0_load_hook();
+
+    void test_enable_cr3_load_hook();
+    void test_disable_cr3_load_hook();
+    void test_enable_cr3_store_hook();
+    void test_disable_cr3_store_hook();
+
+    void test_enable_cr4_load_hook();
+    void test_disable_cr4_load_hook();
+
+    void test_enable_cr8_load_hook();
+    void test_disable_cr8_load_hook();
+    void test_enable_cr8_store_hook();
+    void test_disable_cr8_store_hook();
 };
 
 #endif
