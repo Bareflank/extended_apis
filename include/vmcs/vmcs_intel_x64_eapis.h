@@ -800,6 +800,64 @@ protected:
 
     /// @endcond
 
+    /*
+        Control register access hooks related fields & methods
+    */
+public:
+    using cr0_value_type = intel_x64::cr0::value_type;
+    using cr3_value_type = intel_x64::cr3::value_type;
+    using cr4_value_type = intel_x64::cr4::value_type;
+    using cr8_value_type = intel_x64::cr8::value_type;
+
+    cr0_value_type(*cr0_load_callback)(cr0_value_type);
+
+    cr3_value_type(*cr3_store_callback)(cr3_value_type);
+    cr3_value_type(*cr3_load_callback)(cr3_value_type);
+
+    cr4_value_type(*cr4_load_callback)(cr4_value_type);
+
+    cr8_value_type(*cr8_store_callback)(cr8_value_type);
+    cr8_value_type(*cr8_load_callback)(cr8_value_type);
+
+    // Enable & Disable cr0,cr3,cr4 & cr8 store/load hooks:
+    //
+    // These functions enable access hooks to all possible control registers.
+    // They enable the exit controls for the corresponding access and take a callback to
+    // call upon on each access. The callbacks are all under the same signature;
+    // they take the value to be written (the actual control register value in case of a store,
+    // the requrested value in case of a load) and the value returned by this callback will be used instead of the
+    // requested value, thus allowing you to shadow the operation; if the hook is for monitoring access only, simply
+    // return the given value.
+
+    // cr3 & cr8 are fully supported;
+    // cr0 & cr4 are partially supported due to constraints of the Intel specification - there are no store exits,
+    // and the load exits only in case the value of its source operand matches, for
+    // the position of each bit set in the CR0 guest/host mask, the corresponding bit in the CR0 read shadow.
+
+    void enable_cr0_load_hook(cr0_value_type(*callback)(cr0_value_type), uint64_t cr0_guest_host_mask, uint64_t cr0_read_shadow);
+
+    void enable_cr3_load_hook(cr3_value_type(*callback)(cr3_value_type));
+
+    void enable_cr3_store_hook(cr3_value_type(*callback)(cr3_value_type));
+
+    void enable_cr4_load_hook(cr4_value_type(*callback)(cr4_value_type), uint64_t cr4_guest_host_mask, uint64_t cr4_read_shadow);
+
+    void enable_cr8_load_hook(cr8_value_type(*callback)(cr8_value_type));
+
+    void enable_cr8_store_hook(cr8_value_type(*callback)(cr8_value_type));
+
+    void disable_cr0_load_hook();
+
+    void disable_cr3_load_hook();
+
+    void disable_cr3_store_hook();
+
+    void disable_cr4_load_hook();
+
+    void disable_cr8_load_hook();
+
+    void disable_cr8_store_hook();
+
 public:
 
     /// @cond

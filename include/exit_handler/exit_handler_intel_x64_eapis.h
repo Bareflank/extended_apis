@@ -231,6 +231,7 @@ protected:
     /// @cond
 
     void resume() override;
+    void advance_and_resume();
     void promote(gsl::not_null<const void *> guest_gdt) override;
 
     /// @endcond
