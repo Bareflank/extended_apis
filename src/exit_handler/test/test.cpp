@@ -234,6 +234,10 @@ eapis_ut::list()
     this->test_handle_vmcall_json_wrmsr_wrmsr_access_log_logged();
     this->test_handle_vmcall_json_wrmsr_wrmsr_access_log_denied();
 
+    this->test_handle_exit__ctl_reg_access();
+    this->test_set_gpr_value_by_index_reg();
+    this->test_get_gpr_value_by_index_reg();
+
     return true;
 }
 

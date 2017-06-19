@@ -23,6 +23,8 @@
 
 #include <vmcs/vmcs_intel_x64_32bit_read_only_data_fields.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_vmcall_interface.h>
+#include <vmcs/vmcs_intel_x64_natural_width_read_only_data_fields.h>
+#include <vmcs/vmcs_intel_x64_natural_width_guest_state_fields.h>
 
 using namespace x64;
 using namespace intel_x64;
@@ -75,6 +77,10 @@ exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
 
         case vmcs::exit_reason::basic_exit_reason::wrmsr:
             handle_exit__wrmsr();
+            break;
+
+        case vmcs::exit_reason::basic_exit_reason::control_register_accesses:
+            handle_exit__ctl_reg_access();
             break;
 
         default:

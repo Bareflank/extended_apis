@@ -26,6 +26,8 @@
 #include <vmcs/vmcs_intel_x64_16bit_control_fields.h>
 #include <vmcs/vmcs_intel_x64_32bit_control_fields.h>
 #include <vmcs/vmcs_intel_x64_64bit_control_fields.h>
+#include <vmcs/vmcs_intel_x64_natural_width_read_only_data_fields.h>
+#include <exit_handler/exit_handler_intel_x64_eapis.h>
 
 using namespace intel_x64;
 using namespace vmcs;
@@ -98,7 +100,6 @@ setup_vmcs()
 
     return std::move(vmcs);
 }
-
 
 void
 eapis_ut::test_construction()
@@ -614,4 +615,164 @@ eapis_ut::test_blacklist_wrmsr_access()
 
     this->expect_true(vmcs->m_msr_bitmap_view[0x808] == 0x4);
     this->expect_true(vmcs->m_msr_bitmap_view[0xC08] == 0x4);
+}
+
+//
+//    **Control Register Access Hooking Tests**
+//
+static uint64_t generic_cr_access_hook(uint64_t cr)
+{
+    return cr;
+}
+
+void
+eapis_ut::test_enable_cr0_load_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->enable_cr0_load_hook(&generic_cr_access_hook, 0, 0);
+
+    this->expect_true(vmcs->cr0_load_callback == &generic_cr_access_hook);
+}
+
+void
+eapis_ut::test_disable_cr0_load_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->disable_cr0_load_hook();
+
+    this->expect_true(vmcs->cr0_load_callback == nullptr);
+}
+
+void
+eapis_ut::test_enable_cr3_load_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->enable_cr3_load_hook(&generic_cr_access_hook);
+
+    this->expect_true(vmcs->cr3_load_callback == &generic_cr_access_hook);
+    this->expect_true(primary_processor_based_vm_execution_controls::cr3_load_exiting::is_enabled());
+}
+
+void
+eapis_ut::test_disable_cr3_load_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->disable_cr3_load_hook();
+
+    this->expect_true(vmcs->cr3_load_callback == nullptr);
+    this->expect_true(primary_processor_based_vm_execution_controls::cr3_load_exiting::is_disabled());
+}
+
+void
+eapis_ut::test_enable_cr3_store_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->enable_cr3_store_hook(&generic_cr_access_hook);
+
+    this->expect_true(vmcs->cr3_store_callback == &generic_cr_access_hook);
+    this->expect_true(primary_processor_based_vm_execution_controls::cr3_store_exiting::is_enabled());
+}
+
+void
+eapis_ut::test_disable_cr3_store_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->disable_cr3_store_hook();
+
+    this->expect_true(vmcs->cr3_store_callback == nullptr);
+    this->expect_true(primary_processor_based_vm_execution_controls::cr3_store_exiting::is_disabled());
+}
+
+void
+eapis_ut::test_enable_cr4_load_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->enable_cr4_load_hook(&generic_cr_access_hook, 0, 0);
+
+    this->expect_true(vmcs->cr4_load_callback == &generic_cr_access_hook);
+}
+
+void
+eapis_ut::test_disable_cr4_load_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->disable_cr4_load_hook();
+
+    this->expect_true(vmcs->cr4_load_callback == nullptr);
+}
+
+void
+eapis_ut::test_enable_cr8_load_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->enable_cr8_load_hook(&generic_cr_access_hook);
+
+    this->expect_true(vmcs->cr8_load_callback == &generic_cr_access_hook);
+    this->expect_true(primary_processor_based_vm_execution_controls::cr8_load_exiting::is_enabled());
+}
+
+void
+eapis_ut::test_disable_cr8_load_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->disable_cr8_load_hook();
+
+    this->expect_true(vmcs->cr8_load_callback == nullptr);
+    this->expect_true(primary_processor_based_vm_execution_controls::cr8_load_exiting::is_disabled());
+}
+
+void
+eapis_ut::test_enable_cr8_store_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->enable_cr8_store_hook(&generic_cr_access_hook);
+
+    this->expect_true(vmcs->cr8_store_callback == &generic_cr_access_hook);
+    this->expect_true(primary_processor_based_vm_execution_controls::cr8_store_exiting::is_enabled());
+}
+
+void
+eapis_ut::test_disable_cr8_store_hook()
+{
+    MockRepository mocks;
+    setup_mm(mocks);
+    auto &&vmcs = setup_vmcs();
+
+    vmcs->disable_cr8_store_hook();
+
+    this->expect_true(vmcs->cr8_store_callback == nullptr);
+    this->expect_true(primary_processor_based_vm_execution_controls::cr8_store_exiting::is_disabled());
 }
