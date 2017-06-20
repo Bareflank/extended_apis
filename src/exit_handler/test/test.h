@@ -233,9 +233,14 @@ private:
     void test_handle_vmcall_json_wrmsr_wrmsr_access_log_logged();
     void test_handle_vmcall_json_wrmsr_wrmsr_access_log_denied();
 
-    void test_handle_exit__ctl_reg_access();
-    void test_set_gpr_value_by_index_reg();
-    void test_get_gpr_value_by_index_reg();
+    void test_handle_exit__ctl_reg_access_mov_to_cr0();
+    void test_handle_exit__ctl_reg_access_mov_to_cr3();
+    void test_handle_exit__ctl_reg_access_mov_from_cr3();
+    void test_handle_exit__ctl_reg_access_mov_to_cr4();
+    void test_handle_exit__ctl_reg_access_mov_to_cr8();
+    void test_handle_exit__ctl_reg_access_mov_from_cr8();
+    void test_get_gpr();
+    void test_set_gpr();
 };
 
 #endif

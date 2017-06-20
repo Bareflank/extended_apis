@@ -102,13 +102,6 @@ class exit_handler_ut : public exit_handler_intel_x64_eapis
 public:
     void monitor_trap_callback()
     { g_monitor_trap_callback_called = true; }
-
-    static uint64_t generic_cr_access_hook(uint64_t cr)
-    {
-        if (cr == 0xbabe1ade) return 0xfeedface;
-        if (cr == 0xbabebabe) return 0xfeed1337;
-        return 0;
-    }
 };
 
 auto
@@ -4727,188 +4720,189 @@ eapis_ut::test_handle_vmcall_json_wrmsr_wrmsr_access_log_denied()
     });
 }
 
-
-
 void
-eapis_ut::test_handle_exit__ctl_reg_access()
+eapis_ut::test_handle_exit__ctl_reg_access_mov_to_cr0()
 {
     MockRepository mocks;
 
-    /* Test mov to cr0 */
-    auto &&vmcs = setup_vmcs(
-                      mocks,
-                      exit_reason::basic_exit_reason::control_register_accesses,
-                      0 // MOV cr0, rax
-                  );
-
-    vmcs->enable_cr0_load_hook(&(exit_handler_ut::generic_cr_access_hook), 0, 0);
-
+    auto &&vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 0);
     auto &&ehlr = setup_ehlr(vmcs);
 
-    g_state_save.rax = 0xbabe1ade;
+    g_state_save.rax = 42ULL;
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        this->expect_true(guest_cr0::get() == 0xbeefface);
-
         this->expect_no_exception([&] { ehlr->dispatch(); });
-
-        this->expect_true(guest_cr0::get() == 0xfeedface);
+        this->expect_true(guest_cr0::get() == 42ULL);
     });
-
-    /* Test mov to cr3 */
-    vmcs = setup_vmcs(
-               mocks,
-               exit_reason::basic_exit_reason::control_register_accesses,
-               3 // MOV cr3, rax
-           );
-
-    vmcs->enable_cr3_load_hook(&(exit_handler_ut::generic_cr_access_hook));
-
-    ehlr = setup_ehlr(vmcs);
-
-    g_state_save.rax = 0xbabe1ade;
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_true(guest_cr3::get() == 0xbeefface);
-
-        this->expect_no_exception([&] { ehlr->dispatch(); });
-
-        this->expect_true(guest_cr3::get() == 0xfeedface);
-    });
-
-    /* Test mov from cr3 */
-    vmcs = setup_vmcs(
-               mocks,
-               exit_reason::basic_exit_reason::control_register_accesses,
-               19 // MOV rax, cr3
-           );
-
-    vmcs->enable_cr3_store_hook(&(exit_handler_ut::generic_cr_access_hook));
-
-    ehlr = setup_ehlr(vmcs);
-
-    g_state_save.rax = 0xbabe1ade;
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&] { guest_cr3::set(0xbabebabe); });
-
-        this->expect_no_exception([&] { ehlr->dispatch(); });
-
-        this->expect_true(g_state_save.rax == 0xfeed1337);
-    });
-
-
-    /* Test mov to cr4 */
-    vmcs = setup_vmcs(
-               mocks,
-               exit_reason::basic_exit_reason::control_register_accesses,
-               4 // MOV cr0, rax
-           );
-
-    vmcs->enable_cr4_load_hook(&(exit_handler_ut::generic_cr_access_hook), 0, 0);
-
-    ehlr = setup_ehlr(vmcs);
-
-    g_state_save.rax = 0xbabe1ade;
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_true(guest_cr4::get() == 0xbeefface);
-
-        this->expect_no_exception([&] { ehlr->dispatch(); });
-
-        this->expect_true(guest_cr4::get() == 0xfeedface);
-    });
-
-    /* Test mov to cr8 */
-
-    vmcs = setup_vmcs(
-               mocks,
-               exit_reason::basic_exit_reason::control_register_accesses,
-               8 // MOV cr8, rax
-           );
-
-    vmcs->enable_cr8_load_hook(&(exit_handler_ut::generic_cr_access_hook));
-
-    ehlr = setup_ehlr(vmcs);
-
-    g_state_save.rax = 0xbabe1ade;
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&] {intel_x64::cr8::set(0xbeefface); });
-        this->expect_true(intel_x64::cr8::get() == 0xbeefface);
-
-        this->expect_no_exception([&] { ehlr->dispatch(); });
-
-        this->expect_true(intel_x64::cr8::get() == 0xfeedface);
-    });
-
-    /* Test mov from cr8 */
-    vmcs = setup_vmcs(
-               mocks,
-               exit_reason::basic_exit_reason::control_register_accesses,
-               24 // MOV rax, cr8
-           );
-
-    vmcs->enable_cr8_store_hook(&(exit_handler_ut::generic_cr_access_hook));
-
-    ehlr = setup_ehlr(vmcs);
-
-    g_state_save.rax = 0xbabe1ade;
-
-    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
-    {
-        this->expect_no_exception([&] { intel_x64::cr8::set(0xbabebabe); });
-
-        this->expect_no_exception([&] { ehlr->dispatch(); });
-
-        this->expect_true(g_state_save.rax == 0xfeed1337);
-    });
-
 }
 
-using namespace exit_qualification;
-using namespace control_register_access;
-
 void
-eapis_ut::test_get_gpr_value_by_index_reg()
+eapis_ut::test_handle_exit__ctl_reg_access_mov_to_cr3()
 {
     MockRepository mocks;
 
-    auto &&vmcs = setup_vmcs(
-                      mocks,
-                      0
-                  );
-
+    auto &&vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 3);
     auto &&ehlr = setup_ehlr(vmcs);
+
+    g_state_save.rax = 42ULL;
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        this->expect_true(g_state_save.rax == ehlr->get_gpr_value_by_index_reg(general_purpose_register::rax));
+        this->expect_no_exception([&] { ehlr->dispatch(); });
+        this->expect_true(guest_cr3::get() == 42ULL);
     });
-
 }
 
-
 void
-eapis_ut::test_set_gpr_value_by_index_reg()
+eapis_ut::test_handle_exit__ctl_reg_access_mov_from_cr3()
 {
     MockRepository mocks;
 
-    auto &&vmcs = setup_vmcs(
-                      mocks,
-                      0
-                  );
-
+    auto &&vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 19);
     auto &&ehlr = setup_ehlr(vmcs);
+
+    guest_cr3::set(42ULL);
 
     RUN_UNITTEST_WITH_MOCKS(mocks, [&]
     {
-        ehlr->set_gpr_value_by_index_reg(general_purpose_register::rax, 0xab1234cd);
-        this->expect_true(g_state_save.rax == 0xab1234cd);
+        this->expect_no_exception([&] { ehlr->dispatch(); });
+        this->expect_true(g_state_save.rax == 42ULL);
+    });
+}
+
+void
+eapis_ut::test_handle_exit__ctl_reg_access_mov_to_cr4()
+{
+    MockRepository mocks;
+
+    auto &&vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 4);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    g_state_save.rax = 42ULL;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&] { ehlr->dispatch(); });
+        this->expect_true(guest_cr4::get() == 42ULL);
+    });
+}
+
+void
+eapis_ut::test_handle_exit__ctl_reg_access_mov_to_cr8()
+{
+    MockRepository mocks;
+
+    auto &&vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 8);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    g_state_save.rax = 42ULL;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&] { ehlr->dispatch(); });
+        this->expect_true(cr8::get() == 42ULL);
+    });
+}
+
+void
+eapis_ut::test_handle_exit__ctl_reg_access_mov_from_cr8()
+{
+    MockRepository mocks;
+
+    auto &&vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 24);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    cr8::set(42ULL);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_no_exception([&] { ehlr->dispatch(); });
+        this->expect_true(g_state_save.rax == 42ULL);
+    });
+}
+
+void
+eapis_ut::test_get_gpr()
+{
+    MockRepository mocks;
+
+    auto &&vmcs = setup_vmcs(mocks, 0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    using namespace exit_qualification;
+    using namespace control_register_access;
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_true(g_state_save.rax == ehlr->get_gpr(general_purpose_register::rax));
+        this->expect_true(g_state_save.rbx == ehlr->get_gpr(general_purpose_register::rbx));
+        this->expect_true(g_state_save.rcx == ehlr->get_gpr(general_purpose_register::rcx));
+        this->expect_true(g_state_save.rdx == ehlr->get_gpr(general_purpose_register::rdx));
+        this->expect_true(g_state_save.rsp == ehlr->get_gpr(general_purpose_register::rsp));
+        this->expect_true(g_state_save.rbp == ehlr->get_gpr(general_purpose_register::rbp));
+        this->expect_true(g_state_save.rsi == ehlr->get_gpr(general_purpose_register::rsi));
+        this->expect_true(g_state_save.rdi == ehlr->get_gpr(general_purpose_register::rdi));
+        this->expect_true(g_state_save.r08 == ehlr->get_gpr(general_purpose_register::r8));
+        this->expect_true(g_state_save.r09 == ehlr->get_gpr(general_purpose_register::r9));
+        this->expect_true(g_state_save.r10 == ehlr->get_gpr(general_purpose_register::r10));
+        this->expect_true(g_state_save.r11 == ehlr->get_gpr(general_purpose_register::r11));
+        this->expect_true(g_state_save.r12 == ehlr->get_gpr(general_purpose_register::r12));
+        this->expect_true(g_state_save.r13 == ehlr->get_gpr(general_purpose_register::r13));
+        this->expect_true(g_state_save.r14 == ehlr->get_gpr(general_purpose_register::r14));
+        this->expect_true(g_state_save.r15 == ehlr->get_gpr(general_purpose_register::r15));
+
+        this->expect_exception([&] { ehlr->get_gpr(0x1000); }, ""_ut_ree);
+    });
+}
+
+void
+eapis_ut::test_set_gpr()
+{
+    MockRepository mocks;
+
+    auto &&vmcs = setup_vmcs(mocks, 0);
+    auto &&ehlr = setup_ehlr(vmcs);
+
+    using namespace exit_qualification;
+    using namespace control_register_access;
+
+    ehlr->set_gpr(general_purpose_register::rax, 42ULL);
+    ehlr->set_gpr(general_purpose_register::rbx, 42ULL);
+    ehlr->set_gpr(general_purpose_register::rcx, 42ULL);
+    ehlr->set_gpr(general_purpose_register::rdx, 42ULL);
+    ehlr->set_gpr(general_purpose_register::rsp, 42ULL);
+    ehlr->set_gpr(general_purpose_register::rbp, 42ULL);
+    ehlr->set_gpr(general_purpose_register::rsi, 42ULL);
+    ehlr->set_gpr(general_purpose_register::rdi, 42ULL);
+    ehlr->set_gpr(general_purpose_register::r8, 42ULL);
+    ehlr->set_gpr(general_purpose_register::r9, 42ULL);
+    ehlr->set_gpr(general_purpose_register::r10, 42ULL);
+    ehlr->set_gpr(general_purpose_register::r11, 42ULL);
+    ehlr->set_gpr(general_purpose_register::r12, 42ULL);
+    ehlr->set_gpr(general_purpose_register::r13, 42ULL);
+    ehlr->set_gpr(general_purpose_register::r14, 42ULL);
+    ehlr->set_gpr(general_purpose_register::r15, 42ULL);
+
+    RUN_UNITTEST_WITH_MOCKS(mocks, [&]
+    {
+        this->expect_true(g_state_save.rax == 42ULL);
+        this->expect_true(g_state_save.rbx == 42ULL);
+        this->expect_true(g_state_save.rcx == 42ULL);
+        this->expect_true(g_state_save.rdx == 42ULL);
+        this->expect_true(g_state_save.rsp == 42ULL);
+        this->expect_true(g_state_save.rbp == 42ULL);
+        this->expect_true(g_state_save.rsi == 42ULL);
+        this->expect_true(g_state_save.rdi == 42ULL);
+        this->expect_true(g_state_save.r08 == 42ULL);
+        this->expect_true(g_state_save.r09 == 42ULL);
+        this->expect_true(g_state_save.r10 == 42ULL);
+        this->expect_true(g_state_save.r11 == 42ULL);
+        this->expect_true(g_state_save.r12 == 42ULL);
+        this->expect_true(g_state_save.r13 == 42ULL);
+        this->expect_true(g_state_save.r14 == 42ULL);
+        this->expect_true(g_state_save.r15 == 42ULL);
+
+        this->expect_exception([&] { ehlr->set_gpr(0x1000, 42ULL); }, ""_ut_ree);
     });
 }

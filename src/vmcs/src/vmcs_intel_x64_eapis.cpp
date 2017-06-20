@@ -36,5 +36,12 @@ vmcs_intel_x64_eapis::write_fields(gsl::not_null<vmcs_intel_x64_state *> host_st
     this->disable_ept();
     this->disable_vpid();
     this->disable_io_bitmaps();
-    this->enable_msr_bitmap();
+    this->disable_msr_bitmap();
+
+    this->disable_cr0_load_hook();
+    this->disable_cr3_load_hook();
+    this->disable_cr3_store_hook();
+    this->disable_cr4_load_hook();
+    this->disable_cr8_load_hook();
+    this->disable_cr8_store_hook();
 }
