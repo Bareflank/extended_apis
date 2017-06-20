@@ -40,14 +40,6 @@
 #define vmcall_debug if (0) bfdebug
 #endif
 
-
-using namespace x64;
-using namespace intel_x64;
-
-using cr0_value_type = cr0::value_type;
-using cr3_value_type = cr3::value_type;
-using cr4_value_type = cr4::value_type;
-
 class exit_handler_intel_x64_eapis : public exit_handler_intel_x64
 {
 public:
@@ -65,6 +57,12 @@ public:
     using msr_type = x64::msrs::field_type;
     using msr_list_type = std::vector<msr_type>;
     using msr_log_type = std::map<msr_type, count_type>;
+    using gpr_index_type = intel_x64::vmcs::value_type;
+    using gpr_value_type = uintptr_t;
+    using cr0_value_type = intel_x64::cr0::value_type;
+    using cr3_value_type = intel_x64::cr3::value_type;
+    using cr4_value_type = intel_x64::cr4::value_type;
+    using cr8_value_type = intel_x64::cr8::value_type;
 
     /// Default Constructor
     ///
@@ -272,6 +270,15 @@ private:
 
 protected:
 
+    virtual cr0_value_type cr0_ld_callback(cr0_value_type val);
+    virtual cr3_value_type cr3_ld_callback(cr3_value_type val);
+    virtual cr3_value_type cr3_st_callback(cr3_value_type val);
+    virtual cr4_value_type cr4_ld_callback(cr4_value_type val);
+    virtual cr8_value_type cr8_ld_callback(cr8_value_type val);
+    virtual cr8_value_type cr8_st_callback(cr8_value_type val);
+
+protected:
+
     void handle_vmcall_registers(vmcall_registers_t &regs) override;
     void handle_vmcall_data_string_json(const json &ijson, json &ojson) override;
 
@@ -349,10 +356,10 @@ private:
     msr_log_type m_rdmsr_access_log;
     msr_log_type m_wrmsr_access_log;
 
-public:
+protected:
 
-    uint64_t get_gpr_value_by_index_reg(uint64_t index_gpr);
-    void set_gpr_value_by_index_reg(uint64_t index_gpr, uint64_t new_value);
+    gpr_value_type get_gpr(gpr_index_type index);
+    void set_gpr(gpr_index_type index, gpr_value_type val);
 
 private:
 
