@@ -234,9 +234,14 @@ eapis_ut::list()
     this->test_handle_vmcall_json_wrmsr_wrmsr_access_log_logged();
     this->test_handle_vmcall_json_wrmsr_wrmsr_access_log_denied();
 
-    this->test_handle_exit__ctl_reg_access();
-    this->test_set_gpr_value_by_index_reg();
-    this->test_get_gpr_value_by_index_reg();
+    this->test_handle_exit__ctl_reg_access_mov_to_cr0();
+    this->test_handle_exit__ctl_reg_access_mov_to_cr3();
+    this->test_handle_exit__ctl_reg_access_mov_from_cr3();
+    this->test_handle_exit__ctl_reg_access_mov_to_cr4();
+    this->test_handle_exit__ctl_reg_access_mov_to_cr8();
+    this->test_handle_exit__ctl_reg_access_mov_from_cr8();
+    this->test_get_gpr();
+    this->test_set_gpr();
 
     return true;
 }

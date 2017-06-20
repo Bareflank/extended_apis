@@ -1,3 +1,24 @@
+//
+// Bareflank Extended APIs
+//
+// Copyright (C) 2015 Assured Information Security, Inc.
+// Author: Jonathan Cohen Scaly <scalys7@gmail.com>
+// Author: Rian Quinn           <quinnr@ainfosec.com>
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 
 #include <vmcs/vmcs_intel_x64_32bit_read_only_data_fields.h>
@@ -8,79 +29,51 @@
 using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
+using namespace exit_qualification::control_register_access;
 
-using cr0_value_type = intel_x64::cr0::value_type;
-using cr3_value_type = intel_x64::cr3::value_type;
-using cr4_value_type = intel_x64::cr4::value_type;
-using cr8_value_type = intel_x64::cr8::value_type;
-
-// get_gpr_value_by_index_reg
-//
-// This function resolves the value of the guest gpr by accessing the correct state save field
-// according to the ordering dictated by the Intel manual.
-// This ordering is the same as defined by the exit_qualification::control_register_access::general_purpose_register namespace,
-// and therefore it will be used.
-// The state save is currently ordered by System V's ordering, and thus there must be a transition using a switch-case statement or similar.
-// Let the ordering of the state save ever be changed to fit the Intel ordering, this function should be replaced to use gsl::span or pointer arithmetics,
-// as that would increase performance.
-vmcs::value_type exit_handler_intel_x64_eapis::get_gpr_value_by_index_reg(vmcs::value_type index_gpr)
+exit_handler_intel_x64_eapis::gpr_value_type
+exit_handler_intel_x64_eapis::get_gpr(gpr_index_type index)
 {
-    using namespace exit_qualification::control_register_access;
-    using namespace access_type;
-    using namespace general_purpose_register;
-
-    switch (index_gpr)
+    switch (index)
     {
         case general_purpose_register::rax:
             return m_state_save->rax;
 
+        case general_purpose_register::rbx:
+            return m_state_save->rbx;
+
         case general_purpose_register::rcx:
             return m_state_save->rcx;
-
 
         case general_purpose_register::rdx:
             return m_state_save->rdx;
 
-
-        case general_purpose_register::rbx:
-            return m_state_save->rbx;
-
-
         case general_purpose_register::rsp:
             return m_state_save->rsp;
-
 
         case general_purpose_register::rbp:
             return m_state_save->rbp;
 
-
         case general_purpose_register::rsi:
             return m_state_save->rsi;
-
 
         case general_purpose_register::rdi:
             return m_state_save->rdi;
 
-
         case general_purpose_register::r8:
             return m_state_save->r08;
-
 
         case general_purpose_register::r9:
             return m_state_save->r09;
 
-
         case general_purpose_register::r10:
             return m_state_save->r10;
-
 
         case general_purpose_register::r11:
             return m_state_save->r11;
 
-
         case general_purpose_register::r12:
             return m_state_save->r12;
-
 
         case general_purpose_register::r13:
             return m_state_save->r13;
@@ -92,114 +85,96 @@ vmcs::value_type exit_handler_intel_x64_eapis::get_gpr_value_by_index_reg(vmcs::
             return m_state_save->r15;
     }
 
-    return 0;
+    throw std::runtime_error("unknown index");
 }
 
-// set_gpr_value_by_index_reg
-//
-// This function is the parallel set function to get_gpr_value_by_index_reg;
-// read it's documentation to better understand it.
-void exit_handler_intel_x64_eapis::set_gpr_value_by_index_reg(uint64_t index_gpr, vmcs::value_type new_value)
-{
-    using namespace exit_qualification::control_register_access;
-    using namespace access_type;
-    using namespace general_purpose_register;
 
-    switch (index_gpr)
+void
+exit_handler_intel_x64_eapis::set_gpr(
+    gpr_index_type index, gpr_value_type val)
+{
+    switch (index)
     {
         case general_purpose_register::rax:
-            m_state_save->rax = new_value;
-            break;
-
-        case general_purpose_register::rcx:
-            m_state_save->rcx = new_value;
-            break;
-
-        case general_purpose_register::rdx:
-            m_state_save->rdx = new_value;
-            break;
+            m_state_save->rax = val;
+            return;
 
         case general_purpose_register::rbx:
-            m_state_save->rbx = new_value;
-            break;
+            m_state_save->rbx = val;
+            return;
+
+        case general_purpose_register::rcx:
+            m_state_save->rcx = val;
+            return;
+
+        case general_purpose_register::rdx:
+            m_state_save->rdx = val;
+            return;
 
         case general_purpose_register::rsp:
-            m_state_save->rsp = new_value;
-            break;
+            m_state_save->rsp = val;
+            return;
 
         case general_purpose_register::rbp:
-            m_state_save->rbp = new_value;
-            break;
+            m_state_save->rbp = val;
+            return;
 
         case general_purpose_register::rsi:
-            m_state_save->rsi = new_value;
-            break;
+            m_state_save->rsi = val;
+            return;
 
         case general_purpose_register::rdi:
-            m_state_save->rdi = new_value;
-            break;
+            m_state_save->rdi = val;
+            return;
 
         case general_purpose_register::r8:
-            m_state_save->r08 = new_value;
-            break;
+            m_state_save->r08 = val;
+            return;
 
         case general_purpose_register::r9:
-            m_state_save->r09 = new_value;
-            break;
+            m_state_save->r09 = val;
+            return;
 
         case general_purpose_register::r10:
-            m_state_save->r10 = new_value;
-            break;
+            m_state_save->r10 = val;
+            return;
 
         case general_purpose_register::r11:
-            m_state_save->r11 = new_value;
-            break;
+            m_state_save->r11 = val;
+            return;
 
         case general_purpose_register::r12:
-            m_state_save->r12 = new_value;
-            break;
+            m_state_save->r12 = val;
+            return;
 
         case general_purpose_register::r13:
-            m_state_save->r13 = new_value;
-            break;
+            m_state_save->r13 = val;
+            return;
 
         case general_purpose_register::r14:
-            m_state_save->r14 = new_value;
-            break;
+            m_state_save->r14 = val;
+            return;
 
         case general_purpose_register::r15:
-            m_state_save->r15 = new_value;
-            break;
+            m_state_save->r15 = val;
+            return;
     }
+
+    throw std::runtime_error("unknown index");
 }
 
 void
 exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
 {
-    using namespace exit_qualification::control_register_access;
-    using namespace access_type;
-    using namespace general_purpose_register;
-
-    auto cr = control_register_number::get();
     auto type = access_type::get();
-    auto index_gpr = general_purpose_register::get();
+    auto index = general_purpose_register::get();
 
-    switch (cr)
+    switch (control_register_number::get())
     {
         case 0:
         {
-            // Handling cr0 access exits
-            // Only cr0 loads can cause VM exits; thus no need to check type.
-            // This block does the following:
-            //
-            // 1. Get the original value the guest software tried to assign
-            // 2. Call the hook, and retrive the audited value.
-            // 3. Set the new value, thus emulating the instruction
-            // 4. Skip the emulated instruction and resume.
-            cr0_value_type requested_new_guest_cr0_value = get_gpr_value_by_index_reg(index_gpr);
-
-            uint64_t audited_new_cr0_value = m_vmcs_eapis->cr0_load_callback(requested_new_guest_cr0_value);
-            vmcs::guest_cr0::set(audited_new_cr0_value);
+            auto ret = this->cr0_ld_callback(this->get_gpr(index));
+            guest_cr0::set(ret);
 
             this->advance_and_resume();
             return;
@@ -209,104 +184,87 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
         {
             switch (type)
             {
-                case mov_to_cr:
+                case access_type::mov_to_cr:
                 {
-                    // Handling cr3 load exits
-                    // This block does the following:
-                    //
-                    // 1. Get the original value the guest software tried to assign
-                    // 2. Call the hook, and retrive the audited value.
-                    // 3. Set the new value, thus emulating the instruction
-                    // 4. Skip the emulated instruction and resume.
-                    cr3_value_type requested_new_guest_cr3_value = get_gpr_value_by_index_reg(index_gpr);
-
-                    uint64_t audited_new_cr3_value = m_vmcs_eapis->cr3_load_callback(requested_new_guest_cr3_value);
-                    vmcs::guest_cr3::set(audited_new_cr3_value);
+                    auto ret = this->cr3_ld_callback(this->get_gpr(index));
+                    guest_cr3::set(ret);
 
                     this->advance_and_resume();
                     return;
                 }
-                case mov_from_cr:
+
+                case access_type::mov_from_cr:
                 {
-                    // Handling cr3 store exits
-                    // This block does the following:
-                    //
-                    // 1. Get the real cr3 value
-                    // 2. Call the hook, and retrive the shadow value.
-                    // 3. Set the shadow value to the gpr, thus emulating the instruction
-                    // 4. Skip the emulated instruction and resume.
-                    cr3_value_type real_guest_cr3_value = vmcs::guest_cr3::get();
-
-                    uint64_t shadow_cr3_value = m_vmcs_eapis->cr3_store_callback(real_guest_cr3_value);
-
-                    set_gpr_value_by_index_reg(index_gpr, shadow_cr3_value);
+                    auto ret = this->cr3_st_callback(guest_cr3::get());
+                    this->set_gpr(index, ret);
 
                     this->advance_and_resume();
                     return;
                 }
             }
         }
+
         case 4:
         {
-            // Handling cr4 access exits
-            // Only cr4 loads can cause VM exits; thus no need to check type.
-            // This block does the following:
-            //
-            // 1. Get the original value the guest software tried to assign
-            // 2. Call the hook, and retrive the audited value.
-            // 3. Set the new value, thus emulating the instruction
-            // 4. Skip the emulated instruction and resume.
-            cr4_value_type requested_new_guest_cr4_value = get_gpr_value_by_index_reg(index_gpr);
-
-            uint64_t audited_new_cr4_value = m_vmcs_eapis->cr4_load_callback(requested_new_guest_cr4_value);
-            vmcs::guest_cr4::set(audited_new_cr4_value);
+            auto ret = this->cr4_ld_callback(this->get_gpr(index));
+            guest_cr4::set(ret);
 
             this->advance_and_resume();
             return;
         }
+
         case 8:
         {
             switch (type)
             {
-                case mov_to_cr:
+                case access_type::mov_to_cr:
                 {
-                    // Handling cr8 loads exits
-                    // This block does the following:
-                    //
-                    // 1. Get the original value the guest software tried to assign
-                    // 2. Call the hook, and retrive the audited value.
-                    // 3. Set the new value, thus emulating the instruction
-                    // 4. Skip the emulated instruction and resume.
-                    cr8_value_type requested_new_guest_cr8_value = get_gpr_value_by_index_reg(index_gpr); // Get the original value the guest software tried to assign
+                    auto ret = this->cr8_ld_callback(this->get_gpr(index));
+                    cr8::set(ret);
 
-                    uint64_t audited_new_cr8_value = m_vmcs_eapis->cr8_load_callback(requested_new_guest_cr8_value); // Call the hook, and retrive the audited value.
-                    intel_x64::cr8::set(audited_new_cr8_value); // Set the new value, thus emulating the instruction
-
-                    this->advance_and_resume(); // Skip the emulated instruction and resume.
+                    this->advance_and_resume();
                     return;
                 }
-                case mov_from_cr:
+
+                case access_type::mov_from_cr:
                 {
-                    // Handling cr8 store exits
-                    // This block does the following:
-                    //
-                    // 1. Get the real cr8 value
-                    // 2. Call the hook, and retrive the shadow value.
-                    // 3. Set the shadow value to the gpr, thus emulating the instruction
-                    // 4. Skip the emulated instruction and resume.
-                    cr8_value_type real_guest_cr8_value = intel_x64::cr8::get();
+                    auto ret = this->cr8_st_callback(cr8::get());
+                    this->set_gpr(index, ret);
 
-                    uint64_t shadow_cr8_value = m_vmcs_eapis->cr8_store_callback(real_guest_cr8_value); // Call the hook, and retrive the shadow value.
-                    set_gpr_value_by_index_reg(index_gpr, shadow_cr8_value); // Set the shadow value to the gpr, thus emulating the instruction
-
-                    this->advance_and_resume(); // Skip the emulated instruction and resume.
+                    this->advance_and_resume();
                     return;
                 }
             }
         }
 
         default:
-            bferror << "unimplemented control register access" << bfendl;
+        {
+            bferror << "unknown control register access" << bfendl;
             break;
+        }
     }
 }
+
+exit_handler_intel_x64_eapis::cr0_value_type
+exit_handler_intel_x64_eapis::cr0_ld_callback(cr0_value_type val)
+{ return val; }
+
+exit_handler_intel_x64_eapis::cr3_value_type
+exit_handler_intel_x64_eapis::cr3_ld_callback(cr3_value_type val)
+{ return val; }
+
+exit_handler_intel_x64_eapis::cr3_value_type
+exit_handler_intel_x64_eapis::cr3_st_callback(cr3_value_type val)
+{ return val; }
+
+exit_handler_intel_x64_eapis::cr4_value_type
+exit_handler_intel_x64_eapis::cr4_ld_callback(cr4_value_type val)
+{ return val; }
+
+exit_handler_intel_x64_eapis::cr8_value_type
+exit_handler_intel_x64_eapis::cr8_ld_callback(cr8_value_type val)
+{ return val; }
+
+exit_handler_intel_x64_eapis::cr8_value_type
+exit_handler_intel_x64_eapis::cr8_st_callback(cr8_value_type val)
+{ return val; }
