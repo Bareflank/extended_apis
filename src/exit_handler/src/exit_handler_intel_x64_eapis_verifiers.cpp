@@ -39,8 +39,13 @@ bool g_log_denials = false;
 std::string
 vmcall_verifier::to_string() const
 {
-    if (g_deny_all) return "deny all";
-    if (g_log_denials) return "ignore and log all";
+    if (g_deny_all) {
+        return "deny all";
+    }
+
+    if (g_log_denials) {
+        return "ignore and log all";
+    }
 
     return "allow all";
 }
@@ -48,8 +53,13 @@ vmcall_verifier::to_string() const
 vmcall_verifier::verifier_result
 vmcall_verifier::default_verify()
 {
-    if (g_deny_all) return deny;
-    if (g_log_denials) return log;
+    if (g_deny_all) {
+        return deny;
+    }
+
+    if (g_log_denials) {
+        return log;
+    }
 
     return allow;
 }
@@ -59,14 +69,15 @@ vmcall_verifier::deny_vmcall_with_args(const char *func, denial_list_type &list)
 {
     auto msg = "vmcall denied ["_s + func + "]: "_s + to_string();
 
-    if (g_log_denials)
-    {
-        if (list.size() >= DENIAL_LOG_SIZE)
+    if (g_log_denials) {
+        if (list.size() >= DENIAL_LOG_SIZE) {
             list.erase(list.begin());
+        }
 
         list.push_back(msg);
     }
 
-    if (g_deny_all)
+    if (g_deny_all) {
         throw std::runtime_error(msg);
+    }
 }

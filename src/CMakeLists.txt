@@ -1,0 +1,5 @@
+add_subdirectory(vmcs)
+add_subdirectory(exit_handler)
+add_subdirectory(vcpu_factory)
+add_subdirectory(misc)
+add_subdirectory(main)

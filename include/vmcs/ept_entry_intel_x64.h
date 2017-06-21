@@ -22,13 +22,30 @@
 #ifndef EPT_ENTRY_INTEL_X64_H
 #define EPT_ENTRY_INTEL_X64_H
 
-#include <gsl/gsl>
+#include <bfgsl.h>
+
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_VMCS
+#ifdef SHARED_EAPIS_VMCS
+#define EXPORT_EAPIS_VMCS EXPORT_SYM
+#else
+#define EXPORT_EAPIS_VMCS IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_VMCS
+#endif
 
 // -----------------------------------------------------------------------------
 // Constants
 // -----------------------------------------------------------------------------
 
 // *INDENT-OFF*
+/// @cond
 
 namespace intel_x64
 {
@@ -83,19 +100,24 @@ namespace ept
 }
 }
 
+/// @endcond
 // *INDENT-ON*
 
 // -----------------------------------------------------------------------------
 // Definition
 // -----------------------------------------------------------------------------
 
-class ept_entry_intel_x64
+/// EPT Entry
+///
+/// Defines an entry in an EPT table.
+///
+class EXPORT_EAPIS_VMCS ept_entry_intel_x64
 {
 public:
 
-    using pointer = uintptr_t *;
-    using integer_pointer = uintptr_t;
-    using memory_type_type = uint64_t;
+    using pointer = uintptr_t *;            ///< Pointer type
+    using integer_pointer = uintptr_t;      ///< Integer pointer type
+    using memory_type_type = uint64_t;      ///< Memory type type
 
     /// Default Constructor
     ///
@@ -340,15 +362,19 @@ public:
 
 private:
 
-    pointer m_epte;
+    pointer m_epte;                 ///< A pointer to the epte in memory
 
 public:
+
+    /// @cond
 
     ept_entry_intel_x64(ept_entry_intel_x64 &&) noexcept = default;
     ept_entry_intel_x64 &operator=(ept_entry_intel_x64 &&) noexcept = default;
 
     ept_entry_intel_x64(const ept_entry_intel_x64 &) = delete;
     ept_entry_intel_x64 &operator=(const ept_entry_intel_x64 &) = delete;
+
+    /// @endcond
 };
 
 #endif

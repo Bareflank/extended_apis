@@ -20,8 +20,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <vmcs/vmcs_intel_x64_eapis.h>
-#include <vmcs/vmcs_intel_x64_16bit_control_fields.h>
-#include <vmcs/vmcs_intel_x64_32bit_control_fields.h>
 
 using namespace intel_x64;
 using namespace vmcs;

@@ -32,8 +32,9 @@ exit_handler_intel_x64_eapis::clear_wrmsr_access_log()
 void
 exit_handler_intel_x64_eapis::handle_exit__wrmsr()
 {
-    if (m_wrmsr_access_log_enabled)
+    if (m_wrmsr_access_log_enabled) {
         m_wrmsr_access_log[static_cast<msr_type>(m_state_save->rcx)]++;
+    }
 
     this->handle_wrmsr();
     this->resume();

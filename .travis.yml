@@ -1,47 +1,75 @@
 #
 # Configuration
 #
-
 language: cpp
-
 dist: trusty
-sudo: required
 
 #
-# Compilers
+# Build Dependencies
 #
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-trusty-3.8
-      - llvm-toolchain-trusty-3.9
-    packages:
-      - clang-3.8
-      - clang-3.9
-      - clang-tidy-3.8
-      - clang-tidy-3.9
-      - gcc-5
-      - g++-5
-      - nasm
+before_script:
 
-#
-# Update Build Environment
-#
-before_install:
-  - mkdir $HOME/usr
-  - export PATH="$HOME/usr/bin:$PATH"
-  - wget https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.sh
-  - chmod +x cmake-3.7.2-Linux-x86_64.sh
-  - ./cmake-3.7.2-Linux-x86_64.sh --prefix=$HOME/usr --exclude-subdir --skip-license
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 100
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 100
-  - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-5 100
-  - sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-3.8 100
-  - cd ..
-  - git clone https://github.com/bareflank/hypervisor.git
-  - mv extended_apis hypervisor/
-  - cd hypervisor
+  #
+  # Path
+  #
+  - export PATH="$HOME/bfprefix/bin:$PATH"
+
+  #
+  # Output Errors
+  #
+  - export CTEST_OUTPUT_ON_FAILURE=1
+
+  #
+  # Build Folder
+  #
+  - mkdir build
+  - cd build
+
+  #
+  # Update / Install CMake
+  #
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+      mkdir -p external/cmake
+      pushd external/cmake
+      wget https://cmake.org/files/v3.8/cmake-3.8.0-Linux-x86_64.sh
+      chmod +x cmake-*-Linux-x86_64.sh
+      ./cmake-*-Linux-x86_64.sh --exclude-subdir --skip-license
+      export PATH="${PWD}/bin:$PATH"
+      popd
+    else
+      if ! brew ls --version cmake &>/dev/null; then brew install cmake; fi
+    fi
+
+  #
+  # bfsdk
+  #
+  - git clone https://github.com/Bareflank/bfsdk.git
+  - mkdir bfsdk/build
+  - pushd bfsdk/build
+  - |
+    cmake \
+      -DCMAKE_C_COMPILER="gcc-6" \
+      -DCMAKE_CXX_COMPILER="g++-6" \
+      ..
+  - make install
+  - popd
+  - rm -Rf bfsdk
+
+  #
+  # bfvmm
+  #
+  - git clone https://github.com/Bareflank/bfvmm.git
+  - mkdir bfvmm/build
+  - pushd bfvmm/build
+  - |
+    cmake \
+      -DCMAKE_C_COMPILER="gcc-6" \
+      -DCMAKE_CXX_COMPILER="g++-6" \
+      ..
+  - make install
+  - popd
+  - rm -Rf bfvmm
 
 #
 # Build Matrix
@@ -50,71 +78,233 @@ matrix:
   include:
 
   #
-  # Astyle
-  #
-  - os: linux
-    env:
-      - TEST="Astyle"
-    script:
-      - if [[ -n $(./tools/astyle/run.sh | grep Formatted) ]]; then echo "You must run astyle before submitting a pull request"; exit -1; fi
-
-  #
   # Doxygen
   #
   - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - gcc-6
+          - g++-6
+          - nasm
+          - doxygen
     env:
       - TEST="Doxygen"
     script:
-      - ./configure
-      - make doxygen
-      - if cat doc/doxygen_warnings.txt | grep FIX; then echo "You must fix doxygen before submitting a pull request"; exit -1; fi
+      - cd ..
+      - doxygen .doxygen.txt
+      - |
+        if [[ -s doxygen_warnings.txt ]]; then
+          echo "You must fix doxygen before submitting a pull request"
+          echo ""
+          cat doxygen_warnings.txt
+          exit -1
+        fi
 
   #
   # Git Check
   #
   - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - gcc-6
+          - g++-6
+          - nasm
     env:
       - TEST="Git Check"
     script:
-      - if [[ -n $(git diff --check HEAD^) ]]; then echo "You must remove whitespace before submitting a pull request"; exit -1; fi
+      - |
+        if [[ -n $(git diff --check HEAD^) ]]; then
+          echo "You must remove whitespace before submitting a pull request"
+          echo ""
+          git diff --check HEAD^
+          exit -1
+        fi
 
   #
-  # Codecov
+  # Astyle Format
   #
   - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - gcc-6
+          - g++-6
+          - nasm
     env:
-      - TEST="Codecov"
+      - TEST="Astyle Format"
     script:
-      - ./configure --compiler clang-3.8
-      - CC=clang-3.8 CXX=clang++-3.8 COVERALLS=true make
-      - make test
-    after_success:
-      - cd extended_apis
-      - ./tools/codecov/codecov.sh -s . -p ../makefiles/extended_apis/ -c -x ./tools/codecov/llvm-gcov.sh
+      - |
+        cmake \
+          -DCMAKE_C_COMPILER="gcc-6" \
+          -DCMAKE_CXX_COMPILER="g++-6" \
+          ..
+      - make install
+      - make format
+      - |
+        if [[ -n $(git diff) ]]; then
+          echo "You must run make format before submitting a pull request"
+          echo ""
+          git diff
+          exit -1
+        fi
 
   #
   # Clang Tidy
   #
   - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
+        packages:
+          - clang-4.0
+          - clang-tidy-4.0
+          - gcc-6
+          - g++-6
+          - nasm
     env:
       - TEST="Clang Tidy"
-    install:
-      - git clone https://github.com/rizsotto/bear.git
-      - pushd bear; git reset --hard 37b96a184f32b859c8f25ea2dc0d3f07242a9a98; cmake .; make; sudo make install; popd
     script:
-      - ./configure --compiler clang-3.8
-      - STATIC_ANALYSIS_ENABLED=true bear make
-      - EXTENDED_APIS_EXTENSION=true make tidy
+      - |
+        cmake \
+          -DENABLE_TIDY=ON \
+          -DCMAKE_C_COMPILER="gcc-6" \
+          -DCMAKE_CXX_COMPILER="g++-6" \
+          ..
+      - make install
+      - make tidy
 
   #
-  # Google Sanitizers
+  # Codecov
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - gcc-6
+          - g++-6
+          - nasm
+    env:
+      - TEST="Codecov"
+    script:
+      - |
+        cmake \
+          -DENABLE_COVERAGE=ON \
+          -DCMAKE_C_COMPILER="gcc-6" \
+          -DCMAKE_CXX_COMPILER="g++-6" \
+          ..
+      - make
+      - make test
+      - cd ..
+      - bash <(curl -s https://codecov.io/bash)
+
+  #
+  # Google Address Sanitizer
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - gcc-6
+          - g++-6
+          - nasm
+    env:
+      - TEST="Google Address Sanitizer"
+    script:
+      - |
+        cmake \
+          -DENABLE_DYNAMIC_ASAN=ON \
+          -DCMAKE_C_COMPILER="gcc-6" \
+          -DCMAKE_CXX_COMPILER="g++-6" \
+          ..
+      - make
+      - make test
+
+  #
+  # Google Undefined Sanitizer
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - gcc-6
+          - g++-6
+          - nasm
+    env:
+      - TEST="Google Undefined Sanitizer"
+    script:
+      - |
+        cmake \
+          -DENABLE_DYNAMIC_USAN=ON \
+          -DCMAKE_C_COMPILER="gcc-6" \
+          -DCMAKE_CXX_COMPILER="g++-6" \
+          ..
+      - make
+      - make test
+
+  #
+  # G++ 5
   #
   - os: linux
     env:
-      - TEST="Google Sanitizers"
+      - TEST="G++ 5"
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - gcc-5
+          - g++-5
+          - gcc-6
+          - g++-6
+          - nasm
     script:
-      - ./configure --compiler clang-3.8
-      - DYNAMIC_ANALYSIS_ENABLED=true make
+      - |
+        cmake \
+          -DENABLE_UNITTESTING=ON \
+          -DCMAKE_C_COMPILER="gcc-5" \
+          -DCMAKE_CXX_COMPILER="g++-5" \
+          ..
+      - make
+      - make test
+
+  #
+  # G++ 6
+  #
+  - os: linux
+    env:
+      - TEST="G++ 6"
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - gcc-6
+          - g++-6
+          - nasm
+    script:
+      - |
+        cmake \
+          -DENABLE_UNITTESTING=ON \
+          -DCMAKE_C_COMPILER="gcc-6" \
+          -DCMAKE_CXX_COMPILER="g++-6" \
+          ..
+      - make
       - make test
 
   #
@@ -123,8 +313,23 @@ matrix:
   - os: linux
     env:
       - TEST="Clang 3.8"
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-3.8
+        packages:
+          - clang-3.8
+          - gcc-6
+          - g++-6
+          - nasm
     script:
-      - ./configure --compiler clang-3.8
+      - |
+        cmake \
+          -DENABLE_UNITTESTING=ON \
+          -DCMAKE_C_COMPILER="clang-3.8" \
+          -DCMAKE_CXX_COMPILER="clang++-3.8" \
+          ..
       - make
       - make test
 
@@ -134,7 +339,48 @@ matrix:
   - os: linux
     env:
       - TEST="Clang 3.9"
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-3.9
+        packages:
+          - clang-3.9
+          - gcc-6
+          - g++-6
+          - nasm
     script:
-      - ./configure --compiler clang-3.9
+      - |
+        cmake \
+          -DENABLE_UNITTESTING=ON \
+          -DCMAKE_C_COMPILER="clang-3.9" \
+          -DCMAKE_CXX_COMPILER="clang++-3.9" \
+          ..
+      - make
+      - make test
+
+  #
+  # Clang 4.0
+  #
+  - os: linux
+    env:
+      - TEST="Clang 4.0"
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
+        packages:
+          - clang-4.0
+          - gcc-6
+          - g++-6
+          - nasm
+    script:
+      - |
+        cmake \
+          -DENABLE_UNITTESTING=ON \
+          -DCMAKE_C_COMPILER="clang-4.0" \
+          -DCMAKE_CXX_COMPILER="clang++-4.0" \
+          ..
       - make
       - make test

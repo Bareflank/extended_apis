@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-/*
+/**
  * Extended APIs VMCall Categories
  */
 enum eapis_vmcall_categories
@@ -41,7 +41,7 @@ enum eapis_vmcall_categories
     eapis_cat__wrmsr = 0x5000,
 };
 
-/*
+/**
  * Extended APIs VMCall Functions
  */
 enum eapis_vmcall_functions

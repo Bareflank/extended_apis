@@ -32,8 +32,7 @@ using namespace vmcs;
 void
 exit_handler_intel_x64_eapis::register_json_vmcall__vpid()
 {
-    m_json_commands["enable_vpid"] = [&](const auto & ijson, auto & ojson)
-    {
+    m_json_commands["enable_vpid"] = [&](const auto & ijson, auto & ojson) {
         this->handle_vmcall__enable_vpid(ijson.at("enabled"));
         this->json_success(ojson);
     };
@@ -43,8 +42,7 @@ void
 exit_handler_intel_x64_eapis::handle_vmcall_registers__vpid(
     vmcall_registers_t &regs)
 {
-    switch (regs.r03)
-    {
+    switch (regs.r03) {
         case eapis_fun__enable_vpid:
             handle_vmcall__enable_vpid(true);
             break;
@@ -61,16 +59,15 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers__vpid(
 void
 exit_handler_intel_x64_eapis::handle_vmcall__enable_vpid(bool enabled)
 {
-    if (policy(enable_vpid)->verify(enabled) != vmcall_verifier::allow)
+    if (policy(enable_vpid)->verify(enabled) != vmcall_verifier::allow) {
         policy(enable_vpid)->deny_vmcall();
+    }
 
-    if (enabled)
-    {
+    if (enabled) {
         m_vmcs_eapis->enable_vpid();
         vmcall_debug << "enable_vpid: success" << bfendl;
     }
-    else
-    {
+    else {
         m_vmcs_eapis->disable_vpid();
         vmcall_debug << "disable_vpid: success" << bfendl;
     }

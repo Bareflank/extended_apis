@@ -19,11 +19,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <intrinsics/x86/intel_x64.h>
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
-
-#include <vmcs/vmcs_intel_x64_32bit_control_fields.h>
-#include <vmcs/vmcs_intel_x64_32bit_read_only_data_fields.h>
-#include <vmcs/vmcs_intel_x64_natural_width_read_only_data_fields.h>
 
 using namespace intel_x64;
 using namespace vmcs;

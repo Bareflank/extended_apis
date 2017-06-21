@@ -22,14 +22,35 @@
 #ifndef ROOT_EPT_INTEL_X64_H
 #define ROOT_EPT_INTEL_X64_H
 
-#include <gsl/gsl>
+#include <bfgsl.h>
+#include <bftypes.h>
+#include <bfmemory.h>
 
 #include <mutex>
 #include <vector>
 
-#include <memory.h>
 #include <vmcs/ept_intel_x64.h>
 #include <vmcs/ept_attr_intel_x64.h>
+
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_VMCS
+#ifdef SHARED_EAPIS_VMCS
+#define EXPORT_EAPIS_VMCS EXPORT_SYM
+#else
+#define EXPORT_EAPIS_VMCS IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_VMCS
+#endif
+
+// -----------------------------------------------------------------------------
+// Definitions
+// -----------------------------------------------------------------------------
 
 /// Root Page Tables
 ///
@@ -41,16 +62,16 @@
 /// This needs to be done manually. In general, this class should not be used
 /// directly, but instead mapping should be done via a unique_map_ptr_x64.
 ///
-class root_ept_intel_x64
+class EXPORT_EAPIS_VMCS root_ept_intel_x64
 {
 public:
 
-    using pointer = void *;
-    using integer_pointer = uintptr_t;
-    using eptp_type = uint64_t;
-    using attr_type = intel_x64::ept::memory_attr::attr_type;
-    using size_type = size_t;
-    using memory_descriptor_list = ept_intel_x64::memory_descriptor_list;
+    using pointer = void *;                                                 ///< Pointer type
+    using integer_pointer = uintptr_t;                                      ///< Integer pointer type
+    using eptp_type = uint64_t;                                             ///< EPTP type
+    using attr_type = intel_x64::ept::memory_attr::attr_type;               ///< Memory attribute type
+    using size_type = size_t;                                               ///< Size type
+    using memory_descriptor_list = ept_intel_x64::memory_descriptor_list;   ///< Memory descriptor list type
 
     /// Default Constructor
     ///
@@ -250,29 +271,35 @@ public:
     ///
     memory_descriptor_list ept_to_mdl() const;
 
-private:
+PRIVATE
+
+    /// @cond
 
     ept_entry_intel_x64 add_page(integer_pointer gpa, size_type size);
 
     void map_page(integer_pointer gpa, integer_pointer phys, attr_type attr, size_type size);
     void unmap_page(integer_pointer gpa) noexcept;
 
+    /// @endcond
+
 private:
 
-    integer_pointer m_eptp;
-    std::unique_ptr<ept_intel_x64> m_ept;
+    integer_pointer m_eptp{0};                          ///< Integer pointer to the EPTP for this root EPT
+    std::unique_ptr<ept_intel_x64> m_ept;               ///< The root EPT
 
-    mutable std::mutex m_mutex;
+    mutable std::mutex m_mutex;                         ///< Mutex for root operations
 
 public:
 
-    friend class eapis_ut;
+    /// @cond
 
     root_ept_intel_x64(root_ept_intel_x64 &&) = default;
     root_ept_intel_x64 &operator=(root_ept_intel_x64 &&) = default;
 
     root_ept_intel_x64(const root_ept_intel_x64 &) = delete;
     root_ept_intel_x64 &operator=(const root_ept_intel_x64 &) = delete;
+
+    /// @endcond
 };
 
 #endif

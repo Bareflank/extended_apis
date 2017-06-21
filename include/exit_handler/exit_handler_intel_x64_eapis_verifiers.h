@@ -27,29 +27,90 @@
 #endif
 
 #include <string>
+#include <bfdebug.h>
 
+/// VMCall Verifier
+///
+/// This class defines the base class for vmcall verification. The Extended APIs
+/// provides a set of default verifiers that are always allowed, or deny all.
+/// These classes are intended to be subclassed to provide more fine grain
+/// control of your vmcall policy using a policy engine such as FLASK.
+///
 class vmcall_verifier
 {
 public:
 
-    using denial_list_type = std::vector<std::string>;
+    using denial_list_type = std::vector<std::string>;      ///< Denial list type
 
-    enum verifier_result
-    {
+    /// Verifier Result
+    ///
+    enum verifier_result {
         deny = 0,
         log = 1,
         allow = 2,
     };
 
 public:
+
+    /// Default Constructor
+    ///
+    /// @expects none
+    /// @ensures none
+    ///
     vmcall_verifier() = default;
+
+    /// Default Destructor
+    ///
+    /// @expects none
+    /// @ensures none
+    ///
     virtual ~vmcall_verifier() = default;
 
+    /// To String
+    ///
+    /// @expects none
+    /// @ensures none
+    ///
+    /// @return returns a human readable version of the verifier
+    ///
     virtual std::string to_string() const;
 
+    /// Default Verifier
+    ///
+    /// @expects none
+    /// @ensures none
+    ///
+    /// @return returns
+    ///     - deny if ENABLE_VMCALL_DENIALS == 1
+    ///     - log if ENABLE_VMCALL_DENIALS == 2
+    ///     - allow otherwise
+    ///
     verifier_result default_verify();
+
+    /// Deny VMCall
+    ///
+    /// @expects none
+    /// @ensures none
+    ///
+    /// Used to deny a vmcall. Must provide the vmcall that was denied
+    /// as well as the list the denial is being added too.
+    ///
+    /// @param func the name of the vmcall function being denied
+    /// @param list the denial list to add the denial too
+    ///
     void deny_vmcall_with_args(const char *func, denial_list_type &list);
 };
+
+/// @cond
+
+namespace vp
+{
+using index_type = uint64_t;
+
+constexpr const auto index_clear_denials                          = 0x0000001UL;
+constexpr const auto index_dump_policy                            = 0x0000002UL;
+constexpr const auto index_dump_denials                           = 0x0000003UL;
+}
 
 class default_verifier__clear_denials : public vmcall_verifier
 {
@@ -57,7 +118,7 @@ public:
     default_verifier__clear_denials() = default;
     ~default_verifier__clear_denials() override = default;
 
-    verifier_result verify()
+    virtual verifier_result verify()
     { return default_verify(); }
 };
 
@@ -67,7 +128,7 @@ public:
     default_verifier__dump_policy() = default;
     ~default_verifier__dump_policy() override = default;
 
-    verifier_result verify()
+    virtual verifier_result verify()
     { return default_verify(); }
 };
 
@@ -77,60 +138,16 @@ public:
     default_verifier__dump_denials() = default;
     ~default_verifier__dump_denials() override = default;
 
-    verifier_result verify()
+    virtual verifier_result verify()
     { return default_verify(); }
 };
-
-namespace vp
-{
-
-using index_type = uint64_t;
-
-constexpr const auto index_clear_denials                          = 0x0000001UL;
-constexpr const auto index_dump_policy                            = 0x0000002UL;
-constexpr const auto index_dump_denials                           = 0x0000003UL;
-
-constexpr const auto index_enable_io_bitmaps                      = 0x0001001UL;
-constexpr const auto index_trap_on_io_access                      = 0x0001002UL;
-constexpr const auto index_trap_on_all_io_accesses                = 0x0001003UL;
-constexpr const auto index_pass_through_io_access                 = 0x0001004UL;
-constexpr const auto index_pass_through_all_io_accesses           = 0x0001005UL;
-constexpr const auto index_whitelist_io_access                    = 0x0001006UL;
-constexpr const auto index_blacklist_io_access                    = 0x0001007UL;
-constexpr const auto index_log_io_access                          = 0x0001008UL;
-constexpr const auto index_clear_io_access_log                    = 0x0001009UL;
-constexpr const auto index_io_access_log                          = 0x000100AUL;
-
-constexpr const auto index_enable_vpid                            = 0x0002001UL;
-
-constexpr const auto index_enable_msr_bitmap                      = 0x0003001UL;
-
-constexpr const auto index_trap_on_rdmsr_access                   = 0x0004001UL;
-constexpr const auto index_trap_on_all_rdmsr_accesses             = 0x0004002UL;
-constexpr const auto index_pass_through_rdmsr_access              = 0x0004003UL;
-constexpr const auto index_pass_through_all_rdmsr_accesses        = 0x0004004UL;
-constexpr const auto index_whitelist_rdmsr_access                 = 0x0004005UL;
-constexpr const auto index_blacklist_rdmsr_access                 = 0x0004006UL;
-constexpr const auto index_log_rdmsr_access                       = 0x0004007UL;
-constexpr const auto index_clear_rdmsr_access_log                 = 0x0004008UL;
-constexpr const auto index_rdmsr_access_log                       = 0x0004009UL;
-
-constexpr const auto index_trap_on_wrmsr_access                   = 0x0004001UL;
-constexpr const auto index_trap_on_all_wrmsr_accesses             = 0x0004002UL;
-constexpr const auto index_pass_through_wrmsr_access              = 0x0004003UL;
-constexpr const auto index_pass_through_all_wrmsr_accesses        = 0x0004004UL;
-constexpr const auto index_whitelist_wrmsr_access                 = 0x0004005UL;
-constexpr const auto index_blacklist_wrmsr_access                 = 0x0004006UL;
-constexpr const auto index_log_wrmsr_access                       = 0x0004007UL;
-constexpr const auto index_clear_wrmsr_access_log                 = 0x0004008UL;
-constexpr const auto index_wrmsr_access_log                       = 0x0004009UL;
-
-}
 
 #define policy(a) \
     this->get_verifier<default_verifier__ ## a>(vp::index_ ## a)
 
 #define deny_vmcall() \
-    deny_vmcall_with_args(__FUNC__, m_denials)
+    deny_vmcall_with_args(__BFFUNC__, m_denials)
+
+/// @endcond
 
 #endif

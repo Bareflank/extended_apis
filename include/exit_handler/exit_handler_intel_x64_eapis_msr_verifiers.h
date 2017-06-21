@@ -25,14 +25,23 @@
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 
+/// @cond
+
+namespace vp
+{
+constexpr const auto index_enable_msr_bitmap = 0x0003001UL;
+}
+
 class default_verifier__enable_msr_bitmap : public vmcall_verifier
 {
 public:
     default_verifier__enable_msr_bitmap() = default;
     ~default_verifier__enable_msr_bitmap() override = default;
 
-    verifier_result verify(bool enabled)
-    { (void) enabled; return default_verify(); }
+    virtual verifier_result verify(bool enabled)
+    { bfignored(enabled); return default_verify(); }
 };
+
+/// @endcond
 
 #endif

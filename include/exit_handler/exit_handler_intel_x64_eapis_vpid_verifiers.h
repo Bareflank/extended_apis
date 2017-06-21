@@ -25,14 +25,23 @@
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 
+/// @cond
+
+namespace vp
+{
+constexpr const auto index_enable_vpid = 0x0002001UL;
+}
+
 class default_verifier__enable_vpid : public vmcall_verifier
 {
 public:
     default_verifier__enable_vpid() = default;
     ~default_verifier__enable_vpid() override = default;
 
-    verifier_result verify(bool enabled)
-    { (void) enabled; return default_verify(); }
+    virtual verifier_result verify(bool enabled)
+    { bfignored(enabled); return default_verify(); }
 };
+
+/// @endcond
 
 #endif

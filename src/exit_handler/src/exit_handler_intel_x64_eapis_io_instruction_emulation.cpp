@@ -19,10 +19,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <intrinsics/x86/intel_x64.h>
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
-
-#include <vmcs/vmcs_intel_x64_32bit_control_fields.h>
-#include <vmcs/vmcs_intel_x64_natural_width_read_only_data_fields.h>
 
 using namespace intel_x64;
 using namespace vmcs;
@@ -47,8 +45,9 @@ exit_handler_intel_x64_eapis::handle_exit__io_instruction()
 {
     register_monitor_trap(&exit_handler_intel_x64_eapis::trap_on_io_access_callback);
 
-    if (m_io_access_log_enabled)
+    if (m_io_access_log_enabled) {
         m_io_access_log[exit_qualification::io_instruction::port_number::get()]++;
+    }
 
     primary_processor_based_vm_execution_controls::use_io_bitmaps::disable();
     this->resume();

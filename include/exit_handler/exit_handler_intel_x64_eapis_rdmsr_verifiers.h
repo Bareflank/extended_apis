@@ -25,14 +25,29 @@
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 
+/// @cond
+
+namespace vp
+{
+constexpr const auto index_trap_on_rdmsr_access                   = 0x0004001UL;
+constexpr const auto index_trap_on_all_rdmsr_accesses             = 0x0004002UL;
+constexpr const auto index_pass_through_rdmsr_access              = 0x0004003UL;
+constexpr const auto index_pass_through_all_rdmsr_accesses        = 0x0004004UL;
+constexpr const auto index_whitelist_rdmsr_access                 = 0x0004005UL;
+constexpr const auto index_blacklist_rdmsr_access                 = 0x0004006UL;
+constexpr const auto index_log_rdmsr_access                       = 0x0004007UL;
+constexpr const auto index_clear_rdmsr_access_log                 = 0x0004008UL;
+constexpr const auto index_rdmsr_access_log                       = 0x0004009UL;
+}
+
 class default_verifier__trap_on_rdmsr_access : public vmcall_verifier
 {
 public:
     default_verifier__trap_on_rdmsr_access() = default;
     ~default_verifier__trap_on_rdmsr_access() override = default;
 
-    verifier_result verify(exit_handler_intel_x64_eapis::msr_type msr)
-    { (void) msr; return default_verify(); }
+    virtual verifier_result verify(exit_handler_intel_x64_eapis::msr_type msr)
+    { bfignored(msr); return default_verify(); }
 };
 
 class default_verifier__trap_on_all_rdmsr_accesses : public vmcall_verifier
@@ -41,7 +56,7 @@ public:
     default_verifier__trap_on_all_rdmsr_accesses() = default;
     ~default_verifier__trap_on_all_rdmsr_accesses() override = default;
 
-    verifier_result verify()
+    virtual verifier_result verify()
     { return default_verify(); }
 };
 
@@ -51,8 +66,8 @@ public:
     default_verifier__pass_through_rdmsr_access() = default;
     ~default_verifier__pass_through_rdmsr_access() override = default;
 
-    verifier_result verify(exit_handler_intel_x64_eapis::msr_type msr)
-    { (void) msr; return default_verify(); }
+    virtual verifier_result verify(exit_handler_intel_x64_eapis::msr_type msr)
+    { bfignored(msr); return default_verify(); }
 };
 
 class default_verifier__pass_through_all_rdmsr_accesses : public vmcall_verifier
@@ -61,7 +76,7 @@ public:
     default_verifier__pass_through_all_rdmsr_accesses() = default;
     ~default_verifier__pass_through_all_rdmsr_accesses() override = default;
 
-    verifier_result verify()
+    virtual verifier_result verify()
     { return default_verify(); }
 };
 
@@ -71,8 +86,8 @@ public:
     default_verifier__whitelist_rdmsr_access() = default;
     ~default_verifier__whitelist_rdmsr_access() override = default;
 
-    verifier_result verify(exit_handler_intel_x64_eapis::msr_list_type msrs)
-    { (void) msrs; return default_verify(); }
+    virtual verifier_result verify(exit_handler_intel_x64_eapis::msr_list_type msrs)
+    { bfignored(msrs); return default_verify(); }
 };
 
 class default_verifier__blacklist_rdmsr_access : public vmcall_verifier
@@ -81,8 +96,8 @@ public:
     default_verifier__blacklist_rdmsr_access() = default;
     ~default_verifier__blacklist_rdmsr_access() override = default;
 
-    verifier_result verify(exit_handler_intel_x64_eapis::msr_list_type msrs)
-    { (void) msrs; return default_verify(); }
+    virtual verifier_result verify(exit_handler_intel_x64_eapis::msr_list_type msrs)
+    { bfignored(msrs); return default_verify(); }
 };
 
 class default_verifier__log_rdmsr_access : public vmcall_verifier
@@ -91,8 +106,8 @@ public:
     default_verifier__log_rdmsr_access() = default;
     ~default_verifier__log_rdmsr_access() override = default;
 
-    verifier_result verify(bool enabled)
-    { (void) enabled; return default_verify(); }
+    virtual verifier_result verify(bool enabled)
+    { bfignored(enabled); return default_verify(); }
 };
 
 class default_verifier__clear_rdmsr_access_log : public vmcall_verifier
@@ -101,7 +116,7 @@ public:
     default_verifier__clear_rdmsr_access_log() = default;
     ~default_verifier__clear_rdmsr_access_log() override = default;
 
-    verifier_result verify()
+    virtual verifier_result verify()
     { return default_verify(); }
 };
 
@@ -111,8 +126,10 @@ public:
     default_verifier__rdmsr_access_log() = default;
     ~default_verifier__rdmsr_access_log() override = default;
 
-    verifier_result verify()
+    virtual verifier_result verify()
     { return default_verify(); }
 };
+
+/// @endcond
 
 #endif

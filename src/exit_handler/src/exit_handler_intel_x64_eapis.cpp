@@ -19,19 +19,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <intrinsics/x86/intel_x64.h>
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
-
-#include <vmcs/vmcs_intel_x64_32bit_read_only_data_fields.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_vmcall_interface.h>
 
 using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
 
-exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis() :
-    m_monitor_trap_callback(&exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback),
-    m_io_access_log_enabled(false),
-    m_vmcs_eapis(nullptr)
+exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis()
 {
     init_policy();
 
@@ -59,8 +55,7 @@ exit_handler_intel_x64_eapis::advance_and_resume()
 void
 exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
 {
-    switch (reason)
-    {
+    switch (reason) {
         case exit_reason::basic_exit_reason::monitor_trap_flag:
             handle_exit__monitor_trap_flag();
             break;
@@ -77,6 +72,10 @@ exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
             handle_exit__wrmsr();
             break;
 
+        case vmcs::exit_reason::basic_exit_reason::control_register_accesses:
+            handle_exit__ctl_reg_access();
+            break;
+
         default:
             exit_handler_intel_x64::handle_exit(reason);
             break;
@@ -86,8 +85,7 @@ exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
 void
 exit_handler_intel_x64_eapis::handle_vmcall_registers(vmcall_registers_t &regs)
 {
-    switch (regs.r02)
-    {
+    switch (regs.r02) {
         case eapis_cat__io_instruction:
             handle_vmcall_registers__io_instruction(regs);
             break;
@@ -116,9 +114,7 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers(vmcall_registers_t &regs)
 void
 exit_handler_intel_x64_eapis::handle_vmcall_data_string_json(
     const json &ijson, json &ojson)
-{
-    m_json_commands.at(ijson.at("command"))(ijson, ojson);
-}
+{ m_json_commands.at(ijson.at("command"))(ijson, ojson); }
 
 void
 exit_handler_intel_x64_eapis::json_success(json &ojson)
