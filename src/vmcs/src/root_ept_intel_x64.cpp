@@ -161,19 +161,14 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
 
     switch (size) {
         case ept::pdpt::size_bytes:
-            entry.clear();
             entry.set_phys_addr(phys & ~(ept::pdpt::size_bytes - 1));
-            entry.set_entry_type(true);
             break;
 
         case ept::pd::size_bytes:
-            entry.clear();
             entry.set_phys_addr(phys & ~(ept::pd::size_bytes - 1));
-            entry.set_entry_type(true);
             break;
 
         case ept::pt::size_bytes:
-            entry.clear();
             entry.set_phys_addr(phys & ~(ept::pt::size_bytes - 1));
             break;
     }

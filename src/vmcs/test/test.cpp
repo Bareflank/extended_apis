@@ -85,11 +85,14 @@ eapis_ut::list()
     this->test_ept_entry_intel_x64_pass_through_access();
     this->test_ept_entry_intel_x64_clear();
 
+    this->test_ept_intel_x64_get_entry();
     this->test_ept_intel_x64_add_remove_page_success_without_setting();
     this->test_ept_intel_x64_add_remove_page_1g_success();
     this->test_ept_intel_x64_add_remove_page_2m_success();
     this->test_ept_intel_x64_add_remove_page_4k_success();
-    this->test_ept_intel_x64_add_remove_page_swap_success();
+    this->test_ept_intel_x64_add_page_swap_1g_exception();
+    this->test_ept_intel_x64_add_page_swap_2m_exception();
+    this->test_ept_intel_x64_add_page_swap_4k_exception();
     this->test_ept_intel_x64_add_page_twice_success();
     this->test_ept_intel_x64_remove_page_twice_success();
     this->test_ept_intel_x64_remove_page_unknown_success();

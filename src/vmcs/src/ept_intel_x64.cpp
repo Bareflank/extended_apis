@@ -43,60 +43,79 @@ ept_intel_x64::ept_intel_x64(pointer epte)
 }
 
 ept_entry_intel_x64
+ept_intel_x64::get_entry(index_type index)
+{
+    if (index >= ept::num_entries)
+        throw std::invalid_argument("index must be less than ept::num_entries");
+
+    auto ept = gsl::make_span(m_ept, ept::num_entries);
+    return ept_entry_intel_x64(&ept.at(index));
+}
+
+ept_entry_intel_x64
 ept_intel_x64::add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end)
 {
     auto index = ept::index(gpa, bits);
+    auto entry = get_entry(index);
 
-    if (bits > end) {
+    if (bits > end)
+    {
+        if (entry.entry_type())
+            throw std::logic_error("unmap gpa before adding new page");
 
-        if (m_epts.empty()) {
+        if (m_epts.empty())
             m_epts = std::vector<std::unique_ptr<ept_intel_x64>>(ept::num_entries);
         }
 
         auto iter = bfn::find(m_epts, index);
-        if (!(*iter)) {
+        if (nullptr == *iter)
+        {
             auto view = gsl::make_span(m_ept, ept::num_entries);
-            (*iter) = std::make_unique<ept_intel_x64>(&view.at(index));
+            *iter = std::make_unique<ept_intel_x64>(&view.at(index));
         }
 
         return (*iter)->add_page(gpa, bits - ept::pt::size, end);
     }
 
-    if (!m_epts.empty()) {
-        m_epts.clear();
-        m_epts.shrink_to_fit();
+    if (!m_epts.empty())
+    {
+        auto iter = bfn::find(m_epts, index);
+        if (nullptr != *iter)
+            throw std::logic_error("unmap gpa before adding new page");
     }
 
-    auto view = gsl::make_span(m_ept, ept::num_entries);
-    return ept_entry_intel_x64(&view.at(index));
+    if (entry.entry_type())
+        return entry;
+
+    entry.clear();
+    entry.set_entry_type(true);
+    return entry;
 }
 
 void
 ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
 {
     auto index = ept::index(gpa, bits);
+    auto entry = get_entry(index);
 
-    if (!m_epts.empty()) {
+    if (entry.entry_type())
+    {
+        entry.clear();
+        return;
+    }
 
+    if (!m_epts.empty())
+    {
         auto iter = bfn::find(m_epts, index);
-        if (auto pt = (*iter).get()) {
-
+        if (auto pt = (*iter).get())
+        {
             pt->remove_page(gpa, bits - ept::pt::size);
             if (pt->empty()) {
 
                 (*iter) = nullptr;
-
-                auto view = gsl::make_span(m_ept, ept::num_entries);
-                view.at(index) = 0;
+                entry.clear();
             }
         }
-    }
-    else {
-
-        auto view = gsl::make_span(m_ept, ept::num_entries);
-        view.at(index) = 0;
-
-        return;
     }
 }
 

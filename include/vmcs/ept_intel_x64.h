@@ -90,7 +90,20 @@ public:
     ///
     ~ept_intel_x64() = default;
 
-    /// Add Page (1g Granularity)
+    ///
+    /// Get an EPT entry
+    ///
+    /// Retrieves the EPT entry at the given index.
+    ///
+    /// @expects none
+    /// @ensures none
+    //
+    /// @param index the index of the entry to retrieve.
+    /// @return an entry object constructed from the data at @param index.
+    ///
+    ept_entry_intel_x64 get_entry(index_type index);
+
+    /// Add Page (1G Granularity)
     ///
     /// Adds a page to the extended page table structure. Note that this is the
     /// public function, and should only be used to add pages to the
@@ -98,17 +111,27 @@ public:
     /// will parse through the different levels making sure the guest physical
     /// address provided is valid.
     ///
+    /// If the gpa maps to a table entry, an exception is thrown.
+    ///
+    /// If the gpa maps to a page entry with higher granularity than 1G,
+    /// an exception is thrown.
+    ///
+    /// If the gpa maps to a page entry with 1G granularity, it returns the
+    /// entry unmodified.
+    ///
+    /// Otherwise, it returns an entry with only bit 7 set
+    /// (so the entry maps a 1G page).
+    ///
     /// @expects none
     /// @ensures none
     ///
     /// @param gpa the guest physical address of the page to add
-    /// @return the resulting epte. Note that this epte is blank, and its
-    ///     properties should be set by the caller
+    /// @return the resulting epte.
     ///
     ept_entry_intel_x64 add_page_1g(integer_pointer gpa)
     { return add_page(gpa, intel_x64::ept::pml4::from, intel_x64::ept::pdpt::from); }
 
-    /// Add Page (2m Granularity)
+    /// Add Page (2M Granularity)
     ///
     /// Adds a page to the extended page table structure. Note that this is the
     /// public function, and should only be used to add pages to the
@@ -116,17 +139,27 @@ public:
     /// will parse through the different levels making sure the guest physical
     /// address provided is valid.
     ///
+    /// If the gpa maps to a table entry, an exception is thrown.
+    ///
+    /// If the gpa maps to a page entry with higher granularity than 2M,
+    /// an exception is thrown.
+    ///
+    /// If the gpa maps to a page entry with 2M granularity, it returns the
+    /// entry unmodified.
+    ///
+    /// Otherwise, it returns an entry with only bit 7 set
+    /// (so the entry maps a 2M page).
+    ///
     /// @expects none
     /// @ensures none
     ///
     /// @param gpa the guest physical address of the page to add
-    /// @return the resulting epte. Note that this epte is blank, and its
-    ///     properties should be set by the caller
+    /// @return the resulting epte.
     ///
     ept_entry_intel_x64 add_page_2m(integer_pointer gpa)
     { return add_page(gpa, intel_x64::ept::pml4::from, intel_x64::ept::pd::from); }
 
-    /// Add Page (4k Granularity)
+    /// Add Page (4K Granularity)
     ///
     /// Adds a page to the extended page table structure. Note that this is the
     /// public function, and should only be used to add pages to the
@@ -134,12 +167,20 @@ public:
     /// will parse through the different levels making sure the guest physical
     /// address provided is valid.
     ///
+    /// If the gpa maps to a page entry with higher granularity than 4K,
+    /// an exception is thrown.
+    ///
+    /// If the gpa maps to a page entry with 4K granularity, it returns the
+    /// entry unmodified.
+    ///
+    /// Otherwise, it returns an entry with only bit 7 set
+    /// (so the entry maps a 4K page).
+    ///
     /// @expects none
     /// @ensures none
     ///
     /// @param gpa the guest physical address of the page to add
-    /// @return the resulting epte. Note that this epte is blank, and its
-    ///     properties should be set by the caller
+    /// @return the resulting epte.
     ///
     ept_entry_intel_x64 add_page_4k(integer_pointer gpa)
     { return add_page(gpa, intel_x64::ept::pml4::from, intel_x64::ept::pt::from); }
