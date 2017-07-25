@@ -84,11 +84,14 @@ private:
     void test_ept_entry_intel_x64_pass_through_access();
     void test_ept_entry_intel_x64_clear();
 
+    void test_ept_intel_x64_get_entry();
     void test_ept_intel_x64_add_remove_page_success_without_setting();
     void test_ept_intel_x64_add_remove_page_1g_success();
     void test_ept_intel_x64_add_remove_page_2m_success();
     void test_ept_intel_x64_add_remove_page_4k_success();
-    void test_ept_intel_x64_add_remove_page_swap_success();
+    void test_ept_intel_x64_add_page_swap_1g_exception();
+    void test_ept_intel_x64_add_page_swap_2m_exception();
+    void test_ept_intel_x64_add_page_swap_4k_exception();
     void test_ept_intel_x64_add_page_twice_success();
     void test_ept_intel_x64_remove_page_twice_success();
     void test_ept_intel_x64_remove_page_unknown_success();
