@@ -29,6 +29,44 @@
 #include <string>
 #include <bfdebug.h>
 
+// -----------------------------------------------------------------------------
+// Constants
+// -----------------------------------------------------------------------------
+
+namespace vp
+{
+using index_type = uint64_t;
+
+constexpr const auto index_clear_denials                          = 0x0000001UL;
+constexpr const auto index_dump_policy                            = 0x0000002UL;
+constexpr const auto index_dump_denials                           = 0x0000003UL;
+}
+
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_EXIT_HANDLER
+#ifdef SHARED_EAPIS_EXIT_HANDLER
+#define EXPORT_EAPIS_EXIT_HANDLER EXPORT_SYM
+#else
+#define EXPORT_EAPIS_EXIT_HANDLER IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_EXIT_HANDLER
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4251)
+#endif
+
+// -----------------------------------------------------------------------------
+// Definitions
+// -----------------------------------------------------------------------------
+
 /// VMCall Verifier
 ///
 /// This class defines the base class for vmcall verification. The Extended APIs
@@ -36,7 +74,7 @@
 /// These classes are intended to be subclassed to provide more fine grain
 /// control of your vmcall policy using a policy engine such as FLASK.
 ///
-class vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER vmcall_verifier
 {
 public:
 
@@ -103,16 +141,8 @@ public:
 
 /// @cond
 
-namespace vp
-{
-using index_type = uint64_t;
-
-constexpr const auto index_clear_denials                          = 0x0000001UL;
-constexpr const auto index_dump_policy                            = 0x0000002UL;
-constexpr const auto index_dump_denials                           = 0x0000003UL;
-}
-
-class default_verifier__clear_denials : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__clear_denials :
+    public vmcall_verifier
 {
 public:
     default_verifier__clear_denials() = default;
@@ -122,7 +152,8 @@ public:
     { return default_verify(); }
 };
 
-class default_verifier__dump_policy : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__dump_policy :
+    public vmcall_verifier
 {
 public:
     default_verifier__dump_policy() = default;
@@ -132,7 +163,8 @@ public:
     { return default_verify(); }
 };
 
-class default_verifier__dump_denials : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__dump_denials :
+    public vmcall_verifier
 {
 public:
     default_verifier__dump_denials() = default;
@@ -142,6 +174,14 @@ public:
     { return default_verify(); }
 };
 
+/// @endcond
+
+// -----------------------------------------------------------------------------
+// Macros
+// -----------------------------------------------------------------------------
+
+/// @cond
+
 #define policy(a) \
     this->get_verifier<default_verifier__ ## a>(vp::index_ ## a)
 
@@ -149,5 +189,9 @@ public:
     deny_vmcall_with_args(__BFFUNC__, m_denials)
 
 /// @endcond
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif

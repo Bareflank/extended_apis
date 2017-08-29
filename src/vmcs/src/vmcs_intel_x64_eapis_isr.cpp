@@ -35,7 +35,7 @@ extern "C" void unlock_write(void);
 static auto
 vector_to_str(uint64_t vector) noexcept
 {
-    switch(vector) {
+    switch (vector) {
         case 0x00: return "fault: divide by 0";
         case 0x01: return "fault/trap: debug exception";
         case 0x02: return "interrupt: nmi";
@@ -73,7 +73,7 @@ isr_handler(
     // needed. For now, this case is unlikely, so it is ignored.
     //
 
-    bfdebug_transaction(0, [&](std::string *msg) {
+    bfdebug_transaction(0, [&](std::string * msg) {
         bferror_lnbr(0, msg);
         bferror_lnbr(0, msg);
         bferror_lnbr(0, msg);

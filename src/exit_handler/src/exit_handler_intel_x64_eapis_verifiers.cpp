@@ -20,6 +20,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfstring.h>
+#include <bfexports.h>
 
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
@@ -28,14 +29,14 @@
 //#define ENABLE_VMCALL_DENIALS 2 // Enabled Logging
 
 #if ENABLE_VMCALL_DENIALS == 1
-bool g_deny_all = true;
-bool g_log_denials = true;
+EXPORT_SYM bool g_deny_all = true;
+EXPORT_SYM bool g_log_denials = true;
 #elif ENABLE_VMCALL_DENIALS == 2
-bool g_deny_all = false;
-bool g_log_denials = true;
+EXPORT_SYM bool g_deny_all = false;
+EXPORT_SYM bool g_log_denials = true;
 #else
-bool g_deny_all = false;
-bool g_log_denials = false;
+EXPORT_SYM bool g_deny_all = false;
+EXPORT_SYM bool g_log_denials = false;
 #endif
 
 std::string

@@ -140,7 +140,7 @@ ept_intel_x64::ept_to_mdl(memory_descriptor_list &mdl) const
 bool
 ept_intel_x64::empty() const noexcept
 {
-    auto size = 0UL;
+    auto size = 0ULL;
     auto view = gsl::make_span(m_ept, ept::num_entries);
 
     for (auto element : view) {
@@ -153,7 +153,7 @@ ept_intel_x64::empty() const noexcept
 ept_intel_x64::size_type
 ept_intel_x64::global_size() const noexcept
 {
-    auto size = 0UL;
+    auto size = 0ULL;
     auto view = gsl::make_span(m_ept, ept::num_entries);
 
     for (auto element : view) {

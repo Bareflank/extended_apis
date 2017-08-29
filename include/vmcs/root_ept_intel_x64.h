@@ -48,6 +48,11 @@
 #define EXPORT_EAPIS_VMCS
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4251)
+#endif
+
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
@@ -303,5 +308,9 @@ public:
 
     /// @endcond
 };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif

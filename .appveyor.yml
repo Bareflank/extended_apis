@@ -9,7 +9,9 @@ environment:
     CYG_ROOT: C:\cygwin_bareflank
     CYG_BASH: C:\cygwin_bareflank\bin\bash
     CYG_MIRROR: http://mirrors.kernel.org/sourceware/cygwin/
-    CYG_PACKAGES: git,make,gcc-core,gcc-g++,nasm,clang,clang++,cmake
+    CYG_PACKAGES: git,make,gcc-core,gcc-g++,nasm,clang,clang++,cmake,python,gettext
+    BFPATH: '%PATH%'
+    PATH: '%PATH%;C:\Program Files\NASM'
 
 test: off
 
@@ -17,8 +19,18 @@ test: off
 # Setup Cygwin
 #
 install:
-  - ps: 'Start-FileDownload "https://cygwin.com/setup-x86_64.exe" -FileName "setup-x86_64.exe"'
-  - 'setup-x86_64.exe --quiet-mode --no-shortcuts --only-site --root "%CYG_ROOT%" --site "%CYG_MIRROR%" --local-package-dir "%CYG_ROOT%\var\cache\setup" --packages "%CYG_PACKAGES%"'
+
+  #
+  # Nasm
+  #
+  - ps: Start-FileDownload "http://www.nasm.us/pub/nasm/releasebuilds/2.13.01/win64/nasm-2.13.01-installer-x64.exe" -FileName "nasm-installer-x64.exe"
+  - nasm-installer-x64.exe /S
+
+  #
+  # Cygwin
+  #
+  - ps: Start-FileDownload "https://cygwin.com/setup-x86_64.exe" -FileName "setup-x86_64.exe"
+  - setup-x86_64.exe --quiet-mode --no-shortcuts --only-site --root "%CYG_ROOT%" --site "%CYG_MIRROR%" --local-package-dir "%CYG_ROOT%\var\cache\setup" --packages "%CYG_PACKAGES%"
 
 #
 # Build
@@ -28,59 +40,23 @@ build_script:
   #
   # Download Repos
   #
-  - git clone https://github.com/Bareflank/bfsdk.git bfsdk
-  - git clone https://github.com/Bareflank/bfvmm.git bfvmm
+  - git clone -b dev https://github.com/Bareflank/hypervisor.git hypervisor
 
   #
-  # bfsdk (Cygwin)
+  # Visual Studio (MSBuild / Static Libraries)
   #
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; mkdir bfsdk/build_cygwin"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/bfsdk/build_cygwin; cmake .."'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/bfsdk/build_cygwin; make install"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/bfsdk/build_cygwin; ../scripts/export_path.sh"'
-
-  #
-  # bfvmm (Cygwin)
-  #
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; mkdir bfvmm/build_cygwin"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/bfvmm/build_cygwin; cmake .."'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/bfvmm/build_cygwin; make"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/bfvmm/build_cygwin; make install"'
-
-  #
-  # extended_apis (Cygwin)
-  #
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; mkdir build_cygwin"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/build_cygwin; cmake .."'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/build_cygwin; make"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/build_cygwin; make test"'
-
-  #
-  # bfsdk (MSBuild)
-  #
-  - mkdir bfsdk\build_msbuild
-  - cd bfsdk\build_msbuild
-  - cmake -G "Visual Studio 15 2017 Win64" ..
-  - msbuild bfsdk.sln
-  - cmake --build . --target install
-  - cd ../..
-
-  #
-  # bfvmm (MSBuild)
-  #
-  - mkdir bfvmm\build_msbuild
-  - cd bfvmm\build_msbuild
-  - cmake -G "Visual Studio 15 2017 Win64" ..
-  - msbuild bfvmm.sln
-  - cmake --build . --target install
-  - cd ../..
-
-  #
-  # extended_apis (MSBuild)
-  #
-  - mkdir build_msbuild
-  - cd build_msbuild
-  - cmake -G "Visual Studio 15 2017 Win64" ..
-  - msbuild extended_apis.sln
-  - ctest
+  - mkdir hypervisor\build
+  - cd hypervisor\build
+  - cmake -G "Visual Studio 15 2017 Win64" -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH="C:/projects/extended-apis" ..
+  - msbuild hypervisor.sln
+  - cmake --build . --target test
   - cd ..
+
+  #
+  # Cygwin (Shared Libraries)
+  #
+  - set PATH=%BFPATH%;%APPVEYOR_BUILD_FOLDER%/hypervisor/build_cygwin/bfprefix/bin
+  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; mkdir hypervisor/build_cygwin"'
+  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=/cygdrive/c/projects/extended-apis/ .."'
+  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make -j3"'
+  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make test"'

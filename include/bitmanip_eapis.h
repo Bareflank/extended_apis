@@ -33,7 +33,7 @@ template <
 auto
 set_bit_from_span(gsl::span<T> &view, B b)
 {
-    auto &&byte_view = gsl::as_writeable_bytes(view);
+    auto byte_view = gsl::as_writeable_bytes(view);
     byte_view.at(b >> 3) |= gsl::narrow_cast<gsl::byte>((1 << (b & 7)));
 }
 
@@ -45,7 +45,7 @@ template <
 auto
 clear_bit_from_span(gsl::span<T> &view, B b)
 {
-    auto &&byte_view = gsl::as_writeable_bytes(view);
+    auto byte_view = gsl::as_writeable_bytes(view);
     byte_view.at(b >> 3) &= gsl::narrow_cast<gsl::byte>(~(1 << (b & 7)));
 }
 
@@ -57,7 +57,7 @@ template <
 auto
 get_bit_from_span(const gsl::span<T> &view, B b)
 {
-    auto &&byte_view = gsl::as_writeable_bytes(view);
+    auto byte_view = gsl::as_writeable_bytes(view);
     return byte_view.at(b >> 3) & gsl::narrow_cast<gsl::byte>((1 << (b & 7)));
 }
 

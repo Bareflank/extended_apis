@@ -5,19 +5,16 @@
 include(${CMAKE_INSTALL_PREFIX}/cmake/CMakeGlobal_Includes.txt)
 
 # ------------------------------------------------------------------------------
-# Definitions
-# ------------------------------------------------------------------------------
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSHOW_VMCALLS")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSHOW_VMCALLS")
-
-# ------------------------------------------------------------------------------
 # Targets
 # ------------------------------------------------------------------------------
 
-link_directories(${CMAKE_INSTALL_PREFIX}/lib)
-
 add_library(test_exit_handler_support STATIC test_support.cpp)
+target_compile_definitions(test_exit_handler_support PRIVATE STATIC_EAPIS_EXIT_HANDLER)
+target_compile_definitions(test_exit_handler_support PRIVATE STATIC_EXIT_HANDLER)
+target_compile_definitions(test_exit_handler_support PRIVATE STATIC_EAPIS_VMCS)
+target_compile_definitions(test_exit_handler_support PRIVATE STATIC_VMCS)
+target_compile_definitions(test_exit_handler_support PRIVATE STATIC_MEMORY_MANAGER)
+target_compile_definitions(test_exit_handler_support PRIVATE STATIC_INTRINSICS)
 
 macro(do_test str)
     add_executable(test_${str} test_${str}.cpp)
@@ -28,13 +25,13 @@ macro(do_test str)
     target_compile_definitions(test_${str} PRIVATE STATIC_MEMORY_MANAGER)
     target_compile_definitions(test_${str} PRIVATE STATIC_INTRINSICS)
     target_link_libraries(test_${str} test_exit_handler_support)
-    target_link_libraries(test_${str} eapis_exit_handler_static)
-    target_link_libraries(test_${str} bfvmm_exit_handler_static)
-    target_link_libraries(test_${str} eapis_vmcs_static)
-    target_link_libraries(test_${str} bfvmm_vmcs_static)
-    target_link_libraries(test_${str} bfvmm_memory_manager_static)
-    target_link_libraries(test_${str} bfvmm_intrinsics_static)
-    target_link_libraries(test_${str} eapis_catch_static)
+    target_link_libraries(test_${str} eapis_exit_handler)
+    target_link_libraries(test_${str} bfvmm_exit_handler)
+    target_link_libraries(test_${str} eapis_vmcs)
+    target_link_libraries(test_${str} bfvmm_vmcs)
+    target_link_libraries(test_${str} bfvmm_memory_manager)
+    target_link_libraries(test_${str} bfvmm_intrinsics)
+    target_link_libraries(test_${str} test_catch)
     add_test(test_${str} test_${str})
 endmacro(do_test)
 

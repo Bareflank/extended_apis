@@ -27,12 +27,37 @@
 
 /// @cond
 
+// -----------------------------------------------------------------------------
+// Constants
+// -----------------------------------------------------------------------------
+
 namespace vp
 {
 constexpr const auto index_enable_msr_bitmap = 0x0003001UL;
 }
 
-class default_verifier__enable_msr_bitmap : public vmcall_verifier
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_EXIT_HANDLER
+#ifdef SHARED_EAPIS_EXIT_HANDLER
+#define EXPORT_EAPIS_EXIT_HANDLER EXPORT_SYM
+#else
+#define EXPORT_EAPIS_EXIT_HANDLER IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_EXIT_HANDLER
+#endif
+
+// -----------------------------------------------------------------------------
+// Definitions
+// -----------------------------------------------------------------------------
+
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__enable_msr_bitmap :
+    public vmcall_verifier
 {
 public:
     default_verifier__enable_msr_bitmap() = default;

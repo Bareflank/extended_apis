@@ -52,6 +52,11 @@
 #define EXPORT_EAPIS_EXIT_HANDLER
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4251)
+#endif
+
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
@@ -62,7 +67,8 @@
 /// subclassed, and certain functions need to be handled based on how the
 /// VMCS is setup.
 ///
-class EXPORT_EAPIS_EXIT_HANDLER exit_handler_intel_x64_eapis : public exit_handler_intel_x64
+class EXPORT_EAPIS_EXIT_HANDLER exit_handler_intel_x64_eapis :
+    public exit_handler_intel_x64
 {
 public:
 
@@ -93,7 +99,7 @@ public:
     ///
     using monitor_trap_callback = void(exit_handler_intel_x64_eapis::*)();
 
-    /// @struct
+    /// @struct event
     ///
     /// Event Structure
     ///
@@ -104,8 +110,6 @@ public:
     ///     the vector number for the event
     /// @var event::type
     ///     the event's type (edge or level triggered, etc...)
-    /// @var event::valid_error_code
-    ///     true if the provided error code is valid
     /// @var event::len (if applicable)
     ///     the instruction length of the instruction at RIP
     /// @var event::error_code (if applicable)
@@ -222,7 +226,7 @@ protected:
     /// @cond
 
     void resume() override;
-    void promote() override;
+    void promote(gsl::not_null<const void *> guest_gdt) override;
 
     /// @endcond
 
@@ -581,5 +585,9 @@ public:
 
     /// @endcond
 };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif

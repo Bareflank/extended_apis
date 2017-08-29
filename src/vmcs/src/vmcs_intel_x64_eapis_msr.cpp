@@ -121,7 +121,7 @@ vmcs_intel_x64_eapis::trap_on_all_rdmsr_accesses()
         throw std::runtime_error("msr bitmap not enabled");
     }
 
-    __builtin_memset(&m_msr_bitmap_view[0], 0xFF, x64::page_size / 2);
+    memset(&m_msr_bitmap_view[0], 0xFF, x64::page_size / 2);
 }
 
 void
@@ -131,7 +131,7 @@ vmcs_intel_x64_eapis::trap_on_all_wrmsr_accesses()
         throw std::runtime_error("msr bitmap not enabled");
     }
 
-    __builtin_memset(&m_msr_bitmap_view[2048], 0xFF, x64::page_size / 2);
+    memset(&m_msr_bitmap_view[2048], 0xFF, x64::page_size / 2);
 }
 
 void
@@ -181,7 +181,7 @@ vmcs_intel_x64_eapis::pass_through_all_rdmsr_accesses()
         throw std::runtime_error("msr bitmap not enabled");
     }
 
-    __builtin_memset(&m_msr_bitmap_view[0], 0x0, x64::page_size / 2);
+    memset(&m_msr_bitmap_view[0], 0x0, x64::page_size / 2);
 }
 
 void
@@ -191,7 +191,7 @@ vmcs_intel_x64_eapis::pass_through_all_wrmsr_accesses()
         throw std::runtime_error("msr bitmap not enabled");
     }
 
-    __builtin_memset(&m_msr_bitmap_view[2048], 0x0, x64::page_size / 2);
+    memset(&m_msr_bitmap_view[2048], 0x0, x64::page_size / 2);
 }
 
 void

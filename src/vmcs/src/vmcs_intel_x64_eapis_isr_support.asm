@@ -97,7 +97,7 @@ section .text
 %endmacro
 
 %macro ISR_NOERRCODE 1
-    global _isr%1:function
+    global _isr%1
     _isr%1:
         PUSHALL
         mov rdi, %1
@@ -110,7 +110,7 @@ section .text
 %endmacro
 
 %macro ISR_ERRCODE 1
-    global _isr%1:function
+    global _isr%1
     _isr%1:
         PUSHALL
         mov rdi, %1
