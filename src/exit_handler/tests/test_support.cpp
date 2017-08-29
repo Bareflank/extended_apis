@@ -31,6 +31,7 @@ std::map<intel_x64::vmcs::field_type, intel_x64::vmcs::value_type> g_vmcs;
 
 uintptr_t g_rip = 0;
 uintptr_t g_cr8 = 0;
+uintptr_t g_rflags = 0;
 state_save_intel_x64 g_state_save{};
 bool g_monitor_trap_callback_called = false;
 
@@ -42,37 +43,45 @@ exit_handler_intel_x64_eapis::msr_type g_rdmsr = 0;
 exit_handler_intel_x64_eapis::msr_type g_wrmsr = 0;
 
 extern "C" bool
-vmread(uint64_t field, uint64_t *val) noexcept
+test_vmread(uint64_t field, uint64_t *val) noexcept
 {
     *val = g_vmcs[field];
     return true;
 }
 
 extern "C"  bool
-vmwrite(uint64_t field, uint64_t val) noexcept
+test_vmwrite(uint64_t field, uint64_t val) noexcept
 {
     g_vmcs[field] = val;
     return true;
 }
 
 extern "C" uint64_t
-read_cr8() noexcept
+test_read_cr8() noexcept
 { return g_cr8; }
 
 extern "C" void
-write_cr8(uint64_t val) noexcept
+test_write_cr8(uint64_t val) noexcept
 { g_cr8 = val; }
 
 extern "C" uint64_t
-read_msr(uint32_t addr) noexcept
+test_read_rflags() noexcept
+{ return g_rflags; }
+
+extern "C" void
+test_write_rflags(uint64_t val) noexcept
+{ g_rflags = val; }
+
+extern "C" uint64_t
+test_read_msr(uint32_t addr) noexcept
 { return g_msrs[addr]; }
 
 extern "C" void
-write_msr(uint32_t addr, uint64_t val) noexcept
+test_write_msr(uint32_t addr, uint64_t val) noexcept
 { g_msrs[addr] = val; }
 
 extern "C" void
-stop(void) noexcept
+test_stop(void) noexcept
 { }
 
 vmcs_intel_x64_eapis *
@@ -123,13 +132,15 @@ setup_vmcs(MockRepository &mocks, vmcs::value_type reason, vmcs::value_type qual
     g_vmcs[vmcs::vm_exit_instruction_length::addr] = 8;
     g_vmcs[vmcs::vm_exit_instruction_information::addr] = 0;
 
-    mocks.OnCallFunc(_vmread).Do(vmread);
-    mocks.OnCallFunc(_vmwrite).Do(vmwrite);
-    mocks.OnCallFunc(_read_cr8).Do(read_cr8);
-    mocks.OnCallFunc(_write_cr8).Do(write_cr8);
-    mocks.OnCallFunc(_read_msr).Do(read_msr);
-    mocks.OnCallFunc(_write_msr).Do(write_msr);
-    mocks.OnCallFunc(_stop).Do(stop);
+    mocks.OnCallFunc(_vmread).Do(test_vmread);
+    mocks.OnCallFunc(_vmwrite).Do(test_vmwrite);
+    mocks.OnCallFunc(_read_cr8).Do(test_read_cr8);
+    mocks.OnCallFunc(_write_cr8).Do(test_write_cr8);
+    mocks.OnCallFunc(_read_rflags).Do(test_read_rflags);
+    mocks.OnCallFunc(_write_rflags).Do(test_write_rflags);
+    mocks.OnCallFunc(_read_msr).Do(test_read_msr);
+    mocks.OnCallFunc(_write_msr).Do(test_write_msr);
+    mocks.OnCallFunc(_stop).Do(test_stop);
 
     return vmcs;
 }

@@ -27,136 +27,6 @@ using namespace intel_x64;
 using namespace vmcs;
 using namespace exit_qualification::control_register_access;
 
-exit_handler_intel_x64_eapis::gpr_value_type
-exit_handler_intel_x64_eapis::get_gpr(gpr_index_type index)
-{
-    switch (index) {
-        case general_purpose_register::rax:
-            return m_state_save->rax;
-
-        case general_purpose_register::rbx:
-            return m_state_save->rbx;
-
-        case general_purpose_register::rcx:
-            return m_state_save->rcx;
-
-        case general_purpose_register::rdx:
-            return m_state_save->rdx;
-
-        case general_purpose_register::rsp:
-            return m_state_save->rsp;
-
-        case general_purpose_register::rbp:
-            return m_state_save->rbp;
-
-        case general_purpose_register::rsi:
-            return m_state_save->rsi;
-
-        case general_purpose_register::rdi:
-            return m_state_save->rdi;
-
-        case general_purpose_register::r8:
-            return m_state_save->r08;
-
-        case general_purpose_register::r9:
-            return m_state_save->r09;
-
-        case general_purpose_register::r10:
-            return m_state_save->r10;
-
-        case general_purpose_register::r11:
-            return m_state_save->r11;
-
-        case general_purpose_register::r12:
-            return m_state_save->r12;
-
-        case general_purpose_register::r13:
-            return m_state_save->r13;
-
-        case general_purpose_register::r14:
-            return m_state_save->r14;
-
-        case general_purpose_register::r15:
-            return m_state_save->r15;
-    }
-
-    throw std::runtime_error("unknown index");
-}
-
-
-void
-exit_handler_intel_x64_eapis::set_gpr(
-    gpr_index_type index, gpr_value_type val)
-{
-    switch (index) {
-        case general_purpose_register::rax:
-            m_state_save->rax = val;
-            return;
-
-        case general_purpose_register::rbx:
-            m_state_save->rbx = val;
-            return;
-
-        case general_purpose_register::rcx:
-            m_state_save->rcx = val;
-            return;
-
-        case general_purpose_register::rdx:
-            m_state_save->rdx = val;
-            return;
-
-        case general_purpose_register::rsp:
-            m_state_save->rsp = val;
-            return;
-
-        case general_purpose_register::rbp:
-            m_state_save->rbp = val;
-            return;
-
-        case general_purpose_register::rsi:
-            m_state_save->rsi = val;
-            return;
-
-        case general_purpose_register::rdi:
-            m_state_save->rdi = val;
-            return;
-
-        case general_purpose_register::r8:
-            m_state_save->r08 = val;
-            return;
-
-        case general_purpose_register::r9:
-            m_state_save->r09 = val;
-            return;
-
-        case general_purpose_register::r10:
-            m_state_save->r10 = val;
-            return;
-
-        case general_purpose_register::r11:
-            m_state_save->r11 = val;
-            return;
-
-        case general_purpose_register::r12:
-            m_state_save->r12 = val;
-            return;
-
-        case general_purpose_register::r13:
-            m_state_save->r13 = val;
-            return;
-
-        case general_purpose_register::r14:
-            m_state_save->r14 = val;
-            return;
-
-        case general_purpose_register::r15:
-            m_state_save->r15 = val;
-            return;
-    }
-
-    throw std::runtime_error("unknown index");
-}
-
 void
 exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
 {
@@ -247,8 +117,14 @@ exit_handler_intel_x64_eapis::cr4_ld_callback(cr4_value_type val)
 
 exit_handler_intel_x64_eapis::cr8_value_type
 exit_handler_intel_x64_eapis::cr8_ld_callback(cr8_value_type val)
-{ return val; }
+{
+    m_tpr_shadow = val;
+    return val;
+}
 
 exit_handler_intel_x64_eapis::cr8_value_type
 exit_handler_intel_x64_eapis::cr8_st_callback(cr8_value_type val)
-{ return val; }
+{
+    bfignored(val);
+    return m_tpr_shadow;
+}

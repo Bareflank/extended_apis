@@ -25,6 +25,7 @@
 #include <vcpu/vcpu_intel_x64.h>
 
 #include <vmcs/vmcs_intel_x64_eapis.h>
+#include <vmcs/vmcs_intel_x64_vmm_state_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 
 std::unique_ptr<vcpu>
@@ -33,14 +34,14 @@ vcpu_factory::make_vcpu(vcpuid::type vcpuid, user_data *data)
     bfignored(data);
 
     auto vmcs = std::make_unique<vmcs_intel_x64_eapis>();
+    auto vmm_state = std::make_unique<vmcs_intel_x64_vmm_state_eapis>();
     auto exit_handler = std::make_unique<exit_handler_intel_x64_eapis>();
 
     return std::make_unique<vcpu_intel_x64>(
                vcpuid,
-               nullptr,                         // default debug_ring
                nullptr,                         // default vmxon
                std::move(vmcs),
                std::move(exit_handler),
-               nullptr,                         // default vmm_state
+               std::move(vmm_state),
                nullptr);                        // default guest_state
 }

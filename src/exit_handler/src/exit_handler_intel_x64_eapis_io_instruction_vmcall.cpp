@@ -20,6 +20,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfjson.h>
+#include <bfstring.h>
 
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_vmcall_interface.h>
@@ -75,7 +76,7 @@ exit_handler_intel_x64_eapis::register_json_vmcall__io_instruction()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall_registers__io_instruction(
+exit_handler_intel_x64_eapis::handle_vmcall__io_instruction(
     vmcall_registers_t &regs)
 {
     switch (regs.r03) {
@@ -118,11 +119,11 @@ exit_handler_intel_x64_eapis::handle_vmcall__enable_io_bitmaps(
 
     if (enabled) {
         m_vmcs_eapis->enable_io_bitmaps();
-        vmcall_debug << "enable_io_bitmaps: success" << bfendl;
+        bfdebug_text(1, "enable_io_bitmaps", "success");
     }
     else {
         m_vmcs_eapis->disable_io_bitmaps();
-        vmcall_debug << "disable_io_bitmaps: success" << bfendl;
+        bfdebug_text(1, "disable_io_bitmaps", "success");
     }
 }
 
@@ -135,7 +136,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_io_access(
     }
 
     m_vmcs_eapis->trap_on_io_access(port);
-    vmcall_debug << "trap_on_io_access: " << std::hex << std::uppercase << "0x" << port << bfendl;
+    bfdebug_nhex(1, "trap_on_io_access", port);
 }
 
 void
@@ -146,7 +147,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_all_io_accesses()
     }
 
     m_vmcs_eapis->trap_on_all_io_accesses();
-    vmcall_debug << "trap_on_all_io_accesses: success" << bfendl;
+    bfdebug_text(1, "trap_on_all_io_accesses", "success");
 }
 
 void
@@ -158,7 +159,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_io_access(
     }
 
     m_vmcs_eapis->pass_through_io_access(port);
-    vmcall_debug << "pass_through_io_access: " << std::hex << std::uppercase << "0x" << port << bfendl;
+    bfdebug_nhex(1, "pass_through_io_access", port);
 }
 
 void
@@ -169,7 +170,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_io_accesses()
     }
 
     m_vmcs_eapis->pass_through_all_io_accesses();
-    vmcall_debug << "trap_on_all_io_accesses: success" << bfendl;
+    bfdebug_text(1, "pass_through_all_io_accesses", "success");
 }
 
 void
@@ -182,9 +183,9 @@ exit_handler_intel_x64_eapis::handle_vmcall__whitelist_io_access(
 
     m_vmcs_eapis->whitelist_io_access(ports);
 
-    vmcall_debug << "whitelist_io_access: " << bfendl;
+    bfdebug_info(1, "whitelist_io_access");
     for (auto port : ports) {
-        vmcall_debug << "  - " << std::hex << std::uppercase << "0x" << port << bfendl;
+        bfdebug_subnhex(1, "port", port);
     }
 }
 
@@ -198,9 +199,9 @@ exit_handler_intel_x64_eapis::handle_vmcall__blacklist_io_access(
 
     m_vmcs_eapis->blacklist_io_access(ports);
 
-    vmcall_debug << "blacklist_io_access: " << bfendl;
+    bfdebug_info(1, "blacklist_io_access");
     for (auto port : ports) {
-        vmcall_debug << "  - " << std::hex << std::uppercase << "0x" << port << bfendl;
+        bfdebug_subnhex(1, "port", port);
     }
 }
 
@@ -213,7 +214,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__log_io_access(
     }
 
     log_io_access(enabled);
-    vmcall_debug << "log_io_access: " << std::boolalpha << enabled << bfendl;
+    bfdebug_bool(1, "log_io_access", enabled);
 }
 
 void
@@ -224,7 +225,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__clear_io_access_log()
     }
 
     clear_io_access_log();
-    vmcall_debug << "clear_io_access_log: success" << bfendl;
+    bfdebug_text(1, "clear_io_access_log", "success");
 }
 
 void
@@ -238,5 +239,5 @@ exit_handler_intel_x64_eapis::handle_vmcall__io_access_log(json &ojson)
         ojson[bfn::to_string(pair.first, 16)] = pair.second;
     }
 
-    vmcall_debug << "dump io_access_log: success" << bfendl;
+    bfdebug_text(1, "dump io_access_log", "success");
 }

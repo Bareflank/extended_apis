@@ -22,6 +22,8 @@
 #ifndef EXIT_HANDLER_INTEL_X64_EAPIS_H
 #define EXIT_HANDLER_INTEL_X64_EAPIS_H
 
+#include <list>
+#include <deque>
 #include <vector>
 #include <functional>
 
@@ -32,12 +34,7 @@
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 
 #include <intrinsics/x86/intel_x64.h>
-
-#ifdef SHOW_VMCALLS
-#define vmcall_debug bfdebug
-#else
-#define vmcall_debug if (0) bfdebug
-#endif
+#include <memory_manager/object_allocator.h>
 
 // -----------------------------------------------------------------------------
 // Exports
@@ -69,18 +66,10 @@ class EXPORT_EAPIS_EXIT_HANDLER exit_handler_intel_x64_eapis : public exit_handl
 {
 public:
 
-    /// Monitor Trap Callback Type
-    ///
-    /// Defines the function signature for a monitor callback function.
-    ///
-    typedef void (exit_handler_intel_x64_eapis::*monitor_trap_callback)();
-
-public:
-
     using count_type = uint64_t;                                                        ///< Count type used for logging
     using port_type = x64::portio::port_addr_type;                                      ///< Port type
     using port_list_type = std::vector<port_type>;                                      ///< Port list type
-    using port_log_type = std::map<port_type, count_type>;                              ///< Port log type
+    using port_log_type = std::map<intel_x64::vmcs::value_type, count_type>;            ///< Port log type
     using denial_list_type = std::vector<std::string>;                                  ///< Denial list type
     using policy_type = std::map<vp::index_type, std::unique_ptr<vmcall_verifier>>;     ///< VMCall policy type
     using msr_type = x64::msrs::field_type;                                             ///< MSR type
@@ -92,6 +81,44 @@ public:
     using cr3_value_type = intel_x64::cr3::value_type;                                  ///< CR3 value type
     using cr4_value_type = intel_x64::cr4::value_type;                                  ///< CR4 value type
     using cr8_value_type = intel_x64::cr8::value_type;                                  ///< CR8 value type
+    using vector_type = intel_x64::vmcs::value_type;                                    ///< Event vector type
+    using event_type = intel_x64::vmcs::value_type;                                     ///< Event type
+    using error_code_type = intel_x64::vmcs::value_type;                                ///< Event error code type
+    using instr_len_type = intel_x64::vmcs::value_type;                                 ///< Event instruction length type
+    using tpr_shadow_type = intel_x64::cr8::value_type;                                 ///< TPR shadow type
+
+    /// Monitor Trap Callback Type
+    ///
+    /// Defines the function signature for a monitor callback function.
+    ///
+    using monitor_trap_callback = void(exit_handler_intel_x64_eapis::*)();
+
+    /// @struct
+    ///
+    /// Event Structure
+    ///
+    /// Each event that is sent / received by the exit handler is broken down
+    /// into this structure.
+    ///
+    /// @var event::vector
+    ///     the vector number for the event
+    /// @var event::type
+    ///     the event's type (edge or level triggered, etc...)
+    /// @var event::valid_error_code
+    ///     true if the provided error code is valid
+    /// @var event::len (if applicable)
+    ///     the instruction length of the instruction at RIP
+    /// @var event::error_code (if applicable)
+    ///     the error code received / should be delivered
+    ///
+    struct event {
+        vector_type vector;
+        event_type type;
+        instr_len_type len;
+        error_code_type error_code;
+    };
+
+public:
 
     /// Default Constructor
     ///
@@ -107,34 +134,27 @@ public:
     ///
     ~exit_handler_intel_x64_eapis() override = default;
 
-    /// Resume
+    /// Inject Event
     ///
-    /// Resumes the guest associated with this exit handler.
-    /// Note that this is the same as running:
-    ///
-    /// @code
-    /// eapis_vmcs()->resume();
-    /// @endcode
+    /// Queues an interrupt / exception for injection and sets the interrupt
+    /// window exiting flag in the VMCS if needed. Once the guest is ready,
+    /// an exit will occur and the interrupt / exception will be injected into
+    /// the VM.
     ///
     /// @expects
     /// @ensures
     ///
-    void resume();
+    /// @param vector vector number for the interrupt / exception
+    /// @param type interrupt / exception type
+    /// @param len the amount to advance RIP for a software exception
+    /// @param error_code the error code to place on the stack for certain hardware exceptions
+    ///
+    virtual void inject_event(
+        vector_type vector, event_type type, instr_len_type len, error_code_type error_code);
 
-    /// Advance and Resume
-    ///
-    /// Same as resume(), but prior to resuming the guest,
-    /// the guest's instruction pointer is advanced.
-    ///
-    /// Example:
-    /// @code
-    /// this->advance_and_resume();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void advance_and_resume();
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
 
     /// Register Monitor Trap
     ///
@@ -190,134 +210,83 @@ public:
     ///
     void clear_monitor_trap();
 
-    /// Log IO Access
-    ///
-    /// Enables / disables IO access logging.
-    ///
-    /// Example:
-    /// @code
-    /// this->log_io_access(true);
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param enable set to true to enable IO access logging, false otherwise
-    ///
-    void log_io_access(bool enable);
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
 
-    /// Clear IO Access Log
-    ///
-    /// Clears the IO access log. All previously logged IO accesses will be
-    /// removed.
-    ///
-    /// Example:
-    /// @code
-    /// this->clear_io_access_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void clear_io_access_log();
-
-    /// Log Read MSR Access
-    ///
-    /// Enables / disables read MSR access logging.
-    ///
-    /// Example:
-    /// @code
-    /// this->log_rdmsr_access(true);
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param enable set to true to enable read MSR access logging,
-    ///     false otherwise
-    ///
-    void log_rdmsr_access(bool enable);
-
-    /// Log Write MSR Access
-    ///
-    /// Enables / disables write MSR access logging.
-    ///
-    /// Example:
-    /// @code
-    /// this->log_wrmsr_access(true);
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param enable set to true to enable write MSR access logging,
-    ///     false otherwise
-    ///
-    void log_wrmsr_access(bool enable);
-
-    /// Clear Read MSR Access Log
-    ///
-    /// Clears the read MSR access log. All previously logged read MSR
-    /// accesses will be removed.
-    ///
-    /// Example:
-    /// @code
-    /// this->clear_rdmsr_access_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void clear_rdmsr_access_log();
-
-    /// Clear Write MSR Access Log
-    ///
-    /// Clears the write MSR access log. All previously logged write MSR
-    /// accesses will be removed.
-    ///
-    /// Example:
-    /// @code
-    /// this->clear_wrmsr_access_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void clear_wrmsr_access_log();
-
-PROTECTED
-
-    /// Handle Exit
-    ///
-    /// This function is called when a VMExit occurs. If you turn on your
-    /// own VMCS exit controls, or you wish to re-implement existing
-    /// functionality, you will have to overload this function
-    ///
-    /// @param reason the exit reason is passed to this function
-    ///
-    void handle_exit(intel_x64::vmcs::value_type reason) override;
-
-PRIVATE
+    // Transition overloads.
+    //
+    // These functions are overloaded so that interrupts can be properly
+    // disabled. as needed
 
     /// @cond
 
-    void handle_exit__monitor_trap_flag();
-    void handle_exit__io_instruction();
-    void handle_exit__rdmsr();
-    void handle_exit__wrmsr();
-    void handle_exit__ctl_reg_access();
+    void resume() override;
+    void promote() override;
 
     /// @endcond
 
-PROTECTED
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
 
-    /// Callback Functions
-    ///
-    /// These functions are intended to overloaded if you enable any of the
-    /// corresponding VMCS APIs. Each function receives the CR0, and provides
-    /// a means to alter the result. The default callbacks simply pass
-    /// through the input.
-    ///
+    // Logs
+    //
+    // The following function enable and disable certain logs, and allow the
+    // user to clear said logs when needed.
+
+    /// @cond
+
+    void log_io_access(bool enable);
+    void clear_io_access_log();
+
+    void log_rdmsr_access(bool enable);
+    void log_wrmsr_access(bool enable);
+    void clear_rdmsr_access_log();
+    void clear_wrmsr_access_log();
+
+    /// @endcond
+
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
+    // Exit Handlers
+    //
+    // These functions handle each exit type. Their function names reflect
+    // the exit reason, and some of them are abstractions (like
+    // handle_event) that simplify the exit by first decoding the exit
+    // information and then providing this information to the implementation
+    // so that users can overload without having to perform the decoding
+    // work.
+
+    /// @cond
+
+    void handle_exit(intel_x64::vmcs::value_type reason) override;
+
+    virtual void handle_exit__monitor_trap_flag();
+    virtual void handle_exit__io_instruction();
+    virtual void handle_exit__rdmsr();
+    virtual void handle_exit__wrmsr();
+    virtual void handle_exit__ctl_reg_access();
+    virtual void handle_exit__external_interrupt();
+    virtual void handle_exit__interrupt_window();
+    //     virtual void handle_exit__rdmsr_apic();
+    //     virtual void handle_exit__wrmsr_apic();
+
+    /// @endcond
+
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
+    // Callback Functions
+    //
+    // These functions are intended to overloaded if you enable any of the
+    // corresponding VMCS APIs. Each function receives the CR, and provides
+    // a means to alter the result. The default callbacks simply pass
+    // through the input.
+    //
 
     /// @cond
 
@@ -330,35 +299,91 @@ PROTECTED
 
     /// @endcond
 
-PROTECTED
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
 
-    /// Handle VMCall Functions
-    ///
-    /// These functions will have to be overloaded if you plan to add your
-    /// own VMCalls. Note that if you also want to support the existing VMCalls
-    /// you can call into the subclass stack as you wish
-    ///
+    // VMCall (Register Based)
+    //
+    // The following functions are the EAPI, register based VMCall
+    // handlers. In general, register based vmcalls should be used in
+    // favor of the JSON based calls as they reduce the amount of
+    // memory fragmentation introduced by string parsing with JSON.
+    //
 
     /// @cond
 
     void handle_vmcall_registers(vmcall_registers_t &regs) override;
-    void handle_vmcall_data_string_json(const json &ijson, json &ojson) override;
+
+    void handle_vmcall__io_instruction(vmcall_registers_t &regs);
+    void handle_vmcall__vpid(vmcall_registers_t &regs);
+    void handle_vmcall__msr(vmcall_registers_t &regs);
+    void handle_vmcall__rdmsr(vmcall_registers_t &regs);
+    void handle_vmcall__wrmsr(vmcall_registers_t &regs);
 
     /// @endcond
 
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
+    // VMCall (JSON Based)
+    //
+    // The following functions are the EAPI, JSON based VMCall handlers.
+    // In general, JSON vmcalls should be used by users on the command line,
+    // as it is easier to program JSON on the command line, than it is to
+    // program registers. The JSON vmcalls are provided as a simple means
+    // to query hypervisor information, and provide simple tools for
+    // reverse engineering use cases. PV drivers, or code in general should
+    // not use these interfaces, but instead should use the register based
+    // VMCall interfaces.
+    //
 
     /// @cond
 
-    void handle_vmcall_registers__io_instruction(vmcall_registers_t &regs);
-    void handle_vmcall_registers__vpid(vmcall_registers_t &regs);
-    void handle_vmcall_registers__msr(vmcall_registers_t &regs);
-    void handle_vmcall_registers__rdmsr(vmcall_registers_t &regs);
-    void handle_vmcall_registers__wrmsr(vmcall_registers_t &regs);
+    void handle_vmcall_data_string_json(const json &ijson, json &ojson) override;
+
+    void register_json_vmcall__verifiers();
+    void register_json_vmcall__io_instruction();
+    void register_json_vmcall__vpid();
+    void register_json_vmcall__msr();
+    void register_json_vmcall__rdmsr();
+    void register_json_vmcall__wrmsr();
+
+    void json_success(json &ojson);
+
+    std::map<std::string, std::function<void(const json &, json &)>> m_json_commands;
 
     /// @endcond
 
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
+    // General Purpose Registers
+    //
+    // The Exit Qualification field in the VMCS defines the register to index
+    // mapping that is used by several of the different exit handlers. This
+    // mapping is the same, and the following functions provide the general
+    // conversions from index to our state save area for this exit handler.
+    //
+
+    /// @cond
+
+    gpr_value_type get_gpr(gpr_index_type index);
+    void set_gpr(gpr_index_type index, gpr_value_type val);
+
+    /// @endcond
+
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
+    // Policy VMCalls
+    //
+    // The following functions support the policy based VMCall interfaces
+    // (both register and JSON)
+    //
 
     /// @cond
 
@@ -366,9 +391,26 @@ PRIVATE
     void handle_vmcall__dump_policy(json &ojson);
     void handle_vmcall__dump_denials(json &ojson);
 
+    void clear_denials()
+    { m_denials.clear(); }
+
+    template <class T>
+    T *get_verifier(vp::index_type index)
+    { return static_cast<T *>(m_verifiers[index].get()); }
+
+    void init_policy();
+
     /// @endcond
 
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
+    // IO Instruction VMCalls
+    //
+    // The following functions support the IO instruction based VMCall
+    // interfaces (both register and JSON)
+    //
 
     /// @cond
 
@@ -383,9 +425,19 @@ PRIVATE
     void handle_vmcall__clear_io_access_log();
     void handle_vmcall__io_access_log(json &ojson);
 
+    void trap_on_io_access_callback();
+
     /// @endcond
 
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
+    // VPID VMCalls
+    //
+    // The following functions support the vpid based VMCall interfaces
+    // (both register and JSON)
+    //
 
     /// @cond
 
@@ -393,7 +445,15 @@ PRIVATE
 
     /// @endcond
 
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
+    // MSR VMCalls
+    //
+    // The following functions support the MSR based VMCall interfaces
+    // (both register and JSON)
+    //
 
     /// @cond
 
@@ -421,87 +481,85 @@ PRIVATE
 
     /// @endcond
 
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
+    // Event Management
+    //
+    // The following functions are used by the event management code.
+    //
 
     /// @cond
+
+    tpr_shadow_type m_tpr_shadow{0};
+
+    void enable_vmm_exceptions() noexcept;
+    void disable_vmm_exceptions() noexcept;
+
+    void queue_event(
+        vector_type vector, event_type type, instr_len_type len, error_code_type error_code);
+
+    std::list<event, object_allocator<event, 1>> m_event_queue;
+
+    /// @endcond
+
+#ifndef ENABLE_UNITTESTING
+private:
+#endif
 
     void unhandled_monitor_trap_callback();
     monitor_trap_callback m_monitor_trap_callback{
         &exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback};
 
-    /// @endcond
-
-PRIVATE
-
-    /// @cond
-
-    void trap_on_io_access_callback();
-
-    /// @endcond
-
-    bool m_io_access_log_enabled{false};            ///< Is IO access logged?
-    port_log_type m_io_access_log;                  ///< The IO access log (a list of strings)
-
-PRIVATE
-
-    bool m_rdmsr_access_log_enabled{false};         ///< Is RDMSR access logged?
-    bool m_wrmsr_access_log_enabled{false};         ///< Is WRMSR access logged?
-    msr_log_type m_rdmsr_access_log;                ///< The RDMSR access log (a list of strings)
-    msr_log_type m_wrmsr_access_log;                ///< The WRMSR access log (a list of strings)
-
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+private:
+#endif
 
     /// @cond
 
-    gpr_value_type get_gpr(gpr_index_type index);
-    void set_gpr(gpr_index_type index, gpr_value_type val);
+    bool m_io_access_log_enabled{false};
+    port_log_type m_io_access_log;
 
     /// @endcond
 
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+private:
+#endif
 
     /// @cond
 
-    void clear_denials()
-    { m_denials.clear(); }
-
-    template <class T>
-    T *get_verifier(vp::index_type index)
-    { return static_cast<T *>(m_verifiers[index].get()); }
-
-    void init_policy();
+    bool m_rdmsr_access_log_enabled{false};
+    bool m_wrmsr_access_log_enabled{false};
+    msr_log_type m_rdmsr_access_log;
+    msr_log_type m_wrmsr_access_log;
 
     /// @endcond
 
-    denial_list_type m_denials;                     ///< The denial list (list of strings)
-    policy_type m_verifiers;                        ///< List of verifiers (hash or map of verifiers)
-
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+private:
+#endif
 
     /// @cond
 
-    void json_success(json &ojson);
-
-    void register_json_vmcall__verifiers();
-    void register_json_vmcall__io_instruction();
-    void register_json_vmcall__vpid();
-    void register_json_vmcall__msr();
-    void register_json_vmcall__rdmsr();
-    void register_json_vmcall__wrmsr();
+    policy_type m_verifiers;
+    denial_list_type m_denials;
 
     /// @endcond
-
-    std::map<std::string, std::function<void(const json &ijson, json &ojson)>> m_json_commands;     ///< List of JSON commands
 
 public:
 
+    // Set VMCS
+    //
     // The following are only marked public for unit testing. Do not use
     // these APIs directly as they may change at any time, and their direct
     // use may be unstable. You have been warned.
+    //
 
     /// @cond
 
-    void set_vmcs(gsl::not_null<vmcs_intel_x64 *> vmcs) override
+    void
+    set_vmcs(gsl::not_null<vmcs_intel_x64 *> vmcs) override
     {
         m_vmcs = vmcs;
         m_vmcs_eapis = dynamic_cast<vmcs_intel_x64_eapis *>(m_vmcs);

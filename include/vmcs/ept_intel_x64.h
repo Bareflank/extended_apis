@@ -183,7 +183,9 @@ public:
     memory_descriptor_list ept_to_mdl() const
     { memory_descriptor_list mdl; return ept_to_mdl(mdl); }
 
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+private:
+#endif
 
     /// @cond
 

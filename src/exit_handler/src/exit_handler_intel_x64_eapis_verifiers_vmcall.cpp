@@ -55,7 +55,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__clear_denials()
     }
 
     this->clear_denials();
-    vmcall_debug << "clear_denials: success" << bfendl;
+    bfdebug_text(1, "clear_denials", "success");
 }
 
 void
@@ -69,7 +69,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__dump_policy(json &ojson)
         ojson[get_typename(*pair.second)] = pair.second->to_string();
     }
 
-    vmcall_debug << "dump_policy: success" << bfendl;
+    bfdebug_text(1, "dump_policy", "success");
 }
 
 void
@@ -83,5 +83,5 @@ exit_handler_intel_x64_eapis::handle_vmcall__dump_denials(json &ojson)
         ojson.push_back(str);
     }
 
-    vmcall_debug << "dump_denials: success" << bfendl;
+    bfdebug_text(1, "dump_denials", "success");
 }

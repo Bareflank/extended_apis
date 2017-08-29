@@ -1101,7 +1101,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access lo
     ehlr->m_io_access_log[42] = 42;
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
-    CHECK(ojson.dump() == "{\"0x2A\":42}");
+    CHECK(ojson.dump() == "{\"0x000000000000002A\":42}");
 }
 
 TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access log logged")
@@ -1120,7 +1120,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access lo
     ehlr->m_io_access_log[42] = 42;
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
-    CHECK(ojson.dump() == "{\"0x2A\":42}");
+    CHECK(ojson.dump() == "{\"0x000000000000002A\":42}");
     CHECK(ehlr->m_denials.size() == 1);
 }
 
@@ -1140,5 +1140,5 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access lo
     ehlr->m_io_access_log[42] = 42;
 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
-    CHECK(ojson.dump() != "{\"0x2A\":42}");
+    CHECK(ojson.dump() != "{\"0x000000000000002A\":42}");
 }

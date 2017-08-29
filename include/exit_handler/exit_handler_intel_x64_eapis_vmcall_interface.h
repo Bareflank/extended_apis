@@ -32,8 +32,7 @@ extern "C" {
 /**
  * Extended APIs VMCall Categories
  */
-enum eapis_vmcall_categories
-{
+enum eapis_vmcall_categories {
     eapis_cat__io_instruction = 0x1000,
     eapis_cat__vpid = 0x2000,
     eapis_cat__msr = 0x3000,
@@ -44,8 +43,7 @@ enum eapis_vmcall_categories
 /**
  * Extended APIs VMCall Functions
  */
-enum eapis_vmcall_functions
-{
+enum eapis_vmcall_functions {
     eapis_fun__enable_io_bitmaps = 0x1,
     eapis_fun__disable_io_bitmaps = 0x2,
     eapis_fun__trap_on_io_access = 0x3,

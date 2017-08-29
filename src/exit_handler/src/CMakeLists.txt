@@ -20,8 +20,12 @@ endif()
 list(APPEND SOURCES
     exit_handler_intel_x64_eapis.cpp
     exit_handler_intel_x64_eapis_cr_emulation.cpp
+    exit_handler_intel_x64_eapis_event_emulation.cpp
+    exit_handler_intel_x64_eapis_event_vmcall.cpp
     exit_handler_intel_x64_eapis_io_instruction_emulation.cpp
     exit_handler_intel_x64_eapis_io_instruction_vmcall.cpp
+    exit_handler_intel_x64_eapis_isr.cpp
+    exit_handler_intel_x64_eapis_isr_support.asm
     exit_handler_intel_x64_eapis_monitor_trap_emulation.cpp
     exit_handler_intel_x64_eapis_msr_vmcall.cpp
     exit_handler_intel_x64_eapis_policy.cpp

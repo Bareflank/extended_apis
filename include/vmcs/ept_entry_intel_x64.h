@@ -55,7 +55,7 @@ namespace ept
     constexpr const auto num_bytes = num_entries * sizeof(uintptr_t);
 
     template<class T, class F> auto index(const T virt, const F from)
-    { return (virt & ((0x1FFULL) << from)) >> from; }
+    { return gsl::narrow_cast<std::ptrdiff_t>((virt & ((0x1FFULL) << from)) >> from); }
 
     // 512 GB per page entry
     namespace pml4

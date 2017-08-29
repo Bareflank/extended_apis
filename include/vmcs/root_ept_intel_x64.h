@@ -271,7 +271,9 @@ public:
     ///
     memory_descriptor_list ept_to_mdl() const;
 
-PRIVATE
+#ifndef ENABLE_UNITTESTING
+private:
+#endif
 
     /// @cond
 

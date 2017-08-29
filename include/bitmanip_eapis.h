@@ -25,7 +25,7 @@
 #include <bfgsl.h>
 #include <type_traits>
 
-template<
+template <
     typename T,
     typename B,
     typename = std::enable_if<std::is_integral<B>::value>
@@ -37,7 +37,7 @@ set_bit_from_span(gsl::span<T> &view, B b)
     byte_view.at(b >> 3) |= gsl::narrow_cast<gsl::byte>((1 << (b & 7)));
 }
 
-template<
+template <
     typename T,
     typename B,
     typename = std::enable_if<std::is_integral<B>::value>
@@ -49,7 +49,7 @@ clear_bit_from_span(gsl::span<T> &view, B b)
     byte_view.at(b >> 3) &= gsl::narrow_cast<gsl::byte>(~(1 << (b & 7)));
 }
 
-template<
+template <
     typename T,
     typename B,
     typename = std::enable_if<std::is_integral<B>::value>
@@ -61,7 +61,7 @@ get_bit_from_span(const gsl::span<T> &view, B b)
     return byte_view.at(b >> 3) & gsl::narrow_cast<gsl::byte>((1 << (b & 7)));
 }
 
-template<
+template <
     typename T,
     typename B,
     typename = std::enable_if<std::is_integral<B>::value>
@@ -70,7 +70,7 @@ auto
 is_bit_set_from_span(T t, B b)
 { return get_bit_from_span(t, b) != gsl::narrow_cast<gsl::byte>(0); }
 
-template<
+template <
     typename T,
     typename B,
     typename = std::enable_if<std::is_integral<B>::value>

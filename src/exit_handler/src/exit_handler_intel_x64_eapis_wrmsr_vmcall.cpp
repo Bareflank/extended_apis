@@ -70,7 +70,7 @@ exit_handler_intel_x64_eapis::register_json_vmcall__wrmsr()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall_registers__wrmsr(
+exit_handler_intel_x64_eapis::handle_vmcall__wrmsr(
     vmcall_registers_t &regs)
 {
     switch (regs.r03) {
@@ -104,7 +104,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_wrmsr_access(
     }
 
     m_vmcs_eapis->trap_on_wrmsr_access(msr);
-    vmcall_debug << "trap_on_wrmsr_access: " << std::hex << std::uppercase << "0x" << msr << bfendl;
+    bfdebug_nhex(1, "trap_on_wrmsr_access", msr);
 }
 
 void
@@ -115,7 +115,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_all_wrmsr_accesses()
     }
 
     m_vmcs_eapis->trap_on_all_wrmsr_accesses();
-    vmcall_debug << "trap_on_all_wrmsr_accesses: success" << bfendl;
+    bfdebug_text(1, "trap_on_all_wrmsr_accesses", "success");
 }
 
 void
@@ -127,7 +127,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_wrmsr_access(
     }
 
     m_vmcs_eapis->pass_through_wrmsr_access(msr);
-    vmcall_debug << "pass_through_wrmsr_access: " << std::hex << std::uppercase << "0x" << msr << bfendl;
+    bfdebug_nhex(1, "pass_through_wrmsr_access", msr);
 }
 
 void
@@ -138,7 +138,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_wrmsr_accesses()
     }
 
     m_vmcs_eapis->pass_through_all_wrmsr_accesses();
-    vmcall_debug << "trap_on_all_io_accesses: success" << bfendl;
+    bfdebug_text(1, "pass_through_all_wrmsr_accesses", "success");
 }
 
 void
@@ -151,9 +151,9 @@ exit_handler_intel_x64_eapis::handle_vmcall__whitelist_wrmsr_access(
 
     m_vmcs_eapis->whitelist_wrmsr_access(msrs);
 
-    vmcall_debug << "whitelist_wrmsr_access: " << bfendl;
+    bfdebug_info(1, "whitelist_wrmsr_access");
     for (auto msr : msrs) {
-        vmcall_debug << "  - " << std::hex << std::uppercase << "0x" << msr << bfendl;
+        bfdebug_subnhex(1, "msr", msr);
     }
 }
 
@@ -167,9 +167,9 @@ exit_handler_intel_x64_eapis::handle_vmcall__blacklist_wrmsr_access(
 
     m_vmcs_eapis->blacklist_wrmsr_access(msrs);
 
-    vmcall_debug << "blacklist_wrmsr_access: " << bfendl;
+    bfdebug_info(1, "blacklist_wrmsr_access");
     for (auto msr : msrs) {
-        vmcall_debug << "  - " << std::hex << std::uppercase << "0x" << msr << bfendl;
+        bfdebug_subnhex(1, "msr", msr);
     }
 }
 
@@ -182,7 +182,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__log_wrmsr_access(
     }
 
     log_wrmsr_access(enabled);
-    vmcall_debug << "log_wrmsr_access: " << std::boolalpha << enabled << bfendl;
+    bfdebug_bool(1, "log_wrmsr_access", enabled);
 }
 
 void
@@ -193,7 +193,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__clear_wrmsr_access_log()
     }
 
     clear_wrmsr_access_log();
-    vmcall_debug << "clear_wrmsr_access_log: success" << bfendl;
+    bfdebug_text(1, "clear_wrmsr_access_log", "success");
 }
 
 void
@@ -208,5 +208,5 @@ exit_handler_intel_x64_eapis::handle_vmcall__wrmsr_access_log(
         ojson[bfn::to_string(pair.first, 16)] = pair.second;
     }
 
-    vmcall_debug << "dump wrmsr_access_log: success" << bfendl;
+    bfdebug_text(1, "dump wrmsr_access_log", "success");
 }

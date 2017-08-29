@@ -9,15 +9,18 @@ include(${CMAKE_INSTALL_PREFIX}/cmake/CMakeGlobal_Includes.txt)
 # ------------------------------------------------------------------------------
 
 list(APPEND SOURCES
+    apic_intel_x64.cpp
     ept_entry_intel_x64.cpp
     ept_intel_x64.cpp
     root_ept_intel_x64.cpp
     vmcs_intel_x64_eapis.cpp
     vmcs_intel_x64_eapis_cr.cpp
     vmcs_intel_x64_eapis_ept.cpp
+    vmcs_intel_x64_eapis_event.cpp
     vmcs_intel_x64_eapis_io.cpp
     vmcs_intel_x64_eapis_msr.cpp
     vmcs_intel_x64_eapis_vpid.cpp
+    vmcs_intel_x64_vmm_state_eapis.cpp
 )
 
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)

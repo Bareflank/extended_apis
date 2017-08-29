@@ -14,9 +14,11 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
 # Targets
 # ------------------------------------------------------------------------------
 
-file(WRITE
-    ${CMAKE_BINARY_DIR}/null.cpp ""
-)
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/null.cpp)
+    file(WRITE
+        ${CMAKE_BINARY_DIR}/null.cpp ""
+    )
+endif()
 
 add_executable(eapis ${CMAKE_BINARY_DIR}/null.cpp)
 

@@ -58,7 +58,7 @@ public:
 };
 
 vmcs_intel_x64_eapis *setup_vmcs(MockRepository &mocks,
-    intel_x64::vmcs::value_type reason, intel_x64::vmcs::value_type qualification = 0);
+                                 intel_x64::vmcs::value_type reason, intel_x64::vmcs::value_type qualification = 0);
 std::unique_ptr<exit_handler_ut> setup_ehlr(gsl::not_null<vmcs_intel_x64_eapis *> vmcs);
 
 #endif

@@ -39,7 +39,7 @@ exit_handler_intel_x64_eapis::register_json_vmcall__vpid()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall_registers__vpid(
+exit_handler_intel_x64_eapis::handle_vmcall__vpid(
     vmcall_registers_t &regs)
 {
     switch (regs.r03) {
@@ -65,10 +65,10 @@ exit_handler_intel_x64_eapis::handle_vmcall__enable_vpid(bool enabled)
 
     if (enabled) {
         m_vmcs_eapis->enable_vpid();
-        vmcall_debug << "enable_vpid: success" << bfendl;
+        bfdebug_text(1, "enable_vpid", "success");
     }
     else {
         m_vmcs_eapis->disable_vpid();
-        vmcall_debug << "disable_vpid: success" << bfendl;
+        bfdebug_text(1, "disable_vpid", "success");
     }
 }

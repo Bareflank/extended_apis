@@ -742,16 +742,12 @@ public:
     ///
     void disable_cr8_store_hook();
 
-PROTECTED
+    void enable_event_management();
+    void disable_event_management();
 
-    /// @cond
-
-    void write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
-                      gsl::not_null<vmcs_intel_x64_state *> guest_state) override;
-
-    /// @endcond
-
-PROTECTED
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
 
     intel_x64::vmcs::value_type m_vpid;             ///< VPID for this VMCS
 
@@ -762,6 +758,15 @@ PROTECTED
 
     std::unique_ptr<uint8_t[]> m_msr_bitmap;        ///< MSR bitmap
     gsl::span<uint8_t> m_msr_bitmap_view;           ///< View into MSR bitmap
+
+protected:
+
+    /// @cond
+
+    void write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
+                      gsl::not_null<vmcs_intel_x64_state *> guest_state) override;
+
+    /// @endcond
 
 public:
 
