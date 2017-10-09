@@ -26,6 +26,8 @@ using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: invalid cr")
 {
     MockRepository mocks;
@@ -190,3 +192,5 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: set_gpr")
 
     CHECK_THROWS(ehlr->set_gpr(0x1000, 42ULL));
 }
+
+#endif

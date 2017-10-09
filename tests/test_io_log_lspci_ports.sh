@@ -26,14 +26,13 @@
 
 CB='\033[1;35m'
 CC='\033[1;36m'
-CG='\033[1;32m'
 CE='\033[0m'
 
 # ------------------------------------------------------------------------------
 # Environment
 # ------------------------------------------------------------------------------
 
-NUM_CORES=`grep -c ^processor /proc/cpuinfo`
+NUM_CORES=$(grep -c ^processor /proc/cpuinfo)
 
 # ------------------------------------------------------------------------------
 # Helpers
@@ -49,7 +48,7 @@ footer() {
 }
 
 run_on_all_cores() {
-    for (( core=0; core<$NUM_CORES; core++ ))
+    for (( core=0; core<NUM_CORES; core++ ))
     do
         if [[ $2 == "true" ]]; then
             echo -e "$CC""core:$CB #$core$CE"

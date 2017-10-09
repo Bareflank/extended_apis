@@ -48,21 +48,26 @@
 #define EXPORT_EAPIS_VMCS
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4251)
+#endif
+
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-/// WARNING:
-///
-/// All of these APIs operate on the currently loaded VMCS, as well as on
-/// private members. If the currently loaded VMCS is not "this" vmcs,
-/// corruption is almost certain. We _do not_ check to make sure that this case
-/// is not possible because it would cost far too much to check the currently
-/// loaded VMCS on every operation. Thus, the user should take great care to
-/// ensure that these APIs are used on the currently loaded VMCS. If this is
-/// not the case, run vmcs->load() first to ensure the right VMCS is being
-/// used.
-///
+// WARNING:
+//
+// All of these APIs operate on the currently loaded VMCS, as well as on
+// private members. If the currently loaded VMCS is not "this" vmcs,
+// corruption is almost certain. We _do not_ check to make sure that this case
+// is not possible because it would cost far too much to check the currently
+// loaded VMCS on every operation. Thus, the user should take great care to
+// ensure that these APIs are used on the currently loaded VMCS. If this is
+// not the case, run vmcs->load() first to ensure the right VMCS is being
+// used.
+//
 
 /// VMCS (EAPIs)
 ///
@@ -742,7 +747,34 @@ public:
     ///
     void disable_cr8_store_hook();
 
+    /// Enable Event Management
+    ///
+    /// Enables event management. Turning this on will provide a means to
+    /// monitor and remap interrupts as desired but comes at a performace.
+    ///
+    /// Example:
+    /// @code
+    /// this->enable_event_management();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
     void enable_event_management();
+
+    /// Disable Event Management
+    ///
+    /// Disables event management. Turning this off will prevent monitoring
+    /// and remaping interrupts as desired but increases performance
+    ///
+    /// Example:
+    /// @code
+    /// this->disable_event_management();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
     void disable_event_management();
 
 #ifndef ENABLE_UNITTESTING
@@ -780,5 +812,9 @@ public:
 
     /// @endcond
 };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif

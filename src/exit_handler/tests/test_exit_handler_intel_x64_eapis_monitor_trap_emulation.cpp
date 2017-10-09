@@ -26,6 +26,8 @@ using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: exit")
 {
     MockRepository mocks;
@@ -58,3 +60,5 @@ TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: clear trap")
 
     CHECK_THROWS(ehlr->dispatch());
 }
+
+#endif

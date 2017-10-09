@@ -27,6 +27,10 @@
 
 /// @cond
 
+// -----------------------------------------------------------------------------
+// Constants
+// -----------------------------------------------------------------------------
+
 namespace vp
 {
 constexpr const auto index_enable_io_bitmaps                      = 0x0001001UL;
@@ -41,7 +45,28 @@ constexpr const auto index_clear_io_access_log                    = 0x0001009UL;
 constexpr const auto index_io_access_log                          = 0x000100AUL;
 }
 
-class default_verifier__enable_io_bitmaps : public vmcall_verifier
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_EXIT_HANDLER
+#ifdef SHARED_EAPIS_EXIT_HANDLER
+#define EXPORT_EAPIS_EXIT_HANDLER EXPORT_SYM
+#else
+#define EXPORT_EAPIS_EXIT_HANDLER IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_EXIT_HANDLER
+#endif
+
+// -----------------------------------------------------------------------------
+// Definitions
+// -----------------------------------------------------------------------------
+
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__enable_io_bitmaps :
+    public vmcall_verifier
 {
 public:
     default_verifier__enable_io_bitmaps() = default;
@@ -51,7 +76,8 @@ public:
     { bfignored(enabled); return default_verify(); }
 };
 
-class default_verifier__trap_on_io_access : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__trap_on_io_access :
+    public vmcall_verifier
 {
 public:
     default_verifier__trap_on_io_access() = default;
@@ -61,7 +87,8 @@ public:
     { bfignored(port); return default_verify(); }
 };
 
-class default_verifier__trap_on_all_io_accesses : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__trap_on_all_io_accesses :
+    public vmcall_verifier
 {
 public:
     default_verifier__trap_on_all_io_accesses() = default;
@@ -71,7 +98,8 @@ public:
     { return default_verify(); }
 };
 
-class default_verifier__pass_through_io_access : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__pass_through_io_access :
+    public vmcall_verifier
 {
 public:
     default_verifier__pass_through_io_access() = default;
@@ -81,7 +109,8 @@ public:
     { bfignored(port); return default_verify(); }
 };
 
-class default_verifier__pass_through_all_io_accesses : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__pass_through_all_io_accesses :
+    public vmcall_verifier
 {
 public:
     default_verifier__pass_through_all_io_accesses() = default;
@@ -91,7 +120,8 @@ public:
     { return default_verify(); }
 };
 
-class default_verifier__whitelist_io_access : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__whitelist_io_access :
+    public vmcall_verifier
 {
 public:
     default_verifier__whitelist_io_access() = default;
@@ -101,7 +131,8 @@ public:
     { bfignored(ports); return default_verify(); }
 };
 
-class default_verifier__blacklist_io_access : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__blacklist_io_access :
+    public vmcall_verifier
 {
 public:
     default_verifier__blacklist_io_access() = default;
@@ -111,7 +142,8 @@ public:
     { bfignored(ports); return default_verify(); }
 };
 
-class default_verifier__log_io_access : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__log_io_access :
+    public vmcall_verifier
 {
 public:
     default_verifier__log_io_access() = default;
@@ -121,7 +153,8 @@ public:
     { bfignored(enabled); return default_verify(); }
 };
 
-class default_verifier__clear_io_access_log : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__clear_io_access_log :
+    public vmcall_verifier
 {
 public:
     default_verifier__clear_io_access_log() = default;
@@ -131,7 +164,8 @@ public:
     { return default_verify(); }
 };
 
-class default_verifier__io_access_log : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__io_access_log :
+    public vmcall_verifier
 {
 public:
     default_verifier__io_access_log() = default;

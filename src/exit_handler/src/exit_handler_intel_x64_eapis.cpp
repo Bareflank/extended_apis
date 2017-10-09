@@ -48,10 +48,10 @@ exit_handler_intel_x64_eapis::resume()
 }
 
 void
-exit_handler_intel_x64_eapis::promote()
+exit_handler_intel_x64_eapis::promote(gsl::not_null<const void *> guest_gdt)
 {
     disable_vmm_exceptions();
-    exit_handler_intel_x64::promote();
+    exit_handler_intel_x64::promote(guest_gdt);
 }
 
 void

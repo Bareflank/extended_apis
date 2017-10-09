@@ -26,6 +26,8 @@ using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_emulation: exit")
 {
     MockRepository mocks;
@@ -93,3 +95,5 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_emulation: clear io acces
     ehlr->clear_io_access_log();
     CHECK(ehlr->m_io_access_log[42] == 0);
 }
+
+#endif

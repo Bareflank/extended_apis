@@ -10,19 +10,14 @@ dist: trusty
 before_script:
 
   #
-  # Path
-  #
-  - export PATH="$HOME/bfprefix/bin:$PATH"
-
-  #
-  # Output Errors
-  #
-  - export CTEST_OUTPUT_ON_FAILURE=1
-
-  #
   # Build Folder
   #
-  - mkdir build
+  - git clone -b dev https://github.com/Bareflank/hypervisor.git hypervisor
+  - mkdir hypervisor/build
+  - ls -al
+  - cd hypervisor
+  - ls -al
+  - source env.sh
   - cd build
 
   #
@@ -42,34 +37,11 @@ before_script:
     fi
 
   #
-  # bfsdk
+  # Update GCC
   #
-  - git clone https://github.com/Bareflank/bfsdk.git
-  - mkdir bfsdk/build
-  - pushd bfsdk/build
-  - |
-    cmake \
-      -DCMAKE_C_COMPILER="gcc-6" \
-      -DCMAKE_CXX_COMPILER="g++-6" \
-      ..
-  - make install
-  - popd
-  - rm -Rf bfsdk
-
-  #
-  # bfvmm
-  #
-  - git clone https://github.com/Bareflank/bfvmm.git
-  - mkdir bfvmm/build
-  - pushd bfvmm/build
-  - |
-    cmake \
-      -DCMAKE_C_COMPILER="gcc-6" \
-      -DCMAKE_CXX_COMPILER="g++-6" \
-      ..
-  - make install
-  - popd
-  - rm -Rf bfvmm
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 100
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 100
+  - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-6 100
 
 #
 # Build Matrix
@@ -88,12 +60,11 @@ matrix:
         packages:
           - gcc-6
           - g++-6
-          - nasm
           - doxygen
     env:
       - TEST="Doxygen"
     script:
-      - cd ..
+      - cd ../../
       - doxygen .doxygen.txt
       - |
         if [[ -s doxygen_warnings.txt ]]; then
@@ -102,7 +73,6 @@ matrix:
           cat doxygen_warnings.txt
           exit -1
         fi
-
   #
   # Git Check
   #
@@ -114,7 +84,6 @@ matrix:
         packages:
           - gcc-6
           - g++-6
-          - nasm
     env:
       - TEST="Git Check"
     script:
@@ -134,19 +103,17 @@ matrix:
       apt:
         sources:
           - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
         packages:
           - gcc-6
           - g++-6
+          - clang-4.0
           - nasm
     env:
       - TEST="Astyle Format"
     script:
-      - |
-        cmake \
-          -DCMAKE_C_COMPILER="gcc-6" \
-          -DCMAKE_CXX_COMPILER="g++-6" \
-          ..
-      - make install
+      - cmake -DENABLE_ASTYLE=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
       - make format
       - |
         if [[ -n $(git diff) ]]; then
@@ -174,13 +141,9 @@ matrix:
     env:
       - TEST="Clang Tidy"
     script:
-      - |
-        cmake \
-          -DENABLE_TIDY=ON \
-          -DCMAKE_C_COMPILER="gcc-6" \
-          -DCMAKE_CXX_COMPILER="g++-6" \
-          ..
-      - make install
+      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_TIDY=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
+      - make test
       - make tidy
 
   #
@@ -191,22 +154,20 @@ matrix:
       apt:
         sources:
           - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
         packages:
           - gcc-6
           - g++-6
+          - clang-4.0
           - nasm
     env:
       - TEST="Codecov"
     script:
-      - |
-        cmake \
-          -DENABLE_COVERAGE=ON \
-          -DCMAKE_C_COMPILER="gcc-6" \
-          -DCMAKE_CXX_COMPILER="g++-6" \
-          ..
-      - make
+      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_COVERAGE=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
       - make test
-      - cd ..
+      - rm -Rf external
+      - cd ../../
       - bash <(curl -s https://codecov.io/bash)
 
   #
@@ -217,20 +178,17 @@ matrix:
       apt:
         sources:
           - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
         packages:
           - gcc-6
           - g++-6
+          - clang-4.0
           - nasm
     env:
       - TEST="Google Address Sanitizer"
     script:
-      - |
-        cmake \
-          -DENABLE_DYNAMIC_ASAN=ON \
-          -DCMAKE_C_COMPILER="gcc-6" \
-          -DCMAKE_CXX_COMPILER="g++-6" \
-          ..
-      - make
+      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_DYNAMIC_ASAN=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
       - make test
 
   #
@@ -241,146 +199,183 @@ matrix:
       apt:
         sources:
           - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
         packages:
           - gcc-6
           - g++-6
+          - clang-4.0
           - nasm
     env:
       - TEST="Google Undefined Sanitizer"
     script:
-      - |
-        cmake \
-          -DENABLE_DYNAMIC_USAN=ON \
-          -DCMAKE_C_COMPILER="gcc-6" \
-          -DCMAKE_CXX_COMPILER="g++-6" \
-          ..
-      - make
+      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_DYNAMIC_USAN=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
       - make test
 
   #
-  # G++ 5
+  # Clang 3.8 (Static Libraries)
   #
   - os: linux
-    env:
-      - TEST="G++ 5"
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-        packages:
-          - gcc-5
-          - g++-5
-          - gcc-6
-          - g++-6
-          - nasm
-    script:
-      - |
-        cmake \
-          -DENABLE_UNITTESTING=ON \
-          -DCMAKE_C_COMPILER="gcc-5" \
-          -DCMAKE_CXX_COMPILER="g++-5" \
-          ..
-      - make
-      - make test
-
-  #
-  # G++ 6
-  #
-  - os: linux
-    env:
-      - TEST="G++ 6"
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-        packages:
-          - gcc-6
-          - g++-6
-          - nasm
-    script:
-      - |
-        cmake \
-          -DENABLE_UNITTESTING=ON \
-          -DCMAKE_C_COMPILER="gcc-6" \
-          -DCMAKE_CXX_COMPILER="g++-6" \
-          ..
-      - make
-      - make test
-
-  #
-  # Clang 3.8
-  #
-  - os: linux
-    env:
-      - TEST="Clang 3.8"
     addons:
       apt:
         sources:
           - ubuntu-toolchain-r-test
           - llvm-toolchain-trusty-3.8
         packages:
-          - clang-3.8
           - gcc-6
           - g++-6
+          - clang-3.8
           - nasm
+    env:
+      - TEST="Clang 3.8 (Static Libraries)"
     script:
-      - |
-        cmake \
-          -DENABLE_UNITTESTING=ON \
-          -DCMAKE_C_COMPILER="clang-3.8" \
-          -DCMAKE_CXX_COMPILER="clang++-3.8" \
-          ..
-      - make
+      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
       - make test
 
   #
-  # Clang 3.9
+  # Clang 3.9 (Static Libraries)
   #
   - os: linux
-    env:
-      - TEST="Clang 3.9"
     addons:
       apt:
         sources:
           - ubuntu-toolchain-r-test
           - llvm-toolchain-trusty-3.9
         packages:
-          - clang-3.9
           - gcc-6
           - g++-6
+          - clang-3.9
           - nasm
+    env:
+      - TEST="Clang 3.9 (Static Libraries)"
     script:
-      - |
-        cmake \
-          -DENABLE_UNITTESTING=ON \
-          -DCMAKE_C_COMPILER="clang-3.9" \
-          -DCMAKE_CXX_COMPILER="clang++-3.9" \
-          ..
-      - make
+      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
       - make test
 
   #
-  # Clang 4.0
+  # Clang 4.0 (Static Libraries)
   #
   - os: linux
-    env:
-      - TEST="Clang 4.0"
     addons:
       apt:
         sources:
           - ubuntu-toolchain-r-test
           - llvm-toolchain-trusty-4.0
         packages:
-          - clang-4.0
           - gcc-6
           - g++-6
+          - clang-4.0
           - nasm
+    env:
+      - TEST="Clang 4.0 (Static Libraries)"
     script:
-      - |
-        cmake \
-          -DENABLE_UNITTESTING=ON \
-          -DCMAKE_C_COMPILER="clang-4.0" \
-          -DCMAKE_CXX_COMPILER="clang++-4.0" \
-          ..
-      - make
+      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
+      - make test
+
+  #
+  # Clang 3.8 (Shared Libraries)
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-3.8
+        packages:
+          - gcc-6
+          - g++-6
+          - clang-3.8
+          - nasm
+    env:
+      - TEST="Clang 3.8 (Shared Libraries)"
+    script:
+      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
+      - make test
+
+  #
+  # Clang 3.9 (Shared Libraries)
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-3.9
+        packages:
+          - gcc-6
+          - g++-6
+          - clang-3.9
+          - nasm
+    env:
+      - TEST="Clang 3.9 (Shared Libraries)"
+    script:
+      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
+      - make test
+
+  #
+  # Clang 4.0 (Shared Libraries)
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
+        packages:
+          - gcc-6
+          - g++-6
+          - clang-4.0
+          - nasm
+    env:
+      - TEST="Clang 4.0 (Shared Libraries)"
+    script:
+      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
+      - make test
+
+  #
+  # Clang 4.0 (No Tests / Static Libraries)
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
+        packages:
+          - gcc-6
+          - g++-6
+          - clang-4.0
+          - nasm
+    env:
+      - TEST="Clang 4.0  (No Tests / Static Libraries)"
+    script:
+      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
+      - make test
+
+  #
+  # Clang 4.0 (No Tests / Shared Libraries)
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-4.0
+        packages:
+          - gcc-6
+          - g++-6
+          - clang-4.0
+          - nasm
+    env:
+      - TEST="Clang 4.0 (No Tests / Shared Libraries)"
+    script:
+      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - make -j3
       - make test

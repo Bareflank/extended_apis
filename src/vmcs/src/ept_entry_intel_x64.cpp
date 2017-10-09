@@ -55,11 +55,11 @@ ept_entry_intel_x64::set_execute_access(bool enabled) noexcept
 
 ept_entry_intel_x64::memory_type_type
 ept_entry_intel_x64::memory_type() const noexcept
-{ return get_bits(*m_epte, 0x0000000000000038UL) >> 3; }
+{ return get_bits(*m_epte, 0x0000000000000038ULL) >> 3; }
 
 void
 ept_entry_intel_x64::set_memory_type(memory_type_type val) noexcept
-{ *m_epte = set_bits(*m_epte, 0x0000000000000038UL, val << 3); }
+{ *m_epte = set_bits(*m_epte, 0x0000000000000038ULL, val << 3); }
 
 bool
 ept_entry_intel_x64::ignore_pat() const noexcept
@@ -103,11 +103,11 @@ ept_entry_intel_x64::set_execute_access_user(bool enabled) noexcept
 
 ept_entry_intel_x64::integer_pointer
 ept_entry_intel_x64::phys_addr() const noexcept
-{ return get_bits(*m_epte, 0x0000FFFFFFFFF000UL); }
+{ return get_bits(*m_epte, 0x0000FFFFFFFFF000ULL); }
 
 void
 ept_entry_intel_x64::set_phys_addr(integer_pointer addr) noexcept
-{ *m_epte = set_bits(*m_epte, 0x0000FFFFFFFFF000UL, addr); }
+{ *m_epte = set_bits(*m_epte, 0x0000FFFFFFFFF000ULL, addr); }
 
 bool
 ept_entry_intel_x64::suppress_ve() const noexcept

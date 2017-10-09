@@ -37,13 +37,13 @@ set_vm_entry_interruption_information(const exit_handler_intel_x64_eapis::event 
     auto eii = 0ULL;
     auto deliver_error_code = false;
 
-// bfdebug_transaction([&](std::string *msg) {
-//     bfdebug_info(0, "set_vm_entry_interruption_information: event", msg);
-//     bfdebug_subnhex(0, "event.vector", event.vector, msg);
-//     bfdebug_subnhex(0, "event.type", event.type, msg);
-//     bfdebug_subnhex(0, "event.len", event.len, msg);
-//     bfdebug_subnhex(0, "event.error_code", event.error_code, msg);
-// });
+    // bfdebug_transaction([&](std::string *msg) {
+    //     bfdebug_info(0, "set_vm_entry_interruption_information: event", msg);
+    //     bfdebug_subnhex(0, "event.vector", event.vector, msg);
+    //     bfdebug_subnhex(0, "event.type", event.type, msg);
+    //     bfdebug_subnhex(0, "event.len", event.len, msg);
+    //     bfdebug_subnhex(0, "event.error_code", event.error_code, msg);
+    // });
 
     if (event.type == interruption_type::non_maskable_interrupt) {
         bfalert_info(0, "injecting non_maskable_interrupts is not supported. request ignored");

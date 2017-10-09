@@ -44,20 +44,36 @@
 // Definitions
 // -----------------------------------------------------------------------------
 
-class EXPORT_EAPIS_VMCS vmcs_intel_x64_vmm_state_eapis : public vmcs_intel_x64_vmm_state
+/// VMM Intel x64 State (EAPIs)
+///
+/// The following defines the state class for the VMM. The default VMM state
+/// is used here except the constructor, were EAPI specific resources are
+/// initialized.
+///
+class EXPORT_EAPIS_VMCS vmcs_intel_x64_vmm_state_eapis :
+    public vmcs_intel_x64_vmm_state
 {
 public:
 
+    /// Default Constructor
+    ///
     vmcs_intel_x64_vmm_state_eapis();
+
+    /// Default Destructor
+    ///
     ~vmcs_intel_x64_vmm_state_eapis() override = default;
 
 public:
+
+    /// @cond
 
     vmcs_intel_x64_vmm_state_eapis(vmcs_intel_x64_vmm_state_eapis &&) noexcept = delete;
     vmcs_intel_x64_vmm_state_eapis &operator=(vmcs_intel_x64_vmm_state_eapis &&) noexcept = delete;
 
     vmcs_intel_x64_vmm_state_eapis(const vmcs_intel_x64_vmm_state_eapis &) = delete;
     vmcs_intel_x64_vmm_state_eapis &operator=(const vmcs_intel_x64_vmm_state_eapis &) = delete;
+
+    /// @endcond
 };
 
 #endif

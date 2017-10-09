@@ -23,7 +23,7 @@
 #include <catch/catch.hpp>
 
 #include <vmcs/ept_intel_x64.h>
-constexpr const ept_intel_x64::integer_pointer virt = 0x0000100000000000UL;
+constexpr const ept_intel_x64::integer_pointer virt = 0x0000100000000000ULL;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
@@ -32,7 +32,7 @@ TEST_CASE("ept_intel_x64: add / remove page without touching page settings")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     eptp->add_page_4k(virt);
@@ -65,7 +65,7 @@ TEST_CASE("ept_intel_x64: add / remove page 1g")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     auto entry1 = eptp->add_page_1g(virt);
@@ -106,7 +106,7 @@ TEST_CASE("ept_intel_x64: add / remove page 2m")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     auto entry1 = eptp->add_page_2m(virt);
@@ -147,7 +147,7 @@ TEST_CASE("ept_intel_x64: add / remove page 4k")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     auto entry1 = eptp->add_page_4k(virt);
@@ -188,7 +188,7 @@ TEST_CASE("ept_intel_x64: add / remove page swap")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     auto entry1 = eptp->add_page_4k(virt);
@@ -234,7 +234,7 @@ TEST_CASE("ept_intel_x64: add page twice")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     eptp->add_page_4k(virt);
@@ -246,7 +246,7 @@ TEST_CASE("ept_intel_x64: remove page twice")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     eptp->add_page_4k(virt);
@@ -264,7 +264,7 @@ TEST_CASE("ept_intel_x64: remove unknown page")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
     CHECK_NOTHROW(eptp->remove_page(virt));
 }
@@ -274,7 +274,7 @@ TEST_CASE("ept_intel_x64: invalid gpa_to_epte")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     eptp->add_page_4k(virt);
@@ -290,7 +290,7 @@ TEST_CASE("ept_intel_x64: valid gpa_to_epte")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     eptp->add_page_4k(virt);
@@ -305,7 +305,7 @@ TEST_CASE("ept_intel_x64: ept_to_mdl")
     MockRepository mocks;
     setup_mm(mocks);
 
-    auto scr3 = 0x0UL;
+    ept_intel_x64::integer_pointer scr3 = 0x0ULL;
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     CHECK(eptp->ept_to_mdl().size() == 1);

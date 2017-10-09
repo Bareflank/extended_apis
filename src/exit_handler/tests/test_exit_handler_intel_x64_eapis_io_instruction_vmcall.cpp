@@ -26,6 +26,8 @@ using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register unknown")
 {
     MockRepository mocks;
@@ -1142,3 +1144,5 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access lo
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
     CHECK(ojson.dump() != "{\"0x000000000000002A\":42}");
 }
+
+#endif

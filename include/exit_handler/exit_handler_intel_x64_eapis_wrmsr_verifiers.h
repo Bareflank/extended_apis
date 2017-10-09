@@ -27,6 +27,10 @@
 
 /// @cond
 
+// -----------------------------------------------------------------------------
+// Constants
+// -----------------------------------------------------------------------------
+
 namespace vp
 {
 constexpr const auto index_trap_on_wrmsr_access                   = 0x0005001UL;
@@ -40,7 +44,28 @@ constexpr const auto index_clear_wrmsr_access_log                 = 0x0005008UL;
 constexpr const auto index_wrmsr_access_log                       = 0x0005009UL;
 }
 
-class default_verifier__trap_on_wrmsr_access : public vmcall_verifier
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_EXIT_HANDLER
+#ifdef SHARED_EAPIS_EXIT_HANDLER
+#define EXPORT_EAPIS_EXIT_HANDLER EXPORT_SYM
+#else
+#define EXPORT_EAPIS_EXIT_HANDLER IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_EXIT_HANDLER
+#endif
+
+// -----------------------------------------------------------------------------
+// Definitions
+// -----------------------------------------------------------------------------
+
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__trap_on_wrmsr_access :
+    public vmcall_verifier
 {
 public:
     default_verifier__trap_on_wrmsr_access() = default;
@@ -50,7 +75,8 @@ public:
     { bfignored(msr); return default_verify(); }
 };
 
-class default_verifier__trap_on_all_wrmsr_accesses : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__trap_on_all_wrmsr_accesses :
+    public vmcall_verifier
 {
 public:
     default_verifier__trap_on_all_wrmsr_accesses() = default;
@@ -60,7 +86,8 @@ public:
     { return default_verify(); }
 };
 
-class default_verifier__pass_through_wrmsr_access : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__pass_through_wrmsr_access :
+    public vmcall_verifier
 {
 public:
     default_verifier__pass_through_wrmsr_access() = default;
@@ -70,7 +97,8 @@ public:
     { bfignored(msr); return default_verify(); }
 };
 
-class default_verifier__pass_through_all_wrmsr_accesses : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__pass_through_all_wrmsr_accesses :
+    public vmcall_verifier
 {
 public:
     default_verifier__pass_through_all_wrmsr_accesses() = default;
@@ -80,7 +108,8 @@ public:
     { return default_verify(); }
 };
 
-class default_verifier__whitelist_wrmsr_access : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__whitelist_wrmsr_access :
+    public vmcall_verifier
 {
 public:
     default_verifier__whitelist_wrmsr_access() = default;
@@ -90,7 +119,8 @@ public:
     { bfignored(msrs); return default_verify(); }
 };
 
-class default_verifier__blacklist_wrmsr_access : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__blacklist_wrmsr_access :
+    public vmcall_verifier
 {
 public:
     default_verifier__blacklist_wrmsr_access() = default;
@@ -100,7 +130,8 @@ public:
     { bfignored(msrs); return default_verify(); }
 };
 
-class default_verifier__log_wrmsr_access : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__log_wrmsr_access :
+    public vmcall_verifier
 {
 public:
     default_verifier__log_wrmsr_access() = default;
@@ -110,7 +141,8 @@ public:
     { bfignored(enabled); return default_verify(); }
 };
 
-class default_verifier__clear_wrmsr_access_log : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__clear_wrmsr_access_log :
+    public vmcall_verifier
 {
 public:
     default_verifier__clear_wrmsr_access_log() = default;
@@ -120,7 +152,8 @@ public:
     { return default_verify(); }
 };
 
-class default_verifier__wrmsr_access_log : public vmcall_verifier
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__wrmsr_access_log :
+    public vmcall_verifier
 {
 public:
     default_verifier__wrmsr_access_log() = default;

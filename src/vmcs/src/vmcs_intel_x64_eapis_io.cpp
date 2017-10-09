@@ -81,8 +81,8 @@ vmcs_intel_x64_eapis::trap_on_all_io_accesses()
         throw std::runtime_error("io bitmaps not enabled");
     }
 
-    __builtin_memset(m_io_bitmapa.get(), 0xFF, x64::page_size);
-    __builtin_memset(m_io_bitmapb.get(), 0xFF, x64::page_size);
+    memset(m_io_bitmapa.get(), 0xFF, x64::page_size);
+    memset(m_io_bitmapb.get(), 0xFF, x64::page_size);
 }
 
 void
@@ -109,8 +109,8 @@ vmcs_intel_x64_eapis::pass_through_all_io_accesses()
         throw std::runtime_error("io bitmaps not enabled");
     }
 
-    __builtin_memset(m_io_bitmapa.get(), 0, x64::page_size);
-    __builtin_memset(m_io_bitmapb.get(), 0, x64::page_size);
+    memset(m_io_bitmapa.get(), 0, x64::page_size);
+    memset(m_io_bitmapb.get(), 0, x64::page_size);
 }
 
 void
