@@ -26,6 +26,8 @@ using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 TEST_CASE("exit_handler_intel_x64_eapis_verifiers: overrun denials buffer")
 {
     MockRepository mocks;
@@ -44,3 +46,5 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: overrun denials buffer")
 
     CHECK(ehlr->m_denials.size() == DENIAL_LOG_SIZE);
 }
+
+#endif

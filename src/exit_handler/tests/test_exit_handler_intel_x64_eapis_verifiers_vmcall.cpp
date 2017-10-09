@@ -26,6 +26,8 @@ using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials allowed")
 {
     MockRepository mocks;
@@ -177,3 +179,5 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials denied")
     CHECK(ojson.dump() != "[\"fake denial\"]");
     CHECK(ehlr->m_denials.size() == 1);
 }
+
+#endif

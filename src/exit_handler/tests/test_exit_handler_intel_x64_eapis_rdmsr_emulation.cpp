@@ -26,6 +26,8 @@ using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_emulation: exit")
 {
     MockRepository mocks;
@@ -38,3 +40,5 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_emulation: exit")
     CHECK_NOTHROW(ehlr->dispatch());
     CHECK(ehlr->m_rdmsr_access_log[42] == 1);
 }
+
+#endif

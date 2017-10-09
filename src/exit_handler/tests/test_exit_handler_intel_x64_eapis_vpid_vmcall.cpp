@@ -26,6 +26,8 @@ using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register unknown")
 {
     MockRepository mocks;
@@ -249,3 +251,5 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid denie
     CHECK(ojson.dump() != "[\"success\"]");
     CHECK(g_enable_vpid);
 }
+
+#endif
