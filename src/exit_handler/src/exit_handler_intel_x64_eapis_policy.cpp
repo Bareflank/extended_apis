@@ -26,6 +26,7 @@
 #include <exit_handler/exit_handler_intel_x64_eapis_msr_verifiers.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_rdmsr_verifiers.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_wrmsr_verifiers.h>
+#include <exit_handler/exit_handler_intel_x64_eapis_cpuid_verifiers.h>
 
 void
 exit_handler_intel_x64_eapis::init_policy()
@@ -68,4 +69,12 @@ exit_handler_intel_x64_eapis::init_policy()
     m_verifiers[vp::index_log_wrmsr_access] = std::make_unique<default_verifier__log_wrmsr_access>();
     m_verifiers[vp::index_clear_wrmsr_access_log] = std::make_unique<default_verifier__clear_wrmsr_access_log>();
     m_verifiers[vp::index_wrmsr_access_log] = std::make_unique<default_verifier__wrmsr_access_log>();
+
+    m_verifiers[vp::index_emulate_cpuid] = std::make_unique<default_verifier__emulate_cpuid>();
+    m_verifiers[vp::index_reset_cpuid_leaf] = std::make_unique<default_verifier__reset_cpuid_leaf>();
+    m_verifiers[vp::index_reset_cpuid_all] = std::make_unique<default_verifier__reset_cpuid_all>();
+    m_verifiers[vp::index_log_cpuid_access] = std::make_unique<default_verifier__log_cpuid_access>();
+    m_verifiers[vp::index_clear_cpuid_access_log] = std::make_unique<default_verifier__clear_cpuid_access_log>();
+    m_verifiers[vp::index_cpuid_access_log] = std::make_unique<default_verifier__cpuid_access_log>();
+    m_verifiers[vp::index_dump_cpuid_emulations_log] = std::make_unique<default_verifier__dump_cpuid_emulations_log>();
 }

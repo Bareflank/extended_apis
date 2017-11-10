@@ -92,6 +92,11 @@ public:
     using error_code_type = intel_x64::vmcs::value_type;                                ///< Event error code type
     using instr_len_type = intel_x64::vmcs::value_type;                                 ///< Event instruction length type
     using tpr_shadow_type = intel_x64::cr8::value_type;                                 ///< TPR shadow type
+    using cpuid_type = x64::cpuid::field_type;                                          ///< CPUID type
+    using cpuid_key_type = uint64_t;                                                    ///< CPUID key type
+    using cpuid_regs_type = x64::cpuid::cpuid_regs;                                     ///< CPUID regs type
+    using cpuid_emu_map_type = std::map<cpuid_key_type, cpuid_regs_type>;               ///< CPUID emu map type
+    using cpuid_log_type = std::map<cpuid_key_type, count_type>;                        ///< CPUID log type
 
     /// Monitor Trap Callback Type
     ///
@@ -249,6 +254,9 @@ protected:
     void clear_rdmsr_access_log();
     void clear_wrmsr_access_log();
 
+    void log_cpuid_access(bool enable);
+    void clear_cpuid_access_log();
+
     /// @endcond
 
 #ifndef ENABLE_UNITTESTING
@@ -275,6 +283,7 @@ protected:
     virtual void handle_exit__ctl_reg_access();
     virtual void handle_exit__external_interrupt();
     virtual void handle_exit__interrupt_window();
+    virtual void handle_exit__cpuid();
     //     virtual void handle_exit__rdmsr_apic();
     //     virtual void handle_exit__wrmsr_apic();
 
@@ -353,6 +362,7 @@ protected:
     void register_json_vmcall__msr();
     void register_json_vmcall__rdmsr();
     void register_json_vmcall__wrmsr();
+    void register_json_vmcall__cpuid();
 
     void json_success(json &ojson);
 
@@ -489,6 +499,35 @@ protected:
 protected:
 #endif
 
+    // CPUID VMCalls
+    //
+    // The following functions support the CPUID based VMCall interfaces
+    // (JSON only)
+    //
+
+    /// @cond
+
+    uint64_t create_key(
+        cpuid_key_type leaf, cpuid_key_type subleaf);
+    uint64_t parse_emulate_cpuid_string(
+        std::string reg_string, cpuid_key_type machine_reg);
+
+    void handle_vmcall__emulate_cpuid(
+        cpuid_type leaf, cpuid_type subleaf,
+        std::string eax, std::string ebx, std::string ecx, std::string edx);
+    void handle_vmcall__reset_cpuid_leaf(cpuid_type leaf, cpuid_type subleaf);
+    void handle_vmcall__reset_cpuid_all();
+    void handle_vmcall__log_cpuid_access(bool enabled);
+    void handle_vmcall__clear_cpuid_access_log();
+    void handle_vmcall__cpuid_access_log(json &ojson);
+    void handle_vmcall__dump_cpuid_emulations_log(json &ojson);
+
+    /// @endcond
+
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
     // Event Management
     //
     // The following functions are used by the event management code.
@@ -537,6 +576,18 @@ private:
     bool m_wrmsr_access_log_enabled{false};
     msr_log_type m_rdmsr_access_log;
     msr_log_type m_wrmsr_access_log;
+
+    /// @endcond
+
+#ifndef ENABLE_UNITTESTING
+private:
+#endif
+
+    /// @cond
+
+    cpuid_emu_map_type m_cpuid_emu_map;
+    bool m_cpuid_access_log_enabled{false};
+    cpuid_log_type m_cpuid_access_log;
 
     /// @endcond
 

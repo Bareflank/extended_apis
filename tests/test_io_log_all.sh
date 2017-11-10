@@ -52,10 +52,10 @@ run_on_all_cores() {
     do
         if [[ $2 == "true" ]]; then
             echo -e "$CC""core:$CB #$core$CE"
-            ARGS="--cpuid $core string json $1" make vmcall
+            bfm vmcall string json "$1"
             echo -e ""
         else
-            ARGS="--cpuid $core string json $1" make vmcall > /dev/null
+            bfm vmcall string json "$1" > /dev/null
         fi
     done
 }
@@ -64,10 +64,10 @@ run_on_all_cores() {
 # Init
 # ------------------------------------------------------------------------------
 
-run_on_all_cores "'{\"command\":\"enable_io_bitmaps\", \"enabled\": true}'"
-run_on_all_cores "'{\"command\":\"clear_io_access_log\"}'"
-run_on_all_cores "'{\"command\":\"log_io_access\", \"enabled\": true}'"
-run_on_all_cores "'{\"command\":\"blacklist_io_access\", \"ports\": []}'"
+run_on_all_cores "{\"command\":\"enable_io_bitmaps\", \"enabled\": true}"
+run_on_all_cores "{\"command\":\"clear_io_access_log\"}"
+run_on_all_cores "{\"command\":\"log_io_access\", \"enabled\": true}"
+run_on_all_cores "{\"command\":\"blacklist_io_access\", \"ports\": []}"
 
 # ------------------------------------------------------------------------------
 # Tests
@@ -78,19 +78,19 @@ time lspci > /dev/null
 footer
 
 header "with hypervisor"
-run_on_all_cores "'{\"command\":\"whitelist_io_access\", \"ports\": []}'"
+run_on_all_cores "{\"command\":\"whitelist_io_access\", \"ports\": []}"
 time lspci > /dev/null
 footer
 
 header "io access log"
 footer
-run_on_all_cores "'{\"command\":\"io_access_log\"}'" "true"
+run_on_all_cores "{\"command\":\"io_access_log\"}" "true"
 
 # ------------------------------------------------------------------------------
 # Fini
 # ------------------------------------------------------------------------------
 
-run_on_all_cores "'{\"command\":\"blacklist_io_access\", \"ports\": []}'"
-run_on_all_cores "'{\"command\":\"log_io_access\", \"enabled\": false}'"
-run_on_all_cores "'{\"command\":\"clear_io_access_log\"}'"
-run_on_all_cores "'{\"command\":\"enable_io_bitmaps\", \"enabled\": false}'"
+run_on_all_cores "{\"command\":\"blacklist_io_access\", \"ports\": []}"
+run_on_all_cores "{\"command\":\"log_io_access\", \"enabled\": false}"
+run_on_all_cores "{\"command\":\"clear_io_access_log\"}"
+run_on_all_cores "{\"command\":\"enable_io_bitmaps\", \"enabled\": false}"

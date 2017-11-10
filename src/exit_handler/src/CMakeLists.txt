@@ -25,6 +25,8 @@ list(APPEND SOURCES
     exit_handler_intel_x64_eapis_vpid_vmcall.cpp
     exit_handler_intel_x64_eapis_wrmsr_emulation.cpp
     exit_handler_intel_x64_eapis_wrmsr_vmcall.cpp
+    exit_handler_intel_x64_eapis_cpuid_emulation.cpp
+    exit_handler_intel_x64_eapis_cpuid_vmcall.cpp
 )
 
 if(BUILD_SHARED_LIBS)

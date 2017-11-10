@@ -52,10 +52,10 @@ run_on_all_cores() {
     do
         if [[ $2 == "true" ]]; then
             echo -e "$CC""core:$CB #$core$CE"
-            ARGS="--cpuid $core string json $1" make vmcall
+            bfm vmcall string json "$1"
             echo -e ""
         else
-            ARGS="--cpuid $core string json $1" make vmcall > /dev/null
+            bfm vmcall string json "$1" > /dev/null
         fi
     done
 }
@@ -64,40 +64,40 @@ run_on_all_cores() {
 # Init
 # ------------------------------------------------------------------------------
 
-run_on_all_cores "'{\"command\":\"enable_msr_bitmap\", \"enabled\": true}'"
-run_on_all_cores "'{\"command\":\"clear_rdmsr_access_log\"}'"
-run_on_all_cores "'{\"command\":\"clear_wrmsr_access_log\"}'"
-run_on_all_cores "'{\"command\":\"log_rdmsr_access\", \"enabled\": true}'"
-run_on_all_cores "'{\"command\":\"log_wrmsr_access\", \"enabled\": true}'"
-run_on_all_cores "'{\"command\":\"blacklist_rdmsr_access\", \"msrs\": []}'"
-run_on_all_cores "'{\"command\":\"blacklist_wrmsr_access\", \"msrs\": []}'"
+run_on_all_cores "{\"command\":\"enable_msr_bitmap\", \"enabled\": true}"
+run_on_all_cores "{\"command\":\"clear_rdmsr_access_log\"}"
+run_on_all_cores "{\"command\":\"clear_wrmsr_access_log\"}"
+run_on_all_cores "{\"command\":\"log_rdmsr_access\", \"enabled\": true}"
+run_on_all_cores "{\"command\":\"log_wrmsr_access\", \"enabled\": true}"
+run_on_all_cores "{\"command\":\"blacklist_rdmsr_access\", \"msrs\": []}"
+run_on_all_cores "{\"command\":\"blacklist_wrmsr_access\", \"msrs\": []}"
 
 # ------------------------------------------------------------------------------
 # Tests
 # ------------------------------------------------------------------------------
 
-run_on_all_cores "'{\"command\":\"blacklist_rdmsr_access\", \"msrs_hex\": [\"0x818\", \"0x819\", \"0x81A\", \"0x81B\", \"0x81C\", \"0x81D\", \"0x81E\", \"0x81F\"]}'"
-run_on_all_cores "'{\"command\":\"blacklist_wrmsr_access\", \"msrs_hex\": [\"0x6E0\"]}'"
+run_on_all_cores "{\"command\":\"blacklist_rdmsr_access\", \"msrs_hex\": [\"0x818\", \"0x819\", \"0x81A\", \"0x81B\", \"0x81C\", \"0x81D\", \"0x81E\", \"0x81F\"]}"
+run_on_all_cores "{\"command\":\"blacklist_wrmsr_access\", \"msrs_hex\": [\"0x6E0\"]}"
 sleep 1
-run_on_all_cores "'{\"command\":\"blacklist_rdmsr_access\", \"msrs\": []}'"
-run_on_all_cores "'{\"command\":\"blacklist_wrmsr_access\", \"msrs\": []}'"
+run_on_all_cores "{\"command\":\"blacklist_rdmsr_access\", \"msrs\": []}"
+run_on_all_cores "{\"command\":\"blacklist_wrmsr_access\", \"msrs\": []}"
 
 header "rdmsr access log"
 footer
-run_on_all_cores "'{\"command\":\"rdmsr_access_log\"}'" "true"
+run_on_all_cores "{\"command\":\"rdmsr_access_log\"}" "true"
 
 header "wrmsr access log"
 footer
-run_on_all_cores "'{\"command\":\"wrmsr_access_log\"}'" "true"
+run_on_all_cores "{\"command\":\"wrmsr_access_log\"}" "true"
 
 # ------------------------------------------------------------------------------
 # Fini
 # ------------------------------------------------------------------------------
 
-run_on_all_cores "'{\"command\":\"blacklist_rdmsr_access\", \"msrs\": []}'"
-run_on_all_cores "'{\"command\":\"blacklist_wrmsr_access\", \"msrs\": []}'"
-run_on_all_cores "'{\"command\":\"log_rdmsr_access\", \"enabled\": false}'"
-run_on_all_cores "'{\"command\":\"log_wrmsr_access\", \"enabled\": false}'"
-run_on_all_cores "'{\"command\":\"clear_rdmsr_access_log\"}'"
-run_on_all_cores "'{\"command\":\"clear_wrmsr_access_log\"}'"
-run_on_all_cores "'{\"command\":\"enable_msr_bitmap\", \"enabled\": false}'"
+run_on_all_cores "{\"command\":\"blacklist_rdmsr_access\", \"msrs\": []}"
+run_on_all_cores "{\"command\":\"blacklist_wrmsr_access\", \"msrs\": []}"
+run_on_all_cores "{\"command\":\"log_rdmsr_access\", \"enabled\": false}"
+run_on_all_cores "{\"command\":\"log_wrmsr_access\", \"enabled\": false}"
+run_on_all_cores "{\"command\":\"clear_rdmsr_access_log\"}"
+run_on_all_cores "{\"command\":\"clear_wrmsr_access_log\"}"
+run_on_all_cores "{\"command\":\"enable_msr_bitmap\", \"enabled\": false}"

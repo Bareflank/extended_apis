@@ -38,6 +38,7 @@ enum eapis_vmcall_categories {
     eapis_cat__msr = 0x3000,
     eapis_cat__rdmsr = 0x4000,
     eapis_cat__wrmsr = 0x5000,
+    eapis_cat__cpuid = 0x6000,
 };
 
 /**
@@ -66,6 +67,11 @@ enum eapis_vmcall_functions {
     eapis_fun__trap_on_all_wrmsr_accesses = 0x2,
     eapis_fun__pass_through_wrmsr_access = 0x3,
     eapis_fun__pass_through_all_wrmsr_accesses = 0x4,
+
+    eapis_fun__emulate_cpuid = 0x1,
+    eapis_fun__reset_cpuid_leaf = 0x2,
+    eapis_fun__reset_cpuid_all = 0x3,
+    eapis_fun__dump_cpuid_emulation_log = 0x4,
 };
 
 /**
@@ -308,6 +314,33 @@ enum eapis_vmcall_functions {
  *
  * <b>{"command":"wrmsr_access_log"}</b>:
  * Returns the list of logged MSR accesses
+ *
+ *
+ *
+ * @section cpuid CPUID
+ *
+ * @subsection cpuid_json JSON Based VMCalls
+ *
+ * <b>{"command":"emulate_cpuid", "leaf":dec, "subleaf":dec, "eax":string, "ebx":string, "ecx":string, "edx":string}</b>:
+ * Instructs the hypervisor to return given values on a CPUID call for the specified leaf and subleaf. Supplied register values are strings and can consist of characters '0' or '1' to set bits, or '-' to specify that bit as a passthrough bit which defaults to the machine CPUID value.
+ *
+ * <b>{"command":"reset_cpuid_leaf", "leaf":dec, "subleaf":dec}</b>:
+ * Instructs the hypervisor to clear emulated changes at the specified leaf and subleaf and return usual machine CPUID values.
+ *
+ * <b>{"command":"reset_cpuid_all"}</b>:
+ * Instructs the hypervisor to clear all emulated changes. All leafs will return usual machine CPUID values.
+ *
+ * <b>{"command":"log_cpuid_access", "enabled":true/false}</b>:
+ * Instructs the hypervisor to log all CPUID accesses.
+ *
+ * <b>{"command":"clear_cpuid_access_log"}</b>:
+ * Clears logged CPUID accesses
+ *
+ * <b>{"command":"cpuid_access_log"}</b>:
+ * Returns the list of logged CPUID accesses.
+ *
+ * <b>{"command":"dump_cpuid_emulations_log"}</b>:
+ * Returns the log of emulations created.
  *
  */
 
