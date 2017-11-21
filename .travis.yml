@@ -28,6 +28,7 @@ before_script:
   - mkdir hypervisor/build
   - ls -al
   - cd hypervisor
+  - git clone -b dev https://github.com/Bareflank/extended_apis.git extended_apis
   - ls -al
   - cd build
 

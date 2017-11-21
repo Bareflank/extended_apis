@@ -31,6 +31,6 @@ list(APPEND LIBRARIES
 )
 
 add_vmm_executable(eapis_vmm
-    SOURCES vcpu_factory_intel_x64.cpp
+    SOURCES vcpu_factory_intel_x64_eapis.cpp
     LIBRARIES ${LIBRARIES}
 )
