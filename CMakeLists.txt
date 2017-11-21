@@ -1,26 +1,25 @@
 cmake_minimum_required(VERSION 3.6)
 project(eapis C CXX)
+include(${BF_FLAGS_DIR}/flags.cmake)
+enable_language(ASM_NASM)
 
-include(${CMAKE_INSTALL_PREFIX}/cmake/CMakeGlobal_Project.txt)
+generate_flags(
+    VMM
+    VERBOSE ${BUILD_VERBOSE}
+)
 
-# ------------------------------------------------------------------------------
-# Subdirectories
-# ------------------------------------------------------------------------------
+include_directories(
+    ${CMAKE_CURRENT_LIST_DIR}/include
+    ${BUILD_SYSROOT_VMM}/include/c++/v1
+    ${BUILD_SYSROOT_VMM}/include
+)
 
-if(CMAKE_TOOLCHAIN_FILE)
-    set(INSTALL_LIB_DIR ${BAREFLANK_SYSROOT_PATH}/lib)
-    set(INSTALL_BIN_DIR ${BAREFLANK_SYSROOT_PATH}/bin)
-else()
-    set(INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib)
-    set(INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin)
-endif()
+link_directories(
+    ${BUILD_SYSROOT_VMM}/lib
+)
 
 add_subdirectory(src)
 
-# ------------------------------------------------------------------------------
-# Install
-# ------------------------------------------------------------------------------
-
-install(DIRECTORY include/exit_handler DESTINATION include)
-install(DIRECTORY include/vmcs DESTINATION include)
-install(FILES include/bitmanip_eapis.h DESTINATION include)
+install(DIRECTORY include/exit_handler DESTINATION ${BUILD_SYSROOT_VMM}/include)
+install(DIRECTORY include/vmcs DESTINATION ${BUILD_SYSROOT_VMM}/include)
+install(FILES include/bitmanip_eapis.h DESTINATION ${BUILD_SYSROOT_VMM}/include)
