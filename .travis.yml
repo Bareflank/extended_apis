@@ -16,8 +16,8 @@ before_script:
   - mkdir hypervisor/build
   - ls -al
   - cd hypervisor
+  - git clone -b dev https://github.com/Bareflank/extended_apis.git extended_apis
   - ls -al
-  - source env.sh
   - cd build
 
   #
@@ -112,7 +112,7 @@ matrix:
     env:
       - TEST="Astyle Format"
     script:
-      - cmake -DENABLE_ASTYLE=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DENABLE_ASTYLE=ON -DBUILD_EXTENDED_APIS=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make format
       - |
@@ -141,7 +141,7 @@ matrix:
     env:
       - TEST="Clang Tidy"
     script:
-      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_TIDY=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DBUILD_VMM_SHARED=ON -DENABLE_UNITTESTING=ON -DBUILD_EXTENDED_APIS=ON -DENABLE_TIDY=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test
       - make tidy
@@ -163,7 +163,7 @@ matrix:
     env:
       - TEST="Codecov"
     script:
-      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_COVERAGE=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DBUILD_VMM_SHARED=ON -DENABLE_UNITTESTING=ON -DBUILD_EXTENDED_APIS=ON  -DENABLE_CODECOV=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test
       - rm -Rf external
@@ -187,7 +187,7 @@ matrix:
     env:
       - TEST="Google Address Sanitizer"
     script:
-      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_DYNAMIC_ASAN=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DBUILD_VMM_SHARED=ON -DENABLE_UNITTESTING=ON -DBUILD_EXTENDED_APIS=ON  -DENABLE_ASAN=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test
 
@@ -208,7 +208,7 @@ matrix:
     env:
       - TEST="Google Undefined Sanitizer"
     script:
-      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_DYNAMIC_USAN=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DBUILD_VMM_SHARED=ON -DENABLE_UNITTESTING=ON -DBUILD_EXTENDED_APIS=ON  -DENABLE_USAN=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test
 
@@ -229,7 +229,7 @@ matrix:
     env:
       - TEST="Clang 3.8 (Static Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DENABLE_UNITTESTING=ON -DENABLE_EXTENDED_APIS=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test
 
@@ -250,7 +250,7 @@ matrix:
     env:
       - TEST="Clang 3.9 (Static Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DENABLE_UNITTESTING=ON -DENABLE_EXTENDED_APIS=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test
 
@@ -271,7 +271,7 @@ matrix:
     env:
       - TEST="Clang 4.0 (Static Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DENABLE_UNITTESTING=ON -DENABLE_EXTENDED_APIS=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test
 
@@ -292,7 +292,7 @@ matrix:
     env:
       - TEST="Clang 3.8 (Shared Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DENABLE_UNITTESTING=ON -DBUILD_VMM_SHARED=ON -DBUILD_VMM_STATIC=OFF -DENABLE_EXTENDED_APIS=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test
 
@@ -313,7 +313,7 @@ matrix:
     env:
       - TEST="Clang 3.9 (Shared Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DENABLE_UNITTESTING=ON -DBUILD_VMM_SHARED=ON -DBUILD_VMM_STATIC=OFF -DENABLE_EXTENDED_APIS=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test
 
@@ -334,7 +334,7 @@ matrix:
     env:
       - TEST="Clang 4.0 (Shared Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DENABLE_UNITTESTING=ON -DBUILD_VMM_SHARED=ON -DBUILD_VMM_STATIC=OFF -DENABLE_EXTENDED_APIS=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test
 
@@ -355,7 +355,8 @@ matrix:
     env:
       - TEST="Clang 4.0  (No Tests / Static Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR -DBUILD_BFDRIVER=OFF ..
+      - cmake -DENABLE_UNITTESTING=ON -DENABLE_EXTENDED_APIS=ON ..
       - make -j3
       - make test
 
@@ -376,6 +377,6 @@ matrix:
     env:
       - TEST="Clang 4.0 (No Tests / Shared Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DENABLE_UNITTESTING=ON -DBUILD_VMM_SHARED=ON -DBUILD_VMM_STATIC=OFF -DENABLE_EXTENDED_APIS=ON -DBUILD_BFDRIVER=OFF ..
       - make -j3
       - make test

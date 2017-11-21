@@ -1,13 +1,3 @@
-# ------------------------------------------------------------------------------
-# CMake Includes
-# ------------------------------------------------------------------------------
-
-include(${CMAKE_INSTALL_PREFIX}/cmake/CMakeGlobal_Includes.txt)
-
-# ------------------------------------------------------------------------------
-# Targets
-# ------------------------------------------------------------------------------
-
 list(APPEND SOURCES
     exit_handler_intel_x64_eapis.cpp
     exit_handler_intel_x64_eapis_cr_emulation.cpp
@@ -27,28 +17,32 @@ list(APPEND SOURCES
     exit_handler_intel_x64_eapis_wrmsr_vmcall.cpp
 )
 
-if(BUILD_SHARED_LIBS)
-    add_library(eapis_exit_handler SHARED ${SOURCES})
-    target_compile_definitions(eapis_exit_handler PRIVATE SHARED_EAPIS_EXIT_HANDLER)
-    target_link_libraries(eapis_exit_handler bfvmm_exit_handler)
-    target_link_libraries(eapis_exit_handler eapis_vmcs)
-    target_link_libraries(eapis_exit_handler bfvmm_vmcs)
-    target_link_libraries(eapis_exit_handler bfvmm_memory_manager)
-    target_link_libraries(eapis_exit_handler bfvmm_intrinsics)
+if(BUILD_VMM_SHARED)
+    add_library(eapis_exit_handler_shared SHARED ${SOURCES})
+    set_target_properties(eapis_exit_handler_shared PROPERTIES OUTPUT_NAME "eapis_exit_handler")
+    target_compile_definitions(eapis_exit_handler_shared PRIVATE SHARED_EAPIS_EXIT_HANDLER)
+    if(${PROJECT_NAME} STREQUAL "eapis_test")
+        target_compile_definitions(eapis_exit_handler_shared PRIVATE SHOW_VMCALLS)
+    endif()
+    target_link_libraries(eapis_exit_handler_shared bfvmm_exit_handler)
+    target_link_libraries(eapis_exit_handler_shared eapis_vmcs_shared)
+    target_link_libraries(eapis_exit_handler_shared bfvmm_vmcs)
+    target_link_libraries(eapis_exit_handler_shared bfvmm_memory_manager)
+    target_link_libraries(eapis_exit_handler_shared bfvmm_intrinsics)
+    install(TARGETS eapis_exit_handler_shared DESTINATION ${BUILD_SYSROOT_VMM}/lib)
 endif()
 
-if(BUILD_STATIC_LIBS)
-    add_library(eapis_exit_handler STATIC ${SOURCES})
-    target_compile_definitions(eapis_exit_handler PRIVATE STATIC_EAPIS_EXIT_HANDLER)
-    target_compile_definitions(eapis_exit_handler PRIVATE STATIC_EXIT_HANDLER)
-    target_compile_definitions(eapis_exit_handler PRIVATE STATIC_EAPIS_VMCS)
-    target_compile_definitions(eapis_exit_handler PRIVATE STATIC_VMCS)
-    target_compile_definitions(eapis_exit_handler PRIVATE STATIC_MEMORY_MANAGER)
-    target_compile_definitions(eapis_exit_handler PRIVATE STATIC_INTRINSICS)
+if(BUILD_VMM_STATIC)
+    add_library(eapis_exit_handler_static STATIC ${SOURCES})
+    set_target_properties(eapis_exit_handler_static PROPERTIES OUTPUT_NAME "eapis_exit_handler")
+    if(${PROJECT_NAME} STREQUAL "eapis_test")
+        target_compile_definitions(eapis_exit_handler_static PRIVATE SHOW_VMCALLS)
+    endif()
+    target_compile_definitions(eapis_exit_handler_static PRIVATE STATIC_EAPIS_EXIT_HANDLER)
+    target_compile_definitions(eapis_exit_handler_static PRIVATE STATIC_EXIT_HANDLER)
+    target_compile_definitions(eapis_exit_handler_static PRIVATE STATIC_EAPIS_VMCS)
+    target_compile_definitions(eapis_exit_handler_static PRIVATE STATIC_VMCS)
+    target_compile_definitions(eapis_exit_handler_static PRIVATE STATIC_MEMORY_MANAGER)
+    target_compile_definitions(eapis_exit_handler_static PRIVATE STATIC_INTRINSICS)
+    install(TARGETS eapis_exit_handler_static DESTINATION ${BUILD_SYSROOT_VMM}/lib)
 endif()
-
-if(NOT CMAKE_TOOLCHAIN_FILE)
-    target_compile_definitions(eapis_exit_handler PRIVATE SHOW_VMCALLS)
-endif()
-
-install(TARGETS eapis_exit_handler DESTINATION ${INSTALL_LIB_DIR})
