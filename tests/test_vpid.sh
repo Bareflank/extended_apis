@@ -42,7 +42,7 @@ footer() {
 run_on_all_cores() {
     for (( core=0; core<NUM_CORES; core++ ))
     do
-        ARGS="--cpuid $core string json $1" make vmcall > /dev/null
+        bfm vmcall string json "$1" > /dev/null
     done
 }
 
@@ -55,12 +55,12 @@ run_on_all_cores() {
 # ------------------------------------------------------------------------------
 
 header "without vpid"
-run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": false}'"
+run_on_all_cores "{\"command\":\"enable_vpid\", \"enabled\": false}"
 time lspci > /dev/null
 footer
 
 header "with vpid"
-run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": true}'"
+run_on_all_cores "{\"command\":\"enable_vpid\", \"enabled\": true}"
 time lspci > /dev/null
 footer
 
@@ -68,4 +68,4 @@ footer
 # Fini
 # ------------------------------------------------------------------------------
 
-run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": false}'"
+run_on_all_cores "{\"command\":\"enable_vpid\", \"enabled\": false}"

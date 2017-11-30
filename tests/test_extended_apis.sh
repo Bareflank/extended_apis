@@ -22,7 +22,7 @@
 
 DIR=$(dirname $0)
 
-make driver_load
+make driver_quick
 make quick
 
 $DIR/test_io_log_all.sh
@@ -31,6 +31,7 @@ $DIR/test_msr_log_all.sh
 $DIR/test_msr_tsc_deadline_log.sh
 $DIR/test_policy.sh
 $DIR/test_vpid.sh
+$DIR/test_cpuid.sh
 
-make stop
+make unload
 make driver_unload

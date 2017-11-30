@@ -38,6 +38,7 @@ exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis()
     register_json_vmcall__msr();
     register_json_vmcall__rdmsr();
     register_json_vmcall__wrmsr();
+    register_json_vmcall__cpuid();
 }
 
 void
@@ -86,6 +87,10 @@ exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
 
         case exit_reason::basic_exit_reason::interrupt_window:
             handle_exit__interrupt_window();
+            break;
+
+        case exit_reason::basic_exit_reason::cpuid:
+            handle_exit__cpuid();
             break;
 
         default:

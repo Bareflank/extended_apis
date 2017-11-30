@@ -17,7 +17,6 @@ before_script:
   - ls -al
   - cd hypervisor
   - ls -al
-  - source env.sh
   - cd build
 
   #

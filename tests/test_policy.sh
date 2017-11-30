@@ -52,10 +52,10 @@ run_on_all_cores() {
     do
         if [[ $2 == "true" ]]; then
             echo -e "$CC""core:$CB #$core$CE"
-            ARGS="--cpuid $core string json $1" make vmcall
+            bfm vmcall string json "$1"
             echo -e ""
         else
-            ARGS="--cpuid $core string json $1" make vmcall > /dev/null
+            bfm vmcall string json "$1" > /dev/null
         fi
     done
 }
@@ -64,28 +64,28 @@ run_on_all_cores() {
 # Init
 # ------------------------------------------------------------------------------
 
-run_on_all_cores "'{\"command\":\"clear_denials\"}'"
+run_on_all_cores "{\"command\":\"clear_denials\"}"
 
 # ------------------------------------------------------------------------------
 # Tests
 # ------------------------------------------------------------------------------
 
 header "run vmcalls"
-run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": false}'"
-run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": true}'"
-run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": false}'"
+run_on_all_cores "{\"command\":\"enable_vpid\", \"enabled\": false}"
+run_on_all_cores "{\"command\":\"enable_vpid\", \"enabled\": true}"
+run_on_all_cores "{\"command\":\"enable_vpid\", \"enabled\": false}"
 footer
 
 header "dump policy"
 footer
-run_on_all_cores "'{\"command\":\"dump_policy\"}'" "true"
+run_on_all_cores "{\"command\":\"dump_policy\"}" "true"
 
 header "dump denials"
 footer
-run_on_all_cores "'{\"command\":\"dump_denials\"}'" "true"
+run_on_all_cores "{\"command\":\"dump_denials\"}" "true"
 
 # ------------------------------------------------------------------------------
 # Fini
 # ------------------------------------------------------------------------------
 
-run_on_all_cores "'{\"command\":\"clear_denials\"}'"
+run_on_all_cores "{\"command\":\"clear_denials\"}"
