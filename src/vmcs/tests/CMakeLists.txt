@@ -1,12 +1,4 @@
-# ------------------------------------------------------------------------------
-# CMake Includes
-# ------------------------------------------------------------------------------
-
-include(${CMAKE_INSTALL_PREFIX}/cmake/CMakeGlobal_Includes.txt)
-
-# ------------------------------------------------------------------------------
-# Targets
-# ------------------------------------------------------------------------------
+include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 add_library(test_vmcs_support STATIC test_support.cpp)
 target_compile_definitions(test_vmcs_support PRIVATE STATIC_EAPIS_VMCS)
@@ -21,7 +13,7 @@ macro(do_test str)
     target_compile_definitions(test_${str} PRIVATE STATIC_MEMORY_MANAGER)
     target_compile_definitions(test_${str} PRIVATE STATIC_INTRINSICS)
     target_link_libraries(test_${str} test_vmcs_support)
-    target_link_libraries(test_${str} eapis_vmcs)
+    target_link_libraries(test_${str} eapis_vmcs_static)
     target_link_libraries(test_${str} bfvmm_vmcs)
     target_link_libraries(test_${str} bfvmm_memory_manager)
     target_link_libraries(test_${str} bfvmm_intrinsics)

@@ -1,18 +1,4 @@
-# ------------------------------------------------------------------------------
-# CMake Includes
-# ------------------------------------------------------------------------------
-
-include(${CMAKE_INSTALL_PREFIX}/cmake/CMakeGlobal_Includes.txt)
-
-# ------------------------------------------------------------------------------
-# Custom Flags
-# ------------------------------------------------------------------------------
-
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
-
-# ------------------------------------------------------------------------------
-# Targets
-# ------------------------------------------------------------------------------
 
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/null.cpp)
     file(WRITE
@@ -20,49 +6,57 @@ if(NOT EXISTS ${CMAKE_BINARY_DIR}/null.cpp)
     )
 endif()
 
-add_executable(eapis ${CMAKE_BINARY_DIR}/null.cpp)
+if(BUILD_VMM_SHARED)
+    add_executable(eapis_shared ${CMAKE_BINARY_DIR}/null.cpp)
+    target_link_libraries(eapis_shared -Wl,--whole-archive bfvmm_main -Wl,--no-whole-archive)
+    target_link_libraries(eapis_shared eapis_vcpu_factory_shared)
+    target_link_libraries(eapis_shared bfvmm_vcpu_factory)
+    target_link_libraries(eapis_shared bfvmm_vcpu)
+    target_link_libraries(eapis_shared bfvmm_vcpu_manager)
+    target_link_libraries(eapis_shared eapis_exit_handler_shared)
+    target_link_libraries(eapis_shared bfvmm_exit_handler)
+    target_link_libraries(eapis_shared eapis_vmcs_shared)
+    target_link_libraries(eapis_shared bfvmm_vmcs)
+    target_link_libraries(eapis_shared bfvmm_vmxon)
+    target_link_libraries(eapis_shared bfvmm_memory_manager)
+    target_link_libraries(eapis_shared bfvmm_serial)
+    target_link_libraries(eapis_shared bfvmm_debug_ring)
+    target_link_libraries(eapis_shared bfvmm_intrinsics)
+    target_link_libraries(eapis_shared bfvmm_support)
 
-if(BUILD_SHARED_LIBS)
-    target_link_libraries(eapis -Wl,--whole-archive bfvmm_main -Wl,--no-whole-archive)
-    target_link_libraries(eapis eapis_vcpu_factory)
-    target_link_libraries(eapis bfvmm_vcpu_factory)
-    target_link_libraries(eapis bfvmm_vcpu)
-    target_link_libraries(eapis bfvmm_vcpu_manager)
-    target_link_libraries(eapis eapis_exit_handler)
-    target_link_libraries(eapis bfvmm_exit_handler)
-    target_link_libraries(eapis eapis_vmcs)
-    target_link_libraries(eapis bfvmm_vmcs)
-    target_link_libraries(eapis bfvmm_vmxon)
-    target_link_libraries(eapis bfvmm_memory_manager)
-    if(CMAKE_TOOLCHAIN_FILE)
-        target_link_libraries(eapis bfvmm_support)
-    endif()
-    target_link_libraries(eapis bfvmm_serial)
-    target_link_libraries(eapis bfvmm_debug_ring)
-    target_link_libraries(eapis bfvmm_intrinsics)
+    target_link_libraries(eapis_shared c++)
+    target_link_libraries(eapis_shared c++abi)
+    target_link_libraries(eapis_shared pthread)
+    target_link_libraries(eapis_shared bfunwind)
+    target_link_libraries(eapis_shared --whole-archive -lbfcrt --no-whole-archive)
+    target_link_libraries(eapis_shared c)
+    target_link_libraries(eapis_shared bfsyscall)
+    install(TARGETS eapis_shared DESTINATION ${BUILD_SYSROOT_VMM}/bin)
 endif()
 
-if(BUILD_STATIC_LIBS)
-    target_link_libraries(eapis -Wl,--whole-archive bfvmm_main -Wl,--no-whole-archive)
-    target_link_libraries(eapis -Wl,--whole-archive eapis_vcpu_factory -Wl,--no-whole-archive)
-    target_link_libraries(eapis -Wl,--whole-archive bfvmm_vcpu -Wl,--no-whole-archive)
-    target_link_libraries(eapis -Wl,--whole-archive bfvmm_vcpu_manager -Wl,--no-whole-archive)
-    target_link_libraries(eapis -Wl,--whole-archive eapis_exit_handler -Wl,--no-whole-archive)
-    target_link_libraries(eapis bfvmm_exit_handler)
-    target_link_libraries(eapis eapis_vmcs)
-    target_link_libraries(eapis bfvmm_vmcs)
-    target_link_libraries(eapis bfvmm_vmxon)
-    target_link_libraries(eapis -Wl,--whole-archive bfvmm_memory_manager  -Wl,--no-whole-archive)
-    if(CMAKE_TOOLCHAIN_FILE)
-        target_link_libraries(eapis bfvmm_support)
-    endif()
-    target_link_libraries(eapis bfvmm_serial)
-    target_link_libraries(eapis bfvmm_debug_ring)
-    target_link_libraries(eapis bfvmm_intrinsics)
+if(BUILD_VMM_STATIC)
+    add_executable(eapis_static ${CMAKE_BINARY_DIR}/null.cpp)
+    target_link_libraries(eapis_static -Wl,--whole-archive bfvmm_main -Wl,--no-whole-archive)
+    target_link_libraries(eapis_static -Wl,--whole-archive eapis_vcpu_factory_static -Wl,--no-whole-archive)
+    target_link_libraries(eapis_static -Wl,--whole-archive bfvmm_vcpu -Wl,--no-whole-archive)
+    target_link_libraries(eapis_static -Wl,--whole-archive bfvmm_vcpu_manager -Wl,--no-whole-archive)
+    target_link_libraries(eapis_static -Wl,--whole-archive eapis_exit_handler_static -Wl,--no-whole-archive)
+    target_link_libraries(eapis_static bfvmm_exit_handler)
+    target_link_libraries(eapis_static eapis_vmcs_static)
+    target_link_libraries(eapis_static bfvmm_vmcs)
+    target_link_libraries(eapis_static bfvmm_vmxon)
+    target_link_libraries(eapis_static -Wl,--whole-archive bfvmm_memory_manager  -Wl,--no-whole-archive)
+    target_link_libraries(eapis_static -Wl,--whole-archive bfvmm_serial -Wl,--no-whole-archive)
+    target_link_libraries(eapis_static bfvmm_debug_ring)
+    target_link_libraries(eapis_static bfvmm_intrinsics)
+    target_link_libraries(eapis_static bfvmm_support)
+
+    target_link_libraries(eapis_static c++)
+    target_link_libraries(eapis_static c++abi)
+    target_link_libraries(eapis_static pthread)
+    target_link_libraries(eapis_static bfunwind)
+    target_link_libraries(eapis_static --whole-archive -lbfcrt --no-whole-archive)
+    target_link_libraries(eapis_static c)
+    target_link_libraries(eapis_static bfsyscall)
+    install(TARGETS eapis_static DESTINATION ${BUILD_SYSROOT_VMM}/bin)
 endif()
-
-# ------------------------------------------------------------------------------
-# Install
-# ------------------------------------------------------------------------------
-
-install(TARGETS eapis DESTINATION ${INSTALL_BIN_DIR})
