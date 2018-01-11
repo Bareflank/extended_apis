@@ -360,7 +360,7 @@ public:
     ///
     void clear() noexcept;
 
-private:
+protected:
 
     pointer m_epte;                 ///< A pointer to the epte in memory
 
