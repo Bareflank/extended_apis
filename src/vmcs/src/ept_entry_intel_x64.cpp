@@ -29,6 +29,22 @@ ept_entry_intel_x64::ept_entry_intel_x64(gsl::not_null<pointer> pte) noexcept :
     m_epte(pte.get())
 { }
 
+ept_entry_intel_x64::pointer
+ept_entry_intel_x64::epte() const noexcept
+{ return m_epte; }
+
+void
+ept_entry_intel_x64::set_epte(pointer val) noexcept
+{ m_epte = val; }
+
+ept_entry_intel_x64::epte_value
+ept_entry_intel_x64::epte_val() const noexcept
+{ return *m_epte; }
+
+void
+ept_entry_intel_x64::set_epte_val(epte_value val) noexcept
+{ *m_epte = val; }
+
 bool
 ept_entry_intel_x64::read_access() const noexcept
 { return is_bit_set(*m_epte, 0); }
