@@ -27,10 +27,11 @@
 #include <vector>
 #include <memory>
 
-#include <vmcs/vmcs_intel_x64.h>
+#include <hve/arch/intel_x64/vmcs/vmcs.h>
 
-#include <intrinsics/x86/intel_x64.h>
-#include <intrinsics/x86/common_x64.h>
+#include <arch/x64/misc.h>
+#include <arch/x64/msrs.h>
+#include <arch/x64/portio.h>
 
 // -----------------------------------------------------------------------------
 // Exports

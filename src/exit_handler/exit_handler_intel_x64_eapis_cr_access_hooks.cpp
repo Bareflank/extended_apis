@@ -21,10 +21,10 @@
 
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 
-#include <vmcs/vmcs_intel_x64_32bit_read_only_data_fields.h>
-#include <vmcs/vmcs_intel_x64_natural_width_read_only_data_fields.h>
-#include <vmcs/vmcs_intel_x64_natural_width_guest_state_fields.h>
-#include <intrinsics/crs_intel_x64.h>
+#include <arch/intel_x64/vmcs/32bit_read_only_data_fields.h>
+#include <arch/intel_x64/vmcs/natural_width_read_only_data_fields.h>
+#include <arch/intel_x64/vmcs/natural_width_guest_state_fields.h>
+#include <arch/intel_x64/crs.h>
 
 using namespace x64;
 using namespace intel_x64;
@@ -239,7 +239,7 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
 
         default:
         {
-            bferror << "unknown control register access" << bfendl;
+            bferror_info(0, "unknown control register access");
             break;
         }
     }

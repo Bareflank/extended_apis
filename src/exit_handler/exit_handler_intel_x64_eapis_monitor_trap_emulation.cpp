@@ -19,21 +19,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <vmcs/vmcs_intel_x64_eapis.h>
+#include <exit_handler/exit_handler_intel_x64_eapis.h>
+
+#include <arch/intel_x64/vmcs/32bit_control_fields.h>
+#include <arch/intel_x64/vmcs/32bit_read_only_data_fields.h>
+#include <arch/intel_x64/vmcs/natural_width_read_only_data_fields.h>
 
 using namespace intel_x64;
 using namespace vmcs;
 
 void
-vmcs_intel_x64_eapis::enable_vpid()
+exit_handler_intel_x64_eapis::clear_monitor_trap()
 {
-    vmcs::virtual_processor_identifier::set(m_vpid);
-    secondary_processor_based_vm_execution_controls::enable_vpid::enable();
+    primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
+    m_monitor_trap_callback = &exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback;
 }
 
 void
-vmcs_intel_x64_eapis::disable_vpid()
+exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback()
+{ throw std::logic_error("unhandled_monitor_trap_callback called!!!"); }
+
+void
+exit_handler_intel_x64_eapis::handle_exit__monitor_trap_flag()
 {
-    vmcs::virtual_processor_identifier::set(0UL);
-    secondary_processor_based_vm_execution_controls::enable_vpid::disable();
+    auto callback = m_monitor_trap_callback;
+
+    clear_monitor_trap();
+    (this->*callback)();
 }

@@ -19,36 +19,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <intrinsics/x86/intel_x64.h>
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
+#include <vmcs/vmcs_intel_x64_eapis.h>
+#include <arch/intel_x64/vmcs/32bit_control_fields.h>
+#include <arch/intel_x64/vmcs/64bit_control_fields.h>
+
+#include <vmcs/ept_entry_intel_x64.h>
 
 using namespace intel_x64;
 using namespace vmcs;
 
 void
-exit_handler_intel_x64_eapis::log_io_access(bool enable)
-{ m_io_access_log_enabled = enable; }
-
-void
-exit_handler_intel_x64_eapis::clear_io_access_log()
-{ m_io_access_log.clear(); }
-
-void
-exit_handler_intel_x64_eapis::trap_on_io_access_callback()
+vmcs_intel_x64_eapis::enable_ept()
 {
-    primary_processor_based_vm_execution_controls::use_io_bitmaps::enable();
-    this->resume();
+    secondary_processor_based_vm_execution_controls::enable_ept::enable();
+    intel_x64::vmx::invept_global();
 }
 
 void
-exit_handler_intel_x64_eapis::handle_exit__io_instruction()
+vmcs_intel_x64_eapis::disable_ept()
 {
-    register_monitor_trap(&exit_handler_intel_x64_eapis::trap_on_io_access_callback);
+    intel_x64::vmx::invept_global();
+    secondary_processor_based_vm_execution_controls::enable_ept::disable();
 
-    if (m_io_access_log_enabled) {
-        m_io_access_log[exit_qualification::io_instruction::port_number::get()]++;
-    }
+    ept_pointer::set(0UL);
+}
 
-    primary_processor_based_vm_execution_controls::use_io_bitmaps::disable();
-    this->resume();
+void
+vmcs_intel_x64_eapis::set_eptp(integer_pointer eptp)
+{
+    auto &&entry = ept_entry_intel_x64{&eptp};
+
+    ept_pointer::memory_type::set(ept_pointer::memory_type::write_back);
+    ept_pointer::page_walk_length_minus_one::set(3UL);
+    ept_pointer::phys_addr::set(entry.phys_addr());
 }

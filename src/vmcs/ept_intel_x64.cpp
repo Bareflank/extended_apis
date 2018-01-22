@@ -24,9 +24,7 @@
 #include <vmcs/ept_intel_x64.h>
 #include <memory_manager/memory_manager_x64.h>
 
-#include <intrinsics/x86/intel_x64.h>
-#include <intrinsics/x86/common_x64.h>
-
+#include <arch/x64/misc.h>
 using namespace x64;
 using namespace intel_x64;
 
@@ -34,7 +32,7 @@ ept_intel_x64::ept_intel_x64(pointer epte)
 {
     m_ept = std::make_unique<integer_pointer[]>(ept::num_entries);
 
-    ept_entry_intel_x64 entry{epte};
+    auto &&entry = ept_entry_intel_x64(epte);
     entry.clear();
     entry.set_phys_addr(g_mm->virtptr_to_physint(m_ept.get()));
     entry.set_read_access(true);
@@ -65,7 +63,6 @@ ept_intel_x64::add_page(integer_pointer gpa, integer_pointer bits, integer_point
 
         if (m_epts.empty())
             m_epts = std::vector<std::unique_ptr<ept_intel_x64>>(ept::num_entries);
-        }
 
         auto iter = bfn::find(m_epts, index);
         if (nullptr == *iter)
@@ -110,8 +107,8 @@ ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
         if (auto pt = (*iter).get())
         {
             pt->remove_page(gpa, bits - ept::pt::size);
-            if (pt->empty()) {
-
+            if (pt->empty())
+            {
                 (*iter) = nullptr;
                 entry.clear();
             }
@@ -122,36 +119,32 @@ ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
 ept_entry_intel_x64
 ept_intel_x64::gpa_to_epte(integer_pointer gpa, integer_pointer bits) const
 {
-    auto index = ept::index(gpa, bits);
+    auto &&index = ept::index(gpa, bits);
 
-    if (!m_epts.empty()) {
-
-        auto iter = bfn::cfind(m_epts, index);
-        if (auto pt = (*iter).get()) {
+    if (!m_epts.empty())
+    {
+        auto &&iter = bfn::cfind(m_epts, index);
+        if (auto pt = (*iter).get())
             return pt->gpa_to_epte(gpa, bits - ept::pt::size);
-        }
 
         throw std::runtime_error("unable to locate epte. invalid gpaess");
     }
 
-    auto view = gsl::make_span(m_ept, ept::num_entries);
+    auto &&view = gsl::make_span(m_ept, ept::num_entries);
     return ept_entry_intel_x64(&view.at(index));
 }
 
 ept_intel_x64::memory_descriptor_list
 ept_intel_x64::ept_to_mdl(memory_descriptor_list &mdl) const
 {
-    auto virt = reinterpret_cast<uintptr_t>(m_ept.get());
-    auto phys = g_mm->virtint_to_physint(virt);
-    auto type = MEMORY_TYPE_R | MEMORY_TYPE_W;
+    auto &&virt = reinterpret_cast<uintptr_t>(m_ept.get());
+    auto &&phys = g_mm->virtint_to_physint(virt);
+    auto &&type = MEMORY_TYPE_R | MEMORY_TYPE_W;
 
     mdl.push_back({phys, virt, type});
 
-    for (const auto &pt : m_epts) {
-        if (pt != nullptr) {
-            pt->ept_to_mdl(mdl);
-        }
-    }
+    for (const auto &pt : m_epts)
+        if (pt != nullptr) pt->ept_to_mdl(mdl);
 
     return mdl;
 }
@@ -159,12 +152,11 @@ ept_intel_x64::ept_to_mdl(memory_descriptor_list &mdl) const
 bool
 ept_intel_x64::empty() const noexcept
 {
-    auto size = 0ULL;
-    auto view = gsl::make_span(m_ept, ept::num_entries);
+    auto size = 0UL;
 
-    for (auto element : view) {
+    auto &&view = gsl::make_span(m_ept, ept::num_entries);
+    for (auto element : view)
         size += element != 0 ? 1U : 0U;
-    }
 
     return size == 0;
 }
@@ -172,18 +164,14 @@ ept_intel_x64::empty() const noexcept
 ept_intel_x64::size_type
 ept_intel_x64::global_size() const noexcept
 {
-    auto size = 0ULL;
-    auto view = gsl::make_span(m_ept, ept::num_entries);
+    auto size = 0UL;
 
-    for (auto element : view) {
+    auto &&view = gsl::make_span(m_ept, ept::num_entries);
+    for (auto element : view)
         size += element != 0 ? 1U : 0U;
-    }
 
-    for (const auto &pt : m_epts) {
-        if (pt != nullptr) {
-            size += pt->global_size();
-        }
-    }
+    for (const auto &pt : m_epts)
+        if (pt != nullptr) size += pt->global_size();
 
     return size;
 }
@@ -193,11 +181,8 @@ ept_intel_x64::global_capacity() const noexcept
 {
     auto size = m_epts.capacity();
 
-    for (const auto &pt : m_epts) {
-        if (pt != nullptr) {
-            size += pt->global_capacity();
-        }
-    }
+    for (const auto &pt : m_epts)
+        if (pt != nullptr) size += pt->global_capacity();
 
     return size;
 }

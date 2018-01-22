@@ -34,46 +34,54 @@ using namespace vmcs;
 void
 exit_handler_intel_x64_eapis::register_json_vmcall__rdmsr()
 {
-    m_json_commands["trap_on_rdmsr_access"] = [&](const auto & ijson, auto & ojson) {
+    m_json_commands["trap_on_rdmsr_access"] = [&](const auto & ijson, auto & ojson)
+    {
         this->handle_vmcall__trap_on_rdmsr_access(json_hex_or_dec<msr_type>(ijson, "msr"));
         this->json_success(ojson);
     };
 
-    m_json_commands["pass_through_rdmsr_access"] = [&](const auto & ijson, auto & ojson) {
+    m_json_commands["pass_through_rdmsr_access"] = [&](const auto & ijson, auto & ojson)
+    {
         this->handle_vmcall__pass_through_rdmsr_access(json_hex_or_dec<msr_type>(ijson, "msr"));
         this->json_success(ojson);
     };
 
-    m_json_commands["whitelist_rdmsr_access"] = [&](const auto & ijson, auto & ojson) {
+    m_json_commands["whitelist_rdmsr_access"] = [&](const auto & ijson, auto & ojson)
+    {
         this->handle_vmcall__whitelist_rdmsr_access(json_hex_or_dec_array<msr_type>(ijson, "msrs"));
         this->json_success(ojson);
     };
 
-    m_json_commands["blacklist_rdmsr_access"] = [&](const auto & ijson, auto & ojson) {
+    m_json_commands["blacklist_rdmsr_access"] = [&](const auto & ijson, auto & ojson)
+    {
         this->handle_vmcall__blacklist_rdmsr_access(json_hex_or_dec_array<msr_type>(ijson, "msrs"));
         this->json_success(ojson);
     };
 
-    m_json_commands["log_rdmsr_access"] = [&](const auto & ijson, auto & ojson) {
+    m_json_commands["log_rdmsr_access"] = [&](const auto & ijson, auto & ojson)
+    {
         this->handle_vmcall__log_rdmsr_access(ijson.at("enabled"));
         this->json_success(ojson);
     };
 
-    m_json_commands["clear_rdmsr_access_log"] = [&](const auto &, auto & ojson) {
+    m_json_commands["clear_rdmsr_access_log"] = [&](const auto &, auto & ojson)
+    {
         this->handle_vmcall__clear_rdmsr_access_log();
         this->json_success(ojson);
     };
 
-    m_json_commands["rdmsr_access_log"] = [&](const auto &, auto & ojson) {
+    m_json_commands["rdmsr_access_log"] = [&](const auto &, auto & ojson)
+    {
         this->handle_vmcall__rdmsr_access_log(ojson);
     };
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__rdmsr(
+exit_handler_intel_x64_eapis::handle_vmcall_registers__rdmsr(
     vmcall_registers_t &regs)
 {
-    switch (regs.r03) {
+    switch (regs.r03)
+    {
         case eapis_fun__trap_on_rdmsr_access:
             handle_vmcall__trap_on_rdmsr_access(gsl::narrow_cast<msr_type>(regs.r04));
             break;
@@ -99,114 +107,102 @@ void
 exit_handler_intel_x64_eapis::handle_vmcall__trap_on_rdmsr_access(
     msr_type msr)
 {
-    if (policy(trap_on_rdmsr_access)->verify(msr) != vmcall_verifier::allow) {
+    if (policy(trap_on_rdmsr_access)->verify(msr) != vmcall_verifier::allow)
         policy(trap_on_rdmsr_access)->deny_vmcall();
-    }
 
     m_vmcs_eapis->trap_on_rdmsr_access(msr);
-    bfdebug_nhex(1, "trap_on_rdmsr_access", msr);
+    vmcall_bfdebug_nhex(0, "trap_on_rdmsr_access", msr);
 }
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__trap_on_all_rdmsr_accesses()
 {
-    if (policy(trap_on_all_rdmsr_accesses)->verify() != vmcall_verifier::allow) {
+    if (policy(trap_on_all_rdmsr_accesses)->verify() != vmcall_verifier::allow)
         policy(trap_on_all_rdmsr_accesses)->deny_vmcall();
-    }
 
     m_vmcs_eapis->trap_on_all_rdmsr_accesses();
-    bfdebug_text(1, "trap_on_all_rdmsr_accesses", "success");
+    vmcall_bfdebug_info(0, "trap_on_all_rdmsr_accesses: success");
 }
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__pass_through_rdmsr_access(
     msr_type msr)
 {
-    if (policy(pass_through_rdmsr_access)->verify(msr) != vmcall_verifier::allow) {
+    if (policy(pass_through_rdmsr_access)->verify(msr) != vmcall_verifier::allow)
         policy(pass_through_rdmsr_access)->deny_vmcall();
-    }
 
     m_vmcs_eapis->pass_through_rdmsr_access(msr);
-    bfdebug_nhex(1, "pass_through_rdmsr_access", msr);
+    vmcall_bfdebug_nhex(0, "pass_through_rdmsr_access", msr);
 }
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_rdmsr_accesses()
 {
-    if (policy(pass_through_all_rdmsr_accesses)->verify() != vmcall_verifier::allow) {
+    if (policy(pass_through_all_rdmsr_accesses)->verify() != vmcall_verifier::allow)
         policy(pass_through_all_rdmsr_accesses)->deny_vmcall();
-    }
 
     m_vmcs_eapis->pass_through_all_rdmsr_accesses();
-    bfdebug_text(1, "pass_through_all_rdmsr_accesses", "success");
+    vmcall_bfdebug_info(0, "trap_on_all_io_accesses: success");
 }
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__whitelist_rdmsr_access(
     msr_list_type msrs)
 {
-    if (policy(whitelist_rdmsr_access)->verify(msrs) != vmcall_verifier::allow) {
+    if (policy(whitelist_rdmsr_access)->verify(msrs) != vmcall_verifier::allow)
         policy(whitelist_rdmsr_access)->deny_vmcall();
-    }
 
     m_vmcs_eapis->whitelist_rdmsr_access(msrs);
 
-    bfdebug_info(1, "whitelist_rdmsr_access");
-    for (auto msr : msrs) {
-        bfdebug_subnhex(1, "msr", msr);
-    }
+    vmcall_bfdebug_info(0, "whitelist_rdmsr_access: ");
+    for (auto msr : msrs)
+        vmcall_bfdebug_subnhex(0, nullptr, msr);
 }
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__blacklist_rdmsr_access(
     msr_list_type msrs)
 {
-    if (policy(blacklist_rdmsr_access)->verify(msrs) != vmcall_verifier::allow) {
+    if (policy(blacklist_rdmsr_access)->verify(msrs) != vmcall_verifier::allow)
         policy(blacklist_rdmsr_access)->deny_vmcall();
-    }
 
     m_vmcs_eapis->blacklist_rdmsr_access(msrs);
 
-    bfdebug_info(1, "blacklist_rdmsr_access");
-    for (auto msr : msrs) {
-        bfdebug_subnhex(1, "msr", msr);
-    }
+    vmcall_bfdebug_info(0, "blacklist_rdmsr_access: ");
+    for (auto msr : msrs)
+        vmcall_bfdebug_subnhex(0, nullptr, msr);
 }
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__log_rdmsr_access(
     bool enabled)
 {
-    if (policy(log_rdmsr_access)->verify(enabled) != vmcall_verifier::allow) {
+    if (policy(log_rdmsr_access)->verify(enabled) != vmcall_verifier::allow)
         policy(log_rdmsr_access)->deny_vmcall();
-    }
 
     log_rdmsr_access(enabled);
-    bfdebug_bool(1, "log_rdmsr_access", enabled);
+    vmcall_bfdebug_bool(0, "log_rdmsr_access", enabled);
 }
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__clear_rdmsr_access_log()
 {
-    if (policy(clear_rdmsr_access_log)->verify() != vmcall_verifier::allow) {
+    if (policy(clear_rdmsr_access_log)->verify() != vmcall_verifier::allow)
         policy(clear_rdmsr_access_log)->deny_vmcall();
-    }
 
     clear_rdmsr_access_log();
-    bfdebug_text(1, "clear_rdmsr_access_log", "success");
+    vmcall_bfdebug_info(0, "clear_rdmsr_access_log: success");
 }
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__rdmsr_access_log(
     json &ojson)
 {
-    if (policy(rdmsr_access_log)->verify() != vmcall_verifier::allow) {
+    if (policy(rdmsr_access_log)->verify() != vmcall_verifier::allow)
         policy(rdmsr_access_log)->deny_vmcall();
-    }
 
-    for (auto pair : m_rdmsr_access_log) {
+    for (auto pair : m_rdmsr_access_log)
         ojson[bfn::to_string(pair.first, 16)] = pair.second;
-    }
 
-    bfdebug_text(1, "dump rdmsr_access_log", "success");
+    vmcall_bfdebug_info(0, "dump rdmsr_access_log: success");
 }

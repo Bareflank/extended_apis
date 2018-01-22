@@ -29,16 +29,19 @@ using namespace intel_x64;
 void
 exit_handler_intel_x64_eapis::register_json_vmcall__verifiers()
 {
-    m_json_commands["clear_denials"] = [&](const auto &, auto & ojson) {
+    m_json_commands["clear_denials"] = [&](const auto &, auto & ojson)
+    {
         this->handle_vmcall__clear_denials();
         this->json_success(ojson);
     };
 
-    m_json_commands["dump_policy"] = [&](const auto &, auto & ojson) {
+    m_json_commands["dump_policy"] = [&](const auto &, auto & ojson)
+    {
         this->handle_vmcall__dump_policy(ojson);
     };
 
-    m_json_commands["dump_denials"] = [&](const auto &, auto & ojson) {
+    m_json_commands["dump_denials"] = [&](const auto &, auto & ojson)
+    {
         this->handle_vmcall__dump_denials(ojson);
     };
 }
@@ -50,38 +53,33 @@ std::string get_typename(const T &t)
 void
 exit_handler_intel_x64_eapis::handle_vmcall__clear_denials()
 {
-    if (policy(clear_denials)->verify() != vmcall_verifier::allow) {
+    if (policy(clear_denials)->verify() != vmcall_verifier::allow)
         policy(clear_denials)->deny_vmcall();
-    }
 
     this->clear_denials();
-    bfdebug_text(1, "clear_denials", "success");
+    vmcall_bfdebug_info(0, "clear_denials: success");
 }
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__dump_policy(json &ojson)
 {
-    if (policy(dump_policy)->verify() != vmcall_verifier::allow) {
+    if (policy(dump_policy)->verify() != vmcall_verifier::allow)
         policy(dump_policy)->deny_vmcall();
-    }
 
-    for (const auto &pair : m_verifiers) {
+    for (const auto &pair : m_verifiers)
         ojson[get_typename(*pair.second)] = pair.second->to_string();
-    }
 
-    bfdebug_text(1, "dump_policy", "success");
+    vmcall_bfdebug_info(0, "dump_policy: success");
 }
 
 void
 exit_handler_intel_x64_eapis::handle_vmcall__dump_denials(json &ojson)
 {
-    if (policy(dump_denials)->verify() != vmcall_verifier::allow) {
+    if (policy(dump_denials)->verify() != vmcall_verifier::allow)
         policy(dump_denials)->deny_vmcall();
-    }
 
-    for (const auto &str : m_denials) {
+    for (const auto &str : m_denials)
         ojson.push_back(str);
-    }
 
-    bfdebug_text(1, "dump_denials", "success");
+    vmcall_bfdebug_info(0, "dump_denials: success");
 }

@@ -19,36 +19,40 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <bfstring.h>
+
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_vmcall_interface.h>
 
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_vpid_verifiers.h>
+#include <exit_handler/exit_handler_intel_x64_eapis_msr_verifiers.h>
 
 using namespace x64;
 using namespace intel_x64;
 using namespace vmcs;
 
 void
-exit_handler_intel_x64_eapis::register_json_vmcall__vpid()
+exit_handler_intel_x64_eapis::register_json_vmcall__msr()
 {
-    m_json_commands["enable_vpid"] = [&](const auto & ijson, auto & ojson) {
-        this->handle_vmcall__enable_vpid(ijson.at("enabled"));
+    m_json_commands["enable_msr_bitmap"] = [&](const auto & ijson, auto & ojson)
+    {
+        this->handle_vmcall__enable_msr_bitmap(ijson.at("enabled"));
         this->json_success(ojson);
     };
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__vpid(
+exit_handler_intel_x64_eapis::handle_vmcall_registers__msr(
     vmcall_registers_t &regs)
 {
-    switch (regs.r03) {
-        case eapis_fun__enable_vpid:
-            handle_vmcall__enable_vpid(true);
+    switch (regs.r03)
+    {
+        case eapis_fun__enable_msr_bitmap:
+            handle_vmcall__enable_msr_bitmap(true);
             break;
 
-        case eapis_fun__disable_vpid:
-            handle_vmcall__enable_vpid(false);
+        case eapis_fun__disable_msr_bitmap:
+            handle_vmcall__enable_msr_bitmap(false);
             break;
 
         default:
@@ -57,18 +61,20 @@ exit_handler_intel_x64_eapis::handle_vmcall__vpid(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__enable_vpid(bool enabled)
+exit_handler_intel_x64_eapis::handle_vmcall__enable_msr_bitmap(
+    bool enabled)
 {
-    if (policy(enable_vpid)->verify(enabled) != vmcall_verifier::allow) {
-        policy(enable_vpid)->deny_vmcall();
-    }
+    if (policy(enable_msr_bitmap)->verify(enabled) != vmcall_verifier::allow)
+        policy(enable_msr_bitmap)->deny_vmcall();
 
-    if (enabled) {
-        m_vmcs_eapis->enable_vpid();
-        bfdebug_text(1, "enable_vpid", "success");
+    if (enabled)
+    {
+        m_vmcs_eapis->enable_msr_bitmap();
+        vmcall_bfdebug_info(0, "enable_msr_bitmap: success");
     }
-    else {
-        m_vmcs_eapis->disable_vpid();
-        bfdebug_text(1, "disable_vpid", "success");
+    else
+    {
+        m_vmcs_eapis->disable_msr_bitmap();
+        vmcall_bfdebug_info(0, "disable_msr_bitmap: success");
     }
 }
