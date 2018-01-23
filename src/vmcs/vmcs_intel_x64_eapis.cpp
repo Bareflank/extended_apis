@@ -31,7 +31,6 @@ void
 vmcs_intel_x64_eapis::write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
                                    gsl::not_null<vmcs_intel_x64_state *> guest_state)
 {
-    bfdebug_info(0, "hi from vmcs eapis");
     this->disable_ept();
     this->disable_vpid();
     this->disable_io_bitmaps();

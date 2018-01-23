@@ -33,7 +33,6 @@ std::unique_ptr<vcpu>
 vcpu_factory::make_vcpu(vcpuid::type vcpuid, user_data *data)
 {
     bfignored(data);
-    bfdebug_info(0, "hi from vcpu_factory eapis");
 
     auto vmcs = std::make_unique<vmcs_intel_x64_eapis>();
     auto exit_handler = std::make_unique<exit_handler_intel_x64_eapis>();
