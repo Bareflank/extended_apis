@@ -16,28 +16,21 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-list(APPEND SOURCES
-    vcpu_factory_intel_x64.cpp
+cmake_minimum_required(VERSION 3.6)
+project(eapis_main C CXX)
+
+include(${SOURCE_CMAKE_DIR}/project.cmake)
+init_project(
+    INCLUDES ../../include
 )
 
-set(ARG_LIBRARIES "")
-if(BUILD_SHARED_LIBS)
-    list(APPEND ARG_LIBRARIES
-        ${CMAKE_INSTALL_PREFIX}/lib/libeapis_exit_handler_shared.so
-        ${CMAKE_INSTALL_PREFIX}/lib/libeapis_vmcall_policy_shared.so
-        ${CMAKE_INSTALL_PREFIX}/lib/libeapis_vmcs_shared.so
-    )
-endif()
+list(APPEND LIBRARIES
+    eapis_exit_handler
+    eapis_vmcall_policy
+    eapis_vmcs
+)
 
-if(BUILD_STATIC_LIBS)
-    list(APPEND ARG_LIBRARIES
-        ${CMAKE_INSTALL_PREFIX}/lib/libeapis_exit_handler_shared.a
-        ${CMAKE_INSTALL_PREFIX}/lib/libeapis_vmcall_policy_shared.a
-        ${CMAKE_INSTALL_PREFIX}/lib/libeapis_vmcs_shared.a
-    )
-endif()
-
-add_vmm_executable(eapis_vcpu_factory
-    SOURCES ${SOURCES}
-    LIBRARIES ${ARG_LIBRARIES}
+add_vmm_executable(eapis_vmm
+    SOURCES vcpu_factory_intel_x64.cpp
+    LIBRARIES ${LIBRARIES}
 )

@@ -21,3 +21,9 @@ add_subproject(
     DEPENDS bfvmm bfintrinsics
     SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src
 )
+
+add_subproject(
+    eapis_main vmm
+    DEPENDS eapis
+    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/vcpu_factory
+)

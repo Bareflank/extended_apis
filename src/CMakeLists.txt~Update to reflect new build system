@@ -20,9 +20,12 @@ cmake_minimum_required(VERSION 3.6)
 project(eapis C CXX)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project()
+init_project(
+    INCLUDES ../include
+)
 
 add_subdirectory(exit_handler)
-add_subdirectory(vcpu_factory)
 add_subdirectory(vmcall_policy)
 add_subdirectory(vmcs)
+
+install(DIRECTORY ../include DESTINATION include FILES_MATCHING PATTERN "*.h")
