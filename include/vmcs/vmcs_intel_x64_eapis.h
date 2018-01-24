@@ -796,6 +796,15 @@ protected:
 
 protected:
 
+    /// Set the VMCS fields prior to launching
+    ///
+    /// Sets the VMCS fields. This function will be called
+    /// right before the launch occurs, and can be used by extensions to
+    /// make mods to the VMCS before the launch.
+    ///
+    /// @param host_state pointer to host state
+    /// @param guest_state pointer to guest state
+    ///
     virtual void write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
                       gsl::not_null<vmcs_intel_x64_state *> guest_state);
 
