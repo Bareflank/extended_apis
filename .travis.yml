@@ -123,7 +123,7 @@ matrix:
     env:
       - TEST="Format"
     script:
-      - cmake -DCONFIG=travis_format ..
+      - cmake -DCONFIG=travis_format -DEXTENSIONS=../../extension.cmake ..
       - make astyle_x86_64-userspace-elf
       - make format
       - |
@@ -152,7 +152,7 @@ matrix:
     env:
       - TEST="Clang Tidy"
     script:
-      - cmake -DCONFIG=travis_tidy ..
+      - cmake -DCONFIG=travis_tidy -DEXTENSIONS=../../extension.cmake ..
       - make -j3
       - make tidy
 
@@ -173,7 +173,7 @@ matrix:
     env:
       - TEST="Codecov"
     script:
-      - cmake -DCONFIG=travis_codecov ..
+      - cmake -DCONFIG=travis_codecov -DEXTENSIONS=../../extension.cmake ..
       - make -j3
       - make test
       - rm -Rf depends
@@ -219,7 +219,7 @@ matrix:
     env:
       - TEST="Google Undefined Sanitizer"
     script:
-      - cmake -DCONFIG=travis_usan ..
+      - cmake -DCONFIG=travis_usan -DEXTENSIONS=../../extension.cmake ..
       - make -j3
       - make test
 
@@ -240,7 +240,7 @@ matrix:
     env:
       - TEST="Clang 3.8 (Static Libraries)"
     script:
-      - cmake -DCONFIG=travis_static ..
+      - cmake -DCONFIG=travis_static -DEXTENSIONS=../../extension.cmake ..
       - make -j3
       - make test
 
@@ -261,7 +261,7 @@ matrix:
     env:
       - TEST="Clang 3.9 (Static Libraries)"
     script:
-      - cmake -DCONFIG=travis_static ..
+      - cmake -DCONFIG=travis_static -DEXTENSIONS=../../extension.cmake ..
       - make -j3
       - make test
 
@@ -282,7 +282,7 @@ matrix:
     env:
       - TEST="Clang 4.0 (Static Libraries)"
     script:
-      - cmake -DCONFIG=travis_static ..
+      - cmake -DCONFIG=travis_static -DEXTENSIONS=../../extension.cmake ..
       - make -j3
       - make test
 
@@ -303,7 +303,7 @@ matrix:
     env:
       - TEST="Clang 3.8 (Shared Libraries)"
     script:
-      - cmake -DCONFIG=travis_shared ..
+      - cmake -DCONFIG=travis_shared -DEXTENSIONS=../../extension.cmake ..
       - make -j3
       - make test
 
@@ -324,7 +324,7 @@ matrix:
     env:
       - TEST="Clang 3.9 (Shared Libraries)"
     script:
-      - cmake -DCONFIG=travis_shared ..
+      - cmake -DCONFIG=travis_shared -DEXTENSIONS=../../extension.cmake ..
       - make -j3
       - make test
 
@@ -345,6 +345,6 @@ matrix:
     env:
       - TEST="Clang 4.0 (Shared Libraries)"
     script:
-      - cmake -DCONFIG=travis_shared ..
+      - cmake -DCONFIG=travis_shared -DEXTENSIONS=../../extension.cmake ..
       - make -j3
       - make test
