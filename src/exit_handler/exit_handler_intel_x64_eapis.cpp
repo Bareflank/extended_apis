@@ -95,23 +95,23 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers(vmcall_registers_t &regs)
     switch (regs.r02)
     {
         case eapis_cat__io_instruction:
-            handle_vmcall_registers__io_instruction(regs);
+            handle_vmcall__io_instruction(regs);
             break;
 
         case eapis_cat__vpid:
-            handle_vmcall_registers__vpid(regs);
+            handle_vmcall__vpid(regs);
             break;
 
         case eapis_cat__msr:
-            handle_vmcall_registers__msr(regs);
+            handle_vmcall__msr(regs);
             break;
 
         case eapis_cat__rdmsr:
-            handle_vmcall_registers__rdmsr(regs);
+            handle_vmcall__rdmsr(regs);
             break;
 
         case eapis_cat__wrmsr:
-            handle_vmcall_registers__wrmsr(regs);
+            handle_vmcall__wrmsr(regs);
             break;
 
         default:

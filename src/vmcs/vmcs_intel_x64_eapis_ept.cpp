@@ -29,10 +29,15 @@ using namespace intel_x64;
 using namespace vmcs;
 
 void
-vmcs_intel_x64_eapis::enable_ept()
+vmcs_intel_x64_eapis::enable_ept(eptp_type eptp)
 {
+    ept_entry_intel_x64 entry{&eptp};
+
+    ept_pointer::phys_addr::set(entry.phys_addr());
+    ept_pointer::memory_type::set(ept_pointer::memory_type::write_back);
+    ept_pointer::page_walk_length_minus_one::set(3ULL);
+
     secondary_processor_based_vm_execution_controls::enable_ept::enable();
-    intel_x64::vmx::invept_global();
 }
 
 void

@@ -83,7 +83,7 @@ exit_handler_intel_x64_eapis::register_json_vmcall__io_instruction()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall_registers__io_instruction(
+exit_handler_intel_x64_eapis::handle_vmcall__io_instruction(
     vmcall_registers_t &regs)
 {
     switch (regs.r03)

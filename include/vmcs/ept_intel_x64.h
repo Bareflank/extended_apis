@@ -68,6 +68,7 @@ public:
     using pointer = uintptr_t *;                                    ///< Pointer type
     using integer_pointer = uintptr_t;                              ///< Integer pointer type
     using size_type = std::size_t;                                  ///< Size type
+    using index_type = uint64_t;                                    ///< Index type
     using memory_descriptor_list = std::vector<memory_descriptor>;  ///< Memory descriptor list type
 
     /// Constructor

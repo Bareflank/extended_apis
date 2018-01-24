@@ -20,7 +20,7 @@ list(APPEND SOURCES
     exit_handler_intel_x64_eapis_cpuid_emulation.cpp
     exit_handler_intel_x64_eapis_cpuid_vmcall.cpp
     exit_handler_intel_x64_eapis_cr_access_hooks.cpp
-    exit_handler_intel_x64_eapis_cr_emulation.cpp
+    #exit_handler_intel_x64_eapis_cr_emulation.cpp
     exit_handler_intel_x64_eapis_event_emulation.cpp
     exit_handler_intel_x64_eapis_event_vmcall.cpp
     exit_handler_intel_x64_eapis_io_instruction_emulation.cpp

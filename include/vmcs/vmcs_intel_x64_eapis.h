@@ -658,96 +658,6 @@ public:
     ///
     void enable_cr8_store_hook();
 
-    /// Disable CR0 Load Hook
-    ///
-    /// Disables mov to CR0 hooking, which will cause the exit
-    /// handler to pass through these instructions to the guest
-    ///
-    /// Example:
-    /// @code
-    /// this->disable_cr0_load_hook();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable_cr0_load_hook();
-
-    /// Disable CR3 Load Hook
-    ///
-    /// Disables mov to CR3 hooking, which will cause the exit
-    /// handler to pass through these instructions to the guest
-    ///
-    /// Example:
-    /// @code
-    /// this->disable_cr3_load_hook();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable_cr3_load_hook();
-
-    /// Disable CR3 Store Hook
-    ///
-    /// Disables mov from CR3 hooking, which will cause the exit
-    /// handler to pass through these instructions to the guest
-    ///
-    /// Example:
-    /// @code
-    /// this->disable_cr3_store_hook();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable_cr3_store_hook();
-
-    /// Disable CR4 Load Hook
-    ///
-    /// Disables mov to CR4 hooking, which will cause the exit
-    /// handler to pass through these instructions to the guest
-    ///
-    /// Example:
-    /// @code
-    /// this->disable_cr4_load_hook();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable_cr4_load_hook();
-
-    /// Disable CR8 Load Hook
-    ///
-    /// Disables mov to CR8 hooking, which will cause the exit
-    /// handler to pass through these instructions to the guest
-    ///
-    /// Example:
-    /// @code
-    /// this->disable_cr8_load_hook();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable_cr8_load_hook();
-
-    /// Disable CR8 Store Hook
-    ///
-    /// Disables mov from CR8 hooking, which will cause the exit
-    /// handler to pass through these instructions to the guest
-    ///
-    /// Example:
-    /// @code
-    /// this->disable_cr8_store_hook();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable_cr8_store_hook();
-
     /// Enable Event Management
     ///
     /// Enables event management. Turning this on will provide a means to
@@ -794,13 +704,6 @@ protected:
 
 protected:
 
-    /// @cond
-
-    void write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
-                      gsl::not_null<vmcs_intel_x64_state *> guest_state) override;
-
-    /// @endcond
-
     /// Disable CR0 Load Hook
     ///
     /// Disables mov to CR0 hooking, which will cause the exit
@@ -893,20 +796,8 @@ protected:
 
 protected:
 
-    void write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
-                      gsl::not_null<vmcs_intel_x64_state *> guest_state) override;
-
-protected:
-
-    intel_x64::vmcs::value_type m_vpid;
-
-    std::unique_ptr<uint8_t[]> m_io_bitmapa;
-    std::unique_ptr<uint8_t[]> m_io_bitmapb;
-    gsl::span<uint8_t> m_io_bitmapa_view;
-    gsl::span<uint8_t> m_io_bitmapb_view;
-
-    std::unique_ptr<uint8_t[]> m_msr_bitmap;
-    gsl::span<uint8_t> m_msr_bitmap_view;
+    virtual void write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
+                      gsl::not_null<vmcs_intel_x64_state *> guest_state);
 
 public:
 

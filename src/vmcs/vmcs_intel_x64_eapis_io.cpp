@@ -21,7 +21,7 @@
 
 #include <gsl/gsl>
 
-#include <bitmanip_ext.h>
+#include <bitmanip_eapis.h>
 #include <memory_manager/memory_manager_x64.h>
 
 #include <vmcs/vmcs_intel_x64_eapis.h>

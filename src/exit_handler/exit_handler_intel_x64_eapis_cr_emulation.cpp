@@ -19,7 +19,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <intrinsics/x86/intel_x64.h>
+#include <arch/intel_x64/crs.h>
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 
 using namespace x64;

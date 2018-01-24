@@ -27,7 +27,7 @@ list(APPEND SOURCES
     vmcs_intel_x64_eapis_event.cpp
     vmcs_intel_x64_eapis_io.cpp
     vmcs_intel_x64_eapis_isr_support_mock.cpp
-    vmcs_intel_x64_eapis_isr_support.cpp
+    vmcs_intel_x64_eapis_isr_support.asm
     vmcs_intel_x64_eapis_isr.cpp
     vmcs_intel_x64_eapis_msr.cpp
     vmcs_intel_x64_eapis_vpid.cpp

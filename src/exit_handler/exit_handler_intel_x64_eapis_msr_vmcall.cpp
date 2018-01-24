@@ -34,19 +34,17 @@ using namespace vmcs;
 void
 exit_handler_intel_x64_eapis::register_json_vmcall__msr()
 {
-    m_json_commands["enable_msr_bitmap"] = [&](const auto & ijson, auto & ojson)
-    {
+    m_json_commands["enable_msr_bitmap"] = [&](const auto & ijson, auto & ojson) {
         this->handle_vmcall__enable_msr_bitmap(ijson.at("enabled"));
         this->json_success(ojson);
     };
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall_registers__msr(
+exit_handler_intel_x64_eapis::handle_vmcall__msr(
     vmcall_registers_t &regs)
 {
-    switch (regs.r03)
-    {
+    switch (regs.r03) {
         case eapis_fun__enable_msr_bitmap:
             handle_vmcall__enable_msr_bitmap(true);
             break;
@@ -64,17 +62,16 @@ void
 exit_handler_intel_x64_eapis::handle_vmcall__enable_msr_bitmap(
     bool enabled)
 {
-    if (policy(enable_msr_bitmap)->verify(enabled) != vmcall_verifier::allow)
+    if (policy(enable_msr_bitmap)->verify(enabled) != vmcall_verifier::allow) {
         policy(enable_msr_bitmap)->deny_vmcall();
-
-    if (enabled)
-    {
-        m_vmcs_eapis->enable_msr_bitmap();
-        vmcall_bfdebug_info(0, "enable_msr_bitmap: success");
     }
-    else
-    {
+
+    if (enabled) {
+        m_vmcs_eapis->enable_msr_bitmap();
+        bfdebug_text(1, "enable_msr_bitmap", "success");
+    }
+    else {
         m_vmcs_eapis->disable_msr_bitmap();
-        vmcall_bfdebug_info(0, "disable_msr_bitmap: success");
+        bfdebug_text(1, "disable_msr_bitmap", "success");
     }
 }
