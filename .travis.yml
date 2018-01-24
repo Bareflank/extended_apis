@@ -5,9 +5,21 @@ language: cpp
 dist: trusty
 
 #
+# Cache Dependencies
+#
+cache:
+  directories:
+  - ../cache
+
+#
 # Build Dependencies
 #
 before_script:
+
+  #
+  # Cache
+  #
+  - mkdir -p ../cache
 
   #
   # Build Folder
@@ -109,10 +121,10 @@ matrix:
           - clang-4.0
           - nasm
     env:
-      - TEST="Astyle Format"
+      - TEST="Format"
     script:
-      - cmake -DENABLE_ASTYLE=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
-      - make -j3
+      - cmake -DCONFIG=travis_format ..
+      - make astyle_x86_64-userspace-elf
       - make format
       - |
         if [[ -n $(git diff) ]]; then
@@ -140,9 +152,8 @@ matrix:
     env:
       - TEST="Clang Tidy"
     script:
-      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_TIDY=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DCONFIG=travis_tidy ..
       - make -j3
-      - make test
       - make tidy
 
   #
@@ -162,10 +173,11 @@ matrix:
     env:
       - TEST="Codecov"
     script:
-      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_COVERAGE=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DCONFIG=travis_codecov ..
       - make -j3
       - make test
-      - rm -Rf external
+      - rm -Rf depends
+      - rm -Rf depends
       - cd ../../
       - bash <(curl -s https://codecov.io/bash)
 
@@ -186,7 +198,7 @@ matrix:
     env:
       - TEST="Google Address Sanitizer"
     script:
-      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_DYNAMIC_ASAN=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DCONFIG=travis_asan ..
       - make -j3
       - make test
 
@@ -207,7 +219,7 @@ matrix:
     env:
       - TEST="Google Undefined Sanitizer"
     script:
-      - cmake -DBUILD_SHARED_LIBS=ON -DENABLE_UNITTESTING=ON -DENABLE_DYNAMIC_USAN=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DCONFIG=travis_usan ..
       - make -j3
       - make test
 
@@ -228,7 +240,7 @@ matrix:
     env:
       - TEST="Clang 3.8 (Static Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DCONFIG=travis_static ..
       - make -j3
       - make test
 
@@ -249,7 +261,7 @@ matrix:
     env:
       - TEST="Clang 3.9 (Static Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DCONFIG=travis_static ..
       - make -j3
       - make test
 
@@ -270,7 +282,7 @@ matrix:
     env:
       - TEST="Clang 4.0 (Static Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DCONFIG=travis_static ..
       - make -j3
       - make test
 
@@ -291,7 +303,7 @@ matrix:
     env:
       - TEST="Clang 3.8 (Shared Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DCONFIG=travis_shared ..
       - make -j3
       - make test
 
@@ -312,7 +324,7 @@ matrix:
     env:
       - TEST="Clang 3.9 (Shared Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DCONFIG=travis_shared ..
       - make -j3
       - make test
 
@@ -333,48 +345,6 @@ matrix:
     env:
       - TEST="Clang 4.0 (Shared Libraries)"
     script:
-      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
-      - make -j3
-      - make test
-
-  #
-  # Clang 4.0 (No Tests / Static Libraries)
-  #
-  - os: linux
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-4.0
-        packages:
-          - gcc-6
-          - g++-6
-          - clang-4.0
-          - nasm
-    env:
-      - TEST="Clang 4.0  (No Tests / Static Libraries)"
-    script:
-      - cmake -DENABLE_UNITTESTING=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
-      - make -j3
-      - make test
-
-  #
-  # Clang 4.0 (No Tests / Shared Libraries)
-  #
-  - os: linux
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-4.0
-        packages:
-          - gcc-6
-          - g++-6
-          - clang-4.0
-          - nasm
-    env:
-      - TEST="Clang 4.0 (No Tests / Shared Libraries)"
-    script:
-      - cmake -DENABLE_UNITTESTING=ON -DBUILD_SHARED_LIBS=ON -DEXTENDED_APIS_PATH=$TRAVIS_BUILD_DIR ..
+      - cmake -DCONFIG=travis_shared ..
       - make -j3
       - make test
