@@ -17,15 +17,22 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 list(APPEND SOURCES
+    apic_intel_x64.cpp
     ept_entry_intel_x64.cpp
     ept_intel_x64.cpp
     root_ept_intel_x64.cpp
     vmcs_intel_x64_eapis_cr_access_hooks.cpp
+    vmcs_intel_x64_eapis_cr.cpp
     vmcs_intel_x64_eapis_ept.cpp
+    vmcs_intel_x64_eapis_event.cpp
     vmcs_intel_x64_eapis_io.cpp
+    vmcs_intel_x64_eapis_isr_support_mock.cpp
+    vmcs_intel_x64_eapis_isr_support.cpp
+    vmcs_intel_x64_eapis_isr.cpp
     vmcs_intel_x64_eapis_msr.cpp
     vmcs_intel_x64_eapis_vpid.cpp
     vmcs_intel_x64_eapis.cpp
+    vmcs_intel_x64_vmm_state_eapis.cpp
 )
 
 add_shared_library(

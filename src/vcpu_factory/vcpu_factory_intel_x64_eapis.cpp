@@ -19,23 +19,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <bfdelegate.h>
 #include <bftypes.h>
 
 #include <vcpu/vcpu_factory.h>
-#include <vcpu/vcpu_intel_x64.h>
+#include <vcpu/arch/intel_x64/vcpu.h>
 
 #include <vmcs/vmcs_intel_x64_eapis.h>
 #include <vmcs/vmcs_intel_x64_vmm_state_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
+
+using vmcs_eapis = vmcs_intel_x64_eapis;
+using vmm_state_eapis = vmcs_intel_x64_vmm_state_eapis;
+using exit_handler_eapis = exit_handler_intel_x64_eapis;
 
 std::unique_ptr<vcpu>
 vcpu_factory::make_vcpu(vcpuid::type vcpuid, user_data *data)
 {
     bfignored(data);
 
-    auto vmcs = std::make_unique<vmcs_intel_x64_eapis>();
-    auto vmm_state = std::make_unique<vmcs_intel_x64_vmm_state_eapis>();
-    auto exit_handler = std::make_unique<exit_handler_intel_x64_eapis>();
+    auto vmcs = std::make_unique<vmcs_eapis>();
+    auto vmm_state = std::make_unique<vmm_state_eapis>();
+    auto exit_handler = std::make_unique<exit_handler_eapis>();
 
     return std::make_unique<vcpu_intel_x64>(
                vcpuid,
