@@ -28,14 +28,15 @@
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 
 using vmcs_eapis = vmcs_intel_x64_eapis;
+using exit_handler_eapis = exit_handler_intel_x64_eapis;
 
 std::unique_ptr<vcpu>
 vcpu_factory::make_vcpu(vcpuid::type vcpuid, user_data *data)
 {
     bfignored(data);
 
-    auto vmcs = std::make_unique<vmcs_intel_x64_eapis>();
-    auto exit_handler = std::make_unique<exit_handler_intel_x64_eapis>();
+    auto vmcs = std::make_unique<vmcs_eapis>();
+    auto exit_handler = std::make_unique<exit_handler_eapis>();
 
     auto d = vmcs_eapis::pre_launch_delegate_t::create<vmcs_eapis, &vmcs_eapis::write_fields>(*vmcs);
     vmcs->set_pre_launch_delegate(d);
