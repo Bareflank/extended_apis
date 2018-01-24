@@ -22,7 +22,7 @@
 #ifndef VMCS_INTEL_X64_VMM_STATE_EAPIS_H
 #define VMCS_INTEL_X64_VMM_STATE_EAPIS_H
 
-#include <vmcs/vmcs_intel_x64_vmm_state.h>
+#include <hve/arch/intel_x64/vmcs/vmcs_state_vmm.h>
 
 // -----------------------------------------------------------------------------
 // Exports

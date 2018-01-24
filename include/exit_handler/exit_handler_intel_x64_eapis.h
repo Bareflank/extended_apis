@@ -27,13 +27,13 @@
 #include <vector>
 #include <functional>
 
-#include <vmcs/vmcs_intel_x64.h>
+#include <hve/arch/intel_x64/vmcs/vmcs.h>
 #include <vmcs/vmcs_intel_x64_eapis.h>
 
-#include <exit_handler/exit_handler_intel_x64.h>
+#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
 
-#include <intrinsics/x86/intel_x64.h>
+#include <arch/x64/portio.h>
 #include <memory_manager/object_allocator.h>
 
 // -----------------------------------------------------------------------------
@@ -231,6 +231,7 @@ protected:
     /// @cond
 
     void resume() override;
+    void advance_and_resume() override;
     void promote(gsl::not_null<const void *> guest_gdt) override;
 
     /// @endcond

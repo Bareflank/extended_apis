@@ -19,12 +19,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfgsl.h>
+#include <gsl/gsl>
 
 #include <bitmanip_eapis.h>
 #include <memory_manager/memory_manager_x64.h>
 
 #include <vmcs/vmcs_intel_x64_eapis.h>
+#include <arch/intel_x64/vmcs/32bit_control_fields.h>
+#include <arch/intel_x64/vmcs/64bit_control_fields.h>
 
 using namespace intel_x64;
 using namespace vmcs;
@@ -77,17 +79,18 @@ vmcs_intel_x64_eapis::disable_msr_bitmap()
 void
 vmcs_intel_x64_eapis::trap_on_rdmsr_access(msr_type msr)
 {
-    if (!m_msr_bitmap) {
+    if (!m_msr_bitmap)
         throw std::runtime_error("msr bitmap not enabled");
-    }
 
-    if (msr <= 0x00001FFFUL) {
-        auto addr = (msr - 0x00000000UL) + 0;
+    if (msr <= 0x00001FFFUL)
+    {
+        auto &&addr = (msr - 0x00000000UL) + 0;
         return set_bit_from_span(m_msr_bitmap_view, addr);
     }
 
-    if (msr >= 0xC0000000UL && msr <= 0xC0001FFFUL) {
-        auto addr = (msr - 0xC0000000UL) + 0x2000;
+    if (msr >= 0xC0000000UL && msr <= 0xC0001FFFUL)
+    {
+        auto &&addr = (msr - 0xC0000000UL) + 0x2000;
         return set_bit_from_span(m_msr_bitmap_view, addr);
     }
 
@@ -97,17 +100,18 @@ vmcs_intel_x64_eapis::trap_on_rdmsr_access(msr_type msr)
 void
 vmcs_intel_x64_eapis::trap_on_wrmsr_access(msr_type msr)
 {
-    if (!m_msr_bitmap) {
+    if (!m_msr_bitmap)
         throw std::runtime_error("msr bitmap not enabled");
-    }
 
-    if (msr <= 0x00001FFFUL) {
-        auto addr = (msr - 0x00000000UL) + 0x4000;
+    if (msr <= 0x00001FFFUL)
+    {
+        auto &&addr = (msr - 0x00000000UL) + 0x4000;
         return set_bit_from_span(m_msr_bitmap_view, addr);
     }
 
-    if (msr >= 0xC0000000UL && msr <= 0xC0001FFFUL) {
-        auto addr = (msr - 0xC0000000UL) + 0x6000;
+    if (msr >= 0xC0000000UL && msr <= 0xC0001FFFUL)
+    {
+        auto &&addr = (msr - 0xC0000000UL) + 0x6000;
         return set_bit_from_span(m_msr_bitmap_view, addr);
     }
 
@@ -117,37 +121,36 @@ vmcs_intel_x64_eapis::trap_on_wrmsr_access(msr_type msr)
 void
 vmcs_intel_x64_eapis::trap_on_all_rdmsr_accesses()
 {
-    if (!m_msr_bitmap) {
+    if (!m_msr_bitmap)
         throw std::runtime_error("msr bitmap not enabled");
-    }
 
-    memset(&m_msr_bitmap_view[0], 0xFF, x64::page_size / 2);
+    __builtin_memset(&m_msr_bitmap_view[0], 0xFF, x64::page_size / 2);
 }
 
 void
 vmcs_intel_x64_eapis::trap_on_all_wrmsr_accesses()
 {
-    if (!m_msr_bitmap) {
+    if (!m_msr_bitmap)
         throw std::runtime_error("msr bitmap not enabled");
-    }
 
-    memset(&m_msr_bitmap_view[2048], 0xFF, x64::page_size / 2);
+    __builtin_memset(&m_msr_bitmap_view[2048], 0xFF, x64::page_size / 2);
 }
 
 void
 vmcs_intel_x64_eapis::pass_through_rdmsr_access(msr_type msr)
 {
-    if (!m_msr_bitmap) {
+    if (!m_msr_bitmap)
         throw std::runtime_error("msr bitmap not enabled");
-    }
 
-    if (msr <= 0x00001FFFUL) {
-        auto addr = (msr - 0x00000000) + 0;
+    if (msr <= 0x00001FFFUL)
+    {
+        auto &&addr = (msr - 0x00000000) + 0;
         return clear_bit_from_span(m_msr_bitmap_view, addr);
     }
 
-    if (msr >= 0xC0000000UL && msr <= 0xC0001FFFUL) {
-        auto addr = (msr - 0xC0000000UL) + 0x2000;
+    if (msr >= 0xC0000000UL && msr <= 0xC0001FFFUL)
+    {
+        auto &&addr = (msr - 0xC0000000UL) + 0x2000;
         return clear_bit_from_span(m_msr_bitmap_view, addr);
     }
 
@@ -157,16 +160,17 @@ vmcs_intel_x64_eapis::pass_through_rdmsr_access(msr_type msr)
 void
 vmcs_intel_x64_eapis::pass_through_wrmsr_access(msr_type msr)
 {
-    if (!m_msr_bitmap) {
+    if (!m_msr_bitmap)
         throw std::runtime_error("msr bitmap not enabled");
-    }
 
-    if (msr <= 0x00001FFFUL) {
+    if (msr <= 0x00001FFFUL)
+    {
         auto &&addr = (msr - 0x00000000UL) + 0x4000;
         return clear_bit_from_span(m_msr_bitmap_view, addr);
     }
 
-    if (msr >= 0xC0000000UL && msr <= 0xC0001FFFUL) {
+    if (msr >= 0xC0000000UL && msr <= 0xC0001FFFUL)
+    {
         auto &&addr = (msr - 0xC0000000UL) + 0x6000;
         return clear_bit_from_span(m_msr_bitmap_view, addr);
     }
@@ -177,55 +181,49 @@ vmcs_intel_x64_eapis::pass_through_wrmsr_access(msr_type msr)
 void
 vmcs_intel_x64_eapis::pass_through_all_rdmsr_accesses()
 {
-    if (!m_msr_bitmap) {
+    if (!m_msr_bitmap)
         throw std::runtime_error("msr bitmap not enabled");
-    }
 
-    memset(&m_msr_bitmap_view[0], 0x0, x64::page_size / 2);
+    __builtin_memset(&m_msr_bitmap_view[0], 0x0, x64::page_size / 2);
 }
 
 void
 vmcs_intel_x64_eapis::pass_through_all_wrmsr_accesses()
 {
-    if (!m_msr_bitmap) {
+    if (!m_msr_bitmap)
         throw std::runtime_error("msr bitmap not enabled");
-    }
 
-    memset(&m_msr_bitmap_view[2048], 0x0, x64::page_size / 2);
+    __builtin_memset(&m_msr_bitmap_view[2048], 0x0, x64::page_size / 2);
 }
 
 void
 vmcs_intel_x64_eapis::whitelist_rdmsr_access(msr_list_type msrs)
 {
     trap_on_all_rdmsr_accesses();
-    for (auto msr : msrs) {
+    for (auto msr : msrs)
         pass_through_rdmsr_access(msr);
-    }
 }
 
 void
 vmcs_intel_x64_eapis::whitelist_wrmsr_access(msr_list_type msrs)
 {
     trap_on_all_wrmsr_accesses();
-    for (auto msr : msrs) {
+    for (auto msr : msrs)
         pass_through_wrmsr_access(msr);
-    }
 }
 
 void
 vmcs_intel_x64_eapis::blacklist_rdmsr_access(msr_list_type msrs)
 {
     pass_through_all_rdmsr_accesses();
-    for (auto msr : msrs) {
+    for (auto msr : msrs)
         trap_on_rdmsr_access(msr);
-    }
 }
 
 void
 vmcs_intel_x64_eapis::blacklist_wrmsr_access(msr_list_type msrs)
 {
     pass_through_all_wrmsr_accesses();
-    for (auto msr : msrs) {
+    for (auto msr : msrs)
         trap_on_wrmsr_access(msr);
-    }
 }

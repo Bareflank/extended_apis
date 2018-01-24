@@ -22,8 +22,8 @@
 #include <bfdebug.h>
 #include <vmcs/apic_intel_x64.h>
 
-#include <intrinsics/x86/intel_x64.h>
-#include <intrinsics/x86/common_x64.h>
+#include <arch/intel_x64/cpuid.h>
+#include <arch/x64/misc.h>
 
 using namespace x64;
 using namespace intel_x64;

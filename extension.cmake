@@ -16,16 +16,14 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-cmake_minimum_required(VERSION 3.6)
-project(eapis C CXX)
-
-include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project(
-    INCLUDES ../include
+add_subproject(
+    eapis vmm
+    DEPENDS bfvmm bfintrinsics
+    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
-add_subdirectory(exit_handler)
-add_subdirectory(vmcall_policy)
-add_subdirectory(vmcs)
-
-install(DIRECTORY ../include DESTINATION include FILES_MATCHING PATTERN "*.h")
+add_subproject(
+    eapis_main vmm
+    DEPENDS eapis
+    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/vcpu_factory
+)

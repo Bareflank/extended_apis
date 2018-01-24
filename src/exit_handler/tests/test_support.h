@@ -27,8 +27,6 @@
 
 #include <bfgsl.h>
 
-#include <intrinsics/x86/intel_x64.h>
-
 #include <vmcs/vmcs_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis_vmcall_interface.h>

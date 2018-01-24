@@ -19,29 +19,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bftypes.h>
-
-#include <vcpu/vcpu_factory.h>
-#include <vcpu/vcpu_intel_x64.h>
-
-#include <vmcs/vmcs_intel_x64_eapis.h>
-#include <vmcs/vmcs_intel_x64_vmm_state_eapis.h>
 #include <exit_handler/exit_handler_intel_x64_eapis.h>
 
-std::unique_ptr<vcpu>
-vcpu_factory::make_vcpu(vcpuid::type vcpuid, user_data *data)
+#include <arch/intel_x64/vmcs/32bit_control_fields.h>
+#include <arch/intel_x64/vmcs/32bit_read_only_data_fields.h>
+#include <arch/intel_x64/vmcs/natural_width_read_only_data_fields.h>
+
+using namespace intel_x64;
+using namespace vmcs;
+
+void
+exit_handler_intel_x64_eapis::clear_monitor_trap()
 {
-    bfignored(data);
+    primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
+    m_monitor_trap_callback = &exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback;
+}
 
-    auto vmcs = std::make_unique<vmcs_intel_x64_eapis>();
-    auto vmm_state = std::make_unique<vmcs_intel_x64_vmm_state_eapis>();
-    auto exit_handler = std::make_unique<exit_handler_intel_x64_eapis>();
+void
+exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback()
+{ throw std::logic_error("unhandled_monitor_trap_callback called!!!"); }
 
-    return std::make_unique<vcpu_intel_x64>(
-               vcpuid,
-               nullptr,                         // default vmxon
-               std::move(vmcs),
-               std::move(exit_handler),
-               std::move(vmm_state),
-               nullptr);                        // default guest_state
+void
+exit_handler_intel_x64_eapis::handle_exit__monitor_trap_flag()
+{
+    auto callback = m_monitor_trap_callback;
+
+    clear_monitor_trap();
+    (this->*callback)();
 }

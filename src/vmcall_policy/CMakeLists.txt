@@ -16,16 +16,18 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-cmake_minimum_required(VERSION 3.6)
-project(eapis C CXX)
-
-include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project(
-    INCLUDES ../include
+list(APPEND SOURCES
+    vmcall_policy.cpp
 )
 
-add_subdirectory(exit_handler)
-add_subdirectory(vmcall_policy)
-add_subdirectory(vmcs)
+add_shared_library(
+    eapis_vmcall_policy
+    SOURCES ${SOURCES}
+    DEFINES SHARED_EAPIS_VMCALL_POLICY
+)
 
-install(DIRECTORY ../include DESTINATION include FILES_MATCHING PATTERN "*.h")
+add_static_library(
+    eapis_vmcall_policy
+    SOURCES ${SOURCES}
+    DEFINES STATIC_EAPIS_VMCALL_POLICY
+)

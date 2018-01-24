@@ -19,36 +19,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <intrinsics/x86/intel_x64.h>
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
+#include <vmcs/vmcs_intel_x64_eapis.h>
 
-using namespace intel_x64;
-using namespace vmcs;
-
-void
-exit_handler_intel_x64_eapis::log_io_access(bool enable)
-{ m_io_access_log_enabled = enable; }
-
-void
-exit_handler_intel_x64_eapis::clear_io_access_log()
-{ m_io_access_log.clear(); }
-
-void
-exit_handler_intel_x64_eapis::trap_on_io_access_callback()
+vmcs_intel_x64_eapis::vmcs_intel_x64_eapis()
 {
-    primary_processor_based_vm_execution_controls::use_io_bitmaps::enable();
-    this->resume();
+    static intel_x64::vmcs::value_type g_vpid = 1;
+    m_vpid = g_vpid++;
 }
 
 void
-exit_handler_intel_x64_eapis::handle_exit__io_instruction()
+vmcs_intel_x64_eapis::write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
+                                   gsl::not_null<vmcs_intel_x64_state *> guest_state)
 {
-    register_monitor_trap(&exit_handler_intel_x64_eapis::trap_on_io_access_callback);
-
-    if (m_io_access_log_enabled) {
-        m_io_access_log[exit_qualification::io_instruction::port_number::get()]++;
-    }
-
-    primary_processor_based_vm_execution_controls::use_io_bitmaps::disable();
-    this->resume();
+    this->disable_ept();
+    this->disable_vpid();
+    this->disable_io_bitmaps();
+    this->disable_msr_bitmap();
+    this->disable_msr_bitmap();
+    this->disable_cr0_load_hook();
+    this->disable_cr3_load_hook();
+    this->disable_cr3_store_hook();
+    this->disable_cr4_load_hook();
+    this->disable_cr8_load_hook();
+    this->disable_cr8_store_hook();
+    this->disable_event_management();
 }

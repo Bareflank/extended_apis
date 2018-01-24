@@ -27,7 +27,6 @@
 
 #include <bfgsl.h>
 
-#include <intrinsics/x86/intel_x64.h>
 #include <vmcs/vmcs_intel_x64_eapis.h>
 #include <memory_manager/memory_manager_x64.h>
 

@@ -169,8 +169,8 @@ public:
 
     /// Setup Identify Map (1g Granularity)
     ///
-    /// Sets up an identify map in the extended page tables using 1 gigabyte
-    /// of memory granularity.
+    /// Sets up an identify map in the extended page tables using 1gb
+    /// granularity.
     ///
     /// @expects
     /// @ensures
@@ -182,8 +182,8 @@ public:
 
     /// Setup Identify Map (2m Granularity)
     ///
-    /// Sets up an identify map in the extended page tables using 1 gigabyte
-    /// of memory granularity.
+    /// Sets up an identify map in the extended page tables using 2mb
+    /// granularity.
     ///
     /// @expects
     /// @ensures
@@ -195,8 +195,8 @@ public:
 
     /// Setup Identify Map (4k Granularity)
     ///
-    /// Sets up an identify map in the extended page tables using 1 gigabyte
-    /// of memory granularity.
+    /// Sets up an identify map in the extended page tables using 4k
+    /// granularity.
     ///
     /// @expects
     /// @ensures
@@ -266,8 +266,7 @@ public:
     ///
     /// This function converts the internal page table tree structure into a
     /// linear, memory descriptor list. Page table entry information is not
-    /// provide, only the page tables.
-    /// pages.
+    /// provided, only the page tables.
     ///
     /// @expects
     /// @ensures

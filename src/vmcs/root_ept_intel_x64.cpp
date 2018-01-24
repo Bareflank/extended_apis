@@ -20,7 +20,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfexception.h>
-
 #include <vmcs/root_ept_intel_x64.h>
 #include <memory_manager/memory_manager_x64.h>
 
@@ -52,9 +51,8 @@ root_ept_intel_x64::setup_identity_map_1g(
     expects((saddr & (ept::pdpt::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pdpt::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pdpt::size_bytes) {
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pdpt::size_bytes)
         this->map_1g(gpa, gpa, ept::memory_attr::pt_wb);
-    }
 }
 
 void
@@ -64,9 +62,8 @@ root_ept_intel_x64::setup_identity_map_2m(
     expects((saddr & (ept::pd::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pd::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pd::size_bytes) {
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pd::size_bytes)
         this->map_2m(gpa, gpa, ept::memory_attr::pt_wb);
-    }
 }
 
 void
@@ -76,9 +73,8 @@ root_ept_intel_x64::setup_identity_map_4k(
     expects((saddr & (ept::pt::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pt::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pt::size_bytes) {
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pt::size_bytes)
         this->map_4k(gpa, gpa, ept::memory_attr::pt_wb);
-    }
 }
 
 void
@@ -88,9 +84,8 @@ root_ept_intel_x64::unmap_identity_map_1g(
     expects((saddr & (ept::pdpt::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pdpt::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pdpt::size_bytes) {
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pdpt::size_bytes)
         this->unmap(gpa);
-    }
 }
 
 void
@@ -100,9 +95,8 @@ root_ept_intel_x64::unmap_identity_map_2m(
     expects((saddr & (ept::pd::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pd::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pd::size_bytes) {
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pd::size_bytes)
         this->unmap(gpa);
-    }
 }
 
 void
@@ -112,9 +106,8 @@ root_ept_intel_x64::unmap_identity_map_4k(
     expects((saddr & (ept::pt::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pt::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pt::size_bytes) {
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pt::size_bytes)
         this->unmap(gpa);
-    }
 }
 
 ept_entry_intel_x64
@@ -134,7 +127,8 @@ root_ept_intel_x64::ept_to_mdl() const
 ept_entry_intel_x64
 root_ept_intel_x64::add_page(integer_pointer gpa, size_type size)
 {
-    switch (size) {
+    switch (size)
+    {
         case ept::pdpt::size_bytes:
             return m_ept->add_page_1g(gpa);
 
@@ -153,32 +147,29 @@ void
 root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_type attr, size_type size)
 {
     std::lock_guard<std::mutex> guard(m_mutex);
-    auto entry = add_page(gpa, size);
 
-    auto ___ = gsl::on_failure([&] {
-        this->unmap_page(gpa);
-    });
+    auto &&entry = add_page(gpa, size);
 
-    switch (size) {
+    auto ___ = gsl::on_failure([&]
+    { this->unmap_page(gpa); });
+
+    switch (size)
+    {
         case ept::pdpt::size_bytes:
-            entry.clear();
             entry.set_phys_addr(phys & ~(ept::pdpt::size_bytes - 1));
-            entry.set_entry_type(true);
             break;
 
         case ept::pd::size_bytes:
-            entry.clear();
             entry.set_phys_addr(phys & ~(ept::pd::size_bytes - 1));
-            entry.set_entry_type(true);
             break;
 
         case ept::pt::size_bytes:
-            entry.clear();
             entry.set_phys_addr(phys & ~(ept::pt::size_bytes - 1));
             break;
     }
 
-    switch (attr) {
+    switch (attr)
+    {
         case ept::memory_attr::rw_uc:
         case ept::memory_attr::re_uc:
         case ept::memory_attr::ro_uc:
@@ -225,7 +216,8 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
             break;
     }
 
-    switch (attr) {
+    switch (attr)
+    {
         case ept::memory_attr::rw_uc:
         case ept::memory_attr::rw_wc:
         case ept::memory_attr::rw_wt:
@@ -294,7 +286,6 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
 void
 root_ept_intel_x64::unmap_page(integer_pointer gpa) noexcept
 {
-    guard_exceptions([&] {
-        m_ept->remove_page(gpa);
-    });
+    guard_exceptions([&]
+    { m_ept->remove_page(gpa); });
 }

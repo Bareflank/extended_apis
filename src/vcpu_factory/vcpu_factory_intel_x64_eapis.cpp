@@ -19,30 +19,34 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <bfdelegate.h>
+#include <bftypes.h>
+
+#include <vcpu/vcpu_factory.h>
+#include <vcpu/arch/intel_x64/vcpu.h>
+
 #include <vmcs/vmcs_intel_x64_eapis.h>
+#include <vmcs/vmcs_intel_x64_vmm_state_eapis.h>
+#include <exit_handler/exit_handler_intel_x64_eapis.h>
 
-vmcs_intel_x64_eapis::vmcs_intel_x64_eapis()
+using vmcs_eapis = vmcs_intel_x64_eapis;
+using vmm_state_eapis = vmcs_intel_x64_vmm_state_eapis;
+using exit_handler_eapis = exit_handler_intel_x64_eapis;
+
+std::unique_ptr<vcpu>
+vcpu_factory::make_vcpu(vcpuid::type vcpuid, user_data *data)
 {
-    static intel_x64::vmcs::value_type g_vpid = 1;
-    m_vpid = g_vpid++;
-}
+    bfignored(data);
 
-void
-vmcs_intel_x64_eapis::write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
-                                   gsl::not_null<vmcs_intel_x64_state *> guest_state)
-{
-    vmcs_intel_x64::write_fields(host_state, guest_state);
+    auto vmcs = std::make_unique<vmcs_eapis>();
+    auto vmm_state = std::make_unique<vmm_state_eapis>();
+    auto exit_handler = std::make_unique<exit_handler_eapis>();
 
-    this->disable_ept();
-    this->disable_vpid();
-    this->disable_io_bitmaps();
-    this->disable_msr_bitmap();
-    this->disable_msr_bitmap();
-    this->disable_cr0_load_hook();
-    this->disable_cr3_load_hook();
-    this->disable_cr3_store_hook();
-    this->disable_cr4_load_hook();
-    this->disable_cr8_load_hook();
-    this->disable_cr8_store_hook();
-    this->disable_event_management();
+    return std::make_unique<vcpu_intel_x64>(
+               vcpuid,
+               nullptr,                         // default vmxon
+               std::move(vmcs),
+               std::move(exit_handler),
+               std::move(vmm_state),
+               nullptr);                        // default guest_state
 }

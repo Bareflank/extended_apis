@@ -27,10 +27,11 @@
 #include <vector>
 #include <memory>
 
-#include <vmcs/vmcs_intel_x64.h>
+#include <hve/arch/intel_x64/vmcs/vmcs.h>
 
-#include <intrinsics/x86/intel_x64.h>
-#include <intrinsics/x86/common_x64.h>
+#include <arch/x64/misc.h>
+#include <arch/x64/msrs.h>
+#include <arch/x64/portio.h>
 
 // -----------------------------------------------------------------------------
 // Exports
@@ -657,6 +658,52 @@ public:
     ///
     void enable_cr8_store_hook();
 
+    /// Enable Event Management
+    ///
+    /// Enables event management. Turning this on will provide a means to
+    /// monitor and remap interrupts as desired but comes at a performace.
+    ///
+    /// Example:
+    /// @code
+    /// this->enable_event_management();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void enable_event_management();
+
+    /// Disable Event Management
+    ///
+    /// Disables event management. Turning this off will prevent monitoring
+    /// and remaping interrupts as desired but increases performance
+    ///
+    /// Example:
+    /// @code
+    /// this->disable_event_management();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void disable_event_management();
+
+#ifndef ENABLE_UNITTESTING
+protected:
+#endif
+
+    intel_x64::vmcs::value_type m_vpid;             ///< VPID for this VMCS
+
+    std::unique_ptr<uint8_t[]> m_io_bitmapa;        ///< IO bitmap A
+    std::unique_ptr<uint8_t[]> m_io_bitmapb;        ///< IO bitmap B
+    gsl::span<uint8_t> m_io_bitmapa_view;           ///< View into IO bitmap A
+    gsl::span<uint8_t> m_io_bitmapb_view;           ///< View into IO bitmap B
+
+    std::unique_ptr<uint8_t[]> m_msr_bitmap;        ///< MSR bitmap
+    gsl::span<uint8_t> m_msr_bitmap_view;           ///< View into MSR bitmap
+
+protected:
+
     /// Disable CR0 Load Hook
     ///
     /// Disables mov to CR0 hooking, which will cause the exit
@@ -747,58 +794,19 @@ public:
     ///
     void disable_cr8_store_hook();
 
-    /// Enable Event Management
-    ///
-    /// Enables event management. Turning this on will provide a means to
-    /// monitor and remap interrupts as desired but comes at a performace.
-    ///
-    /// Example:
-    /// @code
-    /// this->enable_event_management();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void enable_event_management();
-
-    /// Disable Event Management
-    ///
-    /// Disables event management. Turning this off will prevent monitoring
-    /// and remaping interrupts as desired but increases performance
-    ///
-    /// Example:
-    /// @code
-    /// this->disable_event_management();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable_event_management();
-
-#ifndef ENABLE_UNITTESTING
-protected:
-#endif
-
-    intel_x64::vmcs::value_type m_vpid;             ///< VPID for this VMCS
-
-    std::unique_ptr<uint8_t[]> m_io_bitmapa;        ///< IO bitmap A
-    std::unique_ptr<uint8_t[]> m_io_bitmapb;        ///< IO bitmap B
-    gsl::span<uint8_t> m_io_bitmapa_view;           ///< View into IO bitmap A
-    gsl::span<uint8_t> m_io_bitmapb_view;           ///< View into IO bitmap B
-
-    std::unique_ptr<uint8_t[]> m_msr_bitmap;        ///< MSR bitmap
-    gsl::span<uint8_t> m_msr_bitmap_view;           ///< View into MSR bitmap
-
 protected:
 
-    /// @cond
-
-    void write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
-                      gsl::not_null<vmcs_intel_x64_state *> guest_state) override;
-
-    /// @endcond
+    /// Set the VMCS fields prior to launching
+    ///
+    /// Sets the VMCS fields. This function will be called
+    /// right before the launch occurs, and can be used by extensions to
+    /// make mods to the VMCS before the launch.
+    ///
+    /// @param host_state pointer to host state
+    /// @param guest_state pointer to guest state
+    ///
+    virtual void write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
+                      gsl::not_null<vmcs_intel_x64_state *> guest_state);
 
 public:
 
