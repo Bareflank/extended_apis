@@ -20,8 +20,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
-
 #include "../../../../../include/hve/arch/intel_x64/vmcs/ept.h"
+
 constexpr const ept_intel_x64::integer_pointer virt = 0x0000100000000000ULL;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
@@ -35,24 +35,24 @@ TEST_CASE("ept_intel_x64: add / remove page without touching page settings")
     auto eptp = std::make_unique<ept_intel_x64>(&scr3);
 
     eptp->add_page_4k(virt);
-    CHECK(eptp->global_size() == 3);
+    CHECK(eptp->global_size() == 4);
     CHECK(eptp->global_capacity() == 512 * 3);
 
     eptp->add_page_4k(virt + 0x1000);
-    CHECK(eptp->global_size() == 3);
+    CHECK(eptp->global_size() == 5);
     CHECK(eptp->global_capacity() == 512 * 3);
 
     eptp->add_page_4k(virt + 0x10000);
-    CHECK(eptp->global_size() == 3);
+    CHECK(eptp->global_size() == 6);
     CHECK(eptp->global_capacity() == 512 * 3);
 
     eptp->remove_page(virt);
-    CHECK(eptp->global_size() == 0);
-    CHECK(eptp->global_capacity() == 512 * 1);
+    CHECK(eptp->global_size() == 5);
+    CHECK(eptp->global_capacity() == 512 * 3);
 
     eptp->remove_page(virt + 0x1000);
-    CHECK(eptp->global_size() == 0);
-    CHECK(eptp->global_capacity() == 512 * 1);
+    CHECK(eptp->global_size() == 4);
+    CHECK(eptp->global_capacity() == 512 * 3);
 
     eptp->remove_page(virt + 0x10000);
     CHECK(eptp->global_size() == 0);
@@ -213,10 +213,9 @@ TEST_CASE("ept_intel_x64: add / remove page swap")
     CHECK(eptp->global_size() == 4);
     CHECK(eptp->global_capacity() == 512 * 3);
 
-    auto entry4 = eptp->add_page_2m(virt);
-    entry4.set_read_access(true);
-    CHECK(eptp->global_size() == 3);
-    CHECK(eptp->global_capacity() == 512 * 2);
+    CHECK_THROWS(eptp->add_page_2m(virt));
+    CHECK(eptp->global_size() == 4);
+    CHECK(eptp->global_capacity() == 512 * 3);
 
     auto entry5 = eptp->add_page_4k(virt);
     entry5.set_read_access(true);
@@ -310,12 +309,16 @@ TEST_CASE("ept_intel_x64: ept_to_mdl")
     CHECK(eptp->ept_to_mdl().size() == 1);
     eptp->add_page_1g(0x1000);
     CHECK(eptp->ept_to_mdl().size() == 2);
+    eptp->remove_page(0x1000);
+
     eptp->add_page_2m(0x1000);
     CHECK(eptp->ept_to_mdl().size() == 3);
+    eptp->remove_page(0x1000);
+
     eptp->add_page_4k(0x1000);
     CHECK(eptp->ept_to_mdl().size() == 4);
-
     eptp->remove_page(0x1000);
+
     CHECK(eptp->global_size() == 0);
 }
 
