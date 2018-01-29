@@ -16,18 +16,28 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-list(APPEND SOURCES
-    vmcall_policy.cpp
-)
+if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
+    if(NOT ENABLE_MOCKING)
+        list(APPEND SOURCES
+            arch/intel_x64/vmcall_policy.cpp
+        )
+    endif()
+elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
+    message(WARNING "Unimplemented")
+else()
+    message(FATAL_ERROR "Unsupported archiecture")
+endif()
 
 add_shared_library(
-    eapis_vmcall_policy
+    eapis_policy
     SOURCES ${SOURCES}
     DEFINES SHARED_EAPIS_VMCALL_POLICY
+    DEFINES SHARED_EAPIS_HVE
 )
 
 add_static_library(
-    eapis_vmcall_policy
+    eapis_policy
     SOURCES ${SOURCES}
     DEFINES STATIC_EAPIS_VMCALL_POLICY
+    DEFINES STATIC_EAPIS_HVE
 )

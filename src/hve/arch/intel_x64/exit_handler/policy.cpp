@@ -19,14 +19,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_io_instruction_verifiers.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_vpid_verifiers.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_msr_verifiers.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_rdmsr_verifiers.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_wrmsr_verifiers.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_cpuid_verifiers.h>
+#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
+#include <hve/arch/intel_x64/exit_handler/verifiers.h>
+#include <hve/arch/intel_x64/exit_handler/io_instruction_verifiers.h>
+#include <hve/arch/intel_x64/exit_handler/vpid_verifiers.h>
+#include <hve/arch/intel_x64/exit_handler/msr_verifiers.h>
+#include <hve/arch/intel_x64/exit_handler/rdmsr_verifiers.h>
+#include <hve/arch/intel_x64/exit_handler/wrmsr_verifiers.h>
+#include <hve/arch/intel_x64/exit_handler/cpuid_verifiers.h>
 
 void
 exit_handler_intel_x64_eapis::init_policy()

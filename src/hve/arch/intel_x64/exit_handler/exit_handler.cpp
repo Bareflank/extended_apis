@@ -19,12 +19,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
+#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
+#include <hve/arch/intel_x64/exit_handler/vmcall_interface.h>
 
-#include <arch/intel_x64/vmcs/32bit_read_only_data_fields.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_vmcall_interface.h>
-#include <arch/intel_x64/vmcs/natural_width_read_only_data_fields.h>
-#include <arch/intel_x64/vmcs/natural_width_guest_state_fields.h>
+#include <bfintrinsics/include/arch/intel_x64/vmcs/32bit_read_only_data_fields.h>
+#include <bfintrinsics/include/arch/intel_x64/vmcs/natural_width_read_only_data_fields.h>
+#include <bfintrinsics/include/arch/intel_x64/vmcs/natural_width_guest_state_fields.h>
 
 using namespace x64;
 using namespace intel_x64;

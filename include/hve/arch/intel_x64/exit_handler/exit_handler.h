@@ -22,19 +22,19 @@
 #ifndef EXIT_HANDLER_INTEL_X64_EAPIS_H
 #define EXIT_HANDLER_INTEL_X64_EAPIS_H
 
-#include <list>
 #include <deque>
+#include <list>
 #include <vector>
 #include <functional>
 
 #include <hve/arch/intel_x64/vmcs/vmcs.h>
-#include <vmcs/vmcs_intel_x64_eapis.h>
-
 #include <hve/arch/intel_x64/exit_handler/exit_handler.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
+#include <hve/arch/intel_x64/exit_handler/verifiers.h>
 
-#include <arch/x64/portio.h>
-#include <memory_manager/object_allocator.h>
+#include <bfintrinsics/include/arch/x64/portio.h>
+
+#include <bfvmm/include/memory_manager/object_allocator.h>
+#include <bfvmm/include/hve/arch/intel_x64/exit_handler/exit_handler.h>
 
 // -----------------------------------------------------------------------------
 // Exports

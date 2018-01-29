@@ -19,7 +19,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
+#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
 
 void
 exit_handler_intel_x64_eapis::log_wrmsr_access(bool enable)

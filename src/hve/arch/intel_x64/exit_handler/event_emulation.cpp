@@ -21,7 +21,8 @@
 #include <bfgsl.h>
 #include <bfdebug.h>
 
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
+#include <bfintrinsics/include/intrinsics.h>
+#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
 
 using namespace x64;
 using namespace intel_x64;

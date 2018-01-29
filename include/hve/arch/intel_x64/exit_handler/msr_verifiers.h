@@ -19,11 +19,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef EXIT_HANDLER_INTEL_X64_EAPIS_VPID_VERIFIERS_H
-#define EXIT_HANDLER_INTEL_X64_EAPIS_VPID_VERIFIERS_H
+#ifndef EXIT_HANDLER_INTEL_X64_EAPIS_MSR_VERIFIERS_H
+#define EXIT_HANDLER_INTEL_X64_EAPIS_MSR_VERIFIERS_H
 
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
+#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
+#include <hve/arch/intel_x64/exit_handler/verifiers.h>
 
 /// @cond
 
@@ -33,7 +33,7 @@
 
 namespace vp
 {
-constexpr const auto index_enable_vpid = 0x0002001UL;
+constexpr const auto index_enable_msr_bitmap = 0x0003001UL;
 }
 
 // -----------------------------------------------------------------------------
@@ -56,12 +56,12 @@ constexpr const auto index_enable_vpid = 0x0002001UL;
 // Definitions
 // -----------------------------------------------------------------------------
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__enable_vpid :
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__enable_msr_bitmap :
     public vmcall_verifier
 {
 public:
-    default_verifier__enable_vpid() = default;
-    ~default_verifier__enable_vpid() override = default;
+    default_verifier__enable_msr_bitmap() = default;
+    ~default_verifier__enable_msr_bitmap() override = default;
 
     virtual verifier_result verify(bool enabled)
     { bfignored(enabled); return default_verify(); }

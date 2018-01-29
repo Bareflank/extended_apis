@@ -29,8 +29,8 @@
 #include <mutex>
 #include <vector>
 
-#include <vmcs/ept_intel_x64.h>
-#include <vmcs/ept_attr_intel_x64.h>
+#include <hve/arch/intel_x64/vmcs/ept.h>
+#include <hve/arch/intel_x64/vmcs/ept_attr.h>
 
 // -----------------------------------------------------------------------------
 // Exports

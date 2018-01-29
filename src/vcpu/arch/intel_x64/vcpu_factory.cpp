@@ -19,15 +19,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfdelegate.h>
 #include <bftypes.h>
+#include <bfdelegate.h>
 
-#include <vcpu/vcpu_factory.h>
-#include <vcpu/arch/intel_x64/vcpu.h>
+#include <bfvmm/include/vcpu/vcpu_factory.h>
+#include <bfvmm/include/vcpu/arch/intel_x64/vcpu.h>
 
-#include <vmcs/vmcs_intel_x64_eapis.h>
-#include <vmcs/vmcs_intel_x64_vmm_state_eapis.h>
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
+#include <hve/arch/intel_x64/vmcs/vmcs.h>
+#include <hve/arch/intel_x64/vmcs/vmcs_vmm_state.h>
+#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
 
 using vmcs_eapis = vmcs_intel_x64_eapis;
 using vmm_state_eapis = vmcs_intel_x64_vmm_state_eapis;

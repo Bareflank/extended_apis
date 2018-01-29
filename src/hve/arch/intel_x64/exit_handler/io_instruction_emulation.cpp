@@ -19,7 +19,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
+#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
 
 #include <arch/intel_x64/vmcs/32bit_control_fields.h>
 #include <arch/intel_x64/vmcs/natural_width_read_only_data_fields.h>

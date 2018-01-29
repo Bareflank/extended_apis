@@ -21,12 +21,12 @@
 
 #include <gsl/gsl>
 
-#include <bitmanip_eapis.h>
-#include <memory_manager/memory_manager_x64.h>
+#include <util/bitmanip.h>
+#include <hve/arch/intel_x64/vmcs/vmcs.h>
 
-#include <vmcs/vmcs_intel_x64_eapis.h>
-#include <arch/intel_x64/vmcs/32bit_control_fields.h>
-#include <arch/intel_x64/vmcs/64bit_control_fields.h>
+#include <bfvmm/include/memory_manager/memory_manager_x64.h>
+#include <bfintrinsics/include/arch/intel_x64/vmcs/32bit_control_fields.h>
+#include <bfintrinsics/include/arch/intel_x64/vmcs/64bit_control_fields.h>
 
 using namespace intel_x64;
 using namespace vmcs;

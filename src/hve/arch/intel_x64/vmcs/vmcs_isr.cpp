@@ -25,8 +25,8 @@
 #include <bfdebug.h>
 #include <bfexports.h>
 
-#include <arch/intel_x64/crs.h>
-#include <arch/x64/pm.h>
+#include <bfintrinsics/include/arch/x64/pm.h>
+#include <bfintrinsics/include/arch/intel_x64/crs.h>
 
 using namespace x64;
 using namespace intel_x64;

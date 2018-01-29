@@ -27,7 +27,7 @@
 #include <vector>
 #include <memory>
 
-#include <hve/arch/intel_x64/vmcs/vmcs.h>
+#include <bfvmm/include/hve/arch/intel_x64/vmcs/vmcs.h>
 
 #include <arch/x64/misc.h>
 #include <arch/x64/msrs.h>

@@ -22,8 +22,8 @@
 #ifndef EXIT_HANDLER_INTEL_X64_EAPIS_WRMSR_VERIFIERS_H
 #define EXIT_HANDLER_INTEL_X64_EAPIS_WRMSR_VERIFIERS_H
 
-#include <exit_handler/exit_handler_intel_x64_eapis.h>
-#include <exit_handler/exit_handler_intel_x64_eapis_verifiers.h>
+#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
+#include <hve/arch/intel_x64/exit_handler/verifiers.h>
 
 /// @cond
 

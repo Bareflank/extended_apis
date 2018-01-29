@@ -1,5 +1,5 @@
 //
-// Bareflank Hypervisor
+// Bareflank Extended APIs
 //
 // Copyright (C) 2015 Assured Information Security, Inc.
 // Author: Rian Quinn        <quinnr@ainfosec.com>
@@ -19,10 +19,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef VMCS_INTEL_X64_VMM_STATE_EAPIS_H
-#define VMCS_INTEL_X64_VMM_STATE_EAPIS_H
+#ifndef EXIT_HANDLER_INTEL_X64_EAPIS_VPID_VERIFIERS_H
+#define EXIT_HANDLER_INTEL_X64_EAPIS_VPID_VERIFIERS_H
 
-#include <hve/arch/intel_x64/vmcs/vmcs_state_vmm.h>
+#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
+#include <hve/arch/intel_x64/exit_handler/verifiers.h>
+
+/// @cond
+
+// -----------------------------------------------------------------------------
+// Constants
+// -----------------------------------------------------------------------------
+
+namespace vp
+{
+constexpr const auto index_enable_vpid = 0x0002001UL;
+}
 
 // -----------------------------------------------------------------------------
 // Exports
@@ -30,50 +42,31 @@
 
 #include <bfexports.h>
 
-#ifndef STATIC_EAPIS_VMCS
-#ifdef SHARED_EAPIS_VMCS
-#define EXPORT_EAPIS_VMCS EXPORT_SYM
+#ifndef STATIC_EAPIS_EXIT_HANDLER
+#ifdef SHARED_EAPIS_EXIT_HANDLER
+#define EXPORT_EAPIS_EXIT_HANDLER EXPORT_SYM
 #else
-#define EXPORT_EAPIS_VMCS IMPORT_SYM
+#define EXPORT_EAPIS_EXIT_HANDLER IMPORT_SYM
 #endif
 #else
-#define EXPORT_EAPIS_VMCS
+#define EXPORT_EAPIS_EXIT_HANDLER
 #endif
 
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-/// VMM Intel x64 State (EAPIs)
-///
-/// The following defines the state class for the VMM. The default VMM state
-/// is used here except the constructor, were EAPI specific resources are
-/// initialized.
-///
-class EXPORT_EAPIS_VMCS vmcs_intel_x64_vmm_state_eapis :
-    public vmcs_intel_x64_vmm_state
+class EXPORT_EAPIS_EXIT_HANDLER default_verifier__enable_vpid :
+    public vmcall_verifier
 {
 public:
+    default_verifier__enable_vpid() = default;
+    ~default_verifier__enable_vpid() override = default;
 
-    /// Default Constructor
-    ///
-    vmcs_intel_x64_vmm_state_eapis();
-
-    /// Default Destructor
-    ///
-    ~vmcs_intel_x64_vmm_state_eapis() override = default;
-
-public:
-
-    /// @cond
-
-    vmcs_intel_x64_vmm_state_eapis(vmcs_intel_x64_vmm_state_eapis &&) noexcept = delete;
-    vmcs_intel_x64_vmm_state_eapis &operator=(vmcs_intel_x64_vmm_state_eapis &&) noexcept = delete;
-
-    vmcs_intel_x64_vmm_state_eapis(const vmcs_intel_x64_vmm_state_eapis &) = delete;
-    vmcs_intel_x64_vmm_state_eapis &operator=(const vmcs_intel_x64_vmm_state_eapis &) = delete;
-
-    /// @endcond
+    virtual verifier_result verify(bool enabled)
+    { bfignored(enabled); return default_verify(); }
 };
+
+/// @endcond
 
 #endif

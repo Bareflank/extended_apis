@@ -21,8 +21,8 @@
 
 #include <bfvector.h>
 
-#include <vmcs/ept_intel_x64.h>
-#include <memory_manager/memory_manager_x64.h>
+#include <hve/arch/intel_x64/vmcs/ept.h>
+#include <bfvmm/include/memory_manager/memory_manager_x64.h>
 
 #include <arch/x64/misc.h>
 using namespace x64;

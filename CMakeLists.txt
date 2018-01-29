@@ -25,5 +25,5 @@ add_subproject(
 add_subproject(
     eapis_main vmm
     DEPENDS eapis
-    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/vcpu_factory
+    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/main
 )
