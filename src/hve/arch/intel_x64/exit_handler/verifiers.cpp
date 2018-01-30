@@ -22,8 +22,8 @@
 #include <bfstring.h>
 #include <bfexports.h>
 
-#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
-#include <hve/arch/intel_x64/exit_handler/verifiers.h>
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/verifiers.h"
 
 //#define ENABLE_VMCALL_DENIALS 1 // Enables Deny All
 //#define ENABLE_VMCALL_DENIALS 2 // Enabled Logging

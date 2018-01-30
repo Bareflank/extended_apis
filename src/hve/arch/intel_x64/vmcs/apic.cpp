@@ -20,8 +20,9 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <bfintrinsics/include/arch/intel_x64/cpuid.h>
-#include <hve/arch/intel_x64/vmcs/apic.h>
+#include <intrinsics.h>
+
+#include "../../../../../include/hve/arch/intel_x64/vmcs/apic.h"
 
 using namespace x64;
 using namespace intel_x64;

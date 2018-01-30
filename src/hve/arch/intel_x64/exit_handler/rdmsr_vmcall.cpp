@@ -21,11 +21,11 @@
 
 #include <bfstring.h>
 
-#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
-#include <hve/arch/intel_x64/exit_handler/vmcall_interface.h>
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/vmcall_interface.h"
 
-#include <hve/arch/intel_x64/exit_handler/verifiers.h>
-#include <hve/arch/intel_x64/exit_handler/rdmsr_verifiers.h>
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/verifiers.h"
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/rdmsr_verifiers.h"
 
 using namespace x64;
 using namespace intel_x64;

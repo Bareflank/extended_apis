@@ -25,10 +25,7 @@ before_script:
   # Build Folder
   #
   - git clone -b dev https://github.com/Bareflank/hypervisor.git hypervisor
-  - mkdir hypervisor/build
-  - ls -al
-  - cd hypervisor
-  - git clone -b dev https://github.com/Bareflank/extended_apis.git extended_apis
+  - mkdir build
   - ls -al
   - cd build
 
@@ -76,7 +73,7 @@ matrix:
     env:
       - TEST="Doxygen"
     script:
-      - cd ../../
+      - cd ../
       - doxygen .doxygen.txt
       - |
         if [[ -s doxygen_warnings.txt ]]; then
@@ -124,7 +121,7 @@ matrix:
     env:
       - TEST="Format"
     script:
-      - cmake -DCONFIG=travis_format -DEXTENSIONS=../../extension.cmake ..
+      - cmake -DCONFIG=travis_format -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make astyle_x86_64-userspace-elf
       - make format
       - |
@@ -153,7 +150,7 @@ matrix:
     env:
       - TEST="Clang Tidy"
     script:
-      - cmake -DCONFIG=travis_tidy -DEXTENSIONS=../../extension.cmake ..
+      - cmake -DCONFIG=travis_tidy -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make -j3
       - make tidy
 
@@ -174,7 +171,7 @@ matrix:
     env:
       - TEST="Codecov"
     script:
-      - cmake -DCONFIG=travis_codecov -DEXTENSIONS=../../extension.cmake ..
+      - cmake -DCONFIG=travis_codecov -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make -j3
       - make test
       - rm -Rf depends
@@ -199,7 +196,7 @@ matrix:
     env:
       - TEST="Google Address Sanitizer"
     script:
-      - cmake -DCONFIG=travis_asan ..
+      - cmake -DCONFIG=travis_asan -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make -j3
       - make test
 
@@ -220,7 +217,7 @@ matrix:
     env:
       - TEST="Google Undefined Sanitizer"
     script:
-      - cmake -DCONFIG=travis_usan -DEXTENSIONS=../../extension.cmake ..
+      - cmake -DCONFIG=travis_usan -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make -j3
       - make test
 
@@ -241,7 +238,7 @@ matrix:
     env:
       - TEST="Clang 3.8 (Static Libraries)"
     script:
-      - cmake -DCONFIG=travis_static -DEXTENSIONS=../../extension.cmake ..
+      - cmake -DCONFIG=travis_static -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make -j3
       - make test
 
@@ -262,7 +259,7 @@ matrix:
     env:
       - TEST="Clang 3.9 (Static Libraries)"
     script:
-      - cmake -DCONFIG=travis_static -DEXTENSIONS=../../extension.cmake ..
+      - cmake -DCONFIG=travis_static -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make -j3
       - make test
 
@@ -283,7 +280,7 @@ matrix:
     env:
       - TEST="Clang 4.0 (Static Libraries)"
     script:
-      - cmake -DCONFIG=travis_static -DEXTENSIONS=../../extension.cmake ..
+      - cmake -DCONFIG=travis_static -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make -j3
       - make test
 
@@ -304,7 +301,7 @@ matrix:
     env:
       - TEST="Clang 3.8 (Shared Libraries)"
     script:
-      - cmake -DCONFIG=travis_shared -DEXTENSIONS=../../extension.cmake ..
+      - cmake -DCONFIG=travis_shared -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make -j3
       - make test
 
@@ -325,7 +322,7 @@ matrix:
     env:
       - TEST="Clang 3.9 (Shared Libraries)"
     script:
-      - cmake -DCONFIG=travis_shared -DEXTENSIONS=../../extension.cmake ..
+      - cmake -DCONFIG=travis_shared -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make -j3
       - make test
 
@@ -346,6 +343,6 @@ matrix:
     env:
       - TEST="Clang 4.0 (Shared Libraries)"
     script:
-      - cmake -DCONFIG=travis_shared -DEXTENSIONS=../../extension.cmake ..
+      - cmake -DCONFIG=travis_shared -DEXTENSION=../CMakeLists.txt ../hypervisor
       - make -j3
       - make test

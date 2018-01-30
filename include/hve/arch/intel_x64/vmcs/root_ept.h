@@ -38,14 +38,14 @@
 
 #include <bfexports.h>
 
-#ifndef STATIC_EAPIS_VMCS
-#ifdef SHARED_EAPIS_VMCS
-#define EXPORT_EAPIS_VMCS EXPORT_SYM
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
 #else
-#define EXPORT_EAPIS_VMCS IMPORT_SYM
+#define EXPORT_EAPIS_HVE IMPORT_SYM
 #endif
 #else
-#define EXPORT_EAPIS_VMCS
+#define EXPORT_EAPIS_HVE
 #endif
 
 #ifdef _MSC_VER
@@ -67,7 +67,7 @@
 /// This needs to be done manually. In general, this class should not be used
 /// directly, but instead mapping should be done via a unique_map_ptr_x64.
 ///
-class EXPORT_EAPIS_VMCS root_ept_intel_x64
+class EXPORT_EAPIS_HVE root_ept_intel_x64
 {
 public:
 

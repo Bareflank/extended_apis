@@ -28,7 +28,7 @@
 #include <bfgsl.h>
 
 #include <vmcs/vmcs_intel_x64_eapis.h>
-#include <memory_manager/memory_manager_x64.h>
+#include <bfvmm/memory_manager/memory_manager_x64.h>
 
 memory_manager_x64 *setup_mm(MockRepository &mocks);
 std::unique_ptr<vmcs_intel_x64_eapis> setup_vmcs(MockRepository &mocks);

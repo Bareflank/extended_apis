@@ -27,14 +27,14 @@
 #include <vector>
 #include <functional>
 
-#include <hve/arch/intel_x64/vmcs/vmcs.h>
-#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
-#include <hve/arch/intel_x64/exit_handler/verifiers.h>
+#include "../../../../hve/arch/intel_x64/vmcs/vmcs.h"
+#include "../../../../hve/arch/intel_x64/exit_handler/exit_handler.h"
+#include "../../../../hve/arch/intel_x64/exit_handler/verifiers.h"
 
-#include <bfintrinsics/include/arch/x64/portio.h>
+#include <intrinsics.h>
 
-#include <bfvmm/include/memory_manager/object_allocator.h>
-#include <bfvmm/include/hve/arch/intel_x64/exit_handler/exit_handler.h>
+#include <bfvmm/memory_manager/object_allocator.h>
+#include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
 
 // -----------------------------------------------------------------------------
 // Exports
@@ -42,14 +42,14 @@
 
 #include <bfexports.h>
 
-#ifndef STATIC_EAPIS_EXIT_HANDLER
-#ifdef SHARED_EAPIS_EXIT_HANDLER
-#define EXPORT_EAPIS_EXIT_HANDLER EXPORT_SYM
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
 #else
-#define EXPORT_EAPIS_EXIT_HANDLER IMPORT_SYM
+#define EXPORT_EAPIS_HVE IMPORT_SYM
 #endif
 #else
-#define EXPORT_EAPIS_EXIT_HANDLER
+#define EXPORT_EAPIS_HVE
 #endif
 
 #ifdef _MSC_VER
@@ -67,7 +67,7 @@
 /// subclassed, and certain functions need to be handled based on how the
 /// VMCS is setup.
 ///
-class EXPORT_EAPIS_EXIT_HANDLER exit_handler_intel_x64_eapis :
+class EXPORT_EAPIS_HVE exit_handler_intel_x64_eapis :
     public exit_handler_intel_x64
 {
 public:

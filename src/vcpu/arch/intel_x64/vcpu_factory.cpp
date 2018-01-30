@@ -22,12 +22,12 @@
 #include <bftypes.h>
 #include <bfdelegate.h>
 
-#include <bfvmm/include/vcpu/vcpu_factory.h>
-#include <bfvmm/include/vcpu/arch/intel_x64/vcpu.h>
+#include <bfvmm/vcpu/vcpu_factory.h>
+#include <bfvmm/vcpu/arch/intel_x64/vcpu.h>
 
-#include <hve/arch/intel_x64/vmcs/vmcs.h>
-#include <hve/arch/intel_x64/vmcs/vmcs_vmm_state.h>
-#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
+#include "../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
+#include "../../../../include/hve/arch/intel_x64/vmcs/vmcs_vmm_state.h"
+#include "../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
 
 using vmcs_eapis = vmcs_intel_x64_eapis;
 using vmm_state_eapis = vmcs_intel_x64_vmm_state_eapis;

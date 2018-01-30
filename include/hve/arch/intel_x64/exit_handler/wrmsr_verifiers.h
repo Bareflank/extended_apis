@@ -22,8 +22,8 @@
 #ifndef EXIT_HANDLER_INTEL_X64_EAPIS_WRMSR_VERIFIERS_H
 #define EXIT_HANDLER_INTEL_X64_EAPIS_WRMSR_VERIFIERS_H
 
-#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
-#include <hve/arch/intel_x64/exit_handler/verifiers.h>
+#include "../../../../hve/arch/intel_x64/exit_handler/exit_handler.h"
+#include "../../../../hve/arch/intel_x64/exit_handler/verifiers.h"
 
 /// @cond
 
@@ -50,21 +50,21 @@ constexpr const auto index_wrmsr_access_log                       = 0x0005009UL;
 
 #include <bfexports.h>
 
-#ifndef STATIC_EAPIS_EXIT_HANDLER
-#ifdef SHARED_EAPIS_EXIT_HANDLER
-#define EXPORT_EAPIS_EXIT_HANDLER EXPORT_SYM
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
 #else
-#define EXPORT_EAPIS_EXIT_HANDLER IMPORT_SYM
+#define EXPORT_EAPIS_HVE IMPORT_SYM
 #endif
 #else
-#define EXPORT_EAPIS_EXIT_HANDLER
+#define EXPORT_EAPIS_HVE
 #endif
 
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__trap_on_wrmsr_access :
+class EXPORT_EAPIS_HVE default_verifier__trap_on_wrmsr_access :
     public vmcall_verifier
 {
 public:
@@ -75,7 +75,7 @@ public:
     { bfignored(msr); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__trap_on_all_wrmsr_accesses :
+class EXPORT_EAPIS_HVE default_verifier__trap_on_all_wrmsr_accesses :
     public vmcall_verifier
 {
 public:
@@ -86,7 +86,7 @@ public:
     { return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__pass_through_wrmsr_access :
+class EXPORT_EAPIS_HVE default_verifier__pass_through_wrmsr_access :
     public vmcall_verifier
 {
 public:
@@ -97,7 +97,7 @@ public:
     { bfignored(msr); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__pass_through_all_wrmsr_accesses :
+class EXPORT_EAPIS_HVE default_verifier__pass_through_all_wrmsr_accesses :
     public vmcall_verifier
 {
 public:
@@ -108,7 +108,7 @@ public:
     { return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__whitelist_wrmsr_access :
+class EXPORT_EAPIS_HVE default_verifier__whitelist_wrmsr_access :
     public vmcall_verifier
 {
 public:
@@ -119,7 +119,7 @@ public:
     { bfignored(msrs); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__blacklist_wrmsr_access :
+class EXPORT_EAPIS_HVE default_verifier__blacklist_wrmsr_access :
     public vmcall_verifier
 {
 public:
@@ -130,7 +130,7 @@ public:
     { bfignored(msrs); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__log_wrmsr_access :
+class EXPORT_EAPIS_HVE default_verifier__log_wrmsr_access :
     public vmcall_verifier
 {
 public:
@@ -141,7 +141,7 @@ public:
     { bfignored(enabled); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__clear_wrmsr_access_log :
+class EXPORT_EAPIS_HVE default_verifier__clear_wrmsr_access_log :
     public vmcall_verifier
 {
 public:
@@ -152,7 +152,7 @@ public:
     { return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__wrmsr_access_log :
+class EXPORT_EAPIS_HVE default_verifier__wrmsr_access_log :
     public vmcall_verifier
 {
 public:

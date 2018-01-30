@@ -22,8 +22,8 @@
 #ifndef EXIT_HANDLER_INTEL_X64_EAPIS_MSR_VERIFIERS_H
 #define EXIT_HANDLER_INTEL_X64_EAPIS_MSR_VERIFIERS_H
 
-#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
-#include <hve/arch/intel_x64/exit_handler/verifiers.h>
+#include "../../../../hve/arch/intel_x64/exit_handler/exit_handler.h"
+#include "../../../../hve/arch/intel_x64/exit_handler/verifiers.h"
 
 /// @cond
 
@@ -42,21 +42,21 @@ constexpr const auto index_enable_msr_bitmap = 0x0003001UL;
 
 #include <bfexports.h>
 
-#ifndef STATIC_EAPIS_EXIT_HANDLER
-#ifdef SHARED_EAPIS_EXIT_HANDLER
-#define EXPORT_EAPIS_EXIT_HANDLER EXPORT_SYM
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
 #else
-#define EXPORT_EAPIS_EXIT_HANDLER IMPORT_SYM
+#define EXPORT_EAPIS_HVE IMPORT_SYM
 #endif
 #else
-#define EXPORT_EAPIS_EXIT_HANDLER
+#define EXPORT_EAPIS_HVE
 #endif
 
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__enable_msr_bitmap :
+class EXPORT_EAPIS_HVE default_verifier__enable_msr_bitmap :
     public vmcall_verifier
 {
 public:

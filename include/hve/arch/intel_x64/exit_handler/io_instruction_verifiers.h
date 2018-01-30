@@ -22,8 +22,8 @@
 #ifndef EXIT_HANDLER_INTEL_X64_EAPIS_IO_INSTRUCTION_VERIFIERS_H
 #define EXIT_HANDLER_INTEL_X64_EAPIS_IO_INSTRUCTION_VERIFIERS_H
 
-#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
-#include <hve/arch/intel_x64/exit_handler/verifiers.h>
+#include "../../../../hve/arch/intel_x64/exit_handler/exit_handler.h"
+#include "../../../../hve/arch/intel_x64/exit_handler/verifiers.h"
 
 /// @cond
 
@@ -51,21 +51,21 @@ constexpr const auto index_io_access_log                          = 0x000100AUL;
 
 #include <bfexports.h>
 
-#ifndef STATIC_EAPIS_EXIT_HANDLER
-#ifdef SHARED_EAPIS_EXIT_HANDLER
-#define EXPORT_EAPIS_EXIT_HANDLER EXPORT_SYM
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
 #else
-#define EXPORT_EAPIS_EXIT_HANDLER IMPORT_SYM
+#define EXPORT_EAPIS_HVE IMPORT_SYM
 #endif
 #else
-#define EXPORT_EAPIS_EXIT_HANDLER
+#define EXPORT_EAPIS_HVE
 #endif
 
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__enable_io_bitmaps :
+class EXPORT_EAPIS_HVE default_verifier__enable_io_bitmaps :
     public vmcall_verifier
 {
 public:
@@ -76,7 +76,7 @@ public:
     { bfignored(enabled); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__trap_on_io_access :
+class EXPORT_EAPIS_HVE default_verifier__trap_on_io_access :
     public vmcall_verifier
 {
 public:
@@ -87,7 +87,7 @@ public:
     { bfignored(port); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__trap_on_all_io_accesses :
+class EXPORT_EAPIS_HVE default_verifier__trap_on_all_io_accesses :
     public vmcall_verifier
 {
 public:
@@ -98,7 +98,7 @@ public:
     { return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__pass_through_io_access :
+class EXPORT_EAPIS_HVE default_verifier__pass_through_io_access :
     public vmcall_verifier
 {
 public:
@@ -109,7 +109,7 @@ public:
     { bfignored(port); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__pass_through_all_io_accesses :
+class EXPORT_EAPIS_HVE default_verifier__pass_through_all_io_accesses :
     public vmcall_verifier
 {
 public:
@@ -120,7 +120,7 @@ public:
     { return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__whitelist_io_access :
+class EXPORT_EAPIS_HVE default_verifier__whitelist_io_access :
     public vmcall_verifier
 {
 public:
@@ -131,7 +131,7 @@ public:
     { bfignored(ports); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__blacklist_io_access :
+class EXPORT_EAPIS_HVE default_verifier__blacklist_io_access :
     public vmcall_verifier
 {
 public:
@@ -142,7 +142,7 @@ public:
     { bfignored(ports); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__log_io_access :
+class EXPORT_EAPIS_HVE default_verifier__log_io_access :
     public vmcall_verifier
 {
 public:
@@ -153,7 +153,7 @@ public:
     { bfignored(enabled); return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__clear_io_access_log :
+class EXPORT_EAPIS_HVE default_verifier__clear_io_access_log :
     public vmcall_verifier
 {
 public:
@@ -164,7 +164,7 @@ public:
     { return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__io_access_log :
+class EXPORT_EAPIS_HVE default_verifier__io_access_log :
     public vmcall_verifier
 {
 public:

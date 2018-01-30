@@ -19,11 +19,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <hve/arch/intel_x64/vmcs/vmcs.h>
-#include <hve/arch/intel_x64/vmcs/ept_entry.h>
+#include "../../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
+#include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
 
-#include <bfintrinsics/include/arch/intel_x64/vmcs/32bit_control_fields.h>
-#include <bfintrinsics/include/arch/intel_x64/vmcs/64bit_control_fields.h>
+#include <intrinsics.h>
 
 using namespace intel_x64;
 using namespace vmcs;

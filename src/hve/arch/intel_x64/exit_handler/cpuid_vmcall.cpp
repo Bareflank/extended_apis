@@ -19,14 +19,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfsdk/include/bfjson.h>
-#include <bfsdk/include/bfstring.h>
+#include <bfjson.h>
+#include <bfstring.h>
 
-#include <hve/arch/intel_x64/exit_handler/exit_handler.h>
-#include <hve/arch/intel_x64/exit_handler/vmcall_interface.h>
-#include <hve/arch/intel_x64/exit_handler/verifiers.h>
-#include <hve/arch/intel_x64/exit_handler/cpuid_verifiers.h>
-
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/vmcall_interface.h"
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/verifiers.h"
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/cpuid_verifiers.h"
 
 void
 exit_handler_intel_x64_eapis::register_json_vmcall__cpuid()

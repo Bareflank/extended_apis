@@ -27,7 +27,7 @@
 #include <vector>
 #include <memory>
 
-#include <bfvmm/include/hve/arch/intel_x64/vmcs/vmcs.h>
+#include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
 
 #include <arch/x64/misc.h>
 #include <arch/x64/msrs.h>
@@ -39,14 +39,14 @@
 
 #include <bfexports.h>
 
-#ifndef STATIC_EAPIS_VMCS
-#ifdef SHARED_EAPIS_VMCS
-#define EXPORT_EAPIS_VMCS EXPORT_SYM
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
 #else
-#define EXPORT_EAPIS_VMCS IMPORT_SYM
+#define EXPORT_EAPIS_HVE IMPORT_SYM
 #endif
 #else
-#define EXPORT_EAPIS_VMCS
+#define EXPORT_EAPIS_HVE
 #endif
 
 #ifdef _MSC_VER
@@ -75,7 +75,7 @@
 /// Defines the EAPIs version of the VMCS. Note that this is intended to be
 /// subclassed.
 ///
-class EXPORT_EAPIS_VMCS vmcs_intel_x64_eapis : public vmcs_intel_x64
+class EXPORT_EAPIS_HVE vmcs_intel_x64_eapis : public vmcs_intel_x64
 {
 public:
 

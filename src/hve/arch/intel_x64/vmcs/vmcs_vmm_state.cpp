@@ -19,8 +19,9 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <hve/arch/intel_x64/vmcs/vmcs_vmm_state.h>
 #include <bfthreadcontext.h>
+#include <bfvmm/hve/arch/x64/idt.h>
+#include "../../../../../include/hve/arch/intel_x64/vmcs/vmcs_vmm_state.h"
 
 using namespace x64;
 using namespace intel_x64;

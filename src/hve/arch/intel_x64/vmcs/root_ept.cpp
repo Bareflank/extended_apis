@@ -20,8 +20,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfexception.h>
-#include <hve/arch/intel_x64/vmcs/root_ept.h>
-#include <bfvmm/include/memory_manager/memory_manager_x64.h>
+#include "../../../../../include/hve/arch/intel_x64/vmcs/root_ept.h"
+#include <bfvmm/memory_manager/memory_manager_x64.h>
 
 using namespace intel_x64;
 

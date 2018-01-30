@@ -48,14 +48,14 @@ constexpr const auto index_dump_denials                           = 0x0000003UL;
 
 #include <bfexports.h>
 
-#ifndef STATIC_EAPIS_EXIT_HANDLER
-#ifdef SHARED_EAPIS_EXIT_HANDLER
-#define EXPORT_EAPIS_EXIT_HANDLER EXPORT_SYM
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
 #else
-#define EXPORT_EAPIS_EXIT_HANDLER IMPORT_SYM
+#define EXPORT_EAPIS_HVE IMPORT_SYM
 #endif
 #else
-#define EXPORT_EAPIS_EXIT_HANDLER
+#define EXPORT_EAPIS_HVE
 #endif
 
 #ifdef _MSC_VER
@@ -74,7 +74,7 @@ constexpr const auto index_dump_denials                           = 0x0000003UL;
 /// These classes are intended to be subclassed to provide more fine grain
 /// control of your vmcall policy using a policy engine such as FLASK.
 ///
-class EXPORT_EAPIS_EXIT_HANDLER vmcall_verifier
+class EXPORT_EAPIS_HVE vmcall_verifier
 {
 public:
 
@@ -141,7 +141,7 @@ public:
 
 /// @cond
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__clear_denials :
+class EXPORT_EAPIS_HVE default_verifier__clear_denials :
     public vmcall_verifier
 {
 public:
@@ -152,7 +152,7 @@ public:
     { return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__dump_policy :
+class EXPORT_EAPIS_HVE default_verifier__dump_policy :
     public vmcall_verifier
 {
 public:
@@ -163,7 +163,7 @@ public:
     { return default_verify(); }
 };
 
-class EXPORT_EAPIS_EXIT_HANDLER default_verifier__dump_denials :
+class EXPORT_EAPIS_HVE default_verifier__dump_denials :
     public vmcall_verifier
 {
 public:
