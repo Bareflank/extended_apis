@@ -61,6 +61,10 @@ exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
 {
     switch (reason)
     {
+        case reason::cpuid:
+            handle_exit__cpuid();
+            break;
+
         case reason::monitor_trap_flag:
             handle_exit__monitor_trap_flag();
             break;
