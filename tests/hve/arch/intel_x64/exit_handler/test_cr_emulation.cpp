@@ -37,7 +37,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: invalid cr")
     auto vmcs = setup_vmcs(mocks, reason::control_register_accesses, 5);
     auto ehlr = setup_ehlr(vmcs);
 
-    CHECK_THROWS(ehlr->dispatch());
+    CHECK_NOTHROW(ehlr->dispatch());
 }
 
 TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr0")
