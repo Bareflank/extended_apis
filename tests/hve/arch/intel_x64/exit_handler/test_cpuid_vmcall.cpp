@@ -100,8 +100,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid invalid
     };
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -145,8 +145,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid allowed
     };
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -175,8 +175,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid logged"
     };
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -206,8 +206,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid denied"
     };
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -254,8 +254,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf allo
     json ijson = {{"command", "reset_cpuid_leaf"}, {"leaf", 0}, {"subleaf", 0}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -274,8 +274,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf logg
     json ijson = {{"command", "reset_cpuid_leaf"}, {"leaf", 0}, {"subleaf", 0}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -295,8 +295,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf deni
     json ijson = {{"command", "reset_cpuid_leaf"}, {"leaf", 0}, {"subleaf", 0}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -315,8 +315,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid all allow
     json ijson = {{"command", "reset_cpuid_all"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -335,8 +335,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid all logge
     json ijson = {{"command", "reset_cpuid_all"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -356,8 +356,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid all denie
     json ijson = {{"command", "reset_cpuid_all"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -400,8 +400,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access allo
     json ijson = {{"command", "log_cpuid_access"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -418,8 +418,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access logg
     json ijson = {{"command", "log_cpuid_access"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -437,8 +437,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access deni
     json ijson = {{"command", "log_cpuid_access"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -455,8 +455,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json clear cpuid access lo
     json ijson = {{"command", "clear_cpuid_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -473,8 +473,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json clear cpuid access lo
     json ijson = {{"command", "clear_cpuid_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -492,8 +492,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json clear cpuid access lo
     json ijson = {{"command", "clear_cpuid_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -510,8 +510,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json cpuid access log allo
     json ijson = {{"command", "cpuid_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
     ehlr->m_cpuid_access_log[0] = 8;
@@ -529,8 +529,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json cpuid access log logg
     json ijson = {{"command", "cpuid_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
     ehlr->m_cpuid_access_log[0] = 8;
@@ -549,8 +549,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json cpuid access log deni
     json ijson = {{"command", "cpuid_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
     ehlr->m_cpuid_access_log[0] = 8;
@@ -568,8 +568,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json dump cpuid emulations
     json ijson = {{"command", "dump_cpuid_emulations_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
     ehlr->m_cpuid_emu_map[0] = { 8, 8, 8, 8 };
@@ -587,8 +587,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json dump cpuid emulations
     json ijson = {{"command", "dump_cpuid_emulations_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
     ehlr->m_cpuid_emu_map[0] = { 8, 8, 8, 8 };
@@ -607,8 +607,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json dump cpuid emulations
     json ijson = {{"command", "dump_cpuid_emulations_log"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
     ehlr->m_cpuid_emu_map[0] = { 8, 8, 8, 8 };

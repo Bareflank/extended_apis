@@ -51,8 +51,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register enable vpid allowe
     regs.r03 = eapis_fun__enable_vpid;
 
     g_enable_vpid = false;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -72,8 +72,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register enable vpid logged
     regs.r03 = eapis_fun__enable_vpid;
 
     g_enable_vpid = false;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -93,8 +93,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register enable vpid denied
     regs.r03 = eapis_fun__enable_vpid;
 
     g_enable_vpid = false;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -114,8 +114,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register disable vpid allow
     regs.r03 = eapis_fun__disable_vpid;
 
     g_enable_vpid = true;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -135,8 +135,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register disable vpid logge
     regs.r03 = eapis_fun__disable_vpid;
 
     g_enable_vpid = true;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -156,8 +156,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register disable vpid denie
     regs.r03 = eapis_fun__disable_vpid;
 
     g_enable_vpid = true;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -200,8 +200,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid allow
     json ojson = {};
 
     g_enable_vpid = true;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -220,8 +220,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid logge
     json ojson = {};
 
     g_enable_vpid = true;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -241,8 +241,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid denie
     json ojson = {};
 
     g_enable_vpid = true;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 

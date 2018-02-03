@@ -41,6 +41,7 @@ exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis() :
     register_json_vmcall__msr();
     register_json_vmcall__rdmsr();
     register_json_vmcall__wrmsr();
+    register_json_vmcall__cpuid();
 }
 
 void

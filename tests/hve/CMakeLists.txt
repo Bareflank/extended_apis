@@ -36,117 +36,117 @@ do_test(test_cpuid_vmcall
     ${ARGN}
 )
 
-do_test(test_cr_emulation
-    SOURCES arch/intel_x64/exit_handler/test_cr_emulation.cpp
-    ${ARGN}
-)
-
-do_test(test_exit_handler
-    SOURCES arch/intel_x64/exit_handler/test_exit_handler.cpp
-    ${ARGN}
-)
-
-do_test(test_io_instruction_emulation
-    SOURCES arch/intel_x64/exit_handler/test_io_instruction_emulation.cpp
-    ${ARGN}
-)
-
-do_test(test_io_instruction_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_io_instruction_vmcall.cpp
-    ${ARGN}
-)
-
-do_test(test_monitor_trap_emulation
-    SOURCES arch/intel_x64/exit_handler/test_monitor_trap_emulation.cpp
-    ${ARGN}
-)
-
-do_test(test_msr_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_msr_vmcall.cpp
-    ${ARGN}
-)
-
-do_test(test_policy
-    SOURCES arch/intel_x64/exit_handler/test_policy.cpp
-    ${ARGN}
-)
-
-do_test(test_rdmsr_emulation
-    SOURCES arch/intel_x64/exit_handler/test_rdmsr_emulation.cpp
-    ${ARGN}
-)
-
-do_test(test_rdmsr_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_rdmsr_vmcall.cpp
-    ${ARGN}
-)
-
-do_test(test_verifiers
-    SOURCES arch/intel_x64/exit_handler/test_verifiers.cpp
-    ${ARGN}
-)
-
-do_test(test_verifiers_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_verifiers_vmcall.cpp
-    ${ARGN}
-)
-
-do_test(test_vpid_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_vpid_vmcall.cpp
-    ${ARGN}
-)
-
-do_test(test_wrmsr_emulation
-    SOURCES arch/intel_x64/exit_handler/test_wrmsr_emulation.cpp
-    ${ARGN}
-)
-
-do_test(test_wrmsr_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_wrmsr_vmcall.cpp
-    ${ARGN}
-)
-
-do_test(test_ept
-    SOURCES arch/intel_x64/vmcs/test_ept.cpp
-    ${ARGN}
-)
-
-do_test(test_ept_entry
-    SOURCES arch/intel_x64/vmcs/test_ept_entry.cpp
-    ${ARGN}
-)
-
-do_test(test_root_ept
-    SOURCES arch/intel_x64/vmcs/test_root_ept.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs
-    SOURCES arch/intel_x64/vmcs/test_vmcs.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs_cr
-    SOURCES arch/intel_x64/vmcs/test_vmcs_cr.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs_ept
-    SOURCES arch/intel_x64/vmcs/test_vmcs_ept.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs_io
-    SOURCES arch/intel_x64/vmcs/test_vmcs_io.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs_msr
-    SOURCES arch/intel_x64/vmcs/test_vmcs_msr.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs_vpid
-    SOURCES arch/intel_x64/vmcs/test_vmcs_vpid.cpp
-    ${ARGN}
-)
+#do_test(test_cr_emulation
+#    SOURCES arch/intel_x64/exit_handler/test_cr_emulation.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_exit_handler
+#    SOURCES arch/intel_x64/exit_handler/test_exit_handler.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_io_instruction_emulation
+#    SOURCES arch/intel_x64/exit_handler/test_io_instruction_emulation.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_io_instruction_vmcall
+#    SOURCES arch/intel_x64/exit_handler/test_io_instruction_vmcall.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_monitor_trap_emulation
+#    SOURCES arch/intel_x64/exit_handler/test_monitor_trap_emulation.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_msr_vmcall
+#    SOURCES arch/intel_x64/exit_handler/test_msr_vmcall.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_policy
+#    SOURCES arch/intel_x64/exit_handler/test_policy.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_rdmsr_emulation
+#    SOURCES arch/intel_x64/exit_handler/test_rdmsr_emulation.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_rdmsr_vmcall
+#    SOURCES arch/intel_x64/exit_handler/test_rdmsr_vmcall.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_verifiers
+#    SOURCES arch/intel_x64/exit_handler/test_verifiers.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_verifiers_vmcall
+#    SOURCES arch/intel_x64/exit_handler/test_verifiers_vmcall.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_vpid_vmcall
+#    SOURCES arch/intel_x64/exit_handler/test_vpid_vmcall.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_wrmsr_emulation
+#    SOURCES arch/intel_x64/exit_handler/test_wrmsr_emulation.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_wrmsr_vmcall
+#    SOURCES arch/intel_x64/exit_handler/test_wrmsr_vmcall.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_ept
+#    SOURCES arch/intel_x64/vmcs/test_ept.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_ept_entry
+#    SOURCES arch/intel_x64/vmcs/test_ept_entry.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_root_ept
+#    SOURCES arch/intel_x64/vmcs/test_root_ept.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_vmcs
+#    SOURCES arch/intel_x64/vmcs/test_vmcs.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_vmcs_cr
+#    SOURCES arch/intel_x64/vmcs/test_vmcs_cr.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_vmcs_ept
+#    SOURCES arch/intel_x64/vmcs/test_vmcs_ept.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_vmcs_io
+#    SOURCES arch/intel_x64/vmcs/test_vmcs_io.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_vmcs_msr
+#    SOURCES arch/intel_x64/vmcs/test_vmcs_msr.cpp
+#    ${ARGN}
+#)
+#
+#do_test(test_vmcs_vpid
+#    SOURCES arch/intel_x64/vmcs/test_vmcs_vpid.cpp
+#    ${ARGN}
+#)

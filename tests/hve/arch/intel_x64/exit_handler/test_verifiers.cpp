@@ -36,8 +36,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: overrun denials buffer")
     json ijson = {{"command", "enable_vpid"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     for (auto i = 0; i < DENIAL_LOG_SIZE + 10; i++) {
         CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));

@@ -52,8 +52,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on wrmsr acc
     regs.r04 = 42;
 
     g_wrmsr = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -74,8 +74,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on wrmsr acc
     regs.r04 = 42;
 
     g_wrmsr = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -96,8 +96,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on wrmsr acc
     regs.r04 = 42;
 
     g_wrmsr = 0;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -117,8 +117,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on all wrmsr
     regs.r03 = eapis_fun__trap_on_all_wrmsr_accesses;
 
     g_wrmsr = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -138,8 +138,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on all wrmsr
     regs.r03 = eapis_fun__trap_on_all_wrmsr_accesses;
 
     g_wrmsr = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -159,8 +159,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on all wrmsr
     regs.r03 = eapis_fun__trap_on_all_wrmsr_accesses;
 
     g_wrmsr = 0;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -181,8 +181,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through wrms
     regs.r04 = 42;
 
     g_wrmsr = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -203,8 +203,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through wrms
     regs.r04 = 42;
 
     g_wrmsr = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -225,8 +225,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through wrms
     regs.r04 = 42;
 
     g_wrmsr = 0;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -246,8 +246,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through all 
     regs.r03 = eapis_fun__pass_through_all_wrmsr_accesses;
 
     g_wrmsr = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -267,8 +267,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through all 
     regs.r03 = eapis_fun__pass_through_all_wrmsr_accesses;
 
     g_wrmsr = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -288,8 +288,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through all 
     regs.r03 = eapis_fun__pass_through_all_wrmsr_accesses;
 
     g_wrmsr = 0;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -334,8 +334,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access 
     json ijson2 = {{"command", "trap_on_wrmsr_access"}, {"msr_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -360,8 +360,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access 
     json ijson2 = {{"command", "trap_on_wrmsr_access"}, {"msr_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -388,8 +388,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access 
     json ijson2 = {{"command", "trap_on_wrmsr_access"}, {"msr_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -440,8 +440,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr ac
     json ijson2 = {{"command", "pass_through_wrmsr_access"}, {"msr_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -466,8 +466,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr ac
     json ijson2 = {{"command", "pass_through_wrmsr_access"}, {"msr_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -494,8 +494,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr ac
     json ijson2 = {{"command", "pass_through_wrmsr_access"}, {"msr_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -546,8 +546,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr acces
     json ijson2 = {{"command", "whitelist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -572,8 +572,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr acces
     json ijson2 = {{"command", "whitelist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -600,8 +600,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr acces
     json ijson2 = {{"command", "whitelist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -652,8 +652,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr acces
     json ijson2 = {{"command", "blacklist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -678,8 +678,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr acces
     json ijson2 = {{"command", "blacklist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -706,8 +706,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr acces
     json ijson2 = {{"command", "blacklist_wrmsr_access"}, {"msrs_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -755,8 +755,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access allo
     json ijson = {{"command", "log_wrmsr_access"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -773,8 +773,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access logg
     json ijson = {{"command", "log_wrmsr_access"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -792,8 +792,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access deni
     json ijson = {{"command", "log_wrmsr_access"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -810,8 +810,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json clear wrmsr access lo
     json ijson = {{"command", "clear_wrmsr_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -828,8 +828,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json clear wrmsr access lo
     json ijson = {{"command", "clear_wrmsr_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -847,8 +847,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json clear wrmsr access lo
     json ijson = {{"command", "clear_wrmsr_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -865,8 +865,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json wrmsr access log allo
     json ijson = {{"command", "wrmsr_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
     ehlr->m_wrmsr_access_log[42] = 42;
@@ -884,8 +884,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json wrmsr access log logg
     json ijson = {{"command", "wrmsr_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
     ehlr->m_wrmsr_access_log[42] = 42;
@@ -904,8 +904,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json wrmsr access log deni
     json ijson = {{"command", "wrmsr_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
     ehlr->m_wrmsr_access_log[42] = 42;

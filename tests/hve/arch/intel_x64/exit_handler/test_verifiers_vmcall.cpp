@@ -36,8 +36,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials allowed")
     json ijson = {{"command", "clear_denials"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
@@ -54,8 +54,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials logged")
     json ijson = {{"command", "clear_denials"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
@@ -72,8 +72,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials denied")
     json ijson = {{"command", "clear_denials"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
@@ -90,8 +90,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy allowed")
     json ijson = {{"command", "dump_policy"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
@@ -105,8 +105,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy logged")
     json ijson = {{"command", "dump_policy"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
@@ -120,8 +120,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy denied")
     json ijson = {{"command", "dump_policy"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
@@ -135,8 +135,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials allowed")
     json ijson = {{"command", "dump_denials"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
@@ -153,8 +153,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials logged")
     json ijson = {{"command", "dump_denials"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
@@ -170,8 +170,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials denied")
     json ijson = {{"command", "dump_denials"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));

@@ -40,6 +40,9 @@ namespace pin_ctls = vmcs::pin_based_vm_execution_controls;
 namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
 namespace proc_ctls2 = vmcs::secondary_processor_based_vm_execution_controls;
 
+extern bool g_deny_all;
+extern bool g_log_denials;
+
 std::map<msrs::field_type, msrs::value_type> g_msrs;
 std::map<vmcs::field_type, vmcs::value_type> g_vmcs;
 std::map<uint32_t, uint32_t> g_eax_cpuid;
@@ -56,8 +59,6 @@ bool g_monitor_trap_callback_called;
 bool g_enable_vpid;
 bool g_enable_io_bitmaps;
 bool g_enable_msr_bitmap;
-bool g_test_deny_all;
-bool g_test_log_denials;
 
 exit_handler_intel_x64_eapis::port_type g_port;
 exit_handler_intel_x64_eapis::msr_type g_rdmsr;

@@ -51,8 +51,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register enable i
     regs.r03 = eapis_fun__enable_io_bitmaps;
 
     g_enable_io_bitmaps = false;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -72,8 +72,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register enable i
     regs.r03 = eapis_fun__enable_io_bitmaps;
 
     g_enable_io_bitmaps = false;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -93,8 +93,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register enable i
     regs.r03 = eapis_fun__enable_io_bitmaps;
 
     g_enable_io_bitmaps = false;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -114,8 +114,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register disable 
     regs.r03 = eapis_fun__disable_io_bitmaps;
 
     g_enable_io_bitmaps = true;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -135,8 +135,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register disable 
     regs.r03 = eapis_fun__disable_io_bitmaps;
 
     g_enable_io_bitmaps = true;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -156,8 +156,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register disable 
     regs.r03 = eapis_fun__disable_io_bitmaps;
 
     g_enable_io_bitmaps = true;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -178,8 +178,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     regs.r04 = 42;
 
     g_port = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -200,8 +200,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     regs.r04 = 42;
 
     g_port = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -222,8 +222,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     regs.r04 = 42;
 
     g_port = 0;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -243,8 +243,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     regs.r03 = eapis_fun__trap_on_all_io_accesses;
 
     g_port = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -264,8 +264,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     regs.r03 = eapis_fun__trap_on_all_io_accesses;
 
     g_port = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -285,8 +285,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     regs.r03 = eapis_fun__trap_on_all_io_accesses;
 
     g_port = 0;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -307,8 +307,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     regs.r04 = 42;
 
     g_port = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -329,8 +329,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     regs.r04 = 42;
 
     g_port = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -351,8 +351,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     regs.r04 = 42;
 
     g_port = 0;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -372,8 +372,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     regs.r03 = eapis_fun__pass_through_all_io_accesses;
 
     g_port = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -393,8 +393,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     regs.r03 = eapis_fun__pass_through_all_io_accesses;
 
     g_port = 0;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -414,8 +414,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     regs.r03 = eapis_fun__pass_through_all_io_accesses;
 
     g_port = 0;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -458,8 +458,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bi
     json ijson2 = {{"command", "enable_io_bitmaps"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -484,8 +484,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bi
     json ijson2 = {{"command", "enable_io_bitmaps"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -512,8 +512,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bi
     json ijson2 = {{"command", "enable_io_bitmaps"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -564,8 +564,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io a
     json ijson2 = {{"command", "trap_on_io_access"}, {"port_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -590,8 +590,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io a
     json ijson2 = {{"command", "trap_on_io_access"}, {"port_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -618,8 +618,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io a
     json ijson2 = {{"command", "trap_on_io_access"}, {"port_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -670,8 +670,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through
     json ijson2 = {{"command", "pass_through_io_access"}, {"port_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -696,8 +696,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through
     json ijson2 = {{"command", "pass_through_io_access"}, {"port_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -724,8 +724,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through
     json ijson2 = {{"command", "pass_through_io_access"}, {"port_hex", "0x2A"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -776,8 +776,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io
     json ijson2 = {{"command", "whitelist_io_access"}, {"ports_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -802,8 +802,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io
     json ijson2 = {{"command", "whitelist_io_access"}, {"ports_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -830,8 +830,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io
     json ijson2 = {{"command", "whitelist_io_access"}, {"ports_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -882,8 +882,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io
     json ijson2 = {{"command", "blacklist_io_access"}, {"ports_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -908,8 +908,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io
     json ijson2 = {{"command", "blacklist_io_access"}, {"ports_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -936,8 +936,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io
     json ijson2 = {{"command", "blacklist_io_access"}, {"ports_hex", {"0x2A"}}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -985,8 +985,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io acces
     json ijson = {{"command", "log_io_access"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -1003,8 +1003,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io acces
     json ijson = {{"command", "log_io_access"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -1022,8 +1022,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io acces
     json ijson = {{"command", "log_io_access"}, {"enabled", false}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -1040,8 +1040,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json clear io acc
     json ijson = {{"command", "clear_io_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -1058,8 +1058,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json clear io acc
     json ijson = {{"command", "clear_io_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -1077,8 +1077,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json clear io acc
     json ijson = {{"command", "clear_io_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -1095,8 +1095,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access lo
     json ijson = {{"command", "io_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
     ehlr->m_io_access_log[42] = 42;
@@ -1114,8 +1114,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access lo
     json ijson = {{"command", "io_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
     ehlr->m_io_access_log[42] = 42;
@@ -1134,8 +1134,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access lo
     json ijson = {{"command", "io_access_log"}};
     json ojson = {};
 
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
     ehlr->m_io_access_log[42] = 42;

@@ -100,6 +100,7 @@ exit_handler_intel_x64_eapis::parse_emulate_cpuid_string(
      * mask. Use the bitwise '&' operator with the actual machine register
      * value to turn off any bits incorrectly set to 1. */
     passthru_mask = passthru_mask & machine_reg;
+
     /* The defined mask only contains bits explicitely enabled in the register
      * string. Use the bitwise '|' operator with the new passthru mask to
      * also enable bits set in the machine register and labeled as passthru in

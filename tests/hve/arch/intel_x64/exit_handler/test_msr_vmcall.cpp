@@ -51,8 +51,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_msr_vmcall: register enable msr bitmap a
     regs.r03 = eapis_fun__enable_msr_bitmap;
 
     g_enable_msr_bitmap = false;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -72,8 +72,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_msr_vmcall: register enable msr bitmap l
     regs.r03 = eapis_fun__enable_msr_bitmap;
 
     g_enable_msr_bitmap = false;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -93,8 +93,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_msr_vmcall: register enable msr bitmap d
     regs.r03 = eapis_fun__enable_msr_bitmap;
 
     g_enable_msr_bitmap = false;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -114,8 +114,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_msr_vmcall: register disable msr bitmap 
     regs.r03 = eapis_fun__disable_msr_bitmap;
 
     g_enable_msr_bitmap = true;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -135,8 +135,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_msr_vmcall: register disable msr bitmap 
     regs.r03 = eapis_fun__disable_msr_bitmap;
 
     g_enable_msr_bitmap = true;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -156,8 +156,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_msr_vmcall: register disable msr bitmap 
     regs.r03 = eapis_fun__disable_msr_bitmap;
 
     g_enable_msr_bitmap = true;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -200,8 +200,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_msr_vmcall: json enable msr bitmap allow
     json ojson = {};
 
     g_enable_msr_bitmap = true;
-    g_test_deny_all = false;
-    g_test_log_denials = false;
+    g_deny_all = false;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
@@ -220,8 +220,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_msr_vmcall: json enable msr bitmap logge
     json ojson = {};
 
     g_enable_msr_bitmap = true;
-    g_test_deny_all = false;
-    g_test_log_denials = true;
+    g_deny_all = false;
+    g_log_denials = true;
 
     ehlr->clear_denials();
 
@@ -241,8 +241,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_msr_vmcall: json enable msr bitmap denie
     json ojson = {};
 
     g_enable_msr_bitmap = true;
-    g_test_deny_all = true;
-    g_test_log_denials = false;
+    g_deny_all = true;
+    g_log_denials = false;
 
     ehlr->clear_denials();
 
