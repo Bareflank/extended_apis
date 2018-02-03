@@ -19,11 +19,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <test_support.h>
-#include <catch/catch.hpp>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
@@ -34,8 +33,8 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr0 load hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->enable_cr0_load_hook(42ULL, 42ULL);
-    CHECK(cr0_guest_host_mask::get() == 42ULL);
-    CHECK(cr0_read_shadow::get() == 42ULL);
+    CHECK(vmcs::cr0_guest_host_mask::get() == 42ULL);
+    CHECK(vmcs::cr0_read_shadow::get() == 42ULL);
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr0 load hook")
@@ -45,8 +44,8 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr0 load hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->disable_cr0_load_hook();
-    CHECK(cr0_guest_host_mask::get() == 0ULL);
-    CHECK(cr0_read_shadow::get() == 0ULL);
+    CHECK(vmcs::cr0_guest_host_mask::get() == 0ULL);
+    CHECK(vmcs::cr0_read_shadow::get() == 0ULL);
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr3 load hook")
@@ -56,7 +55,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr3 load hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->enable_cr3_load_hook();
-    CHECK(primary_processor_based_vm_execution_controls::cr3_load_exiting::is_enabled());
+    CHECK(proc_ctls::cr3_load_exiting::is_enabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr3 load hook")
@@ -66,7 +65,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr3 load hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->disable_cr3_load_hook();
-    CHECK(primary_processor_based_vm_execution_controls::cr3_load_exiting::is_disabled());
+    CHECK(proc_ctls::cr3_load_exiting::is_disabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr3 store hook")
@@ -76,7 +75,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr3 store hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->enable_cr3_store_hook();
-    CHECK(primary_processor_based_vm_execution_controls::cr3_store_exiting::is_enabled());
+    CHECK(proc_ctls::cr3_store_exiting::is_enabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr3 store hook")
@@ -86,7 +85,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr3 store hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->disable_cr3_store_hook();
-    CHECK(primary_processor_based_vm_execution_controls::cr3_store_exiting::is_disabled());
+    CHECK(proc_ctls::cr3_store_exiting::is_disabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr4 load hook")
@@ -96,8 +95,8 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr4 load hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->enable_cr4_load_hook(42ULL, 42ULL);
-    CHECK(cr4_guest_host_mask::get() == 42ULL);
-    CHECK(cr4_read_shadow::get() == 42ULL);
+    CHECK(vmcs::cr4_guest_host_mask::get() == 42ULL);
+    CHECK(vmcs::cr4_read_shadow::get() == 42ULL);
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr4 load hook")
@@ -107,8 +106,8 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr4 load hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->disable_cr4_load_hook();
-    CHECK(cr4_guest_host_mask::get() == 0ULL);
-    CHECK(cr4_read_shadow::get() == 0ULL);
+    CHECK(vmcs::cr4_guest_host_mask::get() == 0ULL);
+    CHECK(vmcs::cr4_read_shadow::get() == 0ULL);
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr8 load hook")
@@ -118,7 +117,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr8 load hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->enable_cr8_load_hook();
-    CHECK(primary_processor_based_vm_execution_controls::cr8_load_exiting::is_enabled());
+    CHECK(proc_ctls::cr8_load_exiting::is_enabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr8 load hook")
@@ -128,7 +127,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr8 load hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->disable_cr8_load_hook();
-    CHECK(primary_processor_based_vm_execution_controls::cr8_load_exiting::is_disabled());
+    CHECK(proc_ctls::cr8_load_exiting::is_disabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr8 store hook")
@@ -138,7 +137,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr8 store hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->enable_cr8_store_hook();
-    CHECK(primary_processor_based_vm_execution_controls::cr8_store_exiting::is_enabled());
+    CHECK(proc_ctls::cr8_store_exiting::is_enabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr8 store hook")
@@ -148,7 +147,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr8 store hook")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->disable_cr8_store_hook();
-    CHECK(primary_processor_based_vm_execution_controls::cr8_store_exiting::is_disabled());
+    CHECK(proc_ctls::cr8_store_exiting::is_disabled());
 }
 
 #endif

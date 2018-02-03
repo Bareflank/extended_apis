@@ -19,19 +19,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <test_support.h>
-#include <catch/catch.hpp>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
 
 using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace reason = vmcs::exit_reason::basic_exit_reason;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: exit")
 {
     MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::monitor_trap_flag);
+    auto vmcs = setup_vmcs(mocks, reason::monitor_trap_flag);
     auto ehlr = setup_ehlr(vmcs);
 
     ehlr->register_monitor_trap(&exit_handler_ut::monitor_trap_callback);
@@ -41,7 +41,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: exit")
 TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: register trap")
 {
     MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::monitor_trap_flag);
+    auto vmcs = setup_vmcs(mocks, reason::monitor_trap_flag);
     auto ehlr = setup_ehlr(vmcs);
 
     ehlr->register_monitor_trap(&exit_handler_ut::monitor_trap_callback);
@@ -55,7 +55,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: register trap")
 TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: clear trap")
 {
     MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::monitor_trap_flag);
+    auto vmcs = setup_vmcs(mocks, reason::monitor_trap_flag);
     auto ehlr = setup_ehlr(vmcs);
 
     CHECK_THROWS(ehlr->dispatch());

@@ -21,8 +21,8 @@
 
 #include <test_support.h>
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 

@@ -26,8 +26,8 @@
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/vpid_verifiers.h"
 
 using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
 
 void
 exit_handler_intel_x64_eapis::register_json_vmcall__vpid()

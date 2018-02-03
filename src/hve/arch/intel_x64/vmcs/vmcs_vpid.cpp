@@ -21,21 +21,21 @@
 
 #include "../../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
 #include <intrinsics.h>
-#include <intrinsics.h>
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace proc_ctls2 = vmcs::secondary_processor_based_vm_execution_controls;
 
 void
 vmcs_intel_x64_eapis::enable_vpid()
 {
     vmcs::virtual_processor_identifier::set(m_vpid);
-    secondary_processor_based_vm_execution_controls::enable_vpid::enable();
+    proc_ctls2::enable_vpid::enable();
 }
 
 void
 vmcs_intel_x64_eapis::disable_vpid()
 {
     vmcs::virtual_processor_identifier::set(0UL);
-    secondary_processor_based_vm_execution_controls::enable_vpid::disable();
+    proc_ctls2::enable_vpid::disable();
 }

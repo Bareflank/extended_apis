@@ -24,9 +24,9 @@
 
 #include <intrinsics.h>
 
-using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace reason = vmcs::exit_reason::basic_exit_reason;
 
 exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis() :
     m_monitor_trap_callback(&exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback),
@@ -61,23 +61,23 @@ exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
 {
     switch (reason)
     {
-        case exit_reason::basic_exit_reason::monitor_trap_flag:
+        case reason::monitor_trap_flag:
             handle_exit__monitor_trap_flag();
             break;
 
-        case exit_reason::basic_exit_reason::io_instruction:
+        case reason::io_instruction:
             handle_exit__io_instruction();
             break;
 
-        case vmcs::exit_reason::basic_exit_reason::rdmsr:
+        case reason::rdmsr:
             handle_exit__rdmsr();
             break;
 
-        case vmcs::exit_reason::basic_exit_reason::wrmsr:
+        case reason::wrmsr:
             handle_exit__wrmsr();
             break;
 
-        case vmcs::exit_reason::basic_exit_reason::control_register_accesses:
+        case reason::control_register_accesses:
             handle_exit__ctl_reg_access();
             break;
 

@@ -24,7 +24,7 @@
 #include "../../../../../include/hve/arch/intel_x64/vmcs/vmcs_vmm_state.h"
 
 using namespace x64;
-using namespace intel_x64;
+namespace intel = intel_x64;
 
 // -----------------------------------------------------------------------------
 // Interrupt Service Routines

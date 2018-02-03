@@ -19,23 +19,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <test_support.h>
-#include <catch/catch.hpp>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace io_qual = vmcs::exit_qualification::io_instruction;
+namespace reason = vmcs::exit_reason::basic_exit_reason;
+namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_emulation: exit")
 {
     MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::io_instruction);
+    auto vmcs = setup_vmcs(mocks, reason::io_instruction);
     auto ehlr = setup_ehlr(vmcs);
 
     ehlr->log_io_access(true);
-    g_vmcs[vmcs::exit_qualification::addr] = 42 << exit_qualification::io_instruction::port_number::from;
+    g_vmcs[vmcs::exit_qualification::addr] = 42 << io_qual::port_number::from;
 
     CHECK_NOTHROW(ehlr->dispatch());
     CHECK(ehlr->m_io_access_log[42] == 1);
@@ -44,51 +45,51 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_emulation: exit")
 TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_emulation: log io access enabled")
 {
     MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::io_instruction);
+    auto vmcs = setup_vmcs(mocks, reason::io_instruction);
     auto ehlr = setup_ehlr(vmcs);
 
     ehlr->log_io_access(true);
-    g_vmcs[vmcs::exit_qualification::addr] = 42 << exit_qualification::io_instruction::port_number::from;
+    g_vmcs[vmcs::exit_qualification::addr] = 42 << io_qual::port_number::from;
 
-    g_vmcs[primary_processor_based_vm_execution_controls::addr] = 0xFFFFFFFFFFFFFFFF;
+    g_vmcs[proc_ctls::addr] = 0xFFFFFFFFFFFFFFFF;
 
     ehlr->dispatch();
     CHECK(ehlr->m_io_access_log[42] == 1);
-    CHECK(primary_processor_based_vm_execution_controls::use_io_bitmaps::is_disabled());
+    CHECK(proc_ctls::use_io_bitmaps::is_disabled());
 
-    g_vmcs[vmcs::exit_reason::addr] = exit_reason::basic_exit_reason::monitor_trap_flag;
+    g_vmcs[vmcs::exit_reason::addr] = reason::monitor_trap_flag;
     ehlr->dispatch();
-    CHECK(primary_processor_based_vm_execution_controls::use_io_bitmaps::is_enabled());
+    CHECK(proc_ctls::use_io_bitmaps::is_enabled());
 }
 
 TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_emulation: log io access disabled")
 {
     MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::io_instruction);
+    auto vmcs = setup_vmcs(mocks, reason::io_instruction);
     auto ehlr = setup_ehlr(vmcs);
 
     ehlr->log_io_access(false);
-    g_vmcs[vmcs::exit_qualification::addr] = 42 << exit_qualification::io_instruction::port_number::from;
+    g_vmcs[vmcs::exit_qualification::addr] = 42 << io_qual::port_number::from;
 
-    g_vmcs[primary_processor_based_vm_execution_controls::addr] = 0xFFFFFFFFFFFFFFFF;
+    g_vmcs[proc_ctls::addr] = 0xFFFFFFFFFFFFFFFF;
 
     ehlr->dispatch();
     CHECK(ehlr->m_io_access_log[42] == 0);
-    CHECK(primary_processor_based_vm_execution_controls::use_io_bitmaps::is_disabled());
+    CHECK(proc_ctls::use_io_bitmaps::is_disabled());
 
-    g_vmcs[vmcs::exit_reason::addr] = exit_reason::basic_exit_reason::monitor_trap_flag;
+    g_vmcs[vmcs::exit_reason::addr] = reason::monitor_trap_flag;
     ehlr->dispatch();
-    CHECK(primary_processor_based_vm_execution_controls::use_io_bitmaps::is_enabled());
+    CHECK(proc_ctls::use_io_bitmaps::is_enabled());
 }
 
 TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_emulation: clear io access log")
 {
     MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::io_instruction);
+    auto vmcs = setup_vmcs(mocks, reason::io_instruction);
     auto ehlr = setup_ehlr(vmcs);
 
     ehlr->log_io_access(true);
-    g_vmcs[vmcs::exit_qualification::addr] = 42 << exit_qualification::io_instruction::port_number::from;
+    g_vmcs[vmcs::exit_qualification::addr] = 42 << io_qual::port_number::from;
 
     ehlr->dispatch();
     CHECK(ehlr->m_io_access_log[42] == 1);

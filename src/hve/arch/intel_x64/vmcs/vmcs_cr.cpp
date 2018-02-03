@@ -21,8 +21,8 @@
 
 #include <arch/intel_x64/vmcs.h>
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
 
 void
 vmcs_intel_x64_eapis::enable_cr0_load_hook(mask_type mask, shadow_type shadow)
@@ -34,13 +34,13 @@ vmcs_intel_x64_eapis::enable_cr0_load_hook(mask_type mask, shadow_type shadow)
 void
 vmcs_intel_x64_eapis::enable_cr3_load_hook()
 {
-    primary_processor_based_vm_execution_controls::cr3_load_exiting::enable();
+    proc_ctls::cr3_load_exiting::enable();
 }
 
 void
 vmcs_intel_x64_eapis::enable_cr3_store_hook()
 {
-    primary_processor_based_vm_execution_controls::cr3_store_exiting::enable();
+    proc_ctls::cr3_store_exiting::enable();
 }
 
 void
@@ -53,13 +53,13 @@ vmcs_intel_x64_eapis::enable_cr4_load_hook(mask_type mask, shadow_type shadow)
 void
 vmcs_intel_x64_eapis::enable_cr8_load_hook()
 {
-    primary_processor_based_vm_execution_controls::cr8_load_exiting::enable();
+    proc_ctls::cr8_load_exiting::enable();
 }
 
 void
 vmcs_intel_x64_eapis::enable_cr8_store_hook()
 {
-    primary_processor_based_vm_execution_controls::cr8_store_exiting::enable();
+    proc_ctls::cr8_store_exiting::enable();
 }
 
 void
@@ -72,13 +72,13 @@ vmcs_intel_x64_eapis::disable_cr0_load_hook()
 void
 vmcs_intel_x64_eapis::disable_cr3_load_hook()
 {
-    primary_processor_based_vm_execution_controls::cr3_load_exiting::disable();
+    proc_ctls::cr3_load_exiting::disable();
 }
 
 void
 vmcs_intel_x64_eapis::disable_cr3_store_hook()
 {
-    primary_processor_based_vm_execution_controls::cr3_store_exiting::disable();
+    proc_ctls::cr3_store_exiting::disable();
 }
 
 void
@@ -91,11 +91,11 @@ vmcs_intel_x64_eapis::disable_cr4_load_hook()
 void
 vmcs_intel_x64_eapis::disable_cr8_load_hook()
 {
-    primary_processor_based_vm_execution_controls::cr8_load_exiting::disable();
+    proc_ctls::cr8_load_exiting::disable();
 }
 
 void
 vmcs_intel_x64_eapis::disable_cr8_store_hook()
 {
-    primary_processor_based_vm_execution_controls::cr8_store_exiting::disable();
+    proc_ctls::cr8_store_exiting::disable();
 }

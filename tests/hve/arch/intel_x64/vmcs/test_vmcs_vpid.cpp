@@ -19,11 +19,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <test_support.h>
-#include <catch/catch.hpp>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
@@ -34,7 +33,7 @@ TEST_CASE("vmcs_intel_x64_eapis_vpid: enable vpid")
 
     vmcs->enable_vpid();
 
-    CHECK(secondary_processor_based_vm_execution_controls::enable_vpid::is_enabled());
+    CHECK(proc_ctls2::enable_vpid::is_enabled());
     CHECK(vmcs::virtual_processor_identifier::get() != 0);
 }
 
@@ -45,7 +44,7 @@ TEST_CASE("vmcs_intel_x64_eapis_vpid: disable vpid")
 
     vmcs->disable_vpid();
 
-    CHECK(secondary_processor_based_vm_execution_controls::enable_vpid::is_disabled());
+    CHECK(proc_ctls2::enable_vpid::is_disabled());
     CHECK(vmcs::virtual_processor_identifier::get() == 0);
 }
 

@@ -19,12 +19,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <test_support.h>
-#include <catch/catch.hpp>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace reason = vmcs::exit_reason::basic_exit_reason;
+namespace exit_qual = vmcs::exit_qualification;
+namespace ctlreg_access = exit_qual::control_register_access;
+namespace gpr = ctlreg_access::general_purpose_register;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
@@ -32,7 +34,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: invalid cr")
 {
     MockRepository mocks;
 
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 5);
+    auto vmcs = setup_vmcs(mocks, reason::control_register_accesses, 5);
     auto ehlr = setup_ehlr(vmcs);
 
     CHECK_THROWS(ehlr->dispatch());
@@ -42,36 +44,36 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr0")
 {
     MockRepository mocks;
 
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 0);
+    auto vmcs = setup_vmcs(mocks, reason::control_register_accesses, 0);
     auto ehlr = setup_ehlr(vmcs);
 
     g_state_save.rax = 42ULL;
 
     CHECK_NOTHROW(ehlr->dispatch());
-    CHECK(guest_cr0::get() == 42ULL);
+    CHECK(vmcs::guest_cr0::get() == 42ULL);
 }
 
 TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr3")
 {
     MockRepository mocks;
 
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 3);
+    auto vmcs = setup_vmcs(mocks, reason::control_register_accesses, 3);
     auto ehlr = setup_ehlr(vmcs);
 
     g_state_save.rax = 42ULL;
 
     CHECK_NOTHROW(ehlr->dispatch());
-    CHECK(guest_cr3::get() == 42ULL);
+    CHECK(vmcs::guest_cr3::get() == 42ULL);
 }
 
 TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov from cr3")
 {
     MockRepository mocks;
 
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 19);
+    auto vmcs = setup_vmcs(mocks, reason::control_register_accesses, 19);
     auto ehlr = setup_ehlr(vmcs);
 
-    guest_cr3::set(42ULL);
+    vmcs::guest_cr3::set(42ULL);
 
     CHECK_NOTHROW(ehlr->dispatch());
     CHECK(g_state_save.rax == 42ULL);
@@ -81,36 +83,36 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr4")
 {
     MockRepository mocks;
 
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 4);
+    auto vmcs = setup_vmcs(mocks, reason::control_register_accesses, 4);
     auto ehlr = setup_ehlr(vmcs);
 
     g_state_save.rax = 42ULL;
 
     CHECK_NOTHROW(ehlr->dispatch());
-    CHECK(guest_cr4::get() == 42ULL);
+    CHECK(vmcs::guest_cr4::get() == 42ULL);
 }
 
 TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr8")
 {
     MockRepository mocks;
 
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 8);
+    auto vmcs = setup_vmcs(mocks, reason::control_register_accesses, 8);
     auto ehlr = setup_ehlr(vmcs);
 
     g_state_save.rax = 42ULL;
 
     CHECK_NOTHROW(ehlr->dispatch());
-    CHECK(cr8::get() == 42ULL);
+    CHECK(intel::cr8::get() == 42ULL);
 }
 
 TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov from cr8")
 {
     MockRepository mocks;
 
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::control_register_accesses, 24);
+    auto vmcs = setup_vmcs(mocks, reason::control_register_accesses, 24);
     auto ehlr = setup_ehlr(vmcs);
 
-    cr8::set(42ULL);
+    intel::cr8::set(42ULL);
 
     CHECK_NOTHROW(ehlr->dispatch());
     CHECK(g_state_save.rax == 42ULL);
@@ -123,25 +125,22 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: get_gpr")
     auto vmcs = setup_vmcs(mocks, 0);
     auto ehlr = setup_ehlr(vmcs);
 
-    using namespace exit_qualification;
-    using namespace control_register_access;
-
-    CHECK(g_state_save.rax == ehlr->get_gpr(general_purpose_register::rax));
-    CHECK(g_state_save.rbx == ehlr->get_gpr(general_purpose_register::rbx));
-    CHECK(g_state_save.rcx == ehlr->get_gpr(general_purpose_register::rcx));
-    CHECK(g_state_save.rdx == ehlr->get_gpr(general_purpose_register::rdx));
-    CHECK(g_state_save.rsp == ehlr->get_gpr(general_purpose_register::rsp));
-    CHECK(g_state_save.rbp == ehlr->get_gpr(general_purpose_register::rbp));
-    CHECK(g_state_save.rsi == ehlr->get_gpr(general_purpose_register::rsi));
-    CHECK(g_state_save.rdi == ehlr->get_gpr(general_purpose_register::rdi));
-    CHECK(g_state_save.r08 == ehlr->get_gpr(general_purpose_register::r8));
-    CHECK(g_state_save.r09 == ehlr->get_gpr(general_purpose_register::r9));
-    CHECK(g_state_save.r10 == ehlr->get_gpr(general_purpose_register::r10));
-    CHECK(g_state_save.r11 == ehlr->get_gpr(general_purpose_register::r11));
-    CHECK(g_state_save.r12 == ehlr->get_gpr(general_purpose_register::r12));
-    CHECK(g_state_save.r13 == ehlr->get_gpr(general_purpose_register::r13));
-    CHECK(g_state_save.r14 == ehlr->get_gpr(general_purpose_register::r14));
-    CHECK(g_state_save.r15 == ehlr->get_gpr(general_purpose_register::r15));
+    CHECK(g_state_save.rax == ehlr->get_gpr(gpr::rax));
+    CHECK(g_state_save.rbx == ehlr->get_gpr(gpr::rbx));
+    CHECK(g_state_save.rcx == ehlr->get_gpr(gpr::rcx));
+    CHECK(g_state_save.rdx == ehlr->get_gpr(gpr::rdx));
+    CHECK(g_state_save.rsp == ehlr->get_gpr(gpr::rsp));
+    CHECK(g_state_save.rbp == ehlr->get_gpr(gpr::rbp));
+    CHECK(g_state_save.rsi == ehlr->get_gpr(gpr::rsi));
+    CHECK(g_state_save.rdi == ehlr->get_gpr(gpr::rdi));
+    CHECK(g_state_save.r08 == ehlr->get_gpr(gpr::r8));
+    CHECK(g_state_save.r09 == ehlr->get_gpr(gpr::r9));
+    CHECK(g_state_save.r10 == ehlr->get_gpr(gpr::r10));
+    CHECK(g_state_save.r11 == ehlr->get_gpr(gpr::r11));
+    CHECK(g_state_save.r12 == ehlr->get_gpr(gpr::r12));
+    CHECK(g_state_save.r13 == ehlr->get_gpr(gpr::r13));
+    CHECK(g_state_save.r14 == ehlr->get_gpr(gpr::r14));
+    CHECK(g_state_save.r15 == ehlr->get_gpr(gpr::r15));
 
     CHECK_THROWS(ehlr->get_gpr(0x1000));
 }
@@ -153,25 +152,22 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: set_gpr")
     auto vmcs = setup_vmcs(mocks, 0);
     auto ehlr = setup_ehlr(vmcs);
 
-    using namespace exit_qualification;
-    using namespace control_register_access;
-
-    ehlr->set_gpr(general_purpose_register::rax, 42ULL);
-    ehlr->set_gpr(general_purpose_register::rbx, 42ULL);
-    ehlr->set_gpr(general_purpose_register::rcx, 42ULL);
-    ehlr->set_gpr(general_purpose_register::rdx, 42ULL);
-    ehlr->set_gpr(general_purpose_register::rsp, 42ULL);
-    ehlr->set_gpr(general_purpose_register::rbp, 42ULL);
-    ehlr->set_gpr(general_purpose_register::rsi, 42ULL);
-    ehlr->set_gpr(general_purpose_register::rdi, 42ULL);
-    ehlr->set_gpr(general_purpose_register::r8, 42ULL);
-    ehlr->set_gpr(general_purpose_register::r9, 42ULL);
-    ehlr->set_gpr(general_purpose_register::r10, 42ULL);
-    ehlr->set_gpr(general_purpose_register::r11, 42ULL);
-    ehlr->set_gpr(general_purpose_register::r12, 42ULL);
-    ehlr->set_gpr(general_purpose_register::r13, 42ULL);
-    ehlr->set_gpr(general_purpose_register::r14, 42ULL);
-    ehlr->set_gpr(general_purpose_register::r15, 42ULL);
+    ehlr->set_gpr(gpr::rax, 42ULL);
+    ehlr->set_gpr(gpr::rbx, 42ULL);
+    ehlr->set_gpr(gpr::rcx, 42ULL);
+    ehlr->set_gpr(gpr::rdx, 42ULL);
+    ehlr->set_gpr(gpr::rsp, 42ULL);
+    ehlr->set_gpr(gpr::rbp, 42ULL);
+    ehlr->set_gpr(gpr::rsi, 42ULL);
+    ehlr->set_gpr(gpr::rdi, 42ULL);
+    ehlr->set_gpr(gpr::r8, 42ULL);
+    ehlr->set_gpr(gpr::r9, 42ULL);
+    ehlr->set_gpr(gpr::r10, 42ULL);
+    ehlr->set_gpr(gpr::r11, 42ULL);
+    ehlr->set_gpr(gpr::r12, 42ULL);
+    ehlr->set_gpr(gpr::r13, 42ULL);
+    ehlr->set_gpr(gpr::r14, 42ULL);
+    ehlr->set_gpr(gpr::r15, 42ULL);
 
     CHECK(g_state_save.rax == 42ULL);
     CHECK(g_state_save.rbx == 42ULL);

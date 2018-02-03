@@ -28,8 +28,9 @@
 #include <intrinsics.h>
 #include <intrinsics.h>
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
 
 /// Note:
 ///
@@ -62,15 +63,15 @@ vmcs_intel_x64_eapis::enable_msr_bitmap()
     m_msr_bitmap = std::make_unique<uint8_t[]>(x64::page_size);
     m_msr_bitmap_view = gsl::make_span(m_msr_bitmap, x64::page_size);
 
-    address_of_msr_bitmap::set(g_mm->virtptr_to_physint(m_msr_bitmap.get()));
-    primary_processor_based_vm_execution_controls::use_msr_bitmap::enable();
+    vmcs::address_of_msr_bitmap::set(g_mm->virtptr_to_physint(m_msr_bitmap.get()));
+    proc_ctls::use_msr_bitmap::enable();
 }
 
 void
 vmcs_intel_x64_eapis::disable_msr_bitmap()
 {
-    primary_processor_based_vm_execution_controls::use_msr_bitmap::disable();
-    address_of_msr_bitmap::set(0UL);
+    proc_ctls::use_msr_bitmap::disable();
+    vmcs::address_of_msr_bitmap::set(0UL);
 
     m_msr_bitmap_view = gsl::span<uint8_t>(nullptr);
     m_msr_bitmap.reset();

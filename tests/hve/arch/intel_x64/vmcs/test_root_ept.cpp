@@ -19,14 +19,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <test_support.h>
-#include <catch/catch.hpp>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
+#include "../../../../../include/hve/arch/intel_x64/vmcs/root_ept.h"
+#include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
 
-#include <vmcs/root_ept_intel_x64.h>
-#include <vmcs/ept_entry_intel_x64.h>
-
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace ept = intel_x64::ept;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 

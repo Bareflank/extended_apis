@@ -1,42 +1,30 @@
+#
+# Bareflank Hypervisor
+# Copyright (C) 2018 Assured Information Security, Inc.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
 cmake_minimum_required(VERSION 3.6)
 project(eapis_test C CXX)
-#include(${BF_FLAGS_DIR}/flags.cmake)
-#include(CTest)
-#enable_testing(true)
-
-#enable_language(ASM_NASM)
-
-# Temp hack until we can restructure unit tests
-#set(BUILD_SYSROOT_VMM ${BUILD_SYSROOT_TEST})
-
-#generate_flags(
-#    USERSPACE
-#    ADD_C_FLAGS "-DENABLE_UNITTESTING"
-#    ADD_CXX_FLAGS "-DENABLE_UNITTESTING"
-#    VERBOSE ${BUILD_VERBOSE}
-#)
-#
-#include_directories(
-#    ${CMAKE_CURRENT_LIST_DIR}/../include
-#    ${BUILD_SYSROOT_OS}/include
-#    ${BUILD_SYSROOT_TEST}/include
-#)
-#
-#link_directories(
-#    ${BUILD_SYSROOT_OS}/lib
-#    ${BUILD_SYSROOT_TEST}/lib
-#)
-#
-#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../src ${CMAKE_CURRENT_BINARY_DIR}/src)
-#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../src/exit_handler/tests ${CMAKE_CURRENT_BINARY_DIR}/src/exit_handler/tests)
-#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../src/misc/tests ${CMAKE_CURRENT_BINARY_DIR}/src/misc/tests)
-#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../src/vmcs/tests ${CMAKE_CURRENT_BINARY_DIR}/src/vmcs/tests)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project()
+init_project(
+    INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../include
+)
 
 add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
-add_subdirectory(../src/util ${CMAKE_CURRENT_BINARY_DIR}/src/util)
 
 add_subdirectory(hve)
 add_subdirectory(util)

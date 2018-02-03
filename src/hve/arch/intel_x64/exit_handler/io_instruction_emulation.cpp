@@ -24,8 +24,10 @@
 #include <arch/intel_x64/vmcs/32bit_control_fields.h>
 #include <arch/intel_x64/vmcs/natural_width_read_only_data_fields.h>
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
+namespace exit_qual = vmcs::exit_qualification;
 
 void
 exit_handler_intel_x64_eapis::log_io_access(bool enable)
@@ -38,7 +40,7 @@ exit_handler_intel_x64_eapis::clear_io_access_log()
 void
 exit_handler_intel_x64_eapis::trap_on_io_access_callback()
 {
-    primary_processor_based_vm_execution_controls::use_io_bitmaps::enable();
+    proc_ctls::use_io_bitmaps::enable();
     this->resume();
 }
 
@@ -48,8 +50,8 @@ exit_handler_intel_x64_eapis::handle_exit__io_instruction()
     register_monitor_trap(&exit_handler_intel_x64_eapis::trap_on_io_access_callback);
 
     if (m_io_access_log_enabled)
-        m_io_access_log[exit_qualification::io_instruction::port_number::get()]++;
+        m_io_access_log[exit_qual::io_instruction::port_number::get()]++;
 
-    primary_processor_based_vm_execution_controls::use_io_bitmaps::disable();
+    proc_ctls::use_io_bitmaps::disable();
     this->resume();
 }

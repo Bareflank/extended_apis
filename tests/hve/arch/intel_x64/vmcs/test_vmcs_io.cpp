@@ -19,11 +19,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <test_support.h>
-#include <catch/catch.hpp>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
@@ -41,9 +41,9 @@ TEST_CASE("vmcs_intel_x64_eapis_io: enable io bitmaps")
     CHECK(vmcs->m_io_bitmapa_view.size() == static_cast<std::ptrdiff_t>(x64::page_size));
     CHECK(vmcs->m_io_bitmapb_view.data() != nullptr);
     CHECK(vmcs->m_io_bitmapb_view.size() == static_cast<std::ptrdiff_t>(x64::page_size));
-    CHECK(address_of_io_bitmap_a::get() != 0);
-    CHECK(address_of_io_bitmap_b::get() != 0);
-    CHECK(primary_processor_based_vm_execution_controls::use_io_bitmaps::is_enabled());
+    CHECK(vmcs::address_of_io_bitmap_a::get() != 0);
+    CHECK(vmcs::address_of_io_bitmap_b::get() != 0);
+    CHECK(proc_ctls::use_io_bitmaps::is_enabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_io: disable io bitmaps")
@@ -60,9 +60,9 @@ TEST_CASE("vmcs_intel_x64_eapis_io: disable io bitmaps")
     CHECK(vmcs->m_io_bitmapa_view.empty());
     CHECK(vmcs->m_io_bitmapb_view.data() == nullptr);
     CHECK(vmcs->m_io_bitmapb_view.empty());
-    CHECK(address_of_io_bitmap_a::get() == 0);
-    CHECK(address_of_io_bitmap_b::get() == 0);
-    CHECK(primary_processor_based_vm_execution_controls::use_io_bitmaps::is_disabled());
+    CHECK(vmcs::address_of_io_bitmap_a::get() == 0);
+    CHECK(vmcs::address_of_io_bitmap_b::get() == 0);
+    CHECK(proc_ctls::use_io_bitmaps::is_disabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_io: trap on io access")

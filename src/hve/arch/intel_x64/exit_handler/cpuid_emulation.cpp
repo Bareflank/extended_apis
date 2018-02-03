@@ -20,7 +20,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
-
 #include <bfvmm/hve/arch/intel_x64/state_save.h>
 
 void

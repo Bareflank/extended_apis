@@ -20,7 +20,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <catch/catch.hpp>
-#include <bitmanip_eapis.h>
+#include "../../include/util/bitmanip.h"
 
 TEST_CASE("bitmanip_eapis: set bit from span")
 {

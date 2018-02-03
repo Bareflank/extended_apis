@@ -22,75 +22,76 @@
 #include "../../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
 #include <intrinsics.h>
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
 
 void
 vmcs_intel_x64_eapis::enable_cr0_load_hook(mask_type mask, shadow_type shadow)
 {
-    cr0_guest_host_mask::set(mask);
-    cr0_read_shadow::set(shadow);
+    vmcs::cr0_guest_host_mask::set(mask);
+    vmcs::cr0_read_shadow::set(shadow);
 }
 
 void
 vmcs_intel_x64_eapis::enable_cr3_load_hook()
 {
-    primary_processor_based_vm_execution_controls::cr3_load_exiting::enable();
+    proc_ctls::cr3_load_exiting::enable();
 }
 
 void
 vmcs_intel_x64_eapis::enable_cr3_store_hook()
 {
-    primary_processor_based_vm_execution_controls::cr3_store_exiting::enable();
+    proc_ctls::cr3_store_exiting::enable();
 }
 
 void
 vmcs_intel_x64_eapis::enable_cr4_load_hook(mask_type mask, shadow_type shadow)
 {
-    cr4_guest_host_mask::set(mask);
-    cr4_read_shadow::set(shadow);
+    vmcs::cr4_guest_host_mask::set(mask);
+    vmcs::cr4_read_shadow::set(shadow);
 }
 
 void
 vmcs_intel_x64_eapis::enable_cr8_load_hook()
 {
-    primary_processor_based_vm_execution_controls::cr8_load_exiting::enable();
+    proc_ctls::cr8_load_exiting::enable();
 }
 
 void
 vmcs_intel_x64_eapis::enable_cr8_store_hook()
 {
-    primary_processor_based_vm_execution_controls::cr8_store_exiting::enable();
+    proc_ctls::cr8_store_exiting::enable();
 }
 
 void vmcs_intel_x64_eapis::disable_cr0_load_hook()
 {
-    cr0_guest_host_mask::set(0ULL);
-    cr0_read_shadow::set(0ULL);
+    vmcs::cr0_guest_host_mask::set(0ULL);
+    vmcs::cr0_read_shadow::set(0ULL);
 }
 
 void vmcs_intel_x64_eapis::disable_cr3_load_hook()
 {
-    primary_processor_based_vm_execution_controls::cr3_load_exiting::disable();
+    proc_ctls::cr3_load_exiting::disable();
 }
 
 void vmcs_intel_x64_eapis::disable_cr3_store_hook()
 {
-    primary_processor_based_vm_execution_controls::cr3_store_exiting::disable();
+    proc_ctls::cr3_store_exiting::disable();
 }
 
 void vmcs_intel_x64_eapis::disable_cr4_load_hook()
 {
-    cr4_guest_host_mask::set(0ULL);
-    cr4_read_shadow::set(0ULL);
+    vmcs::cr4_guest_host_mask::set(0ULL);
+    vmcs::cr4_read_shadow::set(0ULL);
 }
 
 void vmcs_intel_x64_eapis::disable_cr8_load_hook()
 {
-    primary_processor_based_vm_execution_controls::cr8_load_exiting::disable();
+    proc_ctls::cr8_load_exiting::disable();
 }
 
 void vmcs_intel_x64_eapis::disable_cr8_store_hook()
 {
-    primary_processor_based_vm_execution_controls::cr8_store_exiting::disable();
+    proc_ctls::cr8_store_exiting::disable();
 }

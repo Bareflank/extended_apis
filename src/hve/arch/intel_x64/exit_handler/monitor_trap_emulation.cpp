@@ -25,13 +25,14 @@
 #include <arch/intel_x64/vmcs/32bit_read_only_data_fields.h>
 #include <arch/intel_x64/vmcs/natural_width_read_only_data_fields.h>
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
 
 void
 exit_handler_intel_x64_eapis::clear_monitor_trap()
 {
-    primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
+    proc_ctls::monitor_trap_flag::disable();
     m_monitor_trap_callback = &exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback;
 }
 

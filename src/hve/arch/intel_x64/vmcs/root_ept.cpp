@@ -23,7 +23,9 @@
 #include "../../../../../include/hve/arch/intel_x64/vmcs/root_ept.h"
 #include <bfvmm/memory_manager/memory_manager_x64.h>
 
-using namespace intel_x64;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace ept = intel_x64::ept;
 
 // -----------------------------------------------------------------------------
 // Implementation

@@ -19,12 +19,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <test_support.h>
-#include <catch/catch.hpp>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
 
 using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
@@ -37,8 +36,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials allowed")
     json ijson = {{"command", "clear_denials"}};
     json ojson = {};
 
-    g_deny_all = false;
-    g_log_denials = false;
+    g_test_deny_all = false;
+    g_test_log_denials = false;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
@@ -55,8 +54,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials logged")
     json ijson = {{"command", "clear_denials"}};
     json ojson = {};
 
-    g_deny_all = false;
-    g_log_denials = true;
+    g_test_deny_all = false;
+    g_test_log_denials = true;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
@@ -73,8 +72,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials denied")
     json ijson = {{"command", "clear_denials"}};
     json ojson = {};
 
-    g_deny_all = true;
-    g_log_denials = false;
+    g_test_deny_all = true;
+    g_test_log_denials = false;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
@@ -91,8 +90,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy allowed")
     json ijson = {{"command", "dump_policy"}};
     json ojson = {};
 
-    g_deny_all = false;
-    g_log_denials = false;
+    g_test_deny_all = false;
+    g_test_log_denials = false;
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
@@ -106,8 +105,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy logged")
     json ijson = {{"command", "dump_policy"}};
     json ojson = {};
 
-    g_deny_all = false;
-    g_log_denials = true;
+    g_test_deny_all = false;
+    g_test_log_denials = true;
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
@@ -121,8 +120,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy denied")
     json ijson = {{"command", "dump_policy"}};
     json ojson = {};
 
-    g_deny_all = true;
-    g_log_denials = false;
+    g_test_deny_all = true;
+    g_test_log_denials = false;
 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
@@ -136,8 +135,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials allowed")
     json ijson = {{"command", "dump_denials"}};
     json ojson = {};
 
-    g_deny_all = false;
-    g_log_denials = false;
+    g_test_deny_all = false;
+    g_test_log_denials = false;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
@@ -154,8 +153,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials logged")
     json ijson = {{"command", "dump_denials"}};
     json ojson = {};
 
-    g_deny_all = false;
-    g_log_denials = true;
+    g_test_deny_all = false;
+    g_test_log_denials = true;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
@@ -171,8 +170,8 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials denied")
     json ijson = {{"command", "dump_denials"}};
     json ojson = {};
 
-    g_deny_all = true;
-    g_log_denials = false;
+    g_test_deny_all = true;
+    g_test_log_denials = false;
     ehlr->m_denials.emplace_back("fake denial");
 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));

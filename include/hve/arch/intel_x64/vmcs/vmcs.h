@@ -688,7 +688,7 @@ public:
     ///
     void disable_event_management();
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -702,7 +702,9 @@ protected:
     std::unique_ptr<uint8_t[]> m_msr_bitmap;        ///< MSR bitmap
     gsl::span<uint8_t> m_msr_bitmap_view;           ///< View into MSR bitmap
 
+#ifndef ENABLE_BUILD_TEST
 protected:
+#endif
 
     /// Disable CR0 Load Hook
     ///
@@ -794,8 +796,9 @@ protected:
     ///
     void disable_cr8_store_hook();
 
+#ifndef ENABLE_BUILD_TEST
 protected:
-
+#endif
     /// Set the VMCS fields prior to launching
     ///
     /// Sets the VMCS fields. This function will be called

@@ -62,6 +62,8 @@ endif()
 
 add_shared_library(
     eapis_hve
+    DEPENDS bfvmm_hve
+    DEPENDS bfvmm_memory_manager
     SOURCES ${SOURCES}
     DEFINES SHARED_EAPIS_HVE
     DEFINES SHARED_HVE
@@ -71,6 +73,8 @@ add_shared_library(
 
 add_static_library(
     eapis_hve
+    DEPENDS bfvmm_hve
+    DEPENDS bfvmm_memory_manager
     SOURCES ${SOURCES}
     DEFINES STATIC_EAPIS_HVE
     DEFINES STATIC_HVE

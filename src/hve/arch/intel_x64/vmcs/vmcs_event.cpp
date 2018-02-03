@@ -21,9 +21,8 @@
 
 #include "../../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
 
-using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
 
 void
 vmcs_intel_x64_eapis::enable_event_management()
@@ -36,7 +35,7 @@ vmcs_intel_x64_eapis::enable_event_management()
     //     throw std::runtime_error("x2apic not enabled: failed to enable event management");
     // }
 
-    // if (primary_processor_based_vm_execution_controls::use_msr_bitmap::is_disabled()) {
+    // if (proc_ctls::use_msr_bitmap::is_disabled()) {
     //     throw std::runtime_error("msr bitmaps not enabled: failed to enable event management");
     // }
 
@@ -67,14 +66,14 @@ vmcs_intel_x64_eapis::enable_event_management()
     // bfdebug_nhex(0, "838", x64::msrs::get(0x838U));
     // bfdebug_nhex(0, "839", x64::msrs::get(0x839U));
 
-    pin_based_vm_execution_controls::external_interrupt_exiting::enable();
-    vm_exit_controls::acknowledge_interrupt_on_exit::enable();
+    vmcs::pin_based_vm_execution_controls::external_interrupt_exiting::enable();
+    vmcs::vm_exit_controls::acknowledge_interrupt_on_exit::enable();
 }
 
 void
 vmcs_intel_x64_eapis::disable_event_management()
 {
-    // if (primary_processor_based_vm_execution_controls::use_msr_bitmap::is_disabled()) {
+    // if (proc_ctls::use_msr_bitmap::is_disabled()) {
     //     throw std::runtime_error("msr bitmaps not enabled: failed to disable event management");
     // }
 
@@ -85,6 +84,6 @@ vmcs_intel_x64_eapis::disable_event_management()
     // this->disable_cr8_load_hook();
     // this->disable_cr8_store_hook();
 
-    vm_exit_controls::acknowledge_interrupt_on_exit::enable();
-    pin_based_vm_execution_controls::external_interrupt_exiting::disable();
+    vmcs::vm_exit_controls::acknowledge_interrupt_on_exit::enable();
+    vmcs::pin_based_vm_execution_controls::external_interrupt_exiting::disable();
 }

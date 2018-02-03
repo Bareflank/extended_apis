@@ -19,19 +19,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <test_support.h>
-#include <catch/catch.hpp>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_emulation: exit")
 {
     MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, exit_reason::basic_exit_reason::wrmsr);
+    auto vmcs = setup_vmcs(mocks, vmcs::exit_reason::basic_exit_reason::wrmsr);
     auto ehlr = setup_ehlr(vmcs);
 
     ehlr->log_wrmsr_access(true);

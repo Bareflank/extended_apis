@@ -19,10 +19,9 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <catch/catch.hpp>
-
 #include <bfbitmanip.h>
-#include <vmcs/ept_entry_intel_x64.h>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
+#include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
 
 using epte_type = ept_entry_intel_x64::integer_pointer;
 

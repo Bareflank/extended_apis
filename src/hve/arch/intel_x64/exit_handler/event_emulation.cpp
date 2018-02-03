@@ -24,16 +24,19 @@
 #include <intrinsics.h>
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
 
-using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
-using namespace primary_processor_based_vm_execution_controls;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
+namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
+namespace entry_irq_info = vmcs::vm_entry_interruption_information;
+namespace entry_irq_type = vmcs::vm_entry_interruption_information::interruption_type;
+namespace exit_irq_type = vmcs::vm_exit_interruption_information::interruption_type;
+namespace exit_irq_info = vmcs::vm_exit_interruption_information;
+namespace guest_irq_state = vmcs::guest_interruptibility_state;
+namespace guest_act_state = vmcs::guest_activity_state;
 
 static void
 set_vm_entry_interruption_information(const exit_handler_intel_x64_eapis::event &event)
 {
-    using namespace vm_entry_interruption_information;
-
     auto eii = 0ULL;
     auto deliver_error_code = false;
 
@@ -45,12 +48,12 @@ set_vm_entry_interruption_information(const exit_handler_intel_x64_eapis::event 
     //     bfdebug_subnhex(0, "event.error_code", event.error_code, msg);
     // });
 
-    if (event.type == interruption_type::non_maskable_interrupt) {
+    if (event.type == entry_irq_type::non_maskable_interrupt) {
         bfalert_info(0, "injecting non_maskable_interrupts is not supported. request ignored");
         return;
     }
 
-    if (event.type == interruption_type::hardware_exception) {
+    if (event.type == entry_irq_type::hardware_exception) {
 
         switch (event.vector) {
             case 8:
@@ -65,22 +68,22 @@ set_vm_entry_interruption_information(const exit_handler_intel_x64_eapis::event 
         }
     }
 
-    eii = vm_entry_interruption_information::vector::set(eii, event.vector);
-    eii = vm_entry_interruption_information::interruption_type::set(eii, event.type);
-    eii = vm_entry_interruption_information::deliver_error_code_bit::set(eii, deliver_error_code);
-    eii = vm_entry_interruption_information::valid_bit::enable(eii);
+    eii = entry_irq_info::vector::set(eii, event.vector);
+    eii = entry_irq_type::set(eii, event.type);
+    eii = entry_irq_info::deliver_error_code_bit::set(eii, deliver_error_code);
+    eii = entry_irq_info::valid_bit::enable(eii);
 
-    vm_entry_interruption_information::set(eii);
+    entry_irq_info::set(eii);
 
     if (deliver_error_code) {
-        vm_entry_exception_error_code::set(event.error_code & 0x7FFF);
+        vmcs::vm_entry_exception_error_code::set(event.error_code & 0x7FFF);
     }
 
     switch (event.type) {
-        case interruption_type::software_interrupt:
-        case interruption_type::privileged_software_exception:
-        case interruption_type::software_exception:
-            vm_entry_instruction_length::set(event.len);
+        case entry_irq_type::software_interrupt:
+        case entry_irq_type::privileged_software_exception:
+        case entry_irq_type::software_exception:
+            vmcs::vm_entry_instruction_length::set(event.len);
             break;
 
         default:
@@ -99,24 +102,24 @@ exit_handler_intel_x64_eapis::queue_event(
         error_code
     });
 
-    interrupt_window_exiting::enable();
+    proc_ctls::interrupt_window_exiting::enable();
 }
 
 void
 exit_handler_intel_x64_eapis::inject_event(
     vector_type vector, event_type type, instr_len_type len, error_code_type error_code)
 {
-    if (vmcs::guest_interruptibility_state::blocking_by_sti::is_enabled()) {
+    if (guest_irq_state::blocking_by_sti::is_enabled()) {
         return queue_event(vector, type, len, error_code);
     }
 
-    if (type == vm_entry_interruption_information::interruption_type::external_interrupt) {
+    if (type == entry_irq_type::external_interrupt) {
 
-        if (guest_rflags::interrupt_enable_flag::is_disabled()) {
+        if (vmcs::guest_rflags::interrupt_enable_flag::is_disabled()) {
             return queue_event(vector, type, len, error_code);
         }
 
-        if (vmcs::guest_interruptibility_state::get() != 0) {
+        if (guest_irq_state::get() != 0) {
             return queue_event(vector, type, len, error_code);
         }
     }
@@ -125,11 +128,11 @@ exit_handler_intel_x64_eapis::inject_event(
         return queue_event(vector, type, len, error_code);
     }
 
-    if (vm_entry_interruption_information::valid_bit::is_enabled()) {
+    if (entry_irq_info::valid_bit::is_enabled()) {
         return queue_event(vector, type, len, error_code);
     }
 
-    if (vmcs::guest_activity_state::get() != vmcs::guest_activity_state::active) {
+    if (guest_act_state::get() != guest_act_state::active) {
         return queue_event(vector, type, len, error_code);
     }
 
@@ -144,23 +147,23 @@ exit_handler_intel_x64_eapis::inject_event(
 void
 exit_handler_intel_x64_eapis::handle_exit__external_interrupt()
 {
-    auto eii = vm_exit_interruption_information::get();
+    auto eii = exit_irq_info::get();
 
-    if (vm_exit_interruption_information::valid_bit::is_disabled(eii)) {
+    if (exit_irq_info::valid_bit::is_disabled(eii)) {
         bfalert_info(0, "invalid interruption exit information. interrupt ignored");
         this->resume();
     }
 
-    if (vm_exit_interruption_information::nmi_unblocking_due_to_iret::is_enabled(eii)) {
+    if (exit_irq_info::nmi_unblocking_due_to_iret::is_enabled(eii)) {
         bfalert_info(0, "nmi_unblocking_due_to_iret is unsupported. interrupt ignored");
         this->resume();
     }
 
     inject_event(
-        vm_exit_interruption_information::vector::get(eii),
-        vm_exit_interruption_information::interruption_type::get(eii),
-        vm_exit_instruction_length::get(),
-        vm_exit_interruption_error_code::get()
+        exit_irq_info::vector::get(eii),
+        exit_irq_info::interruption_type::get(eii),
+        vmcs::vm_exit_instruction_length::get(),
+        vmcs::vm_exit_interruption_error_code::get()
     );
 
     this->resume();
@@ -177,22 +180,22 @@ exit_handler_intel_x64_eapis::handle_exit__interrupt_window()
     set_vm_entry_interruption_information(m_event_queue.front());
     m_event_queue.pop_front();
 
-    interrupt_window_exiting::set(!m_event_queue.empty());
+    proc_ctls::interrupt_window_exiting::set(!m_event_queue.empty());
     this->resume();
 }
 
 void
 exit_handler_intel_x64_eapis::enable_vmm_exceptions() noexcept
 {
-    m_tpr_shadow = cr8::get();
-    cr8::set(0x0FU);
+    m_tpr_shadow = intel::cr8::get();
+    intel::cr8::set(0x0FU);
 
-    rflags::interrupt_enable_flag::enable();
+    x64::rflags::interrupt_enable_flag::enable();
 }
 
 void
 exit_handler_intel_x64_eapis::disable_vmm_exceptions() noexcept
 {
-    rflags::interrupt_enable_flag::disable();
-    cr8::set(m_tpr_shadow);
+    x64::rflags::interrupt_enable_flag::disable();
+    intel::cr8::set(m_tpr_shadow);
 }

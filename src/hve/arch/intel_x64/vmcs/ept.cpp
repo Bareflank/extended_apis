@@ -20,13 +20,12 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfvector.h>
-
-#include "../../../../../include/hve/arch/intel_x64/vmcs/ept.h"
 #include <bfvmm/memory_manager/memory_manager_x64.h>
-
 #include <arch/x64/misc.h>
-using namespace x64;
-using namespace intel_x64;
+#include "../../../../../include/hve/arch/intel_x64/vmcs/ept.h"
+
+namespace intel = intel_x64;
+namespace ept = intel_x64::ept;
 
 ept_intel_x64::ept_intel_x64(pointer epte)
 {
@@ -54,7 +53,7 @@ ept_entry_intel_x64
 ept_intel_x64::add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end)
 {
     auto index = ept::index(gpa, bits);
-    auto entry = get_entry(index);
+    auto entry = get_entry(static_cast<uint64_t>(index));
 
     if (bits > end)
     {
@@ -93,7 +92,7 @@ void
 ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
 {
     auto index = ept::index(gpa, bits);
-    auto entry = get_entry(index);
+    auto entry = get_entry(static_cast<uint64_t>(index));
 
     if (entry.entry_type())
     {

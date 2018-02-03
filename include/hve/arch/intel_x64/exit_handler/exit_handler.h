@@ -161,7 +161,7 @@ public:
     virtual void inject_event(
         vector_type vector, event_type type, instr_len_type len, error_code_type error_code);
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -219,7 +219,7 @@ protected:
     ///
     void clear_monitor_trap();
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -232,11 +232,10 @@ protected:
 
     void resume() override;
     void advance_and_resume() override;
-    void promote(gsl::not_null<const void *> guest_gdt) override;
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -260,7 +259,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -290,7 +289,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -313,7 +312,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -337,7 +336,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -371,7 +370,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -390,7 +389,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -417,7 +416,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -444,7 +443,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -460,7 +459,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -496,7 +495,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -525,7 +524,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 protected:
 #endif
 
@@ -548,7 +547,7 @@ protected:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 private:
 #endif
 
@@ -556,7 +555,7 @@ private:
     monitor_trap_callback m_monitor_trap_callback{
         &exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback};
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 private:
 #endif
 
@@ -567,7 +566,7 @@ private:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 private:
 #endif
 
@@ -580,7 +579,7 @@ private:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 private:
 #endif
 
@@ -592,7 +591,7 @@ private:
 
     /// @endcond
 
-#ifndef ENABLE_UNITTESTING
+#ifndef ENABLE_BUILD_TEST
 private:
 #endif
 

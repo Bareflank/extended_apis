@@ -18,6 +18,8 @@
 
 list(APPEND ARGN
     DEPENDS eapis_hve
+    DEPENDS bfvmm_hve
+    DEPENDS bfvmm_memory_manager
     DEFINES STATIC_EAPIS_HVE
     DEFINES STATIC_HVE
     DEFINES STATIC_MEMORY_MANAGER

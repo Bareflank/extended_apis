@@ -19,11 +19,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <test_support.h>
-#include <catch/catch.hpp>
+#include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace intel = intel_x64;
+namespace vmcs = intel_x64::vmcs;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
@@ -34,10 +33,10 @@ TEST_CASE("vmcs_intel_x64_eapis_ept: enable ept")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->enable_ept(0x0000000ABCDEF0000);
-    CHECK(ept_pointer::memory_type::get() == ept_pointer::memory_type::write_back);
-    CHECK(ept_pointer::page_walk_length_minus_one::get() == 3UL);
-    CHECK(ept_pointer::phys_addr::get() == 0x0000000ABCDEF0000);
-    CHECK(secondary_processor_based_vm_execution_controls::enable_ept::is_enabled());
+    CHECK(vmcs::ept_pointer::memory_type::get() == vmcs::ept_pointer::memory_type::write_back);
+    CHECK(vmcs::ept_pointer::page_walk_length_minus_one::get() == 3UL);
+    CHECK(vmcs::ept_pointer::phys_addr::get() == 0x0000000ABCDEF0000);
+    CHECK(proc_ctls2::enable_ept::is_enabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_ept: disable ept")
@@ -47,8 +46,8 @@ TEST_CASE("vmcs_intel_x64_eapis_ept: disable ept")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->disable_ept();
-    CHECK(ept_pointer::get() == 0);
-    CHECK(secondary_processor_based_vm_execution_controls::enable_ept::is_disabled());
+    CHECK(vmcs::ept_pointer::get() == 0);
+    CHECK(proc_ctls2::enable_ept::is_disabled());
 }
 
 TEST_CASE("vmcs_intel_x64_eapis_ept: set eptp")
@@ -58,7 +57,7 @@ TEST_CASE("vmcs_intel_x64_eapis_ept: set eptp")
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->set_eptp(0x0000000ABCDEF0000);
-    CHECK(ept_pointer::phys_addr::get() == 0x0000000ABCDEF0000);
+    CHECK(vmcs::ept_pointer::phys_addr::get() == 0x0000000ABCDEF0000);
 }
 
 #endif

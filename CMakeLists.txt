@@ -1,6 +1,6 @@
 #
 # Bareflank Hypervisor
-# Copyright (C) 2015 Assured Information Security, Inc.
+# Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,3 +27,11 @@ add_subproject(
     DEPENDS eapis
     SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/main
 )
+
+if(ENABLE_BUILD_TEST)
+    add_subproject(
+        eapis test
+        DEPENDS bfvmm bfintrinsics
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
+    )
+endif()
