@@ -101,7 +101,7 @@ public:
     /// @ensures none
     //
     /// @param index the index of the entry to retrieve
-    /// @return an entry object constructed from the data at @param index.
+    /// @return an entry object constructed from the data at index.
     ///
     ept_entry_intel_x64 get_entry(index_type index);
 

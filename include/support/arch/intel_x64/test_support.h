@@ -64,9 +64,18 @@ exit_handler_intel_x64_eapis::port_type g_port;
 exit_handler_intel_x64_eapis::msr_type g_rdmsr;
 exit_handler_intel_x64_eapis::msr_type g_wrmsr;
 
+/// Exit handler unit test class
+///
+/// Extends the eapi exit handler for unit testing
+///
 class exit_handler_ut : public exit_handler_intel_x64_eapis
 {
 public:
+
+    /// Monitor Trap Callback
+    ///
+    /// A mocked version of the monitor callback.
+    ///
     void monitor_trap_callback()
     {
         g_monitor_trap_callback_called = true;
