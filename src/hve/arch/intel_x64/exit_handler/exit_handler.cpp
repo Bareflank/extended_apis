@@ -24,12 +24,11 @@
 
 #include <intrinsics.h>
 
-using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace exit_reason_basic = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
-exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis() :
-    m_monitor_trap_callback(&exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback),
+exit_handler_eapis::exit_handler::exit_handler() :
+    m_monitor_trap_callback(&exit_handler_eapis::exit_handler::unhandled_monitor_trap_callback),
     m_io_access_log_enabled(false),
     m_vmcs_eapis(nullptr)
 {
@@ -44,51 +43,51 @@ exit_handler_intel_x64_eapis::exit_handler_intel_x64_eapis() :
 }
 
 void
-exit_handler_intel_x64_eapis::resume()
+exit_handler_eapis::exit_handler::resume()
 {
     m_vmcs_eapis->resume();
 }
 
 void
-exit_handler_intel_x64_eapis::advance_and_resume()
+exit_handler_eapis::exit_handler::advance_and_resume()
 {
     this->advance_rip();
     m_vmcs_eapis->resume();
 }
 
 void
-exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
+exit_handler_eapis::exit_handler::handle_exit(::intel_x64::vmcs::value_type reason)
 {
     switch (reason)
     {
-        case exit_reason::basic_exit_reason::monitor_trap_flag:
+        case exit_reason_basic::monitor_trap_flag:
             handle_exit__monitor_trap_flag();
             break;
 
-        case exit_reason::basic_exit_reason::io_instruction:
+        case exit_reason_basic::io_instruction:
             handle_exit__io_instruction();
             break;
 
-        case vmcs::exit_reason::basic_exit_reason::rdmsr:
+        case exit_reason_basic::rdmsr:
             handle_exit__rdmsr();
             break;
 
-        case vmcs::exit_reason::basic_exit_reason::wrmsr:
+        case exit_reason_basic::wrmsr:
             handle_exit__wrmsr();
             break;
 
-        case vmcs::exit_reason::basic_exit_reason::control_register_accesses:
+        case exit_reason_basic::control_register_accesses:
             handle_exit__ctl_reg_access();
             break;
 
         default:
-            exit_handler_intel_x64::handle_exit(reason);
+            bfvmm::intel_x64::exit_handler::handle_exit(reason);
             break;
     }
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall_registers(vmcall_registers_t &regs)
+exit_handler_eapis::exit_handler::handle_vmcall_registers(vmcall_registers_t &regs)
 {
     switch (regs.r02)
     {
@@ -118,12 +117,12 @@ exit_handler_intel_x64_eapis::handle_vmcall_registers(vmcall_registers_t &regs)
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall_data_string_json(
+exit_handler_eapis::exit_handler::handle_vmcall_data_string_json(
     const json &ijson, json &ojson)
 {
     m_json_commands.at(ijson.at("command"))(ijson, ojson);
 }
 
 void
-exit_handler_intel_x64_eapis::json_success(json &ojson)
+exit_handler_eapis::exit_handler::json_success(json &ojson)
 { ojson = {"success"}; }

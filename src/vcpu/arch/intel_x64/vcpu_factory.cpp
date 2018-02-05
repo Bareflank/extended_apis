@@ -29,20 +29,20 @@
 #include "../../../../include/hve/arch/intel_x64/vmcs/vmcs_vmm_state.h"
 #include "../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
 
-using vmcs_eapis = vmcs_intel_x64_eapis;
-using vmm_state_eapis = vmcs_intel_x64_vmm_state_eapis;
-using exit_handler_eapis = exit_handler_intel_x64_eapis;
+using eapis_vmcs = eapis::hve::intel_x64::vmcs::vmcs;
+using eapis_vmm_state = eapis::hve::intel_x64::vmcs::vmcs_state_vmm;
+using eapis_exit_handler = eapis::hve::intel_x64::exit_handler::exit_handler;
 
-std::unique_ptr<vcpu>
-vcpu_factory::make_vcpu(vcpuid::type vcpuid, user_data *data)
+std::unique_ptr<bfvmm::vcpu>
+bfvmm::vcpu_factory::make_vcpu(vcpuid::type vcpuid, user_data *data)
 {
     bfignored(data);
 
-    auto vmcs = std::make_unique<vmcs_eapis>();
-    auto vmm_state = std::make_unique<vmm_state_eapis>();
-    auto exit_handler = std::make_unique<exit_handler_eapis>();
+    auto vmcs = std::make_unique<eapis_vmcs>();
+    auto vmm_state = std::make_unique<eapis_vmm_state>();
+    auto exit_handler = std::make_unique<eapis_exit_handler>();
 
-    return std::make_unique<vcpu_intel_x64>(
+    return std::make_unique<bfvmm::intel_x64::vcpu>(
                vcpuid,
                nullptr,                         // default vmxon
                std::move(vmcs),

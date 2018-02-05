@@ -23,19 +23,19 @@
 #include <intrinsics.h>
 #include <intrinsics.h>
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace proc_ctls2 = ::intel_x64::vmcs::secondary_processor_based_vm_execution_controls;
+namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 
 void
-vmcs_intel_x64_eapis::enable_vpid()
+vmcs_eapis::vmcs::enable_vpid()
 {
-    vmcs::virtual_processor_identifier::set(m_vpid);
-    secondary_processor_based_vm_execution_controls::enable_vpid::enable();
+    ::intel_x64::vmcs::virtual_processor_identifier::set(m_vpid);
+    proc_ctls2::enable_vpid::enable();
 }
 
 void
-vmcs_intel_x64_eapis::disable_vpid()
+vmcs_eapis::vmcs::disable_vpid()
 {
-    vmcs::virtual_processor_identifier::set(0UL);
-    secondary_processor_based_vm_execution_controls::enable_vpid::disable();
+    ::intel_x64::vmcs::virtual_processor_identifier::set(0UL);
+    proc_ctls2::enable_vpid::disable();
 }

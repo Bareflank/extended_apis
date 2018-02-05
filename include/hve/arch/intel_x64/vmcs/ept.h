@@ -61,7 +61,14 @@
 ///
 /// Defines an Extended Page Table
 ///
-class EXPORT_EAPIS_HVE ept_intel_x64
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+
+class EXPORT_EAPIS_HVE ept
 {
 public:
 
@@ -83,14 +90,14 @@ public:
     /// @param epte the parent extended page table entry that points to this
     ///     table
     ///
-    ept_intel_x64(pointer epte = nullptr);
+    ept(pointer epte = nullptr);
 
     /// Destructor
     ///
     /// @expects none
     /// @ensures none
     ///
-    ~ept_intel_x64() = default;
+    ~ept() = default;
 
     ///
     /// Get an EPT entry
@@ -103,7 +110,7 @@ public:
     /// @param index the index of the entry to retrieve
     /// @return an entry object constructed from the data at @param index.
     ///
-    ept_entry_intel_x64 get_entry(index_type index);
+    ept_entry get_entry(index_type index);
 
     /// Add Page (1G Granularity)
     ///
@@ -130,8 +137,8 @@ public:
     /// @param gpa the guest physical address of the page to add
     /// @return the resulting epte.
     ///
-    ept_entry_intel_x64 add_page_1g(integer_pointer gpa)
-    { return add_page(gpa, intel_x64::ept::pml4::from, intel_x64::ept::pdpt::from); }
+    ept_entry add_page_1g(integer_pointer gpa)
+    { return add_page(gpa, ::intel_x64::ept::pml4::from, ::intel_x64::ept::pdpt::from); }
 
     /// Add Page (2M Granularity)
     ///
@@ -158,8 +165,8 @@ public:
     /// @param gpa the guest physical address of the page to add
     /// @return the resulting epte.
     ///
-    ept_entry_intel_x64 add_page_2m(integer_pointer gpa)
-    { return add_page(gpa, intel_x64::ept::pml4::from, intel_x64::ept::pd::from); }
+    ept_entry add_page_2m(integer_pointer gpa)
+    { return add_page(gpa, ::intel_x64::ept::pml4::from, ::intel_x64::ept::pd::from); }
 
     /// Add Page (4K Granularity)
     ///
@@ -184,8 +191,8 @@ public:
     /// @param gpa the guest physical address of the page to add
     /// @return the resulting epte.
     ///
-    ept_entry_intel_x64 add_page_4k(integer_pointer gpa)
-    { return add_page(gpa, intel_x64::ept::pml4::from, intel_x64::ept::pt::from); }
+    ept_entry add_page_4k(integer_pointer gpa)
+    { return add_page(gpa, ::intel_x64::ept::pml4::from, ::intel_x64::ept::pt::from); }
 
     /// Remove Page
     ///
@@ -201,7 +208,7 @@ public:
     /// @param gpa the guest physical address of the page to remove
     ///
     void remove_page(integer_pointer gpa)
-    { remove_page(gpa, intel_x64::ept::pml4::from); }
+    { remove_page(gpa, ::intel_x64::ept::pml4::from); }
 
     /// Find Extended Page Table Entry
     ///
@@ -213,8 +220,8 @@ public:
     /// @param gpa the guest physical address of the page to lookup
     /// @return returns the EPT entry for the provided gpa or throws
     ///
-    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa) const
-    { return gpa_to_epte(gpa, intel_x64::ept::pml4::from); }
+    ept_entry gpa_to_epte(integer_pointer gpa) const
+    { return gpa_to_epte(gpa, ::intel_x64::ept::pml4::from); }
 
     /// Extended Page Table to Memory Descriptor List
     ///
@@ -237,9 +244,9 @@ private:
 
     /// @cond
 
-    ept_entry_intel_x64 add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end);
+    ept_entry add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end);
     void remove_page(integer_pointer gpa, integer_pointer bits);
-    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa, integer_pointer bits) const;
+    ept_entry gpa_to_epte(integer_pointer gpa, integer_pointer bits) const;
     memory_descriptor_list ept_to_mdl(memory_descriptor_list &mdl) const;
 
     bool empty() const noexcept;
@@ -251,20 +258,24 @@ private:
 private:
 
     std::unique_ptr<integer_pointer[]> m_ept;               ///< The allocated EPT
-    std::vector<std::unique_ptr<ept_intel_x64>> m_epts;     ///< List of EPTs this EPT points to
+    std::vector<std::unique_ptr<ept>> m_epts;     ///< List of EPTs this EPT points to
 
 public:
 
     /// @cond
 
-    ept_intel_x64(ept_intel_x64 &&) noexcept = default;
-    ept_intel_x64 &operator=(ept_intel_x64 &&) noexcept = default;
+    ept(ept &&) noexcept = default;
+    ept &operator=(ept &&) noexcept = default;
 
-    ept_intel_x64(const ept_intel_x64 &) = delete;
-    ept_intel_x64 &operator=(const ept_intel_x64 &) = delete;
+    ept(const ept &) = delete;
+    ept &operator=(const ept &) = delete;
 
     /// @endcond
 };
+
+}
+}
+}
 
 #ifdef _MSC_VER
 #pragma warning(pop)

@@ -21,16 +21,18 @@
 
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
 
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+
 void
-exit_handler_intel_x64_eapis::log_wrmsr_access(bool enable)
+exit_handler_eapis::exit_handler::log_wrmsr_access(bool enable)
 { m_wrmsr_access_log_enabled = enable; }
 
 void
-exit_handler_intel_x64_eapis::clear_wrmsr_access_log()
+exit_handler_eapis::exit_handler::clear_wrmsr_access_log()
 { m_wrmsr_access_log.clear(); }
 
 void
-exit_handler_intel_x64_eapis::handle_exit__wrmsr()
+exit_handler_eapis::exit_handler::handle_exit__wrmsr()
 {
     if (m_wrmsr_access_log_enabled) {
         m_wrmsr_access_log[static_cast<msr_type>(m_state_save->rcx)]++;

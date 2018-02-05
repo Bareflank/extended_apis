@@ -27,12 +27,10 @@
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/verifiers.h"
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/wrmsr_verifiers.h"
 
-using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
 void
-exit_handler_intel_x64_eapis::register_json_vmcall__wrmsr()
+exit_handler_eapis::exit_handler::register_json_vmcall__wrmsr()
 {
     m_json_commands["trap_on_wrmsr_access"] = [&](const auto & ijson, auto & ojson) {
         this->handle_vmcall__trap_on_wrmsr_access(json_hex_or_dec<msr_type>(ijson, "msr"));
@@ -70,7 +68,7 @@ exit_handler_intel_x64_eapis::register_json_vmcall__wrmsr()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__wrmsr(
+exit_handler_eapis::exit_handler::handle_vmcall__wrmsr(
     vmcall_registers_t &regs)
 {
     switch (regs.r03) {
@@ -96,7 +94,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__wrmsr(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__trap_on_wrmsr_access(
+exit_handler_eapis::exit_handler::handle_vmcall__trap_on_wrmsr_access(
     msr_type msr)
 {
     if (policy(trap_on_wrmsr_access)->verify(msr) != vmcall_verifier::allow) {
@@ -108,7 +106,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_wrmsr_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__trap_on_all_wrmsr_accesses()
+exit_handler_eapis::exit_handler::handle_vmcall__trap_on_all_wrmsr_accesses()
 {
     if (policy(trap_on_all_wrmsr_accesses)->verify() != vmcall_verifier::allow) {
         policy(trap_on_all_wrmsr_accesses)->deny_vmcall();
@@ -119,7 +117,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_all_wrmsr_accesses()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__pass_through_wrmsr_access(
+exit_handler_eapis::exit_handler::handle_vmcall__pass_through_wrmsr_access(
     msr_type msr)
 {
     if (policy(pass_through_wrmsr_access)->verify(msr) != vmcall_verifier::allow) {
@@ -131,7 +129,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_wrmsr_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_wrmsr_accesses()
+exit_handler_eapis::exit_handler::handle_vmcall__pass_through_all_wrmsr_accesses()
 {
     if (policy(pass_through_all_wrmsr_accesses)->verify() != vmcall_verifier::allow) {
         policy(pass_through_all_wrmsr_accesses)->deny_vmcall();
@@ -142,7 +140,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_wrmsr_accesses()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__whitelist_wrmsr_access(
+exit_handler_eapis::exit_handler::handle_vmcall__whitelist_wrmsr_access(
     msr_list_type msrs)
 {
     if (policy(whitelist_wrmsr_access)->verify(msrs) != vmcall_verifier::allow) {
@@ -158,7 +156,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__whitelist_wrmsr_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__blacklist_wrmsr_access(
+exit_handler_eapis::exit_handler::handle_vmcall__blacklist_wrmsr_access(
     msr_list_type msrs)
 {
     if (policy(blacklist_wrmsr_access)->verify(msrs) != vmcall_verifier::allow) {
@@ -174,7 +172,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__blacklist_wrmsr_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__log_wrmsr_access(
+exit_handler_eapis::exit_handler::handle_vmcall__log_wrmsr_access(
     bool enabled)
 {
     if (policy(log_wrmsr_access)->verify(enabled) != vmcall_verifier::allow) {
@@ -186,7 +184,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__log_wrmsr_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__clear_wrmsr_access_log()
+exit_handler_eapis::exit_handler::handle_vmcall__clear_wrmsr_access_log()
 {
     if (policy(clear_wrmsr_access_log)->verify() != vmcall_verifier::allow) {
         policy(clear_wrmsr_access_log)->deny_vmcall();
@@ -197,7 +195,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__clear_wrmsr_access_log()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__wrmsr_access_log(
+exit_handler_eapis::exit_handler::handle_vmcall__wrmsr_access_log(
     json &ojson)
 {
     if (policy(wrmsr_access_log)->verify() != vmcall_verifier::allow) {

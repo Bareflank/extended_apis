@@ -27,8 +27,10 @@
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/verifiers.h"
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/cpuid_verifiers.h"
 
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+
 void
-exit_handler_intel_x64_eapis::register_json_vmcall__cpuid()
+exit_handler_eapis::exit_handler::register_json_vmcall__cpuid()
 {
     m_json_commands["emulate_cpuid"] = [&](const auto & ijson, auto & ojson) {
         this->handle_vmcall__emulate_cpuid(json_hex_or_dec<cpuid_type>(ijson, "leaf"),
@@ -68,14 +70,14 @@ exit_handler_intel_x64_eapis::register_json_vmcall__cpuid()
 }
 
 uint64_t
-exit_handler_intel_x64_eapis::create_key(
+exit_handler_eapis::exit_handler::create_key(
     cpuid_key_type leaf, cpuid_key_type subleaf)
 {
     return (leaf << 32) | subleaf;
 }
 
 uint64_t
-exit_handler_intel_x64_eapis::parse_emulate_cpuid_string(
+exit_handler_eapis::exit_handler::parse_emulate_cpuid_string(
     std::string reg_string, cpuid_key_type machine_reg)
 {
     cpuid_key_type defined_mask = 0;
@@ -109,7 +111,7 @@ exit_handler_intel_x64_eapis::parse_emulate_cpuid_string(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__emulate_cpuid(
+exit_handler_eapis::exit_handler::handle_vmcall__emulate_cpuid(
     cpuid_type leaf, cpuid_type subleaf,
     std::string eax, std::string ebx, std::string ecx, std::string edx)
 {
@@ -136,7 +138,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__emulate_cpuid(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__reset_cpuid_leaf(
+exit_handler_eapis::exit_handler::handle_vmcall__reset_cpuid_leaf(
     cpuid_type leaf, cpuid_type subleaf)
 {
     if (policy(reset_cpuid_leaf)->verify(leaf, subleaf) != vmcall_verifier::allow) {
@@ -152,7 +154,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__reset_cpuid_leaf(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__reset_cpuid_all()
+exit_handler_eapis::exit_handler::handle_vmcall__reset_cpuid_all()
 {
     if (policy(reset_cpuid_all)->verify() != vmcall_verifier::allow) {
         policy(reset_cpuid_all)->deny_vmcall();
@@ -164,7 +166,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__reset_cpuid_all()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__log_cpuid_access(
+exit_handler_eapis::exit_handler::handle_vmcall__log_cpuid_access(
     bool enabled)
 {
     if (policy(log_cpuid_access)->verify(enabled) != vmcall_verifier::allow) {
@@ -177,7 +179,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__log_cpuid_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__clear_cpuid_access_log()
+exit_handler_eapis::exit_handler::handle_vmcall__clear_cpuid_access_log()
 {
     if (policy(clear_cpuid_access_log)->verify() != vmcall_verifier::allow) {
         policy(clear_cpuid_access_log)->deny_vmcall();
@@ -189,7 +191,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__clear_cpuid_access_log()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__cpuid_access_log(
+exit_handler_eapis::exit_handler::handle_vmcall__cpuid_access_log(
     json &ojson)
 {
     if (policy(cpuid_access_log)->verify() != vmcall_verifier::allow) {
@@ -204,7 +206,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__cpuid_access_log(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__dump_cpuid_emulations_log(
+exit_handler_eapis::exit_handler::handle_vmcall__dump_cpuid_emulations_log(
     json &ojson)
 {
     if (policy(dump_cpuid_emulations_log)->verify() != vmcall_verifier::allow) {

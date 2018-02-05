@@ -25,22 +25,21 @@
 #include <arch/intel_x64/vmcs/32bit_read_only_data_fields.h>
 #include <arch/intel_x64/vmcs/natural_width_read_only_data_fields.h>
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
 void
-exit_handler_intel_x64_eapis::clear_monitor_trap()
+exit_handler_eapis::exit_handler::clear_monitor_trap()
 {
-    primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
-    m_monitor_trap_callback = &exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback;
+    ::intel_x64::vmcs::primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
+    m_monitor_trap_callback = &exit_handler_eapis::exit_handler::unhandled_monitor_trap_callback;
 }
 
 void
-exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback()
+exit_handler_eapis::exit_handler::unhandled_monitor_trap_callback()
 { throw std::logic_error("unhandled_monitor_trap_callback called!!!"); }
 
 void
-exit_handler_intel_x64_eapis::handle_exit__monitor_trap_flag()
+exit_handler_eapis::exit_handler::handle_exit__monitor_trap_flag()
 {
     auto callback = m_monitor_trap_callback;
 

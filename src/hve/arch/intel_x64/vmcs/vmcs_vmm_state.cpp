@@ -23,8 +23,7 @@
 #include <bfvmm/hve/arch/x64/idt.h>
 #include "../../../../../include/hve/arch/intel_x64/vmcs/vmcs_vmm_state.h"
 
-using namespace x64;
-using namespace intel_x64;
+namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 
 // -----------------------------------------------------------------------------
 // Interrupt Service Routines
@@ -298,7 +297,7 @@ extern "C" void _isr255(void) noexcept;
 // VMM State Implementation
 // -----------------------------------------------------------------------------
 
-vmcs_intel_x64_vmm_state_eapis::vmcs_intel_x64_vmm_state_eapis()
+vmcs_eapis::vmcs_state_vmm::vmcs_state_vmm()
 {
     m_idt.set(0, _isr0, 0x8);
     m_idt.set(1, _isr1, 0x8);

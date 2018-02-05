@@ -28,30 +28,30 @@
 #include <intrinsics.h>
 #include <intrinsics.h>
 
-using namespace intel_x64;
-using namespace vmcs;
+namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_controls;
+namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 
 void
-vmcs_intel_x64_eapis::enable_io_bitmaps()
+vmcs_eapis::vmcs::enable_io_bitmaps()
 {
     m_io_bitmapa = std::make_unique<uint8_t[]>(x64::page_size);
     m_io_bitmapb = std::make_unique<uint8_t[]>(x64::page_size);
     m_io_bitmapa_view = gsl::make_span(m_io_bitmapa, x64::page_size);
     m_io_bitmapb_view = gsl::make_span(m_io_bitmapb, x64::page_size);
 
-    address_of_io_bitmap_a::set(g_mm->virtptr_to_physint(m_io_bitmapa.get()));
-    address_of_io_bitmap_b::set(g_mm->virtptr_to_physint(m_io_bitmapb.get()));
+    ::intel_x64::vmcs::address_of_io_bitmap_a::set(g_mm->virtptr_to_physint(m_io_bitmapa.get()));
+    ::intel_x64::vmcs::address_of_io_bitmap_b::set(g_mm->virtptr_to_physint(m_io_bitmapb.get()));
 
-    primary_processor_based_vm_execution_controls::use_io_bitmaps::enable();
+    proc_ctls::use_io_bitmaps::enable();
 }
 
 void
-vmcs_intel_x64_eapis::disable_io_bitmaps()
+vmcs_eapis::vmcs::disable_io_bitmaps()
 {
-    primary_processor_based_vm_execution_controls::use_io_bitmaps::disable();
+    proc_ctls::use_io_bitmaps::disable();
 
-    address_of_io_bitmap_a::set(0UL);
-    address_of_io_bitmap_b::set(0UL);
+    ::intel_x64::vmcs::address_of_io_bitmap_a::set(0UL);
+    ::intel_x64::vmcs::address_of_io_bitmap_b::set(0UL);
 
     m_io_bitmapa_view = gsl::span<uint8_t>(nullptr);
     m_io_bitmapb_view = gsl::span<uint8_t>(nullptr);
@@ -60,7 +60,7 @@ vmcs_intel_x64_eapis::disable_io_bitmaps()
 }
 
 void
-vmcs_intel_x64_eapis::trap_on_io_access(port_type port)
+vmcs_eapis::vmcs::trap_on_io_access(port_type port)
 {
     if (!m_io_bitmapa || !m_io_bitmapb)
         throw std::runtime_error("io bitmaps not enabled");
@@ -78,7 +78,7 @@ vmcs_intel_x64_eapis::trap_on_io_access(port_type port)
 }
 
 void
-vmcs_intel_x64_eapis::trap_on_all_io_accesses()
+vmcs_eapis::vmcs::trap_on_all_io_accesses()
 {
     if (!m_io_bitmapa || !m_io_bitmapb)
         throw std::runtime_error("io bitmaps not enabled");
@@ -88,7 +88,7 @@ vmcs_intel_x64_eapis::trap_on_all_io_accesses()
 }
 
 void
-vmcs_intel_x64_eapis::pass_through_io_access(port_type port)
+vmcs_eapis::vmcs::pass_through_io_access(port_type port)
 {
     if (!m_io_bitmapa || !m_io_bitmapb)
         throw std::runtime_error("io bitmaps not enabled");
@@ -106,7 +106,7 @@ vmcs_intel_x64_eapis::pass_through_io_access(port_type port)
 }
 
 void
-vmcs_intel_x64_eapis::pass_through_all_io_accesses()
+vmcs_eapis::vmcs::pass_through_all_io_accesses()
 {
     if (!m_io_bitmapa || !m_io_bitmapb)
         throw std::runtime_error("io bitmaps not enabled");
@@ -116,7 +116,7 @@ vmcs_intel_x64_eapis::pass_through_all_io_accesses()
 }
 
 void
-vmcs_intel_x64_eapis::whitelist_io_access(const port_list_type &ports)
+vmcs_eapis::vmcs::whitelist_io_access(const port_list_type &ports)
 {
     trap_on_all_io_accesses();
     for (auto port : ports)
@@ -124,7 +124,7 @@ vmcs_intel_x64_eapis::whitelist_io_access(const port_list_type &ports)
 }
 
 void
-vmcs_intel_x64_eapis::blacklist_io_access(const port_list_type &ports)
+vmcs_eapis::vmcs::blacklist_io_access(const port_list_type &ports)
 {
     pass_through_all_io_accesses();
     for (auto port : ports)

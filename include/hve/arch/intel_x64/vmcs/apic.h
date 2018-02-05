@@ -53,17 +53,24 @@
 ///
 /// TODO:
 ///
-class EXPORT_EAPIS_HVE apic_intel_x64
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+
+class EXPORT_EAPIS_HVE apic
 {
 public:
 
     /// Default Constructor
     ///
-    apic_intel_x64();
+    apic();
 
     /// Default Destructor
     ///
-    ~apic_intel_x64() = default;
+    ~apic() = default;
 
 public:
 
@@ -224,14 +231,18 @@ public:
 
     /// @cond
 
-    apic_intel_x64(apic_intel_x64 &&) noexcept = default;
-    apic_intel_x64 &operator=(apic_intel_x64 &&) noexcept = default;
+    apic(apic &&) noexcept = default;
+    apic &operator=(apic &&) noexcept = default;
 
-    apic_intel_x64(const apic_intel_x64 &) = delete;
-    apic_intel_x64 &operator=(const apic_intel_x64 &) = delete;
+    apic(const apic &) = delete;
+    apic &operator=(const apic &) = delete;
 
     /// @endcond
 
 };
+
+}
+}
+}
 
 #endif

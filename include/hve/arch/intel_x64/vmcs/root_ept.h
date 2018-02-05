@@ -67,30 +67,37 @@
 /// This needs to be done manually. In general, this class should not be used
 /// directly, but instead mapping should be done via a unique_map_ptr_x64.
 ///
-class EXPORT_EAPIS_HVE root_ept_intel_x64
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+
+class EXPORT_EAPIS_HVE root_ept
 {
 public:
 
     using pointer = void *;                                                 ///< Pointer type
     using integer_pointer = uintptr_t;                                      ///< Integer pointer type
     using eptp_type = uint64_t;                                             ///< EPTP type
-    using attr_type = intel_x64::ept::memory_attr::attr_type;               ///< Memory attribute type
+    using attr_type = ::intel_x64::ept::memory_attr::attr_type;               ///< Memory attribute type
     using size_type = size_t;                                               ///< Size type
-    using memory_descriptor_list = ept_intel_x64::memory_descriptor_list;   ///< Memory descriptor list type
+    using memory_descriptor_list = ept::memory_descriptor_list;   ///< Memory descriptor list type
 
     /// Default Constructor
     ///
     /// @expects none
     /// @ensures none
     ///
-    root_ept_intel_x64();
+    root_ept();
 
     /// Default Destructor
     ///
     /// @expects none
     /// @ensures none
     ///
-    virtual ~root_ept_intel_x64() = default;
+    virtual ~root_ept() = default;
 
     /// Extended Page Table Pointer
     ///
@@ -108,7 +115,7 @@ public:
     /// physical address, the physical address and a set of attributes.
     ///
     /// @note: the user should ensure that this level of page granularity is
-    ///     supported by hardware using intel_x64::msrs::ia32_vmx_ept_vpid_cap
+    ///     supported by hardware using ::intel_x64::msrs::ia32_vmx_ept_vpid_cap
     ///
     /// @expects
     /// @ensures
@@ -118,7 +125,7 @@ public:
     /// @param attr describes how to map the gpa
     ///
     void map_1g(integer_pointer gpa, integer_pointer phys, attr_type attr)
-    { this->map_page(gpa, phys, attr, intel_x64::ept::pdpt::size_bytes); }
+    { this->map_page(gpa, phys, attr, ::intel_x64::ept::pdpt::size_bytes); }
 
     /// Map (2 Megabytes)
     ///
@@ -126,7 +133,7 @@ public:
     /// physical address, the physical address and a set of attributes.
     ///
     /// @note: the user should ensure that this level of page granularity is
-    ///     supported by hardware using intel_x64::msrs::ia32_vmx_ept_vpid_cap
+    ///     supported by hardware using ::intel_x64::msrs::ia32_vmx_ept_vpid_cap
     ///
     /// @expects
     /// @ensures
@@ -136,7 +143,7 @@ public:
     /// @param attr describes how to map the gpa
     ///
     void map_2m(integer_pointer gpa, integer_pointer phys, attr_type attr)
-    { this->map_page(gpa, phys, attr, intel_x64::ept::pd::size_bytes); }
+    { this->map_page(gpa, phys, attr, ::intel_x64::ept::pd::size_bytes); }
 
     /// Map (4 Kilobytes)
     ///
@@ -144,7 +151,7 @@ public:
     /// physical address, the physical address and a set of attributes.
     ///
     /// @note: the user should ensure that this level of page granularity is
-    ///     supported by hardware using intel_x64::msrs::ia32_vmx_ept_vpid_cap
+    ///     supported by hardware using ::intel_x64::msrs::ia32_vmx_ept_vpid_cap
     ///
     /// @expects
     /// @ensures
@@ -154,7 +161,7 @@ public:
     /// @param attr describes how to map the gpa
     ///
     void map_4k(integer_pointer gpa, integer_pointer phys, attr_type attr)
-    { this->map_page(gpa, phys, attr, intel_x64::ept::pt::size_bytes); }
+    { this->map_page(gpa, phys, attr, ::intel_x64::ept::pt::size_bytes); }
 
     /// Unmap
     ///
@@ -260,7 +267,7 @@ public:
     /// @param gpa the guest physical address to lookup
     /// @return the resulting EPTE
     ///
-    ept_entry_intel_x64 gpa_to_epte(integer_pointer gpa) const;
+    ept_entry gpa_to_epte(integer_pointer gpa) const;
 
     /// Extended Page Table to Memory Descriptor List
     ///
@@ -281,7 +288,7 @@ private:
 
     /// @cond
 
-    ept_entry_intel_x64 add_page(integer_pointer gpa, size_type size);
+    ept_entry add_page(integer_pointer gpa, size_type size);
 
     void map_page(integer_pointer gpa, integer_pointer phys, attr_type attr, size_type size);
     void unmap_page(integer_pointer gpa) noexcept;
@@ -291,7 +298,7 @@ private:
 private:
 
     integer_pointer m_eptp{0};                          ///< Integer pointer to the EPTP for this root EPT
-    std::unique_ptr<ept_intel_x64> m_ept;               ///< The root EPT
+    std::unique_ptr<ept> m_ept;               ///< The root EPT
 
     mutable std::mutex m_mutex;                         ///< Mutex for root operations
 
@@ -299,14 +306,18 @@ public:
 
     /// @cond
 
-    root_ept_intel_x64(root_ept_intel_x64 &&) = default;
-    root_ept_intel_x64 &operator=(root_ept_intel_x64 &&) = default;
+    root_ept(root_ept &&) = default;
+    root_ept &operator=(root_ept &&) = default;
 
-    root_ept_intel_x64(const root_ept_intel_x64 &) = delete;
-    root_ept_intel_x64 &operator=(const root_ept_intel_x64 &) = delete;
+    root_ept(const root_ept &) = delete;
+    root_ept &operator=(const root_ept &) = delete;
 
     /// @endcond
 };
+
+}
+}
+}
 
 #ifdef _MSC_VER
 #pragma warning(pop)

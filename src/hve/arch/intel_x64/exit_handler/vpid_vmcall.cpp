@@ -25,12 +25,10 @@
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/verifiers.h"
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/vpid_verifiers.h"
 
-using namespace x64;
-using namespace intel_x64;
-using namespace vmcs;
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
 void
-exit_handler_intel_x64_eapis::register_json_vmcall__vpid()
+exit_handler_eapis::exit_handler::register_json_vmcall__vpid()
 {
     m_json_commands["enable_vpid"] = [&](const auto & ijson, auto & ojson) {
         this->handle_vmcall__enable_vpid(ijson.at("enabled"));
@@ -39,7 +37,7 @@ exit_handler_intel_x64_eapis::register_json_vmcall__vpid()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__vpid(
+exit_handler_eapis::exit_handler::handle_vmcall__vpid(
     vmcall_registers_t &regs)
 {
     switch (regs.r03) {
@@ -57,7 +55,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__vpid(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__enable_vpid(bool enabled)
+exit_handler_eapis::exit_handler::handle_vmcall__enable_vpid(bool enabled)
 {
     if (policy(enable_vpid)->verify(enabled) != vmcall_verifier::allow) {
         policy(enable_vpid)->deny_vmcall();
