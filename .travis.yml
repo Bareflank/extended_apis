@@ -200,6 +200,7 @@ matrix:
     script:
       - cmake -DCONFIG=../scripts/cmake/config/travis_asan.cmake ../hypervisor
       - make -j3
+      - make test
 
   #
   # Google Undefined Sanitizer
@@ -220,6 +221,7 @@ matrix:
     script:
       - cmake -DCONFIG=../scripts/cmake/config/travis_usan.cmake ../hypervisor
       - make -j3
+      - make test
 
   #
   # Clang 3.8 (Static Libraries)
