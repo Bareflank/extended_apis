@@ -53,8 +53,9 @@ root_ept_intel_x64::setup_identity_map_1g(
     expects((saddr & (ept::pdpt::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pdpt::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pdpt::size_bytes)
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pdpt::size_bytes) {
         this->map_1g(gpa, gpa, ept::memory_attr::pt_wb);
+    }
 }
 
 void
@@ -64,8 +65,9 @@ root_ept_intel_x64::setup_identity_map_2m(
     expects((saddr & (ept::pd::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pd::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pd::size_bytes)
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pd::size_bytes) {
         this->map_2m(gpa, gpa, ept::memory_attr::pt_wb);
+    }
 }
 
 void
@@ -75,8 +77,9 @@ root_ept_intel_x64::setup_identity_map_4k(
     expects((saddr & (ept::pt::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pt::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pt::size_bytes)
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pt::size_bytes) {
         this->map_4k(gpa, gpa, ept::memory_attr::pt_wb);
+    }
 }
 
 void
@@ -86,8 +89,9 @@ root_ept_intel_x64::unmap_identity_map_1g(
     expects((saddr & (ept::pdpt::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pdpt::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pdpt::size_bytes)
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pdpt::size_bytes) {
         this->unmap(gpa);
+    }
 }
 
 void
@@ -97,8 +101,9 @@ root_ept_intel_x64::unmap_identity_map_2m(
     expects((saddr & (ept::pd::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pd::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pd::size_bytes)
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pd::size_bytes) {
         this->unmap(gpa);
+    }
 }
 
 void
@@ -108,8 +113,9 @@ root_ept_intel_x64::unmap_identity_map_4k(
     expects((saddr & (ept::pt::size_bytes - 1)) == 0);
     expects((eaddr & (ept::pt::size_bytes - 1)) == 0);
 
-    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pt::size_bytes)
+    for (auto gpa = saddr; gpa < eaddr; gpa += ept::pt::size_bytes) {
         this->unmap(gpa);
+    }
 }
 
 ept_entry_intel_x64
@@ -129,8 +135,7 @@ root_ept_intel_x64::ept_to_mdl() const
 ept_entry_intel_x64
 root_ept_intel_x64::add_page(integer_pointer gpa, size_type size)
 {
-    switch (size)
-    {
+    switch (size) {
         case ept::pdpt::size_bytes:
             return m_ept->add_page_1g(gpa);
 
@@ -155,8 +160,7 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
     auto ___ = gsl::on_failure([&]
     { this->unmap_page(gpa); });
 
-    switch (size)
-    {
+    switch (size) {
         case ept::pdpt::size_bytes:
             entry.set_phys_addr(phys & ~(ept::pdpt::size_bytes - 1));
             break;
@@ -170,8 +174,7 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
             break;
     }
 
-    switch (attr)
-    {
+    switch (attr) {
         case ept::memory_attr::rw_uc:
         case ept::memory_attr::re_uc:
         case ept::memory_attr::ro_uc:
@@ -218,8 +221,7 @@ root_ept_intel_x64::map_page(integer_pointer gpa, integer_pointer phys, attr_typ
             break;
     }
 
-    switch (attr)
-    {
+    switch (attr) {
         case ept::memory_attr::rw_uc:
         case ept::memory_attr::rw_wc:
         case ept::memory_attr::rw_wt:

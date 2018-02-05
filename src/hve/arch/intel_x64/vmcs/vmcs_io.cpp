@@ -63,16 +63,15 @@ vmcs_intel_x64_eapis::disable_io_bitmaps()
 void
 vmcs_intel_x64_eapis::trap_on_io_access(port_type port)
 {
-    if (!m_io_bitmapa || !m_io_bitmapb)
+    if (!m_io_bitmapa || !m_io_bitmapb) {
         throw std::runtime_error("io bitmaps not enabled");
+    }
 
-    if (port < 0x8000)
-    {
+    if (port < 0x8000) {
         auto &&addr = port;
         set_bit_from_span(m_io_bitmapa_view, addr);
     }
-    else
-    {
+    else {
         auto &&addr = port - 0x8000;
         set_bit_from_span(m_io_bitmapb_view, addr);
     }
@@ -81,8 +80,9 @@ vmcs_intel_x64_eapis::trap_on_io_access(port_type port)
 void
 vmcs_intel_x64_eapis::trap_on_all_io_accesses()
 {
-    if (!m_io_bitmapa || !m_io_bitmapb)
+    if (!m_io_bitmapa || !m_io_bitmapb) {
         throw std::runtime_error("io bitmaps not enabled");
+    }
 
     __builtin_memset(m_io_bitmapa.get(), 0xFF, x64::page_size);
     __builtin_memset(m_io_bitmapb.get(), 0xFF, x64::page_size);
@@ -91,16 +91,15 @@ vmcs_intel_x64_eapis::trap_on_all_io_accesses()
 void
 vmcs_intel_x64_eapis::pass_through_io_access(port_type port)
 {
-    if (!m_io_bitmapa || !m_io_bitmapb)
+    if (!m_io_bitmapa || !m_io_bitmapb) {
         throw std::runtime_error("io bitmaps not enabled");
+    }
 
-    if (port < 0x8000)
-    {
+    if (port < 0x8000) {
         auto &&addr = port;
         clear_bit_from_span(m_io_bitmapa_view, addr);
     }
-    else
-    {
+    else {
         auto &&addr = port - 0x8000;
         clear_bit_from_span(m_io_bitmapb_view, addr);
     }
@@ -109,8 +108,9 @@ vmcs_intel_x64_eapis::pass_through_io_access(port_type port)
 void
 vmcs_intel_x64_eapis::pass_through_all_io_accesses()
 {
-    if (!m_io_bitmapa || !m_io_bitmapb)
+    if (!m_io_bitmapa || !m_io_bitmapb) {
         throw std::runtime_error("io bitmaps not enabled");
+    }
 
     __builtin_memset(m_io_bitmapa.get(), 0, x64::page_size);
     __builtin_memset(m_io_bitmapb.get(), 0, x64::page_size);
@@ -120,14 +120,16 @@ void
 vmcs_intel_x64_eapis::whitelist_io_access(const port_list_type &ports)
 {
     trap_on_all_io_accesses();
-    for (auto port : ports)
+    for (auto port : ports) {
         pass_through_io_access(port);
+    }
 }
 
 void
 vmcs_intel_x64_eapis::blacklist_io_access(const port_list_type &ports)
 {
     pass_through_all_io_accesses();
-    for (auto port : ports)
+    for (auto port : ports) {
         trap_on_io_access(port);
+    }
 }

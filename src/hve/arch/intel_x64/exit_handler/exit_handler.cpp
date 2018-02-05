@@ -60,8 +60,7 @@ exit_handler_intel_x64_eapis::advance_and_resume()
 void
 exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
 {
-    switch (reason)
-    {
+    switch (reason) {
         case reason::cpuid:
             handle_exit__cpuid();
             break;
@@ -95,8 +94,7 @@ exit_handler_intel_x64_eapis::handle_exit(vmcs::value_type reason)
 void
 exit_handler_intel_x64_eapis::handle_vmcall_registers(vmcall_registers_t &regs)
 {
-    switch (regs.r02)
-    {
+    switch (regs.r02) {
         case eapis_cat__io_instruction:
             handle_vmcall__io_instruction(regs);
             break;

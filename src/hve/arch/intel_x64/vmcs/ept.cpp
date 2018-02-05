@@ -42,8 +42,9 @@ ept_intel_x64::ept_intel_x64(pointer epte)
 ept_entry_intel_x64
 ept_intel_x64::get_entry(index_type index)
 {
-    if (index >= ept::num_entries)
+    if (index >= ept::num_entries) {
         throw std::invalid_argument("index must be less than ept::num_entries");
+    }
 
     auto ept = gsl::make_span(m_ept, ept::num_entries);
     return ept_entry_intel_x64(&ept.at(index));
@@ -55,17 +56,17 @@ ept_intel_x64::add_page(integer_pointer gpa, integer_pointer bits, integer_point
     auto index = ept::index(gpa, bits);
     auto entry = get_entry(static_cast<uint64_t>(index));
 
-    if (bits > end)
-    {
-        if (entry.entry_type())
+    if (bits > end) {
+        if (entry.entry_type()) {
             throw std::logic_error("unmap gpa before adding new page");
+        }
 
-        if (m_epts.empty())
+        if (m_epts.empty()) {
             m_epts = std::vector<std::unique_ptr<ept_intel_x64>>(ept::num_entries);
+        }
 
         auto iter = bfn::find(m_epts, index);
-        if (nullptr == *iter)
-        {
+        if (nullptr == *iter) {
             auto view = gsl::make_span(m_ept, ept::num_entries);
             *iter = std::make_unique<ept_intel_x64>(&view.at(index));
         }
@@ -73,15 +74,16 @@ ept_intel_x64::add_page(integer_pointer gpa, integer_pointer bits, integer_point
         return (*iter)->add_page(gpa, bits - ept::pt::size, end);
     }
 
-    if (!m_epts.empty())
-    {
+    if (!m_epts.empty()) {
         auto iter = bfn::find(m_epts, index);
-        if (nullptr != *iter)
+        if (nullptr != *iter) {
             throw std::logic_error("unmap gpa before adding new page");
+        }
     }
 
-    if (entry.entry_type())
+    if (entry.entry_type()) {
         return entry;
+    }
 
     entry.clear();
     entry.set_entry_type(true);
@@ -94,20 +96,16 @@ ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
     auto index = ept::index(gpa, bits);
     auto entry = get_entry(static_cast<uint64_t>(index));
 
-    if (entry.entry_type())
-    {
+    if (entry.entry_type()) {
         entry.clear();
         return;
     }
 
-    if (!m_epts.empty())
-    {
+    if (!m_epts.empty()) {
         auto iter = bfn::find(m_epts, index);
-        if (auto pt = (*iter).get())
-        {
+        if (auto pt = (*iter).get()) {
             pt->remove_page(gpa, bits - ept::pt::size);
-            if (pt->empty())
-            {
+            if (pt->empty()) {
                 (*iter) = nullptr;
                 entry.clear();
             }
@@ -120,11 +118,11 @@ ept_intel_x64::gpa_to_epte(integer_pointer gpa, integer_pointer bits) const
 {
     auto &&index = ept::index(gpa, bits);
 
-    if (!m_epts.empty())
-    {
+    if (!m_epts.empty()) {
         auto &&iter = bfn::cfind(m_epts, index);
-        if (auto pt = (*iter).get())
+        if (auto pt = (*iter).get()) {
             return pt->gpa_to_epte(gpa, bits - ept::pt::size);
+        }
 
         throw std::runtime_error("unable to locate epte. invalid gpaess");
     }
@@ -143,7 +141,7 @@ ept_intel_x64::ept_to_mdl(memory_descriptor_list &mdl) const
     mdl.push_back({phys, virt, type});
 
     for (const auto &pt : m_epts)
-        if (pt != nullptr) pt->ept_to_mdl(mdl);
+        if (pt != nullptr) { pt->ept_to_mdl(mdl); }
 
     return mdl;
 }
@@ -154,8 +152,9 @@ ept_intel_x64::empty() const noexcept
     auto size = 0UL;
 
     auto &&view = gsl::make_span(m_ept, ept::num_entries);
-    for (auto element : view)
+    for (auto element : view) {
         size += element != 0 ? 1U : 0U;
+    }
 
     return size == 0;
 }
@@ -166,11 +165,12 @@ ept_intel_x64::global_size() const noexcept
     auto size = 0UL;
 
     auto &&view = gsl::make_span(m_ept, ept::num_entries);
-    for (auto element : view)
+    for (auto element : view) {
         size += element != 0 ? 1U : 0U;
+    }
 
     for (const auto &pt : m_epts)
-        if (pt != nullptr) size += pt->global_size();
+        if (pt != nullptr) { size += pt->global_size(); }
 
     return size;
 }
@@ -181,7 +181,7 @@ ept_intel_x64::global_capacity() const noexcept
     auto size = m_epts.capacity();
 
     for (const auto &pt : m_epts)
-        if (pt != nullptr) size += pt->global_capacity();
+        if (pt != nullptr) { size += pt->global_capacity(); }
 
     return size;
 }

@@ -34,8 +34,7 @@ namespace gpr = ctlreg_access::general_purpose_register;
 exit_handler_intel_x64_eapis::gpr_value_type
 exit_handler_intel_x64_eapis::get_gpr(gpr_index_type index)
 {
-    switch (index)
-    {
+    switch (index) {
         case gpr::rax:
             return m_state_save->rax;
 
@@ -93,8 +92,7 @@ void
 exit_handler_intel_x64_eapis::set_gpr(
     gpr_index_type index, gpr_value_type val)
 {
-    switch (index)
-    {
+    switch (index) {
         case gpr::rax:
             m_state_save->rax = val;
             return;
@@ -169,10 +167,8 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
     auto type = ctlreg_access::access_type::get();
     auto index = gpr::get();
 
-    switch (ctlreg_access::control_register_number::get())
-    {
-        case 0:
-        {
+    switch (ctlreg_access::control_register_number::get()) {
+        case 0: {
             auto ret = this->cr0_ld_callback(this->get_gpr(index));
             vmcs::guest_cr0::set(ret);
 
@@ -180,12 +176,9 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
             return;
         }
 
-        case 3:
-        {
-            switch (type)
-            {
-                case ctlreg_access::access_type::mov_to_cr:
-                {
+        case 3: {
+            switch (type) {
+                case ctlreg_access::access_type::mov_to_cr: {
                     auto ret = this->cr3_ld_callback(this->get_gpr(index));
                     vmcs::guest_cr3::set(ret);
 
@@ -193,8 +186,7 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
                     return;
                 }
 
-                case ctlreg_access::access_type::mov_from_cr:
-                {
+                case ctlreg_access::access_type::mov_from_cr: {
                     auto ret = this->cr3_st_callback(vmcs::guest_cr3::get());
                     this->set_gpr(index, ret);
 
@@ -205,8 +197,7 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
             return;
         }
 
-        case 4:
-        {
+        case 4: {
             auto ret = this->cr4_ld_callback(this->get_gpr(index));
             vmcs::guest_cr4::set(ret);
 
@@ -214,12 +205,9 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
             return;
         }
 
-        case 8:
-        {
-            switch (type)
-            {
-                case ctlreg_access::access_type::mov_to_cr:
-                {
+        case 8: {
+            switch (type) {
+                case ctlreg_access::access_type::mov_to_cr: {
                     auto ret = this->cr8_ld_callback(this->get_gpr(index));
                     intel::cr8::set(ret);
 
@@ -227,8 +215,7 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
                     return;
                 }
 
-                case ctlreg_access::access_type::mov_from_cr:
-                {
+                case ctlreg_access::access_type::mov_from_cr: {
                     auto ret = this->cr8_st_callback(intel::cr8::get());
                     this->set_gpr(index, ret);
 
@@ -239,8 +226,7 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
             return;
         }
 
-        default:
-        {
+        default: {
             bferror_info(0, "unknown control register access");
             break;
         }
