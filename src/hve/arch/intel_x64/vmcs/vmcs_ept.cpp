@@ -24,35 +24,37 @@
 
 #include <intrinsics.h>
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-namespace ept_ptr = vmcs::ept_pointer;
-namespace proc_ctls2 = vmcs::secondary_processor_based_vm_execution_controls;
+namespace ept_p = ::intel_x64::vmcs::ept_pointer;
+namespace proc_ctls2 = ::intel_x64::vmcs::secondary_processor_based_vm_execution_controls;
+namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 
 void
-vmcs_intel_x64_eapis::enable_ept(eptp_type eptp)
+vmcs_eapis::vmcs::enable_ept(eptp_type eptp)
 {
-    ept_entry_intel_x64 entry{&eptp};
-    ept_ptr::phys_addr::set(entry.phys_addr());
-    ept_ptr::memory_type::set(ept_ptr::memory_type::write_back);
-    ept_ptr::page_walk_length_minus_one::set(3ULL);
+    ept_entry entry{&eptp};
+
+    ept_p::phys_addr::set(entry.phys_addr());
+    ept_p::memory_type::set(ept_p::memory_type::write_back);
+    ept_p::page_walk_length_minus_one::set(3ULL);
+
     proc_ctls2::enable_ept::enable();
 }
 
 void
-vmcs_intel_x64_eapis::disable_ept()
+vmcs_eapis::vmcs::disable_ept()
 {
-    intel::vmx::invept_global();
+    ::intel_x64::vmx::invept_global();
     proc_ctls2::enable_ept::disable();
-    ept_ptr::set(0UL);
+
+    ept_p::set(0UL);
 }
 
 void
-vmcs_intel_x64_eapis::set_eptp(integer_pointer eptp)
+vmcs_eapis::vmcs::set_eptp(integer_pointer eptp)
 {
-    auto &&entry = ept_entry_intel_x64{&eptp};
+    auto &&entry = ept_entry{&eptp};
 
-    ept_ptr::memory_type::set(ept_ptr::memory_type::write_back);
-    ept_ptr::page_walk_length_minus_one::set(3UL);
-    ept_ptr::phys_addr::set(entry.phys_addr());
+    ept_p::memory_type::set(ept_p::memory_type::write_back);
+    ept_p::page_walk_length_minus_one::set(3UL);
+    ept_p::phys_addr::set(entry.phys_addr());
 }

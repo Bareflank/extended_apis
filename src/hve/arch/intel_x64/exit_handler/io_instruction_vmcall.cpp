@@ -27,12 +27,10 @@
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/verifiers.h"
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/io_instruction_verifiers.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
 void
-exit_handler_intel_x64_eapis::register_json_vmcall__io_instruction()
+exit_handler_eapis::exit_handler::register_json_vmcall__io_instruction()
 {
     m_json_commands["enable_io_bitmaps"] = [&](const auto & ijson, auto & ojson) {
         this->handle_vmcall__enable_io_bitmaps(ijson.at("enabled"));
@@ -75,7 +73,7 @@ exit_handler_intel_x64_eapis::register_json_vmcall__io_instruction()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__io_instruction(
+exit_handler_eapis::exit_handler::handle_vmcall__io_instruction(
     vmcall_registers_t &regs)
 {
     switch (regs.r03) {
@@ -109,7 +107,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__io_instruction(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__enable_io_bitmaps(
+exit_handler_eapis::exit_handler::handle_vmcall__enable_io_bitmaps(
     bool enabled)
 {
     if (policy(enable_io_bitmaps)->verify(enabled) != vmcall_verifier::allow) {
@@ -127,7 +125,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__enable_io_bitmaps(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__trap_on_io_access(
+exit_handler_eapis::exit_handler::handle_vmcall__trap_on_io_access(
     port_type port)
 {
     if (policy(trap_on_io_access)->verify(port) != vmcall_verifier::allow) {
@@ -139,7 +137,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_io_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__trap_on_all_io_accesses()
+exit_handler_eapis::exit_handler::handle_vmcall__trap_on_all_io_accesses()
 {
     if (policy(trap_on_all_io_accesses)->verify() != vmcall_verifier::allow) {
         policy(trap_on_all_io_accesses)->deny_vmcall();
@@ -150,7 +148,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__trap_on_all_io_accesses()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__pass_through_io_access(
+exit_handler_eapis::exit_handler::handle_vmcall__pass_through_io_access(
     port_type port)
 {
     if (policy(pass_through_io_access)->verify(port) != vmcall_verifier::allow) {
@@ -162,7 +160,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_io_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_io_accesses()
+exit_handler_eapis::exit_handler::handle_vmcall__pass_through_all_io_accesses()
 {
     if (policy(pass_through_all_io_accesses)->verify() != vmcall_verifier::allow) {
         policy(pass_through_all_io_accesses)->deny_vmcall();
@@ -173,7 +171,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__pass_through_all_io_accesses()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__whitelist_io_access(
+exit_handler_eapis::exit_handler::handle_vmcall__whitelist_io_access(
     const port_list_type &ports)
 {
     if (policy(whitelist_io_access)->verify(ports) != vmcall_verifier::allow) {
@@ -189,7 +187,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__whitelist_io_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__blacklist_io_access(
+exit_handler_eapis::exit_handler::handle_vmcall__blacklist_io_access(
     const port_list_type &ports)
 {
     if (policy(blacklist_io_access)->verify(ports) != vmcall_verifier::allow) {
@@ -205,7 +203,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__blacklist_io_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__log_io_access(
+exit_handler_eapis::exit_handler::handle_vmcall__log_io_access(
     bool enabled)
 {
     if (policy(log_io_access)->verify(enabled) != vmcall_verifier::allow) {
@@ -217,7 +215,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__log_io_access(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__clear_io_access_log()
+exit_handler_eapis::exit_handler::handle_vmcall__clear_io_access_log()
 {
     if (policy(clear_io_access_log)->verify() != vmcall_verifier::allow) {
         policy(clear_io_access_log)->deny_vmcall();
@@ -228,7 +226,7 @@ exit_handler_intel_x64_eapis::handle_vmcall__clear_io_access_log()
 }
 
 void
-exit_handler_intel_x64_eapis::handle_vmcall__io_access_log(json &ojson)
+exit_handler_eapis::exit_handler::handle_vmcall__io_access_log(json &ojson)
 {
     if (policy(io_access_log)->verify() != vmcall_verifier::allow) {
         policy(io_access_log)->deny_vmcall();

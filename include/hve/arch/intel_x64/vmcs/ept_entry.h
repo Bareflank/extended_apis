@@ -111,7 +111,14 @@ namespace ept
 ///
 /// Defines an entry in an EPT table.
 ///
-class EXPORT_EAPIS_HVE ept_entry_intel_x64
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+
+class EXPORT_EAPIS_HVE ept_entry
 {
 public:
 
@@ -127,14 +134,14 @@ public:
     ///
     /// @param pte the pte that this page table entry encapsulates.
     ///
-    ept_entry_intel_x64(gsl::not_null<pointer> pte) noexcept;
+    ept_entry(gsl::not_null<pointer> pte) noexcept;
 
     /// Destructor
     ///
     /// @expects none
     /// @ensures none
     ///
-    ~ept_entry_intel_x64() = default;
+    ~ept_entry() = default;
 
     /// EPTE pointer
     ///
@@ -405,13 +412,17 @@ public:
 
     /// @cond
 
-    ept_entry_intel_x64(ept_entry_intel_x64 &&) noexcept = default;
-    ept_entry_intel_x64 &operator=(ept_entry_intel_x64 &&) noexcept = default;
+    ept_entry(ept_entry &&) noexcept = default;
+    ept_entry &operator=(ept_entry &&) noexcept = default;
 
-    ept_entry_intel_x64(const ept_entry_intel_x64 &) = delete;
-    ept_entry_intel_x64 &operator=(const ept_entry_intel_x64 &) = delete;
+    ept_entry(const ept_entry &) = delete;
+    ept_entry &operator=(const ept_entry &) = delete;
 
     /// @endcond
 };
+
+}
+}
+}
 
 #endif

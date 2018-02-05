@@ -75,32 +75,41 @@
 /// Defines the EAPIs version of the VMCS. Note that this is intended to be
 /// subclassed.
 ///
-class EXPORT_EAPIS_HVE vmcs_intel_x64_eapis : public vmcs_intel_x64
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+namespace vmcs
+{
+
+class EXPORT_EAPIS_HVE vmcs : public bfvmm::intel_x64::vmcs
 {
 public:
 
     using integer_pointer = uintptr_t;                      ///< Integer pointer type
-    using port_type = x64::portio::port_addr_type;          ///< Port type
+    using port_type = ::x64::portio::port_addr_type;          ///< Port type
     using port_list_type = std::vector<port_type>;          ///< Port list type
-    using msr_type = x64::msrs::field_type;                 ///< MSR type
+    using msr_type = ::x64::msrs::field_type;                 ///< MSR type
     using msr_list_type = std::vector<msr_type>;            ///< MSR list type
-    using mask_type = intel_x64::vmcs::value_type;          ///< CR Mask type
-    using shadow_type = intel_x64::vmcs::value_type;        ///< CR shadow type
-    using eptp_type = intel_x64::vmcs::value_type;          ///< CR shadow type
+    using mask_type = ::intel_x64::vmcs::value_type;          ///< CR Mask type
+    using shadow_type = ::intel_x64::vmcs::value_type;        ///< CR shadow type
+    using eptp_type = ::intel_x64::vmcs::value_type;          ///< CR shadow type
 
     /// Default Constructor
     ///
     /// @expects
     /// @ensures
     ///
-    vmcs_intel_x64_eapis();
+    vmcs();
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~vmcs_intel_x64_eapis() override  = default;
+    ~vmcs() override  = default;
 
     /// Enable VPID
     ///
@@ -284,7 +293,7 @@ public:
     /// @ensures
     ///
     /// @param eptp the eptp value to use. This should come from the
-    ///     root_ept_intel_x64->eptp() function.
+    ///     root_ept->eptp() function.
     ///
     virtual void enable_ept(eptp_type eptp);
 
@@ -316,7 +325,7 @@ public:
     /// @ensures
     ///
     /// @param eptp the eptp value to use. This should come from the
-    ///     root_ept_intel_x64->eptp() function.
+    ///     root_ept->eptp() function.
     ///
     virtual void set_eptp(eptp_type eptp);
 
@@ -692,7 +701,7 @@ public:
 protected:
 #endif
 
-    intel_x64::vmcs::value_type m_vpid;             ///< VPID for this VMCS
+    ::intel_x64::vmcs::value_type m_vpid;             ///< VPID for this VMCS
 
     std::unique_ptr<uint8_t[]> m_io_bitmapa;        ///< IO bitmap A
     std::unique_ptr<uint8_t[]> m_io_bitmapb;        ///< IO bitmap B
@@ -808,21 +817,26 @@ protected:
     /// @param host_state pointer to host state
     /// @param guest_state pointer to guest state
     ///
-    virtual void write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
-                      gsl::not_null<vmcs_intel_x64_state *> guest_state);
+    virtual void write_fields(gsl::not_null<bfvmm::intel_x64::vmcs_state *> host_state,
+                              gsl::not_null<bfvmm::intel_x64::vmcs_state *> guest_state);
 
 public:
 
     /// @cond
 
-    vmcs_intel_x64_eapis(vmcs_intel_x64_eapis &&) = default;
-    vmcs_intel_x64_eapis &operator=(vmcs_intel_x64_eapis &&) = default;
+    vmcs(vmcs &&) = default;
+    vmcs &operator=(vmcs &&) = default;
 
-    vmcs_intel_x64_eapis(const vmcs_intel_x64_eapis &) = delete;
-    vmcs_intel_x64_eapis &operator=(const vmcs_intel_x64_eapis &) = delete;
+    vmcs(const vmcs &) = delete;
+    vmcs &operator=(const vmcs &) = delete;
 
     /// @endcond
 };
+
+}
+}
+}
+}
 
 #ifdef _MSC_VER
 #pragma warning(pop)

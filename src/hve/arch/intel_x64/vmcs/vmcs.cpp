@@ -21,15 +21,17 @@
 
 #include "../../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
 
-vmcs_intel_x64_eapis::vmcs_intel_x64_eapis()
+namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
+
+vmcs_eapis::vmcs::vmcs()
 {
-    static intel_x64::vmcs::value_type g_vpid = 1;
+    static ::intel_x64::vmcs::value_type g_vpid = 1;
     m_vpid = g_vpid++;
 }
 
 void
-vmcs_intel_x64_eapis::write_fields(gsl::not_null<vmcs_intel_x64_state *> host_state,
-                                   gsl::not_null<vmcs_intel_x64_state *> guest_state)
+vmcs_eapis::vmcs::write_fields(gsl::not_null<bfvmm::intel_x64::vmcs_state *> host_state,
+                               gsl::not_null<bfvmm::intel_x64::vmcs_state *> guest_state)
 {
     bfignored(host_state);
     bfignored(guest_state);

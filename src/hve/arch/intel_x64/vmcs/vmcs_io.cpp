@@ -28,12 +28,12 @@
 #include <intrinsics.h>
 #include <intrinsics.h>
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
+namespace vmcs = ::intel_x64::vmcs;
+namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_controls;
+namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 
 void
-vmcs_intel_x64_eapis::enable_io_bitmaps()
+vmcs_eapis::vmcs::enable_io_bitmaps()
 {
     m_io_bitmapa = std::make_unique<uint8_t[]>(x64::page_size);
     m_io_bitmapb = std::make_unique<uint8_t[]>(x64::page_size);
@@ -47,7 +47,7 @@ vmcs_intel_x64_eapis::enable_io_bitmaps()
 }
 
 void
-vmcs_intel_x64_eapis::disable_io_bitmaps()
+vmcs_eapis::vmcs::disable_io_bitmaps()
 {
     proc_ctls::use_io_bitmaps::disable();
 
@@ -61,7 +61,7 @@ vmcs_intel_x64_eapis::disable_io_bitmaps()
 }
 
 void
-vmcs_intel_x64_eapis::trap_on_io_access(port_type port)
+vmcs_eapis::vmcs::trap_on_io_access(port_type port)
 {
     if (!m_io_bitmapa || !m_io_bitmapb) {
         throw std::runtime_error("io bitmaps not enabled");
@@ -78,7 +78,7 @@ vmcs_intel_x64_eapis::trap_on_io_access(port_type port)
 }
 
 void
-vmcs_intel_x64_eapis::trap_on_all_io_accesses()
+vmcs_eapis::vmcs::trap_on_all_io_accesses()
 {
     if (!m_io_bitmapa || !m_io_bitmapb) {
         throw std::runtime_error("io bitmaps not enabled");
@@ -89,7 +89,7 @@ vmcs_intel_x64_eapis::trap_on_all_io_accesses()
 }
 
 void
-vmcs_intel_x64_eapis::pass_through_io_access(port_type port)
+vmcs_eapis::vmcs::pass_through_io_access(port_type port)
 {
     if (!m_io_bitmapa || !m_io_bitmapb) {
         throw std::runtime_error("io bitmaps not enabled");
@@ -106,7 +106,7 @@ vmcs_intel_x64_eapis::pass_through_io_access(port_type port)
 }
 
 void
-vmcs_intel_x64_eapis::pass_through_all_io_accesses()
+vmcs_eapis::vmcs::pass_through_all_io_accesses()
 {
     if (!m_io_bitmapa || !m_io_bitmapb) {
         throw std::runtime_error("io bitmaps not enabled");
@@ -117,7 +117,7 @@ vmcs_intel_x64_eapis::pass_through_all_io_accesses()
 }
 
 void
-vmcs_intel_x64_eapis::whitelist_io_access(const port_list_type &ports)
+vmcs_eapis::vmcs::whitelist_io_access(const port_list_type &ports)
 {
     trap_on_all_io_accesses();
     for (auto port : ports) {
@@ -126,7 +126,7 @@ vmcs_intel_x64_eapis::whitelist_io_access(const port_list_type &ports)
 }
 
 void
-vmcs_intel_x64_eapis::blacklist_io_access(const port_list_type &ports)
+vmcs_eapis::vmcs::blacklist_io_access(const port_list_type &ports)
 {
     pass_through_all_io_accesses();
     for (auto port : ports) {

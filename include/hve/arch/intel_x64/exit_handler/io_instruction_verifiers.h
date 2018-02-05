@@ -25,6 +25,8 @@
 #include "../../../../hve/arch/intel_x64/exit_handler/exit_handler.h"
 #include "../../../../hve/arch/intel_x64/exit_handler/verifiers.h"
 
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+
 /// @cond
 
 // -----------------------------------------------------------------------------
@@ -83,7 +85,7 @@ public:
     default_verifier__trap_on_io_access() = default;
     ~default_verifier__trap_on_io_access() override = default;
 
-    virtual verifier_result verify(exit_handler_intel_x64_eapis::port_type port)
+    virtual verifier_result verify(exit_handler_eapis::exit_handler::port_type port)
     { bfignored(port); return default_verify(); }
 };
 
@@ -105,7 +107,7 @@ public:
     default_verifier__pass_through_io_access() = default;
     ~default_verifier__pass_through_io_access() override = default;
 
-    virtual verifier_result verify(exit_handler_intel_x64_eapis::port_type port)
+    virtual verifier_result verify(exit_handler_eapis::exit_handler::port_type port)
     { bfignored(port); return default_verify(); }
 };
 
@@ -127,7 +129,7 @@ public:
     default_verifier__whitelist_io_access() = default;
     ~default_verifier__whitelist_io_access() override = default;
 
-    virtual verifier_result verify(exit_handler_intel_x64_eapis::port_list_type ports)
+    virtual verifier_result verify(exit_handler_eapis::exit_handler::port_list_type ports)
     { bfignored(ports); return default_verify(); }
 };
 
@@ -138,7 +140,7 @@ public:
     default_verifier__blacklist_io_access() = default;
     ~default_verifier__blacklist_io_access() override = default;
 
-    virtual verifier_result verify(exit_handler_intel_x64_eapis::port_list_type ports)
+    virtual verifier_result verify(exit_handler_eapis::exit_handler::port_list_type ports)
     { bfignored(ports); return default_verify(); }
 };
 
