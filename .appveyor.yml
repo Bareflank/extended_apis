@@ -47,7 +47,7 @@ build_script:
   #
   - mkdir hypervisor\build
   - cd hypervisor\build
-  - cmake -G "Visual Studio 15 2017 Win64" -DEXTENSIONS="C:/projects/extended-apis/extension.cmake" -DBFM_VMM="eapis_vmm_static" -DENABLE_BUILD_VMM=OFF -DENABLE_BUILD_USERSPACE=OFF -DENABLE_BUILD_TEST=ON ..
+  - cmake -G "Visual Studio 15 2017 Win64" -DEXTENSIONS="C:/projects/extended-apis/CMakeLists.txt" -DBFM_VMM="eapis_vmm_static" -DENABLE_TESTS_ONLY=ON ..
   - msbuild /m:3 hypervisor.sln
   - cmake --build . --target test
   - cd ..
@@ -57,6 +57,6 @@ build_script:
   #
   - set PATH=%BFPATH%;%APPVEYOR_BUILD_FOLDER%/hypervisor/build_cygwin/bfprefix/bin
   - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; mkdir hypervisor/build_cygwin"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; cmake -DEXTENSIONS="C:/projects/extended-apis/extension.cmake" -DBFM_VMM="eapis_vmm_static" -DENABLE_BUILD_TEST=ON .."'
+  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; cmake -DEXTENSIONS="C:/projects/extended-apis/CMakeLists.txt" -DBFM_VMM="eapis_vmm_static" -DENABLE_TESTS_ONLY=ON .."'
   - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make -j3"'
   - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make unittest"'
