@@ -25,4 +25,6 @@ set(CMAKE_BUILD_TYPE Debug)
 set(ENABLE_COMPILER_WARNINGS ON)
 
 set(CACHE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../../cache)
+
+set_bfm_vmm(eapis)
 list(APPEND EXTENSIONS ${CMAKE_CURRENT_LIST_DIR}/../../../CMakeLists.txt)
