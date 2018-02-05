@@ -123,7 +123,9 @@ matrix:
     script:
       - cmake -DCONFIG=../scripts/cmake/config/travis_format.cmake ../hypervisor
       - make astyle_x86_64-userspace-elf
-      - make format-all
+      - make format-eapis_main_x86_64-vmm-elf-all
+      - make format-eapis_x86_64-vmm-elf-all
+      - make format-eapis_x86_64-test-elf-all
       - |
         if [[ -n $(git diff) ]]; then
           echo "You must run make format before submitting a pull request"
@@ -172,7 +174,7 @@ matrix:
       - TEST="Codecov"
     script:
       - cmake -DCONFIG=../scripts/cmake/config/travis_codecov.cmake ../hypervisor
-      - make -j3
+      - make -j3 eapis_x86_64-test-elf
       - make test
       - rm -Rf depends
       - rm -Rf depends
