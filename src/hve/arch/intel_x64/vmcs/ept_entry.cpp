@@ -19,7 +19,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfbitmanip.h>
+#include <util/bitmanip.h>
 #include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
 
 #include <arch/x64/misc.h>
@@ -71,11 +71,11 @@ ept_entry_intel_x64::set_execute_access(bool enabled) noexcept
 
 ept_entry_intel_x64::memory_type_type
 ept_entry_intel_x64::memory_type() const noexcept
-{ return get_bits(*m_epte, 0x0000000000000038UL) >> 3; }
+{ return get_bits(*m_epte, 0x0000000000000038ULL) >> 3; }
 
 void
 ept_entry_intel_x64::set_memory_type(memory_type_type val) noexcept
-{ *m_epte = set_bits(*m_epte, 0x0000000000000038UL, val << 3); }
+{ *m_epte = set_bits(*m_epte, 0x0000000000000038ULL, val << 3); }
 
 bool
 ept_entry_intel_x64::ignore_pat() const noexcept
@@ -119,11 +119,11 @@ ept_entry_intel_x64::set_execute_access_user(bool enabled) noexcept
 
 ept_entry_intel_x64::integer_pointer
 ept_entry_intel_x64::phys_addr() const noexcept
-{ return get_bits(*m_epte, 0x0000FFFFFFFFF000UL); }
+{ return get_bits(*m_epte, 0x0000FFFFFFFFF000ULL); }
 
 void
 ept_entry_intel_x64::set_phys_addr(integer_pointer addr) noexcept
-{ *m_epte = set_bits(*m_epte, 0x0000FFFFFFFFF000UL, addr); }
+{ *m_epte = set_bits(*m_epte, 0x0000FFFFFFFFF000ULL, addr); }
 
 bool
 ept_entry_intel_x64::suppress_ve() const noexcept
@@ -151,4 +151,4 @@ ept_entry_intel_x64::pass_through_access() noexcept
 
 void
 ept_entry_intel_x64::clear() noexcept
-{ *m_epte = 0; }
+{ *m_epte = 0ULL; }
