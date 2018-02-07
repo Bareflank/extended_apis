@@ -23,12 +23,7 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-
-
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register unknown")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register unknown")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -41,7 +36,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register unknown")
     CHECK_THROWS(ehlr->handle_vmcall_registers(regs));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on wrmsr access allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register trap on wrmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -63,7 +58,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on wrmsr acc
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on wrmsr access logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register trap on wrmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -85,7 +80,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on wrmsr acc
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on wrmsr access denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register trap on wrmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -107,7 +102,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on wrmsr acc
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on all wrmsr accesses allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register trap on all wrmsr accesses allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -128,7 +123,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on all wrmsr
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on all wrmsr accesses logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register trap on all wrmsr accesses logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -149,7 +144,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on all wrmsr
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on all wrmsr accesses denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register trap on all wrmsr accesses denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -170,7 +165,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register trap on all wrmsr
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through wrmsr access allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register pass through wrmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -192,7 +187,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through wrms
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through wrmsr access logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register pass through wrmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -214,7 +209,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through wrms
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through wrmsr access denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register pass through wrmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -236,7 +231,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through wrms
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through all wrmsr accesses allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register pass through all wrmsr accesses allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -257,7 +252,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through all 
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through all wrmsr accesses logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register pass through all wrmsr accesses logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -278,7 +273,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through all 
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through all wrmsr accesses denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: register pass through all wrmsr accesses denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -299,7 +294,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: register pass through all 
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access missing msr")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json trap on wrmsr access missing msr")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -311,7 +306,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access invalid msr")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json trap on wrmsr access invalid msr")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -325,7 +320,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json trap on wrmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -351,7 +346,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access 
     CHECK(g_wrmsr == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json trap on wrmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -379,7 +374,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access 
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json trap on wrmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -405,7 +400,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json trap on wrmsr access 
     CHECK(g_wrmsr == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr access missing wrmsr")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json pass through wrmsr access missing wrmsr")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -417,7 +412,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr ac
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr access invalid msr")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json pass through wrmsr access invalid msr")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -431,7 +426,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr ac
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr access allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json pass through wrmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -457,7 +452,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr ac
     CHECK(g_wrmsr == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr access logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json pass through wrmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -485,7 +480,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr ac
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr access denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json pass through wrmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -511,7 +506,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json pass through wrmsr ac
     CHECK(g_wrmsr == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr access missing wrmsrs")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json whitelist wrmsr access missing wrmsrs")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -523,7 +518,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr acces
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr access invalid msrs")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json whitelist wrmsr access invalid msrs")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -537,7 +532,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr acces
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr access allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json whitelist wrmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -563,7 +558,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr acces
     CHECK(g_wrmsr == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr access logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json whitelist wrmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -591,7 +586,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr acces
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr access denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json whitelist wrmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -617,7 +612,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json whitelist wrmsr acces
     CHECK(g_wrmsr == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr access missing wrmsrs")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json blacklist wrmsr access missing wrmsrs")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -629,7 +624,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr acces
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr access invalid msrs")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json blacklist wrmsr access invalid msrs")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -643,7 +638,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr acces
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr access allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json blacklist wrmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -669,7 +664,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr acces
     CHECK(g_wrmsr == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr access logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json blacklist wrmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -697,7 +692,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr acces
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr access denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json blacklist wrmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -723,7 +718,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json blacklist wrmsr acces
     CHECK(g_wrmsr == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access missing enabled")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json log wrmsr access missing enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -735,7 +730,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access miss
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access invalid enabled")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json log wrmsr access invalid enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -747,7 +742,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access inva
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json log wrmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -765,7 +760,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access allo
     CHECK(ojson.dump() == "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json log wrmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -784,7 +779,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access logg
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json log wrmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -802,7 +797,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json log wrmsr access deni
     CHECK(ojson.dump() != "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json clear wrmsr access log allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json clear wrmsr access log allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -820,7 +815,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json clear wrmsr access lo
     CHECK(ojson.dump() == "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json clear wrmsr access log logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json clear wrmsr access log logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -839,7 +834,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json clear wrmsr access lo
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json clear wrmsr access log denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json clear wrmsr access log denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -857,7 +852,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json clear wrmsr access lo
     CHECK(ojson.dump() != "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json wrmsr access log allowed")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json wrmsr access log allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -876,7 +871,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json wrmsr access log allo
     CHECK(ojson.dump() == "{\"0x000000000000002A\":42}");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json wrmsr access log logged")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json wrmsr access log logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -896,7 +891,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json wrmsr access log logg
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_vmcall: json wrmsr access log denied")
+TEST_CASE("eapis_exit_handler_wrmsr_vmcall: json wrmsr access log denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);

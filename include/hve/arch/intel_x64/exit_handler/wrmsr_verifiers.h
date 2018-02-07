@@ -25,6 +25,8 @@
 #include "../../../../hve/arch/intel_x64/exit_handler/exit_handler.h"
 #include "../../../../hve/arch/intel_x64/exit_handler/verifiers.h"
 
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+
 /// @cond
 
 // -----------------------------------------------------------------------------
@@ -71,7 +73,7 @@ public:
     default_verifier__trap_on_wrmsr_access() = default;
     ~default_verifier__trap_on_wrmsr_access() override = default;
 
-    virtual verifier_result verify(exit_handler_intel_x64_eapis::msr_type msr)
+    virtual verifier_result verify(exit_handler_eapis::exit_handler::msr_type msr)
     { bfignored(msr); return default_verify(); }
 };
 
@@ -93,7 +95,7 @@ public:
     default_verifier__pass_through_wrmsr_access() = default;
     ~default_verifier__pass_through_wrmsr_access() override = default;
 
-    virtual verifier_result verify(exit_handler_intel_x64_eapis::msr_type msr)
+    virtual verifier_result verify(exit_handler_eapis::exit_handler::msr_type msr)
     { bfignored(msr); return default_verify(); }
 };
 
@@ -115,7 +117,7 @@ public:
     default_verifier__whitelist_wrmsr_access() = default;
     ~default_verifier__whitelist_wrmsr_access() override = default;
 
-    virtual verifier_result verify(exit_handler_intel_x64_eapis::msr_list_type msrs)
+    virtual verifier_result verify(exit_handler_eapis::exit_handler::msr_list_type msrs)
     { bfignored(msrs); return default_verify(); }
 };
 
@@ -126,7 +128,7 @@ public:
     default_verifier__blacklist_wrmsr_access() = default;
     ~default_verifier__blacklist_wrmsr_access() override = default;
 
-    virtual verifier_result verify(exit_handler_intel_x64_eapis::msr_list_type msrs)
+    virtual verifier_result verify(exit_handler_eapis::exit_handler::msr_list_type msrs)
     { bfignored(msrs); return default_verify(); }
 };
 

@@ -23,12 +23,7 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-
-
-TEST_CASE("exit_handler_intel_x64_eapis: resume")
+TEST_CASE("eapis_exit_handler: resume")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -37,7 +32,7 @@ TEST_CASE("exit_handler_intel_x64_eapis: resume")
     CHECK_NOTHROW(ehlr->resume());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis: resume_and_advance")
+TEST_CASE("eapis_exit_handler: resume_and_advance")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -47,7 +42,7 @@ TEST_CASE("exit_handler_intel_x64_eapis: resume_and_advance")
     CHECK(ehlr->m_state_save->rip == g_rip);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis: exit invalid")
+TEST_CASE("eapis_exit_handler: exit invalid")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -56,7 +51,7 @@ TEST_CASE("exit_handler_intel_x64_eapis: exit invalid")
     CHECK_NOTHROW(ehlr->dispatch());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis: vmcall registers unknown")
+TEST_CASE("eapis_exit_handler: vmcall registers unknown")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -68,7 +63,7 @@ TEST_CASE("exit_handler_intel_x64_eapis: vmcall registers unknown")
     CHECK_THROWS(ehlr->handle_vmcall_registers(regs));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis: vmcall json unknown")
+TEST_CASE("eapis_exit_handler: vmcall json unknown")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);

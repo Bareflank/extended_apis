@@ -23,12 +23,7 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-
-
-TEST_CASE("exit_handler_intel_x64_eapis_verifiers: overrun denials buffer")
+TEST_CASE("eapis_exit_handler_verifiers: overrun denials buffer")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);

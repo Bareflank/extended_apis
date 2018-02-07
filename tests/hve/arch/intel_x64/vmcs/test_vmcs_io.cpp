@@ -23,12 +23,10 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
+namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_controls;
 
 
-TEST_CASE("vmcs_intel_x64_eapis_io: enable io bitmaps")
+TEST_CASE("eapis_vmcs_io: enable io bitmaps")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -42,12 +40,12 @@ TEST_CASE("vmcs_intel_x64_eapis_io: enable io bitmaps")
     CHECK(vmcs->m_io_bitmapa_view.size() == static_cast<std::ptrdiff_t>(x64::page_size));
     CHECK(vmcs->m_io_bitmapb_view.data() != nullptr);
     CHECK(vmcs->m_io_bitmapb_view.size() == static_cast<std::ptrdiff_t>(x64::page_size));
-    CHECK(vmcs::address_of_io_bitmap_a::get() != 0);
-    CHECK(vmcs::address_of_io_bitmap_b::get() != 0);
+    CHECK(::intel_x64::vmcs::address_of_io_bitmap_a::get() != 0);
+    CHECK(::intel_x64::vmcs::address_of_io_bitmap_b::get() != 0);
     CHECK(proc_ctls::use_io_bitmaps::is_enabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_io: disable io bitmaps")
+TEST_CASE("eapis_vmcs_io: disable io bitmaps")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -61,12 +59,12 @@ TEST_CASE("vmcs_intel_x64_eapis_io: disable io bitmaps")
     CHECK(vmcs->m_io_bitmapa_view.empty());
     CHECK(vmcs->m_io_bitmapb_view.data() == nullptr);
     CHECK(vmcs->m_io_bitmapb_view.empty());
-    CHECK(vmcs::address_of_io_bitmap_a::get() == 0);
-    CHECK(vmcs::address_of_io_bitmap_b::get() == 0);
+    CHECK(::intel_x64::vmcs::address_of_io_bitmap_a::get() == 0);
+    CHECK(::intel_x64::vmcs::address_of_io_bitmap_b::get() == 0);
     CHECK(proc_ctls::use_io_bitmaps::is_disabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_io: trap on io access")
+TEST_CASE("eapis_vmcs_io: trap on io access")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -82,7 +80,7 @@ TEST_CASE("vmcs_intel_x64_eapis_io: trap on io access")
     CHECK(vmcs->m_io_bitmapb_view[8] == 0x4);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_io: trap on all io accesses")
+TEST_CASE("eapis_vmcs_io: trap on all io accesses")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -108,7 +106,7 @@ TEST_CASE("vmcs_intel_x64_eapis_io: trap on all io accesses")
     CHECK(all_setb == 0xFF);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_io: pass through io access")
+TEST_CASE("eapis_vmcs_io: pass through io access")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -125,7 +123,7 @@ TEST_CASE("vmcs_intel_x64_eapis_io: pass through io access")
     CHECK(vmcs->m_io_bitmapb_view[8] == 0xFB);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_io: pass through all io accesses")
+TEST_CASE("eapis_vmcs_io: pass through all io accesses")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -151,7 +149,7 @@ TEST_CASE("vmcs_intel_x64_eapis_io: pass through all io accesses")
     CHECK(all_setb == 0x0);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_io: whitelist io access")
+TEST_CASE("eapis_vmcs_io: whitelist io access")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -165,7 +163,7 @@ TEST_CASE("vmcs_intel_x64_eapis_io: whitelist io access")
     CHECK(vmcs->m_io_bitmapb_view[8] == 0xFB);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_io: blacklist io access")
+TEST_CASE("eapis_vmcs_io: blacklist io access")
 {
     MockRepository mocks;
     setup_mm(mocks);

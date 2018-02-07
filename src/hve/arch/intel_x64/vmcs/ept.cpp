@@ -24,14 +24,13 @@
 #include <arch/x64/misc.h>
 #include "../../../../../include/hve/arch/intel_x64/vmcs/ept.h"
 
-namespace intel = intel_x64;
-namespace ept = intel_x64::ept;
+namespace intel = eapis::hve::intel_x64;
 
-ept_intel_x64::ept_intel_x64(pointer epte)
+intel::ept::ept(pointer epte)
 {
-    m_ept = std::make_unique<integer_pointer[]>(ept::num_entries);
+    m_ept = std::make_unique<integer_pointer[]>(::intel_x64::ept::num_entries);
 
-    auto &&entry = ept_entry_intel_x64(epte);
+    auto &&entry = intel::ept_entry(epte);
     entry.clear();
     entry.set_phys_addr(g_mm->virtptr_to_physint(m_ept.get()));
     entry.set_read_access(true);
@@ -39,22 +38,22 @@ ept_intel_x64::ept_intel_x64(pointer epte)
     entry.set_execute_access(true);
 }
 
-ept_entry_intel_x64
-ept_intel_x64::get_entry(index_type index)
+intel::ept_entry
+intel::ept::get_entry(index_type index)
 {
-    if (index >= ept::num_entries) {
-        throw std::invalid_argument("index must be less than ept::num_entries");
+    if (index >= ::intel_x64::ept::num_entries) {
+        throw std::invalid_argument("index must be less than ::intel_x64::ept::num_entries");
     }
 
-    auto ept = gsl::make_span(m_ept, ept::num_entries);
-    return ept_entry_intel_x64(&ept.at(index));
+    auto ept = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
+    return intel::ept_entry(&ept.at(index));
 }
 
-ept_entry_intel_x64
-ept_intel_x64::add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end)
+intel::ept_entry
+intel::ept::add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end)
 {
-    auto index = ept::index(gpa, bits);
-    auto entry = get_entry(static_cast<uint64_t>(index));
+    auto index = ::intel_x64::ept::index(gpa, bits);
+    auto entry = get_entry(index);
 
     if (bits > end) {
         if (entry.entry_type()) {
@@ -62,16 +61,16 @@ ept_intel_x64::add_page(integer_pointer gpa, integer_pointer bits, integer_point
         }
 
         if (m_epts.empty()) {
-            m_epts = std::vector<std::unique_ptr<ept_intel_x64>>(ept::num_entries);
+            m_epts = std::vector<std::unique_ptr<ept>>(::intel_x64::ept::num_entries);
         }
 
         auto iter = bfn::find(m_epts, index);
         if (nullptr == *iter) {
-            auto view = gsl::make_span(m_ept, ept::num_entries);
-            *iter = std::make_unique<ept_intel_x64>(&view.at(index));
+            auto view = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
+            *iter = std::make_unique<ept>(&view.at(index));
         }
 
-        return (*iter)->add_page(gpa, bits - ept::pt::size, end);
+        return (*iter)->add_page(gpa, bits - ::intel_x64::ept::pt::size, end);
     }
 
     if (!m_epts.empty()) {
@@ -91,10 +90,10 @@ ept_intel_x64::add_page(integer_pointer gpa, integer_pointer bits, integer_point
 }
 
 void
-ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
+intel::ept::remove_page(integer_pointer gpa, integer_pointer bits)
 {
-    auto index = ept::index(gpa, bits);
-    auto entry = get_entry(static_cast<uint64_t>(index));
+    auto index = ::intel_x64::ept::index(gpa, bits);
+    auto entry = get_entry(index);
 
     if (entry.entry_type()) {
         entry.clear();
@@ -104,7 +103,7 @@ ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
     if (!m_epts.empty()) {
         auto iter = bfn::find(m_epts, index);
         if (auto pt = (*iter).get()) {
-            pt->remove_page(gpa, bits - ept::pt::size);
+            pt->remove_page(gpa, bits - ::intel_x64::ept::pt::size);
             if (pt->empty()) {
                 (*iter) = nullptr;
                 entry.clear();
@@ -113,26 +112,26 @@ ept_intel_x64::remove_page(integer_pointer gpa, integer_pointer bits)
     }
 }
 
-ept_entry_intel_x64
-ept_intel_x64::gpa_to_epte(integer_pointer gpa, integer_pointer bits) const
+intel::ept_entry
+intel::ept::gpa_to_epte(integer_pointer gpa, integer_pointer bits) const
 {
-    auto &&index = ept::index(gpa, bits);
+    auto &&index = ::intel_x64::ept::index(gpa, bits);
 
     if (!m_epts.empty()) {
         auto &&iter = bfn::cfind(m_epts, index);
         if (auto pt = (*iter).get()) {
-            return pt->gpa_to_epte(gpa, bits - ept::pt::size);
+            return pt->gpa_to_epte(gpa, bits - ::intel_x64::ept::pt::size);
         }
 
         throw std::runtime_error("unable to locate epte. invalid gpaess");
     }
 
-    auto &&view = gsl::make_span(m_ept, ept::num_entries);
-    return ept_entry_intel_x64(&view.at(index));
+    auto &&view = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
+    return intel::ept_entry(&view.at(index));
 }
 
-ept_intel_x64::memory_descriptor_list
-ept_intel_x64::ept_to_mdl(memory_descriptor_list &mdl) const
+intel::ept::memory_descriptor_list
+intel::ept::ept_to_mdl(memory_descriptor_list &mdl) const
 {
     auto &&virt = reinterpret_cast<uintptr_t>(m_ept.get());
     auto &&phys = g_mm->virtint_to_physint(virt);
@@ -147,11 +146,11 @@ ept_intel_x64::ept_to_mdl(memory_descriptor_list &mdl) const
 }
 
 bool
-ept_intel_x64::empty() const noexcept
+intel::ept::empty() const noexcept
 {
     auto size = 0UL;
 
-    auto &&view = gsl::make_span(m_ept, ept::num_entries);
+    auto &&view = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
     for (auto element : view) {
         size += element != 0 ? 1U : 0U;
     }
@@ -159,12 +158,12 @@ ept_intel_x64::empty() const noexcept
     return size == 0;
 }
 
-ept_intel_x64::size_type
-ept_intel_x64::global_size() const noexcept
+intel::ept::size_type
+intel::ept::global_size() const noexcept
 {
     auto size = 0UL;
 
-    auto &&view = gsl::make_span(m_ept, ept::num_entries);
+    auto &&view = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
     for (auto element : view) {
         size += element != 0 ? 1U : 0U;
     }
@@ -175,8 +174,8 @@ ept_intel_x64::global_size() const noexcept
     return size;
 }
 
-ept_intel_x64::size_type
-ept_intel_x64::global_capacity() const noexcept
+intel::ept::size_type
+intel::ept::global_capacity() const noexcept
 {
     auto size = m_epts.capacity();
 

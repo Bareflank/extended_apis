@@ -28,8 +28,10 @@
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/wrmsr_verifiers.h"
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/cpuid_verifiers.h"
 
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+
 void
-exit_handler_intel_x64_eapis::init_policy()
+exit_handler_eapis::exit_handler::init_policy()
 {
     m_verifiers[vp::index_clear_denials] = std::make_unique<default_verifier__clear_denials>();
     m_verifiers[vp::index_dump_policy] = std::make_unique<default_verifier__dump_policy>();

@@ -23,12 +23,7 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-
-
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register unknown")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register unknown")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -41,7 +36,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register unknown"
     CHECK_THROWS(ehlr->handle_vmcall_registers(regs));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register enable io bitmaps allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register enable io bitmaps allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -62,7 +57,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register enable i
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register enable io bitmaps logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register enable io bitmaps logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -83,7 +78,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register enable i
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register enable io bitmaps denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register enable io bitmaps denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -104,7 +99,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register enable i
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register disable io bitmaps allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register disable io bitmaps allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -125,7 +120,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register disable 
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register disable io bitmaps logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register disable io bitmaps logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -146,7 +141,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register disable 
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register disable io bitmaps denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register disable io bitmaps denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -167,7 +162,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register disable 
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on io access allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register trap on io access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -189,7 +184,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on io access logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register trap on io access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -211,7 +206,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on io access denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register trap on io access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -233,7 +228,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on all io accesses allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register trap on all io accesses allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -254,7 +249,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on all io accesses logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register trap on all io accesses logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -275,7 +270,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on all io accesses denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register trap on all io accesses denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -296,7 +291,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register trap on 
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass through io access allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register pass through io access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -318,7 +313,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass through io access logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register pass through io access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -340,7 +335,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass through io access denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register pass through io access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -362,7 +357,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass through all io accesses allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register pass through all io accesses allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -383,7 +378,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass through all io accesses logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register pass through all io accesses logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -404,7 +399,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass through all io accesses denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: register pass through all io accesses denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -425,7 +420,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: register pass thr
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bitmaps missing enabled")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json enable io bitmaps missing enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -437,7 +432,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bi
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bitmaps invalid enabled")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json enable io bitmaps invalid enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -449,7 +444,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bi
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bitmaps allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json enable io bitmaps allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -475,7 +470,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bi
     CHECK(!g_enable_io_bitmaps);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bitmaps logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json enable io bitmaps logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -503,7 +498,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bi
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bitmaps denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json enable io bitmaps denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -529,7 +524,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json enable io bi
     CHECK(g_enable_io_bitmaps);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io access missing port")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json trap on io access missing port")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -541,7 +536,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io a
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io access invalid port")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json trap on io access invalid port")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -555,7 +550,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io a
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io access allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json trap on io access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -581,7 +576,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io a
     CHECK(g_port == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io access logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json trap on io access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -609,7 +604,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io a
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io access denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json trap on io access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -635,7 +630,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json trap on io a
     CHECK(g_port == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through io access missing port")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json pass through io access missing port")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -647,7 +642,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through io access invalid port")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json pass through io access invalid port")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -661,7 +656,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through io access allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json pass through io access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -687,7 +682,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through
     CHECK(g_port == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through io access logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json pass through io access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -715,7 +710,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through io access denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json pass through io access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -741,7 +736,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json pass through
     CHECK(g_port == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io access missing ports")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json whitelist io access missing ports")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -753,7 +748,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io access invalid ports")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json whitelist io access invalid ports")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -767,7 +762,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io access allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json whitelist io access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -793,7 +788,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io
     CHECK(g_port == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io access logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json whitelist io access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -821,7 +816,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io access denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json whitelist io access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -847,7 +842,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json whitelist io
     CHECK(g_port == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io access missing ports")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json blacklist io access missing ports")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -859,7 +854,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io access invalid ports")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json blacklist io access invalid ports")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -873,7 +868,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io access allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json blacklist io access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -899,7 +894,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io
     CHECK(g_port == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io access logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json blacklist io access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -927,7 +922,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io access denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json blacklist io access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -953,7 +948,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json blacklist io
     CHECK(g_port == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io access missing enabled")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json log io access missing enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -965,7 +960,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io acces
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io access invalid enabled")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json log io access invalid enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -977,7 +972,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io acces
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io access allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json log io access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -995,7 +990,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io acces
     CHECK(ojson.dump() == "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io access logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json log io access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -1014,7 +1009,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io acces
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io access denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json log io access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -1032,7 +1027,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json log io acces
     CHECK(ojson.dump() != "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json clear io access log allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json clear io access log allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -1050,7 +1045,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json clear io acc
     CHECK(ojson.dump() == "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json clear io access log logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json clear io access log logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -1069,7 +1064,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json clear io acc
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json clear io access log denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json clear io access log denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -1087,7 +1082,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json clear io acc
     CHECK(ojson.dump() != "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access log allowed")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json io access log allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -1106,7 +1101,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access lo
     CHECK(ojson.dump() == "{\"0x000000000000002A\":42}");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access log logged")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json io access log logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -1126,7 +1121,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access lo
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_vmcall: json io access log denied")
+TEST_CASE("eapis_exit_handler_io_instruction_vmcall: json io access log denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);

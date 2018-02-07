@@ -51,30 +51,43 @@
 /// is used here except the constructor, were EAPI specific resources are
 /// initialized.
 ///
-class EXPORT_EAPIS_HVE vmcs_intel_x64_vmm_state_eapis :
-    public vmcs_intel_x64_vmm_state
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+namespace vmcs
+{
+
+class EXPORT_EAPIS_HVE vmcs_state_vmm : public bfvmm::intel_x64::vmcs_state_vmm
 {
 public:
 
     /// Default Constructor
     ///
-    vmcs_intel_x64_vmm_state_eapis();
+    vmcs_state_vmm();
 
     /// Default Destructor
     ///
-    ~vmcs_intel_x64_vmm_state_eapis() override = default;
+    ~vmcs_state_vmm() override = default;
 
 public:
 
     /// @cond
 
-    vmcs_intel_x64_vmm_state_eapis(vmcs_intel_x64_vmm_state_eapis &&) noexcept = delete;
-    vmcs_intel_x64_vmm_state_eapis &operator=(vmcs_intel_x64_vmm_state_eapis &&) noexcept = delete;
+    vmcs_state_vmm(vmcs_state_vmm &&) noexcept = delete;
+    vmcs_state_vmm &operator=(vmcs_state_vmm &&) noexcept = delete;
 
-    vmcs_intel_x64_vmm_state_eapis(const vmcs_intel_x64_vmm_state_eapis &) = delete;
-    vmcs_intel_x64_vmm_state_eapis &operator=(const vmcs_intel_x64_vmm_state_eapis &) = delete;
+    vmcs_state_vmm(const vmcs_state_vmm &) = delete;
+    vmcs_state_vmm &operator=(const vmcs_state_vmm &) = delete;
 
     /// @endcond
 };
+
+}
+}
+}
+}
 
 #endif

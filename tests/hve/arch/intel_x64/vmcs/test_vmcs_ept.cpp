@@ -23,42 +23,41 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
+namespace ept_p = ::intel_x64::vmcs::ept_pointer;
 
 
-TEST_CASE("vmcs_intel_x64_eapis_ept: enable ept")
+TEST_CASE("eapis_vmcs_ept: enable ept")
 {
     MockRepository mocks;
     setup_mm(mocks);
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->enable_ept(0x0000000ABCDEF0000);
-    CHECK(vmcs::ept_pointer::memory_type::get() == vmcs::ept_pointer::memory_type::write_back);
-    CHECK(vmcs::ept_pointer::page_walk_length_minus_one::get() == 3UL);
-    CHECK(vmcs::ept_pointer::phys_addr::get() == 0x0000000ABCDEF0000);
+    CHECK(ept_p::memory_type::get() == ept_p::memory_type::write_back);
+    CHECK(ept_p::page_walk_length_minus_one::get() == 3UL);
+    CHECK(ept_p::phys_addr::get() == 0x0000000ABCDEF0000);
     CHECK(proc_ctls2::enable_ept::is_enabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_ept: disable ept")
+TEST_CASE("eapis_vmcs_ept: disable ept")
 {
     MockRepository mocks;
     setup_mm(mocks);
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->disable_ept();
-    CHECK(vmcs::ept_pointer::get() == 0);
+    CHECK(ept_p::get() == 0);
     CHECK(proc_ctls2::enable_ept::is_disabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_ept: set eptp")
+TEST_CASE("eapis_vmcs_ept: set eptp")
 {
     MockRepository mocks;
     setup_mm(mocks);
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->set_eptp(0x0000000ABCDEF0000);
-    CHECK(vmcs::ept_pointer::phys_addr::get() == 0x0000000ABCDEF0000);
+    CHECK(ept_p::phys_addr::get() == 0x0000000ABCDEF0000);
 }
 
 #endif

@@ -23,19 +23,17 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid missing args")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid missing args")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_intel_x64_eapis::cpuid_type leaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_type subleaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
     std::string valid = "00000000000000000000000000001000";
 
     json ijson1 = {{"command", "emulate_cpuid"}};
@@ -48,14 +46,14 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid missing
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid invalid args")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid invalid args")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_intel_x64_eapis::cpuid_type leaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_type subleaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
     std::string valid = "00000000000000000000000000001000";
 
     json ijson1 = {{"command", "emulate_cpuid"}, {"leaf", "bad leaf"}, {"subleaf", "bad subleaf"},
@@ -74,14 +72,14 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid invalid
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson3, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid invalid string")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid invalid string")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_intel_x64_eapis::cpuid_type leaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_type subleaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
     std::string long_string = "0000000000000000000000000000001000";
     std::string short_string =                        "0000001000";
     std::string unknown_chars = "00000000000000000000000000001jwz";
@@ -131,14 +129,14 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid invalid
     CHECK(ehlr->m_cpuid_emu_map[0].rdx == 8);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid allowed")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_intel_x64_eapis::cpuid_type leaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_type subleaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
     std::string valid =   "00000000000000000000000000001000";
 
     json ijson = {{"command", "emulate_cpuid"}, {"leaf", leaf}, {"subleaf", subleaf},
@@ -161,14 +159,14 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid allowed
     CHECK(ehlr->m_cpuid_emu_map[0].rdx == 8);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid logged")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_intel_x64_eapis::cpuid_type leaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_type subleaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
     std::string valid =   "00000000000000000000000000001000";
 
     json ijson = {{"command", "emulate_cpuid"}, {"leaf", leaf}, {"subleaf", subleaf},
@@ -192,14 +190,14 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid logged"
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid denied")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_intel_x64_eapis::cpuid_type leaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_type subleaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
     std::string valid =   "00000000000000000000000000001000";
 
     json ijson = {{"command", "emulate_cpuid"}, {"leaf", leaf}, {"subleaf", subleaf},
@@ -222,7 +220,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json emulate cpuid denied"
     CHECK(ehlr->m_cpuid_emu_map[0].rdx != 8);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf missing args")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json reset cpuid leaf missing args")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -234,7 +232,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf miss
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf invalid args")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json reset cpuid leaf invalid args")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -246,7 +244,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf inva
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf allowed")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json reset cpuid leaf allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -266,7 +264,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf allo
     CHECK(ehlr->m_cpuid_emu_map.find(0) == ehlr->m_cpuid_emu_map.end());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf logged")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json reset cpuid leaf logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -287,7 +285,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf logg
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf denied")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json reset cpuid leaf denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -307,7 +305,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid leaf deni
     CHECK(ehlr->m_cpuid_emu_map.find(0) != ehlr->m_cpuid_emu_map.end());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid all allowed")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json reset cpuid all allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -327,7 +325,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid all allow
     CHECK(ehlr->m_cpuid_emu_map.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid all logged")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json reset cpuid all logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -348,7 +346,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid all logge
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid all denied")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json reset cpuid all denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -368,7 +366,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json reset cpuid all denie
     CHECK_FALSE(ehlr->m_cpuid_emu_map.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access missing enabled")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json log cpuid access missing enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -380,7 +378,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access miss
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access invalid enabled")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json log cpuid access invalid enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -392,7 +390,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access inva
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access allowed")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json log cpuid access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -410,7 +408,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access allo
     CHECK(ojson.dump() == "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access logged")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json log cpuid access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -429,7 +427,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access logg
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access denied")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json log cpuid access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -447,7 +445,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json log cpuid access deni
     CHECK(ojson.dump() != "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json clear cpuid access log allowed")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json clear cpuid access log allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -465,7 +463,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json clear cpuid access lo
     CHECK(ojson.dump() == "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json clear cpuid access log logged")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json clear cpuid access log logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -484,7 +482,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json clear cpuid access lo
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json clear cpuid access log denied")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json clear cpuid access log denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -502,7 +500,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json clear cpuid access lo
     CHECK(ojson.dump() != "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json cpuid access log allowed")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json cpuid access log allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -521,7 +519,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json cpuid access log allo
     CHECK(ojson.dump() == "{\"0x0000000000000000\":8}");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json cpuid access log logged")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json cpuid access log logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -541,7 +539,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json cpuid access log logg
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json cpuid access log denied")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json cpuid access log denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -560,7 +558,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json cpuid access log deni
     CHECK(ojson.dump() != "{\"0x0000000000000000\":8}");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json dump cpuid emulations log allowed")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json dump cpuid emulations log allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -579,7 +577,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json dump cpuid emulations
     CHECK(ojson.dump() == "{\"0x0000000000000000\":[8,8,8,8]}");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json dump cpuid emulations log logged")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json dump cpuid emulations log logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -599,7 +597,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json dump cpuid emulations
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_vmcall: json dump cpuid emulations log denied")
+TEST_CASE("eapis_exit_handler_cpuid_vmcall: json dump cpuid emulations log denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);

@@ -23,14 +23,13 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
+namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
 
 
-TEST_CASE("exit_handler_intel_x64_eapis_wrmsr_emulation: exit")
+TEST_CASE("eapis_exit_handler_wrmsr_emulation: exit")
 {
     MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, vmcs::exit_reason::basic_exit_reason::wrmsr);
+    auto vmcs = setup_vmcs(mocks, reason::wrmsr);
     auto ehlr = setup_ehlr(vmcs);
 
     ehlr->log_wrmsr_access(true);

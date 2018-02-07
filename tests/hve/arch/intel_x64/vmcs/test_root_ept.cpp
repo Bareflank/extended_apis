@@ -25,28 +25,28 @@
 #include "../../../../../include/hve/arch/intel_x64/vmcs/root_ept.h"
 #include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
+namespace intel = eapis::hve::intel_x64;
+namespace mem_attr = intel_x64::ept::memory_attr;
 namespace ept = intel_x64::ept;
 
 
-TEST_CASE("root_ept_intel_x64: eptp")
+TEST_CASE("root_ept: eptp")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     CHECK(root_ept.eptp() == 0x0000000ABCDEF0007);
 }
 
-TEST_CASE("root_ept_intel_x64: map 1g read / write")
+TEST_CASE("root_ept: map 1g read / write")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::rw_uc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::rw_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -57,7 +57,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read / write")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::rw_wc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::rw_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -68,7 +68,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read / write")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::rw_wt);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::rw_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -79,7 +79,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read / write")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::rw_wp);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::rw_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -90,7 +90,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read / write")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::rw_wb);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::rw_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -101,14 +101,14 @@ TEST_CASE("root_ept_intel_x64: map 1g read / write")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 1g read / execute")
+TEST_CASE("root_ept: map 1g read / execute")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::re_uc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::re_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -119,7 +119,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read / execute")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::re_wc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::re_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -130,7 +130,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read / execute")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::re_wt);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::re_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -141,7 +141,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read / execute")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::re_wp);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::re_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -152,7 +152,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read / execute")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::re_wb);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::re_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -163,14 +163,14 @@ TEST_CASE("root_ept_intel_x64: map 1g read / execute")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 1g read only")
+TEST_CASE("root_ept: map 1g read only")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::ro_uc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::ro_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -181,7 +181,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read only")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::ro_wc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::ro_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -192,7 +192,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read only")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::ro_wt);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::ro_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -203,7 +203,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read only")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::ro_wp);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::ro_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -214,7 +214,7 @@ TEST_CASE("root_ept_intel_x64: map 1g read only")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::ro_wb);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::ro_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -225,14 +225,14 @@ TEST_CASE("root_ept_intel_x64: map 1g read only")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 1g execute only")
+TEST_CASE("root_ept: map 1g execute only")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::eo_uc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::eo_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -243,7 +243,7 @@ TEST_CASE("root_ept_intel_x64: map 1g execute only")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::eo_wc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::eo_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -254,7 +254,7 @@ TEST_CASE("root_ept_intel_x64: map 1g execute only")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::eo_wt);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::eo_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -265,7 +265,7 @@ TEST_CASE("root_ept_intel_x64: map 1g execute only")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::eo_wp);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::eo_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -276,7 +276,7 @@ TEST_CASE("root_ept_intel_x64: map 1g execute only")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::eo_wb);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::eo_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -287,14 +287,14 @@ TEST_CASE("root_ept_intel_x64: map 1g execute only")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 1g pass through")
+TEST_CASE("root_ept: map 1g pass through")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::pt_uc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::pt_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -305,7 +305,7 @@ TEST_CASE("root_ept_intel_x64: map 1g pass through")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::pt_wc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::pt_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -316,7 +316,7 @@ TEST_CASE("root_ept_intel_x64: map 1g pass through")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::pt_wt);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::pt_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -327,7 +327,7 @@ TEST_CASE("root_ept_intel_x64: map 1g pass through")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::pt_wp);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::pt_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -338,7 +338,7 @@ TEST_CASE("root_ept_intel_x64: map 1g pass through")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::pt_wb);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::pt_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -349,14 +349,14 @@ TEST_CASE("root_ept_intel_x64: map 1g pass through")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 1g trap")
+TEST_CASE("root_ept: map 1g trap")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::tp_uc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::tp_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -367,7 +367,7 @@ TEST_CASE("root_ept_intel_x64: map 1g trap")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::tp_wc);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::tp_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -378,7 +378,7 @@ TEST_CASE("root_ept_intel_x64: map 1g trap")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::tp_wt);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::tp_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -389,7 +389,7 @@ TEST_CASE("root_ept_intel_x64: map 1g trap")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::tp_wp);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::tp_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -400,7 +400,7 @@ TEST_CASE("root_ept_intel_x64: map 1g trap")
     }
 
     {
-        root_ept.map_1g(0x1000UL, 0x1000UL, ept::memory_attr::tp_wb);
+        root_ept.map_1g(0x1000UL, 0x1000UL, mem_attr::tp_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -411,14 +411,14 @@ TEST_CASE("root_ept_intel_x64: map 1g trap")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 2m read / write")
+TEST_CASE("root_ept: map 2m read / write")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::rw_uc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::rw_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -429,7 +429,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read / write")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::rw_wc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::rw_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -440,7 +440,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read / write")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::rw_wt);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::rw_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -451,7 +451,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read / write")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::rw_wp);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::rw_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -462,7 +462,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read / write")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::rw_wb);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::rw_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -473,14 +473,14 @@ TEST_CASE("root_ept_intel_x64: map 2m read / write")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 2m read / execute")
+TEST_CASE("root_ept: map 2m read / execute")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::re_uc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::re_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -491,7 +491,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read / execute")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::re_wc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::re_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -502,7 +502,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read / execute")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::re_wt);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::re_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -513,7 +513,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read / execute")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::re_wp);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::re_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -524,7 +524,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read / execute")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::re_wb);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::re_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -535,14 +535,14 @@ TEST_CASE("root_ept_intel_x64: map 2m read / execute")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 2m read only")
+TEST_CASE("root_ept: map 2m read only")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::ro_uc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::ro_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -553,7 +553,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read only")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::ro_wc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::ro_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -564,7 +564,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read only")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::ro_wt);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::ro_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -575,7 +575,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read only")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::ro_wp);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::ro_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -586,7 +586,7 @@ TEST_CASE("root_ept_intel_x64: map 2m read only")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::ro_wb);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::ro_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -597,13 +597,13 @@ TEST_CASE("root_ept_intel_x64: map 2m read only")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 2m execute only")
+TEST_CASE("root_ept: map 2m execute only")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::eo_uc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::eo_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -614,7 +614,7 @@ TEST_CASE("root_ept_intel_x64: map 2m execute only")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::eo_wc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::eo_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -625,7 +625,7 @@ TEST_CASE("root_ept_intel_x64: map 2m execute only")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::eo_wt);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::eo_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -636,7 +636,7 @@ TEST_CASE("root_ept_intel_x64: map 2m execute only")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::eo_wp);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::eo_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -647,7 +647,7 @@ TEST_CASE("root_ept_intel_x64: map 2m execute only")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::eo_wb);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::eo_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -658,13 +658,13 @@ TEST_CASE("root_ept_intel_x64: map 2m execute only")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 2m pass through")
+TEST_CASE("root_ept: map 2m pass through")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::pt_uc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::pt_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -675,7 +675,7 @@ TEST_CASE("root_ept_intel_x64: map 2m pass through")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::pt_wc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::pt_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -686,7 +686,7 @@ TEST_CASE("root_ept_intel_x64: map 2m pass through")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::pt_wt);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::pt_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -697,7 +697,7 @@ TEST_CASE("root_ept_intel_x64: map 2m pass through")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::pt_wp);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::pt_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -708,7 +708,7 @@ TEST_CASE("root_ept_intel_x64: map 2m pass through")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::pt_wb);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::pt_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -719,14 +719,14 @@ TEST_CASE("root_ept_intel_x64: map 2m pass through")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 2m trap")
+TEST_CASE("root_ept: map 2m trap")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::tp_uc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::tp_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -737,7 +737,7 @@ TEST_CASE("root_ept_intel_x64: map 2m trap")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::tp_wc);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::tp_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -748,7 +748,7 @@ TEST_CASE("root_ept_intel_x64: map 2m trap")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::tp_wt);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::tp_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -759,7 +759,7 @@ TEST_CASE("root_ept_intel_x64: map 2m trap")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::tp_wp);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::tp_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -770,7 +770,7 @@ TEST_CASE("root_ept_intel_x64: map 2m trap")
     }
 
     {
-        root_ept.map_2m(0x1000UL, 0x1000UL, ept::memory_attr::tp_wb);
+        root_ept.map_2m(0x1000UL, 0x1000UL, mem_attr::tp_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -781,14 +781,14 @@ TEST_CASE("root_ept_intel_x64: map 2m trap")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 4k read / write")
+TEST_CASE("root_ept: map 4k read / write")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::rw_uc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::rw_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -799,7 +799,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read / write")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::rw_wc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::rw_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -810,7 +810,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read / write")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::rw_wt);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::rw_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -821,7 +821,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read / write")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::rw_wp);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::rw_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -832,7 +832,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read / write")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::rw_wb);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::rw_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -843,13 +843,13 @@ TEST_CASE("root_ept_intel_x64: map 4k read / write")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 4k read / execute")
+TEST_CASE("root_ept: map 4k read / execute")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::re_uc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::re_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -860,7 +860,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read / execute")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::re_wc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::re_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -871,7 +871,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read / execute")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::re_wt);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::re_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -882,7 +882,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read / execute")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::re_wp);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::re_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -893,7 +893,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read / execute")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::re_wb);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::re_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -904,14 +904,14 @@ TEST_CASE("root_ept_intel_x64: map 4k read / execute")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 4k read only")
+TEST_CASE("root_ept: map 4k read only")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::ro_uc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::ro_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -922,7 +922,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read only")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::ro_wc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::ro_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -933,7 +933,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read only")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::ro_wt);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::ro_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -944,7 +944,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read only")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::ro_wp);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::ro_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -955,7 +955,7 @@ TEST_CASE("root_ept_intel_x64: map 4k read only")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::ro_wb);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::ro_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(!entry.write_access());
@@ -966,14 +966,14 @@ TEST_CASE("root_ept_intel_x64: map 4k read only")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 4k execute only")
+TEST_CASE("root_ept: map 4k execute only")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::eo_uc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::eo_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -984,7 +984,7 @@ TEST_CASE("root_ept_intel_x64: map 4k execute only")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::eo_wc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::eo_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -995,7 +995,7 @@ TEST_CASE("root_ept_intel_x64: map 4k execute only")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::eo_wt);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::eo_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -1006,7 +1006,7 @@ TEST_CASE("root_ept_intel_x64: map 4k execute only")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::eo_wp);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::eo_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -1017,7 +1017,7 @@ TEST_CASE("root_ept_intel_x64: map 4k execute only")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::eo_wb);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::eo_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -1028,14 +1028,14 @@ TEST_CASE("root_ept_intel_x64: map 4k execute only")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 4k pass through")
+TEST_CASE("root_ept: map 4k pass through")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_uc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::pt_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -1046,7 +1046,7 @@ TEST_CASE("root_ept_intel_x64: map 4k pass through")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_wc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::pt_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -1057,7 +1057,7 @@ TEST_CASE("root_ept_intel_x64: map 4k pass through")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_wt);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::pt_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -1068,7 +1068,7 @@ TEST_CASE("root_ept_intel_x64: map 4k pass through")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_wp);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::pt_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -1079,7 +1079,7 @@ TEST_CASE("root_ept_intel_x64: map 4k pass through")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_wb);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::pt_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(entry.read_access());
         CHECK(entry.write_access());
@@ -1090,14 +1090,14 @@ TEST_CASE("root_ept_intel_x64: map 4k pass through")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map 4k trap")
+TEST_CASE("root_ept: map 4k trap")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::tp_uc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::tp_uc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -1108,7 +1108,7 @@ TEST_CASE("root_ept_intel_x64: map 4k trap")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::tp_wc);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::tp_wc);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -1119,7 +1119,7 @@ TEST_CASE("root_ept_intel_x64: map 4k trap")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::tp_wt);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::tp_wt);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -1130,7 +1130,7 @@ TEST_CASE("root_ept_intel_x64: map 4k trap")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::tp_wp);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::tp_wp);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -1141,7 +1141,7 @@ TEST_CASE("root_ept_intel_x64: map 4k trap")
     }
 
     {
-        root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::tp_wb);
+        root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::tp_wb);
         auto entry = root_ept.gpa_to_epte(0x1000UL);
         CHECK(!entry.read_access());
         CHECK(!entry.write_access());
@@ -1152,33 +1152,33 @@ TEST_CASE("root_ept_intel_x64: map 4k trap")
     }
 }
 
-TEST_CASE("root_ept_intel_x64: map invalid")
+TEST_CASE("root_ept: map invalid")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     CHECK_THROWS(root_ept.map_page(0x0, 0x0, 0x0, 0x0));
     CHECK_THROWS(root_ept.map_page(0x0, 0x0, 0x0, ept::pt::size_bytes));
 }
 
-TEST_CASE("root_ept_intel_x64: map / unmap twice")
+TEST_CASE("root_ept: map / unmap twice")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
-    CHECK_NOTHROW(root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_wb));
-    CHECK_NOTHROW(root_ept.map_4k(0x1000UL, 0x1000UL, ept::memory_attr::pt_wb));
+    CHECK_NOTHROW(root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::pt_wb));
+    CHECK_NOTHROW(root_ept.map_4k(0x1000UL, 0x1000UL, mem_attr::pt_wb));
     CHECK_NOTHROW(root_ept.unmap(0x1000UL));
     CHECK_NOTHROW(root_ept.unmap(0x1000UL));
 }
 
-TEST_CASE("root_ept_intel_x64: setup_identity_map_1g invalid")
+TEST_CASE("root_ept: setup_identity_map_1g invalid")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     CHECK_THROWS(root_ept.setup_identity_map_1g(0x1, 0x40000000));
     CHECK_THROWS(root_ept.setup_identity_map_1g(0x0, 0x40000001));
@@ -1186,21 +1186,21 @@ TEST_CASE("root_ept_intel_x64: setup_identity_map_1g invalid")
     CHECK_THROWS(root_ept.unmap_identity_map_1g(0x0, 0x40000001));
 }
 
-TEST_CASE("root_ept_intel_x64: setup_identity_map_1g valid")
+TEST_CASE("root_ept: setup_identity_map_1g valid")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     CHECK_NOTHROW(root_ept.setup_identity_map_1g(0x0, 0x40000000));
     CHECK_NOTHROW(root_ept.unmap_identity_map_1g(0x0, 0x40000000));
 }
 
-TEST_CASE("root_ept_intel_x64: setup_identity_map_2m invalid")
+TEST_CASE("root_ept: setup_identity_map_2m invalid")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     CHECK_THROWS(root_ept.setup_identity_map_2m(0x1, 0x200000));
     CHECK_THROWS(root_ept.setup_identity_map_2m(0x0, 0x200001));
@@ -1208,21 +1208,21 @@ TEST_CASE("root_ept_intel_x64: setup_identity_map_2m invalid")
     CHECK_THROWS(root_ept.unmap_identity_map_2m(0x0, 0x200001));
 }
 
-TEST_CASE("root_ept_intel_x64: setup_identity_map_2m valid")
+TEST_CASE("root_ept: setup_identity_map_2m valid")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     CHECK_NOTHROW(root_ept.setup_identity_map_2m(0x0, 0x200000));
     CHECK_NOTHROW(root_ept.unmap_identity_map_2m(0x0, 0x200000));
 }
 
-TEST_CASE("root_ept_intel_x64: setup_identity_map_4k invalid")
+TEST_CASE("root_ept: setup_identity_map_4k invalid")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     CHECK_THROWS(root_ept.setup_identity_map_4k(0x1, 0x1000));
     CHECK_THROWS(root_ept.setup_identity_map_4k(0x0, 0x1001));
@@ -1230,21 +1230,21 @@ TEST_CASE("root_ept_intel_x64: setup_identity_map_4k invalid")
     CHECK_THROWS(root_ept.unmap_identity_map_4k(0x0, 0x1001));
 }
 
-TEST_CASE("root_ept_intel_x64: setup_identity_map_4k valid")
+TEST_CASE("root_ept: setup_identity_map_4k valid")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     CHECK_NOTHROW(root_ept.setup_identity_map_4k(0x0, 0x1000));
     CHECK_NOTHROW(root_ept.unmap_identity_map_4k(0x0, 0x1000));
 }
 
-TEST_CASE("root_ept_intel_x64: ept_to_mdl")
+TEST_CASE("root_ept: ept_to_mdl")
 {
     MockRepository mocks;
     setup_mm(mocks);
-    root_ept_intel_x64 root_ept{};
+    intel::root_ept root_ept{};
 
     CHECK_NOTHROW(root_ept.ept_to_mdl());
 }

@@ -23,12 +23,7 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-
-
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register unknown")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register unknown")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -41,7 +36,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register unknown")
     CHECK_THROWS(ehlr->handle_vmcall_registers(regs));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on rdmsr access allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register trap on rdmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -63,7 +58,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on rdmsr acc
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on rdmsr access logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register trap on rdmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -85,7 +80,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on rdmsr acc
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on rdmsr access denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register trap on rdmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -107,7 +102,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on rdmsr acc
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on all rdmsr accesses allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register trap on all rdmsr accesses allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -128,7 +123,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on all rdmsr
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on all rdmsr accesses logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register trap on all rdmsr accesses logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -149,7 +144,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on all rdmsr
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on all rdmsr accesses denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register trap on all rdmsr accesses denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -170,7 +165,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register trap on all rdmsr
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through rdmsr access allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register pass through rdmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -192,7 +187,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through rdms
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through rdmsr access logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register pass through rdmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -214,7 +209,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through rdms
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through rdmsr access denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register pass through rdmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -236,7 +231,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through rdms
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through all rdmsr accesses allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register pass through all rdmsr accesses allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -257,7 +252,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through all 
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through all rdmsr accesses logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register pass through all rdmsr accesses logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -278,7 +273,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through all 
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through all rdmsr accesses denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: register pass through all rdmsr accesses denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -299,7 +294,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: register pass through all 
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json trap on rdmsr access missing msr")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json trap on rdmsr access missing msr")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -311,7 +306,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json trap on rdmsr access 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json trap on rdmsr access invalid msr")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json trap on rdmsr access invalid msr")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -325,7 +320,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json trap on rdmsr access 
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json trap on rdmsr access allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json trap on rdmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -351,7 +346,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json trap on rdmsr access 
     CHECK(g_rdmsr == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json trap on rdmsr access logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json trap on rdmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -379,7 +374,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json trap on rdmsr access 
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json trap on rdmsr access denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json trap on rdmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -405,7 +400,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json trap on rdmsr access 
     CHECK(g_rdmsr == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json pass through rdmsr access missing rdmsr")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json pass through rdmsr access missing rdmsr")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -417,7 +412,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json pass through rdmsr ac
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json pass through rdmsr access invalid msr")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json pass through rdmsr access invalid msr")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -431,7 +426,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json pass through rdmsr ac
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json pass through rdmsr access allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json pass through rdmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -457,7 +452,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json pass through rdmsr ac
     CHECK(g_rdmsr == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json pass through rdmsr access logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json pass through rdmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -485,7 +480,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json pass through rdmsr ac
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json pass through rdmsr access denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json pass through rdmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -511,7 +506,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json pass through rdmsr ac
     CHECK(g_rdmsr == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json whitelist rdmsr access missing rdmsrs")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json whitelist rdmsr access missing rdmsrs")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -523,7 +518,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json whitelist rdmsr acces
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json whitelist rdmsr access invalid msrs")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json whitelist rdmsr access invalid msrs")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -537,7 +532,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json whitelist rdmsr acces
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json whitelist rdmsr access allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json whitelist rdmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -563,7 +558,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json whitelist rdmsr acces
     CHECK(g_rdmsr == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json whitelist rdmsr access logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json whitelist rdmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -591,7 +586,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json whitelist rdmsr acces
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json whitelist rdmsr access denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json whitelist rdmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -617,7 +612,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json whitelist rdmsr acces
     CHECK(g_rdmsr == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json blacklist rdmsr access missing rdmsrs")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json blacklist rdmsr access missing rdmsrs")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -629,7 +624,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json blacklist rdmsr acces
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json blacklist rdmsr access invalid msrs")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json blacklist rdmsr access invalid msrs")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -643,7 +638,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json blacklist rdmsr acces
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson2, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json blacklist rdmsr access allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json blacklist rdmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -669,7 +664,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json blacklist rdmsr acces
     CHECK(g_rdmsr == 42);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json blacklist rdmsr access logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json blacklist rdmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -697,7 +692,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json blacklist rdmsr acces
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json blacklist rdmsr access denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json blacklist rdmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -723,7 +718,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json blacklist rdmsr acces
     CHECK(g_rdmsr == 0);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json log rdmsr access missing enabled")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json log rdmsr access missing enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -735,7 +730,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json log rdmsr access miss
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json log rdmsr access invalid enabled")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json log rdmsr access invalid enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -747,7 +742,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json log rdmsr access inva
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json log rdmsr access allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json log rdmsr access allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -765,7 +760,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json log rdmsr access allo
     CHECK(ojson.dump() == "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json log rdmsr access logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json log rdmsr access logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -784,7 +779,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json log rdmsr access logg
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json log rdmsr access denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json log rdmsr access denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -802,7 +797,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json log rdmsr access deni
     CHECK(ojson.dump() != "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json clear rdmsr access log allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json clear rdmsr access log allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -820,7 +815,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json clear rdmsr access lo
     CHECK(ojson.dump() == "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json clear rdmsr access log logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json clear rdmsr access log logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -839,7 +834,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json clear rdmsr access lo
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json clear rdmsr access log denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json clear rdmsr access log denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -857,7 +852,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json clear rdmsr access lo
     CHECK(ojson.dump() != "[\"success\"]");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json rdmsr access log allowed")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json rdmsr access log allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -876,7 +871,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json rdmsr access log allo
     CHECK(ojson.dump() == "{\"0x000000000000002A\":42}");
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json rdmsr access log logged")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json rdmsr access log logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -896,7 +891,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json rdmsr access log logg
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_vmcall: json rdmsr access log denied")
+TEST_CASE("eapis_exit_handler_rdmsr_vmcall: json rdmsr access log denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);

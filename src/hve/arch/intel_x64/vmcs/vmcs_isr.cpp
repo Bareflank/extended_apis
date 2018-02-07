@@ -27,8 +27,6 @@
 
 #include <intrinsics.h>
 
-namespace intel = intel_x64;
-
 extern "C" void unlock_write(void);
 
 static auto
@@ -80,7 +78,7 @@ isr_handler(
         bferror_info(0, "VMM Panic!!!", msg);
         bferror_brk1(0, msg);
 
-        if (vector == 0x0E && intel::cr2::get() == 0) {
+        if (vector == 0x0E && ::intel_x64::cr2::get() == 0) {
             bferror_info(0, "fault: null dereference", msg);
         }
         else {
@@ -116,11 +114,11 @@ isr_handler(
         bferror_subnhex(0, "r14   ", view[1], msg);
         bferror_subnhex(0, "r15   ", view[0], msg);
 
-        bferror_subnhex(0, "cr0   ", intel::cr0::get(), msg);
-        bferror_subnhex(0, "cr2   ", intel::cr2::get(), msg);
-        bferror_subnhex(0, "cr3   ", intel::cr3::get(), msg);
-        bferror_subnhex(0, "cr4   ", intel::cr4::get(), msg);
+        bferror_subnhex(0, "cr0   ", ::intel_x64::cr0::get(), msg);
+        bferror_subnhex(0, "cr2   ", ::intel_x64::cr2::get(), msg);
+        bferror_subnhex(0, "cr3   ", ::intel_x64::cr3::get(), msg);
+        bferror_subnhex(0, "cr4   ", ::intel_x64::cr4::get(), msg);
     });
 
-    x64::pm::halt();
+    ::x64::pm::halt();
 }

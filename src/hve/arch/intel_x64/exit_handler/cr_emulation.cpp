@@ -26,13 +26,12 @@
 #include <arch/intel_x64/vmcs/natural_width_guest_state_fields.h>
 #include <arch/intel_x64/crs.h>
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-namespace ctlreg_access = vmcs::exit_qualification::control_register_access;
-namespace gpr = ctlreg_access::general_purpose_register;
+namespace cr_access = ::intel_x64::vmcs::exit_qualification::control_register_access;
+namespace gpr = cr_access::general_purpose_register;
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
-exit_handler_intel_x64_eapis::gpr_value_type
-exit_handler_intel_x64_eapis::get_gpr(gpr_index_type index)
+exit_handler_eapis::exit_handler::gpr_value_type
+exit_handler_eapis::exit_handler::get_gpr(gpr_index_type index)
 {
     switch (index) {
         case gpr::rax:
@@ -89,7 +88,7 @@ exit_handler_intel_x64_eapis::get_gpr(gpr_index_type index)
 
 
 void
-exit_handler_intel_x64_eapis::set_gpr(
+exit_handler_eapis::exit_handler::set_gpr(
     gpr_index_type index, gpr_value_type val)
 {
     switch (index) {
@@ -162,15 +161,15 @@ exit_handler_intel_x64_eapis::set_gpr(
 }
 
 void
-exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
+exit_handler_eapis::exit_handler::handle_exit__ctl_reg_access()
 {
-    auto type = ctlreg_access::access_type::get();
+    auto type = cr_access::access_type::get();
     auto index = gpr::get();
 
-    switch (ctlreg_access::control_register_number::get()) {
+    switch (cr_access::control_register_number::get()) {
         case 0: {
             auto ret = this->cr0_ld_callback(this->get_gpr(index));
-            vmcs::guest_cr0::set(ret);
+            ::intel_x64::vmcs::guest_cr0::set(ret);
 
             this->advance_and_resume();
             return;
@@ -178,16 +177,16 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
 
         case 3: {
             switch (type) {
-                case ctlreg_access::access_type::mov_to_cr: {
+                case cr_access::access_type::mov_to_cr: {
                     auto ret = this->cr3_ld_callback(this->get_gpr(index));
-                    vmcs::guest_cr3::set(ret);
+                    ::intel_x64::vmcs::guest_cr3::set(ret);
 
                     this->advance_and_resume();
                     return;
                 }
 
-                case ctlreg_access::access_type::mov_from_cr: {
-                    auto ret = this->cr3_st_callback(vmcs::guest_cr3::get());
+                case cr_access::access_type::mov_from_cr: {
+                    auto ret = this->cr3_st_callback(::intel_x64::vmcs::guest_cr3::get());
                     this->set_gpr(index, ret);
 
                     this->advance_and_resume();
@@ -199,7 +198,7 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
 
         case 4: {
             auto ret = this->cr4_ld_callback(this->get_gpr(index));
-            vmcs::guest_cr4::set(ret);
+            ::intel_x64::vmcs::guest_cr4::set(ret);
 
             this->advance_and_resume();
             return;
@@ -207,16 +206,16 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
 
         case 8: {
             switch (type) {
-                case ctlreg_access::access_type::mov_to_cr: {
+                case cr_access::access_type::mov_to_cr: {
                     auto ret = this->cr8_ld_callback(this->get_gpr(index));
-                    intel::cr8::set(ret);
+                    ::intel_x64::cr8::set(ret);
 
                     this->advance_and_resume();
                     return;
                 }
 
-                case ctlreg_access::access_type::mov_from_cr: {
-                    auto ret = this->cr8_st_callback(intel::cr8::get());
+                case cr_access::access_type::mov_from_cr: {
+                    auto ret = this->cr8_st_callback(::intel_x64::cr8::get());
                     this->set_gpr(index, ret);
 
                     this->advance_and_resume();
@@ -233,26 +232,26 @@ exit_handler_intel_x64_eapis::handle_exit__ctl_reg_access()
     }
 }
 
-exit_handler_intel_x64_eapis::cr0_value_type
-exit_handler_intel_x64_eapis::cr0_ld_callback(cr0_value_type val)
+exit_handler_eapis::exit_handler::cr0_value_type
+exit_handler_eapis::exit_handler::cr0_ld_callback(cr0_value_type val)
 { return val; }
 
-exit_handler_intel_x64_eapis::cr3_value_type
-exit_handler_intel_x64_eapis::cr3_ld_callback(cr3_value_type val)
+exit_handler_eapis::exit_handler::cr3_value_type
+exit_handler_eapis::exit_handler::cr3_ld_callback(cr3_value_type val)
 { return val; }
 
-exit_handler_intel_x64_eapis::cr3_value_type
-exit_handler_intel_x64_eapis::cr3_st_callback(cr3_value_type val)
+exit_handler_eapis::exit_handler::cr3_value_type
+exit_handler_eapis::exit_handler::cr3_st_callback(cr3_value_type val)
 { return val; }
 
-exit_handler_intel_x64_eapis::cr4_value_type
-exit_handler_intel_x64_eapis::cr4_ld_callback(cr4_value_type val)
+exit_handler_eapis::exit_handler::cr4_value_type
+exit_handler_eapis::exit_handler::cr4_ld_callback(cr4_value_type val)
 { return val; }
 
-exit_handler_intel_x64_eapis::cr8_value_type
-exit_handler_intel_x64_eapis::cr8_ld_callback(cr8_value_type val)
+exit_handler_eapis::exit_handler::cr8_value_type
+exit_handler_eapis::exit_handler::cr8_ld_callback(cr8_value_type val)
 { return val; }
 
-exit_handler_intel_x64_eapis::cr8_value_type
-exit_handler_intel_x64_eapis::cr8_st_callback(cr8_value_type val)
+exit_handler_eapis::exit_handler::cr8_value_type
+exit_handler_eapis::exit_handler::cr8_st_callback(cr8_value_type val)
 { return val; }

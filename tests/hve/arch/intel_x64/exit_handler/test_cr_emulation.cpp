@@ -23,15 +23,13 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-namespace reason = vmcs::exit_reason::basic_exit_reason;
-namespace exit_qual = vmcs::exit_qualification;
+namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
+namespace exit_qual = ::intel_x64::vmcs::exit_qualification;
 namespace ctlreg_access = exit_qual::control_register_access;
 namespace gpr = ctlreg_access::general_purpose_register;
 
 
-TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: invalid cr")
+TEST_CASE("eapis_exit_handler_cr_emulation: invalid cr")
 {
     MockRepository mocks;
 
@@ -41,7 +39,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: invalid cr")
     CHECK_NOTHROW(ehlr->dispatch());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr0")
+TEST_CASE("eapis_exit_handler_cr_emulation: mov to cr0")
 {
     MockRepository mocks;
 
@@ -51,10 +49,10 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr0")
     g_state_save.rax = 42ULL;
 
     CHECK_NOTHROW(ehlr->dispatch());
-    CHECK(vmcs::guest_cr0::get() == 42ULL);
+    CHECK(::intel_x64::vmcs::guest_cr0::get() == 42ULL);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr3")
+TEST_CASE("eapis_exit_handler_cr_emulation: mov to cr3")
 {
     MockRepository mocks;
 
@@ -64,23 +62,23 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr3")
     g_state_save.rax = 42ULL;
 
     CHECK_NOTHROW(ehlr->dispatch());
-    CHECK(vmcs::guest_cr3::get() == 42ULL);
+    CHECK(::intel_x64::vmcs::guest_cr3::get() == 42ULL);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov from cr3")
+TEST_CASE("eapis_exit_handler_cr_emulation: mov from cr3")
 {
     MockRepository mocks;
 
     auto vmcs = setup_vmcs(mocks, reason::control_register_accesses, 19);
     auto ehlr = setup_ehlr(vmcs);
 
-    vmcs::guest_cr3::set(42ULL);
+    ::intel_x64::vmcs::guest_cr3::set(42ULL);
 
     CHECK_NOTHROW(ehlr->dispatch());
     CHECK(g_state_save.rax == 42ULL);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr4")
+TEST_CASE("eapis_exit_handler_cr_emulation: mov to cr4")
 {
     MockRepository mocks;
 
@@ -90,10 +88,10 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr4")
     g_state_save.rax = 42ULL;
 
     CHECK_NOTHROW(ehlr->dispatch());
-    CHECK(vmcs::guest_cr4::get() == 42ULL);
+    CHECK(::intel_x64::vmcs::guest_cr4::get() == 42ULL);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr8")
+TEST_CASE("eapis_exit_handler_cr_emulation: mov to cr8")
 {
     MockRepository mocks;
 
@@ -103,23 +101,23 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov to cr8")
     g_state_save.rax = 42ULL;
 
     CHECK_NOTHROW(ehlr->dispatch());
-    CHECK(intel::cr8::get() == 42ULL);
+    CHECK(::intel_x64::cr8::get() == 42ULL);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: mov from cr8")
+TEST_CASE("eapis_exit_handler_cr_emulation: mov from cr8")
 {
     MockRepository mocks;
 
     auto vmcs = setup_vmcs(mocks, reason::control_register_accesses, 24);
     auto ehlr = setup_ehlr(vmcs);
 
-    intel::cr8::set(42ULL);
+    ::intel_x64::cr8::set(42ULL);
 
     CHECK_NOTHROW(ehlr->dispatch());
     CHECK(g_state_save.rax == 42ULL);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: get_gpr")
+TEST_CASE("eapis_exit_handler_cr_emulation: get_gpr")
 {
     MockRepository mocks;
 
@@ -146,7 +144,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: get_gpr")
     CHECK_THROWS(ehlr->get_gpr(0x1000));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: set_gpr")
+TEST_CASE("eapis_exit_handler_cr_emulation: set_gpr")
 {
     MockRepository mocks;
 

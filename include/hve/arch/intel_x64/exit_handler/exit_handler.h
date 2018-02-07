@@ -36,6 +36,8 @@
 #include <bfvmm/memory_manager/object_allocator.h>
 #include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
 
+namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
+
 // -----------------------------------------------------------------------------
 // Exports
 // -----------------------------------------------------------------------------
@@ -67,34 +69,42 @@
 /// subclassed, and certain functions need to be handled based on how the
 /// VMCS is setup.
 ///
-class EXPORT_EAPIS_HVE exit_handler_intel_x64_eapis :
-    public exit_handler_intel_x64
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+namespace exit_handler
+{
+
+class EXPORT_EAPIS_HVE exit_handler : public bfvmm::intel_x64::exit_handler
 {
 public:
 
     using count_type = uint64_t;                                                        ///< Count type used for logging
-    using port_type = x64::portio::port_addr_type;                                      ///< Port type
+    using port_type = ::x64::portio::port_addr_type;                                      ///< Port type
     using port_list_type = std::vector<port_type>;                                      ///< Port list type
-    using port_log_type = std::map<intel_x64::vmcs::value_type, count_type>;            ///< Port log type
+    using port_log_type = std::map<::intel_x64::vmcs::value_type, count_type>;            ///< Port log type
     using denial_list_type = std::vector<std::string>;                                  ///< Denial list type
     using policy_type = std::map<vp::index_type, std::unique_ptr<vmcall_verifier>>;     ///< VMCall policy type
-    using msr_type = x64::msrs::field_type;                                             ///< MSR type
+    using msr_type = ::x64::msrs::field_type;                                             ///< MSR type
     using msr_list_type = std::vector<msr_type>;                                        ///< MSR list type
     using msr_log_type = std::map<msr_type, count_type>;                                ///< MSR log type
-    using gpr_index_type = intel_x64::vmcs::value_type;                                 ///< General purpose register index type
+    using gpr_index_type = ::intel_x64::vmcs::value_type;                                 ///< General purpose register index type
     using gpr_value_type = uintptr_t;                                                   ///< General purpose register value type
-    using cr0_value_type = intel_x64::cr0::value_type;                                  ///< CR0 value type
-    using cr3_value_type = intel_x64::cr3::value_type;                                  ///< CR3 value type
-    using cr4_value_type = intel_x64::cr4::value_type;                                  ///< CR4 value type
-    using cr8_value_type = intel_x64::cr8::value_type;                                  ///< CR8 value type
-    using vector_type = intel_x64::vmcs::value_type;                                    ///< Event vector type
-    using event_type = intel_x64::vmcs::value_type;                                     ///< Event type
-    using error_code_type = intel_x64::vmcs::value_type;                                ///< Event error code type
-    using instr_len_type = intel_x64::vmcs::value_type;                                 ///< Event instruction length type
-    using tpr_shadow_type = intel_x64::cr8::value_type;                                 ///< TPR shadow type
-    using cpuid_type = x64::cpuid::field_type;                                          ///< CPUID type
+    using cr0_value_type = ::intel_x64::cr0::value_type;                                  ///< CR0 value type
+    using cr3_value_type = ::intel_x64::cr3::value_type;                                  ///< CR3 value type
+    using cr4_value_type = ::intel_x64::cr4::value_type;                                  ///< CR4 value type
+    using cr8_value_type = ::intel_x64::cr8::value_type;                                  ///< CR8 value type
+    using vector_type = ::intel_x64::vmcs::value_type;                                    ///< Event vector type
+    using event_type = ::intel_x64::vmcs::value_type;                                     ///< Event type
+    using error_code_type = ::intel_x64::vmcs::value_type;                                ///< Event error code type
+    using instr_len_type = ::intel_x64::vmcs::value_type;                                 ///< Event instruction length type
+    using tpr_shadow_type = ::intel_x64::cr8::value_type;                                 ///< TPR shadow type
+    using cpuid_type = ::x64::cpuid::field_type;                                          ///< CPUID type
     using cpuid_key_type = uint64_t;                                                    ///< CPUID key type
-    using cpuid_regs_type = x64::cpuid::cpuid_regs;                                     ///< CPUID regs type
+    using cpuid_regs_type = ::x64::cpuid::cpuid_regs;                                     ///< CPUID regs type
     using cpuid_emu_map_type = std::map<cpuid_key_type, cpuid_regs_type>;               ///< CPUID emu map type
     using cpuid_log_type = std::map<cpuid_key_type, count_type>;                        ///< CPUID log type
 
@@ -102,7 +112,7 @@ public:
     ///
     /// Defines the function signature for a monitor callback function.
     ///
-    using monitor_trap_callback = void(exit_handler_intel_x64_eapis::*)();
+    using monitor_trap_callback = void(exit_handler::*)();
 
     /// @struct event
     ///
@@ -134,14 +144,14 @@ public:
     /// @expects
     /// @ensures
     ///
-    exit_handler_intel_x64_eapis();
+    exit_handler();
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~exit_handler_intel_x64_eapis() override = default;
+    ~exit_handler() override = default;
 
     /// Inject Event
     ///
@@ -179,7 +189,7 @@ protected:
     /// Example:
     /// @code
     ///
-    /// class my_exit_handler : public exit_handler_intel_x64_eapis
+    /// class my_exit_handler : public exit_handler
     /// {
     /// public:
     ///     void monitor_trap_callback()
@@ -198,7 +208,7 @@ protected:
     template<typename T, typename = std::enable_if<std::is_member_function_pointer<T>::value>>
     void register_monitor_trap(T callback)
     {
-        intel_x64::vmcs::primary_processor_based_vm_execution_controls::monitor_trap_flag::enable();
+        ::intel_x64::vmcs::primary_processor_based_vm_execution_controls::monitor_trap_flag::enable();
         m_monitor_trap_callback = static_cast<monitor_trap_callback>(callback);
     }
 
@@ -274,7 +284,7 @@ protected:
 
     /// @cond
 
-    void handle_exit(intel_x64::vmcs::value_type reason) override;
+    void handle_exit(::intel_x64::vmcs::value_type reason) override;
 
     virtual void handle_exit__monitor_trap_flag();
     virtual void handle_exit__io_instruction();
@@ -553,7 +563,7 @@ private:
 
     void unhandled_monitor_trap_callback();
     monitor_trap_callback m_monitor_trap_callback{
-        &exit_handler_intel_x64_eapis::unhandled_monitor_trap_callback};
+        &exit_handler::unhandled_monitor_trap_callback};
 
 #ifndef ENABLE_BUILD_TEST
 private:
@@ -614,28 +624,33 @@ public:
     /// @cond
 
     void
-    set_vmcs(gsl::not_null<vmcs_intel_x64 *> vmcs) override
+    set_vmcs(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs) override
     {
         m_vmcs = vmcs;
-        m_vmcs_eapis = dynamic_cast<vmcs_intel_x64_eapis *>(m_vmcs);
+        m_vmcs_eapis = dynamic_cast<vmcs_eapis::vmcs *>(m_vmcs);
     }
 
     /// @endcond
 
-    vmcs_intel_x64_eapis *m_vmcs_eapis{nullptr};    ///< Pointer to the EAPIS vmcs
+    vmcs_eapis::vmcs *m_vmcs_eapis{nullptr};    ///< Pointer to the EAPIS vmcs
 
 public:
 
     /// @cond
 
-    exit_handler_intel_x64_eapis(exit_handler_intel_x64_eapis &&) = default;
-    exit_handler_intel_x64_eapis &operator=(exit_handler_intel_x64_eapis &&) = default;
+    exit_handler(exit_handler &&) = default;
+    exit_handler &operator=(exit_handler &&) = default;
 
-    exit_handler_intel_x64_eapis(const exit_handler_intel_x64_eapis &) = delete;
-    exit_handler_intel_x64_eapis &operator=(const exit_handler_intel_x64_eapis &) = delete;
+    exit_handler(const exit_handler &) = delete;
+    exit_handler &operator=(const exit_handler &) = delete;
 
     /// @endcond
 };
+
+}
+}
+}
+}
 
 #ifdef _MSC_VER
 #pragma warning(pop)
