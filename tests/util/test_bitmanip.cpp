@@ -19,6 +19,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 #include <catch/catch.hpp>
 #include "../../include/util/bitmanip.h"
 
@@ -88,3 +90,4 @@ TEST_CASE("bitmanip_eapis: is bit")
     CHECK_THROWS(is_bit_set_from_span(buf_view, 1000000));
     CHECK_THROWS(is_bit_cleared_from_span(buf_view, 1000000));
 }
+#endif
