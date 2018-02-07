@@ -19,6 +19,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
 namespace intel = intel_x64;
@@ -28,7 +30,6 @@ namespace exit_qual = vmcs::exit_qualification;
 namespace ctlreg_access = exit_qual::control_register_access;
 namespace gpr = ctlreg_access::general_purpose_register;
 
-#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 TEST_CASE("exit_handler_intel_x64_eapis_cr_emulation: invalid cr")
 {

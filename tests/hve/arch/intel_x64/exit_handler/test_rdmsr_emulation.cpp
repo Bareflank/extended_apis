@@ -19,13 +19,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
 using namespace x64;
 namespace intel = intel_x64;
 namespace vmcs = intel_x64::vmcs;
 
-#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_emulation: exit")
 {
