@@ -28,7 +28,6 @@
 #include <intrinsics.h>
 #include <intrinsics.h>
 
-namespace vmcs = ::intel_x64::vmcs;
 namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_controls;
 namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 
@@ -40,8 +39,8 @@ vmcs_eapis::vmcs::enable_io_bitmaps()
     m_io_bitmapa_view = gsl::make_span(m_io_bitmapa, x64::page_size);
     m_io_bitmapb_view = gsl::make_span(m_io_bitmapb, x64::page_size);
 
-    vmcs::address_of_io_bitmap_a::set(g_mm->virtptr_to_physint(m_io_bitmapa.get()));
-    vmcs::address_of_io_bitmap_b::set(g_mm->virtptr_to_physint(m_io_bitmapb.get()));
+    ::intel_x64::vmcs::address_of_io_bitmap_a::set(g_mm->virtptr_to_physint(m_io_bitmapa.get()));
+    ::intel_x64::vmcs::address_of_io_bitmap_b::set(g_mm->virtptr_to_physint(m_io_bitmapb.get()));
 
     proc_ctls::use_io_bitmaps::enable();
 }
@@ -51,8 +50,8 @@ vmcs_eapis::vmcs::disable_io_bitmaps()
 {
     proc_ctls::use_io_bitmaps::disable();
 
-    vmcs::address_of_io_bitmap_a::set(0UL);
-    vmcs::address_of_io_bitmap_b::set(0UL);
+    ::intel_x64::vmcs::address_of_io_bitmap_a::set(0UL);
+    ::intel_x64::vmcs::address_of_io_bitmap_b::set(0UL);
 
     m_io_bitmapa_view = gsl::span<uint8_t>(nullptr);
     m_io_bitmapb_view = gsl::span<uint8_t>(nullptr);

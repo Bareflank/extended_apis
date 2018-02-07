@@ -24,7 +24,6 @@
 
 #include <intrinsics.h>
 
-namespace vmcs = ::intel_x64::vmcs;
 namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
 namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
@@ -58,7 +57,7 @@ exit_handler_eapis::exit_handler::advance_and_resume()
 }
 
 void
-exit_handler_eapis::exit_handler::handle_exit(vmcs::value_type reason)
+exit_handler_eapis::exit_handler::handle_exit(::intel_x64::vmcs::value_type reason)
 {
     switch (reason)
     {
@@ -80,6 +79,10 @@ exit_handler_eapis::exit_handler::handle_exit(vmcs::value_type reason)
 
         case reason::control_register_accesses:
             handle_exit__ctl_reg_access();
+            break;
+
+        case reason::cpuid:
+            handle_exit__cpuid();
             break;
 
         default:

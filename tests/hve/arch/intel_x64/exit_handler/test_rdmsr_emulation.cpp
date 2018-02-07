@@ -21,16 +21,14 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
+namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
-TEST_CASE("exit_handler_intel_x64_eapis_rdmsr_emulation: exit")
+TEST_CASE("eapis_exit_handler_rdmsr_emulation: exit")
 {
     MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, vmcs::exit_reason::basic_exit_reason::rdmsr);
+    auto vmcs = setup_vmcs(mocks, reason::rdmsr);
     auto ehlr = setup_ehlr(vmcs);
 
     ehlr->log_rdmsr_access(true);

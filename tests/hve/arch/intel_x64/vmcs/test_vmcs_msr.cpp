@@ -21,9 +21,11 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
+namespace msr_bitmap_address = ::intel_x64::vmcs::address_of_msr_bitmap;
+
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: enable msr bitmap")
+TEST_CASE("eapis_vmcs_msr: enable msr bitmap")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -34,11 +36,11 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: enable msr bitmap")
     CHECK(vmcs->m_msr_bitmap != nullptr);
     CHECK(vmcs->m_msr_bitmap_view.data() != nullptr);
     CHECK(vmcs->m_msr_bitmap_view.size() == static_cast<std::ptrdiff_t>(x64::page_size));
-    CHECK(vmcs::address_of_msr_bitmap::get() != 0);
+    CHECK(msr_bitmap_address::get() != 0);
     CHECK(proc_ctls::use_msr_bitmap::is_enabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: disable msr bitmap")
+TEST_CASE("eapis_vmcs_msr: disable msr bitmap")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -49,11 +51,11 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: disable msr bitmap")
     CHECK(vmcs->m_msr_bitmap == nullptr);
     CHECK(vmcs->m_msr_bitmap_view.data() == nullptr);
     CHECK(vmcs->m_msr_bitmap_view.empty());
-    CHECK(vmcs::address_of_msr_bitmap::get() == 0);
+    CHECK(msr_bitmap_address::get() == 0);
     CHECK(proc_ctls::use_msr_bitmap::is_disabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: trap on read msr access")
+TEST_CASE("eapis_vmcs_msr: trap on read msr access")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -72,7 +74,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: trap on read msr access")
     CHECK_THROWS(vmcs->trap_on_rdmsr_access(0xC0004000UL));
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: trap on all read msr accesses")
+TEST_CASE("eapis_vmcs_msr: trap on all read msr accesses")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -98,7 +100,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: trap on all read msr accesses")
     CHECK(all_set_0 == 0x0);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: pass through read msr access")
+TEST_CASE("eapis_vmcs_msr: pass through read msr access")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -119,7 +121,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: pass through read msr access")
     CHECK_THROWS(vmcs->pass_through_rdmsr_access(0xC0004000UL));
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: pass through all read msr accesses")
+TEST_CASE("eapis_vmcs_msr: pass through all read msr accesses")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -147,7 +149,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: pass through all read msr accesses")
     CHECK(all_set_1 == 0xFF);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: whitelist read msr access")
+TEST_CASE("eapis_vmcs_msr: whitelist read msr access")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -162,7 +164,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: whitelist read msr access")
     CHECK(vmcs->m_msr_bitmap_view[0x408] == 0xFB);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: black list read msr access")
+TEST_CASE("eapis_vmcs_msr: black list read msr access")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -177,7 +179,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: black list read msr access")
     CHECK(vmcs->m_msr_bitmap_view[0x408] == 0x4);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: trap on write msr access")
+TEST_CASE("eapis_vmcs_msr: trap on write msr access")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -196,7 +198,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: trap on write msr access")
     CHECK_THROWS(vmcs->trap_on_wrmsr_access(0xC0004000UL));
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: trap on all write msr accesses")
+TEST_CASE("eapis_vmcs_msr: trap on all write msr accesses")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -222,7 +224,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: trap on all write msr accesses")
     CHECK(all_set_0 == 0x0);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: pass through write msr access")
+TEST_CASE("eapis_vmcs_msr: pass through write msr access")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -243,7 +245,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: pass through write msr access")
     CHECK_THROWS(vmcs->pass_through_wrmsr_access(0xC0004000UL));
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: pass through all write msr accesses")
+TEST_CASE("eapis_vmcs_msr: pass through all write msr accesses")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -271,7 +273,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: pass through all write msr accesses")
     CHECK(all_set_1 == 0xFF);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: whitelist write msr access")
+TEST_CASE("eapis_vmcs_msr: whitelist write msr access")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -286,7 +288,7 @@ TEST_CASE("vmcs_intel_x64_eapis_msr: whitelist write msr access")
     CHECK(vmcs->m_msr_bitmap_view[0xC08] == 0xFB);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_msr: blacklist write msr access")
+TEST_CASE("eapis_vmcs_msr: blacklist write msr access")
 {
     MockRepository mocks;
     setup_mm(mocks);

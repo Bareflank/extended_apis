@@ -21,34 +21,31 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr0 load hook")
+TEST_CASE("eapis_vmcs_cr: enable cr0 load hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->enable_cr0_load_hook(42ULL, 42ULL);
-    CHECK(vmcs::cr0_guest_host_mask::get() == 42ULL);
-    CHECK(vmcs::cr0_read_shadow::get() == 42ULL);
+    CHECK(::intel_x64::vmcs::cr0_guest_host_mask::get() == 42ULL);
+    CHECK(::intel_x64::vmcs::cr0_read_shadow::get() == 42ULL);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr0 load hook")
+TEST_CASE("eapis_vmcs_cr: disable cr0 load hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->disable_cr0_load_hook();
-    CHECK(vmcs::cr0_guest_host_mask::get() == 0ULL);
-    CHECK(vmcs::cr0_read_shadow::get() == 0ULL);
+    CHECK(::intel_x64::vmcs::cr0_guest_host_mask::get() == 0ULL);
+    CHECK(::intel_x64::vmcs::cr0_read_shadow::get() == 0ULL);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr3 load hook")
+TEST_CASE("eapis_vmcs_cr: enable cr3 load hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -58,7 +55,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr3 load hook")
     CHECK(proc_ctls::cr3_load_exiting::is_enabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr3 load hook")
+TEST_CASE("eapis_vmcs_cr: disable cr3 load hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -68,7 +65,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr3 load hook")
     CHECK(proc_ctls::cr3_load_exiting::is_disabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr3 store hook")
+TEST_CASE("eapis_vmcs_cr: enable cr3 store hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -78,7 +75,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr3 store hook")
     CHECK(proc_ctls::cr3_store_exiting::is_enabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr3 store hook")
+TEST_CASE("eapis_vmcs_cr: disable cr3 store hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -88,29 +85,29 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr3 store hook")
     CHECK(proc_ctls::cr3_store_exiting::is_disabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr4 load hook")
+TEST_CASE("eapis_vmcs_cr: enable cr4 load hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->enable_cr4_load_hook(42ULL, 42ULL);
-    CHECK(vmcs::cr4_guest_host_mask::get() == 42ULL);
-    CHECK(vmcs::cr4_read_shadow::get() == 42ULL);
+    CHECK(::intel_x64::vmcs::cr4_guest_host_mask::get() == 42ULL);
+    CHECK(::intel_x64::vmcs::cr4_read_shadow::get() == 42ULL);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr4 load hook")
+TEST_CASE("eapis_vmcs_cr: disable cr4 load hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
     auto vmcs = setup_vmcs(mocks);
 
     vmcs->disable_cr4_load_hook();
-    CHECK(vmcs::cr4_guest_host_mask::get() == 0ULL);
-    CHECK(vmcs::cr4_read_shadow::get() == 0ULL);
+    CHECK(::intel_x64::vmcs::cr4_guest_host_mask::get() == 0ULL);
+    CHECK(::intel_x64::vmcs::cr4_read_shadow::get() == 0ULL);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr8 load hook")
+TEST_CASE("eapis_vmcs_cr: enable cr8 load hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -120,7 +117,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr8 load hook")
     CHECK(proc_ctls::cr8_load_exiting::is_enabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr8 load hook")
+TEST_CASE("eapis_vmcs_cr: disable cr8 load hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -130,7 +127,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr8 load hook")
     CHECK(proc_ctls::cr8_load_exiting::is_disabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr8 store hook")
+TEST_CASE("eapis_vmcs_cr: enable cr8 store hook")
 {
     MockRepository mocks;
     setup_mm(mocks);
@@ -140,7 +137,7 @@ TEST_CASE("vmcs_intel_x64_eapis_cr: enable cr8 store hook")
     CHECK(proc_ctls::cr8_store_exiting::is_enabled());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_cr: disable cr8 store hook")
+TEST_CASE("eapis_vmcs_cr: disable cr8 store hook")
 {
     MockRepository mocks;
     setup_mm(mocks);

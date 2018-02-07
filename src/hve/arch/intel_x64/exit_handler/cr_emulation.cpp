@@ -26,10 +26,8 @@
 #include <arch/intel_x64/vmcs/natural_width_guest_state_fields.h>
 #include <arch/intel_x64/crs.h>
 
-namespace intel = ::intel_x64;
-namespace vmcs = ::intel_x64::vmcs;
-namespace cr_access = vmcs::exit_qualification::control_register_access;
-namespace gpr = gpr;
+namespace cr_access = ::intel_x64::vmcs::exit_qualification::control_register_access;
+namespace gpr = cr_access::general_purpose_register;
 namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
 exit_handler_eapis::exit_handler::gpr_value_type
@@ -172,7 +170,7 @@ exit_handler_eapis::exit_handler::handle_exit__ctl_reg_access()
     switch (cr_access::control_register_number::get()) {
         case 0: {
             auto ret = this->cr0_ld_callback(this->get_gpr(index));
-            vmcs::guest_cr0::set(ret);
+            ::intel_x64::vmcs::guest_cr0::set(ret);
 
             this->advance_and_resume();
             return;
@@ -182,14 +180,14 @@ exit_handler_eapis::exit_handler::handle_exit__ctl_reg_access()
             switch (type) {
                 case cr_access::access_type::mov_to_cr: {
                     auto ret = this->cr3_ld_callback(this->get_gpr(index));
-                    vmcs::guest_cr3::set(ret);
+                    ::intel_x64::vmcs::guest_cr3::set(ret);
 
                     this->advance_and_resume();
                     return;
                 }
 
                 case cr_access::access_type::mov_from_cr: {
-                    auto ret = this->cr3_st_callback(vmcs::guest_cr3::get());
+                    auto ret = this->cr3_st_callback(::intel_x64::vmcs::guest_cr3::get());
                     this->set_gpr(index, ret);
 
                     this->advance_and_resume();
@@ -201,7 +199,7 @@ exit_handler_eapis::exit_handler::handle_exit__ctl_reg_access()
 
         case 4: {
             auto ret = this->cr4_ld_callback(this->get_gpr(index));
-            vmcs::guest_cr4::set(ret);
+            ::intel_x64::vmcs::guest_cr4::set(ret);
 
             this->advance_and_resume();
             return;
@@ -211,14 +209,14 @@ exit_handler_eapis::exit_handler::handle_exit__ctl_reg_access()
             switch (type) {
                 case cr_access::access_type::mov_to_cr: {
                     auto ret = this->cr8_ld_callback(this->get_gpr(index));
-                    intel::cr8::set(ret);
+                    ::intel_x64::cr8::set(ret);
 
                     this->advance_and_resume();
                     return;
                 }
 
                 case cr_access::access_type::mov_from_cr: {
-                    auto ret = this->cr8_st_callback(intel::cr8::get());
+                    auto ret = this->cr8_st_callback(::intel_x64::cr8::get());
                     this->set_gpr(index, ret);
 
                     this->advance_and_resume();

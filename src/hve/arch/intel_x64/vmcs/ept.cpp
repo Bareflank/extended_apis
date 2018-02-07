@@ -22,13 +22,13 @@
 #include <bfvector.h>
 #include <bfvmm/memory_manager/memory_manager_x64.h>
 #include <arch/x64/misc.h>
+#include "../../../../../include/hve/arch/intel_x64/vmcs/ept.h"
 
-namespace ept = ::intel_x64::ept;
 namespace intel = eapis::hve::intel_x64;
 
 intel::ept::ept(pointer epte)
 {
-    m_ept = std::make_unique<integer_pointer[]>(ept::num_entries);
+    m_ept = std::make_unique<integer_pointer[]>(::intel_x64::ept::num_entries);
 
     auto &&entry = intel::ept_entry(epte);
     entry.clear();
@@ -41,17 +41,17 @@ intel::ept::ept(pointer epte)
 intel::ept_entry
 intel::ept::get_entry(index_type index)
 {
-    if (index >= ept::num_entries)
-        throw std::invalid_argument("index must be less than ept::num_entries");
+    if (index >= ::intel_x64::ept::num_entries)
+        throw std::invalid_argument("index must be less than ::intel_x64::ept::num_entries");
 
-    auto ept = gsl::make_span(m_ept, ept::num_entries);
+    auto ept = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
     return intel::ept_entry(&ept.at(index));
 }
 
 intel::ept_entry
 intel::ept::add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end)
 {
-    auto index = ept::index(gpa, bits);
+    auto index = ::intel_x64::ept::index(gpa, bits);
     auto entry = get_entry(index);
 
     if (bits > end) {
@@ -60,16 +60,16 @@ intel::ept::add_page(integer_pointer gpa, integer_pointer bits, integer_pointer 
         }
 
         if (m_epts.empty())
-            m_epts = std::vector<std::unique_ptr<ept>>(ept::num_entries);
+            m_epts = std::vector<std::unique_ptr<ept>>(::intel_x64::ept::num_entries);
 
         auto iter = bfn::find(m_epts, index);
         if (nullptr == *iter)
         {
-            auto view = gsl::make_span(m_ept, ept::num_entries);
+            auto view = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
             *iter = std::make_unique<ept>(&view.at(index));
         }
 
-        return (*iter)->add_page(gpa, bits - ept::pt::size, end);
+        return (*iter)->add_page(gpa, bits - ::intel_x64::ept::pt::size, end);
     }
 
     if (!m_epts.empty()) {
@@ -91,7 +91,7 @@ intel::ept::add_page(integer_pointer gpa, integer_pointer bits, integer_pointer 
 void
 intel::ept::remove_page(integer_pointer gpa, integer_pointer bits)
 {
-    auto index = ept::index(gpa, bits);
+    auto index = ::intel_x64::ept::index(gpa, bits);
     auto entry = get_entry(index);
 
     if (entry.entry_type()) {
@@ -103,7 +103,7 @@ intel::ept::remove_page(integer_pointer gpa, integer_pointer bits)
         auto iter = bfn::find(m_epts, index);
         if (auto pt = (*iter).get())
         {
-            pt->remove_page(gpa, bits - ept::pt::size);
+            pt->remove_page(gpa, bits - ::intel_x64::ept::pt::size);
             if (pt->empty())
             {
                 (*iter) = nullptr;
@@ -116,17 +116,17 @@ intel::ept::remove_page(integer_pointer gpa, integer_pointer bits)
 intel::ept_entry
 intel::ept::gpa_to_epte(integer_pointer gpa, integer_pointer bits) const
 {
-    auto &&index = ept::index(gpa, bits);
+    auto &&index = ::intel_x64::ept::index(gpa, bits);
 
     if (!m_epts.empty()) {
         auto &&iter = bfn::cfind(m_epts, index);
         if (auto pt = (*iter).get())
-            return pt->gpa_to_epte(gpa, bits - ept::pt::size);
+            return pt->gpa_to_epte(gpa, bits - ::intel_x64::ept::pt::size);
 
         throw std::runtime_error("unable to locate epte. invalid gpaess");
     }
 
-    auto &&view = gsl::make_span(m_ept, ept::num_entries);
+    auto &&view = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
     return intel::ept_entry(&view.at(index));
 }
 
@@ -150,8 +150,8 @@ intel::ept::empty() const noexcept
 {
     auto size = 0UL;
 
-    auto &&view = gsl::make_span(m_ept, ept::num_entries);
-    for (auto element : view)
+    auto &&view = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
+    for (auto element : view) {
         size += element != 0 ? 1U : 0U;
     }
 
@@ -163,8 +163,8 @@ intel::ept::global_size() const noexcept
 {
     auto size = 0UL;
 
-    auto &&view = gsl::make_span(m_ept, ept::num_entries);
-    for (auto element : view)
+    auto &&view = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
+    for (auto element : view) {
         size += element != 0 ? 1U : 0U;
     }
 

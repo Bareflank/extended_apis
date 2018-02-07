@@ -21,13 +21,9 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register unknown")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: register unknown")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -40,7 +36,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register unknown")
     CHECK_THROWS(ehlr->handle_vmcall_registers(regs));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register enable vpid allowed")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: register enable vpid allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -61,7 +57,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register enable vpid allowe
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register enable vpid logged")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: register enable vpid logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -82,7 +78,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register enable vpid logged
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register enable vpid denied")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: register enable vpid denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -103,7 +99,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register enable vpid denied
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register disable vpid allowed")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: register disable vpid allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -124,7 +120,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register disable vpid allow
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register disable vpid logged")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: register disable vpid logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -145,7 +141,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register disable vpid logge
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register disable vpid denied")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: register disable vpid denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -166,7 +162,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: register disable vpid denie
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid missing enabled")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: json vpid enable vpid missing enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -178,7 +174,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid missi
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid invalid enabled")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: json vpid enable vpid invalid enabled")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -190,7 +186,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid inval
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid allowed")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: json vpid enable vpid allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -210,7 +206,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid allow
     CHECK(!g_enable_vpid);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid logged")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: json vpid enable vpid logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -231,7 +227,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid logge
     CHECK(!g_enable_vpid);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_vpid_vmcall: json vpid enable vpid denied")
+TEST_CASE("eapis_exit_handler_vpid_vmcall: json vpid enable vpid denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);

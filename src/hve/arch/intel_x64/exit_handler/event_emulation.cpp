@@ -24,15 +24,13 @@
 #include <intrinsics.h>
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
 
-namespace intel = ::intel_x64;
-namespace vmcs = ::intel_x64::vmcs;
-namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
-namespace entry_irq_info = vmcs::vm_entry_interruption_information;
-namespace entry_irq_type = vmcs::vm_entry_interupption_information::interruption_type;
-namespace exit_irq_info = vmcs::vm_exit_interruption_information;
-namespace exit_irq_type = vmcs::vm_exit_interruption_information::interruption_type;
-namespace guest_irq_state = vmcs::guest_interruptibility_state;
-namespace guest_act_state = vmcs::guest_activity_state;
+namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_controls;
+namespace entry_irq_info = ::intel_x64::vmcs::vm_entry_interruption_information;
+namespace entry_irq_type = ::intel_x64::vmcs::vm_entry_interruption_information::interruption_type;
+namespace exit_irq_info = ::intel_x64::vmcs::vm_exit_interruption_information;
+namespace exit_irq_type = ::intel_x64::vmcs::vm_exit_interruption_information::interruption_type;
+namespace guest_irq_state = ::intel_x64::vmcs::guest_interruptibility_state;
+namespace guest_act_state = ::intel_x64::vmcs::guest_activity_state;
 namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
 static void
@@ -77,14 +75,14 @@ set_vm_entry_interruption_information(const exit_handler_eapis::exit_handler::ev
     entry_irq_info::set(eii);
 
     if (deliver_error_code) {
-        vmcs::vm_entry_exception_error_code::set(event.error_code & 0x7FFF);
+        ::intel_x64::vmcs::vm_entry_exception_error_code::set(event.error_code & 0x7FFF);
     }
 
     switch (event.type) {
         case entry_irq_type::software_interrupt:
         case entry_irq_type::privileged_software_exception:
         case entry_irq_type::software_exception:
-            vmcs::vm_entry_instruction_length::set(event.len);
+            ::intel_x64::vmcs::vm_entry_instruction_length::set(event.len);
             break;
 
         default:
@@ -116,7 +114,7 @@ exit_handler_eapis::exit_handler::inject_event(
 
     if (type == entry_irq_type::external_interrupt) {
 
-        if (vmcs::guest_rflags::interrupt_enable_flag::is_disabled()) {
+        if (::intel_x64::vmcs::guest_rflags::interrupt_enable_flag::is_disabled()) {
             return queue_event(vector, type, len, error_code);
         }
 
@@ -133,7 +131,7 @@ exit_handler_eapis::exit_handler::inject_event(
         return queue_event(vector, type, len, error_code);
     }
 
-    if (vmcs::guest_activity_state::get() != vmcs::guest_activity_state::active) {
+    if (::intel_x64::vmcs::guest_activity_state::get() != ::intel_x64::vmcs::guest_activity_state::active) {
         return queue_event(vector, type, len, error_code);
     }
 
@@ -163,8 +161,8 @@ exit_handler_eapis::exit_handler::handle_exit__external_interrupt()
     inject_event(
         exit_irq_info::vector::get(eii),
         exit_irq_type::get(eii),
-        vmcs::vm_exit_instruction_length::get(),
-        vmcs::vm_exit_interruption_error_code::get()
+        ::intel_x64::vmcs::vm_exit_instruction_length::get(),
+        ::intel_x64::vmcs::vm_exit_interruption_error_code::get()
     );
 
     this->resume();
@@ -188,8 +186,8 @@ exit_handler_eapis::exit_handler::handle_exit__interrupt_window()
 void
 exit_handler_eapis::exit_handler::enable_vmm_exceptions() noexcept
 {
-    m_tpr_shadow = intel::cr8::get();
-    intel::cr8::set(0x0FU);
+    m_tpr_shadow = ::intel_x64::cr8::get();
+    ::intel_x64::cr8::set(0x0FU);
 
     ::x64::rflags::interrupt_enable_flag::enable();
 }
@@ -198,5 +196,5 @@ void
 exit_handler_eapis::exit_handler::disable_vmm_exceptions() noexcept
 {
     ::x64::rflags::interrupt_enable_flag::disable();
-    intel::cr8::set(m_tpr_shadow);
+    ::intel_x64::cr8::set(m_tpr_shadow);
 }

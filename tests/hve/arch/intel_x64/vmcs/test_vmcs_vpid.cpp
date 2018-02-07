@@ -21,12 +21,11 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
+namespace vpi = ::intel_x64::vmcs::virtual_processor_identifier;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
-TEST_CASE("vmcs_intel_x64_eapis_vpid: enable vpid")
+TEST_CASE("eapis_vmcs_vpid: enable vpid")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
@@ -34,10 +33,10 @@ TEST_CASE("vmcs_intel_x64_eapis_vpid: enable vpid")
     vmcs->enable_vpid();
 
     CHECK(proc_ctls2::enable_vpid::is_enabled());
-    CHECK(vmcs::virtual_processor_identifier::get() != 0);
+    CHECK(vpi::get() != 0);
 }
 
-TEST_CASE("vmcs_intel_x64_eapis_vpid: disable vpid")
+TEST_CASE("eapis_vmcs_vpid: disable vpid")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
@@ -45,7 +44,7 @@ TEST_CASE("vmcs_intel_x64_eapis_vpid: disable vpid")
     vmcs->disable_vpid();
 
     CHECK(proc_ctls2::enable_vpid::is_disabled());
-    CHECK(vmcs::virtual_processor_identifier::get() == 0);
+    CHECK(vpi::get() == 0);
 }
 
 #endif

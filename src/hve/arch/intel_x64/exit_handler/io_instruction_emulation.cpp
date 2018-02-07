@@ -24,8 +24,7 @@
 #include <arch/intel_x64/vmcs/32bit_control_fields.h>
 #include <arch/intel_x64/vmcs/natural_width_read_only_data_fields.h>
 
-namespace vmcs = ::intel_x64::vmcs;
-namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
+namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_controls;
 namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
 void

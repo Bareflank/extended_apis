@@ -21,13 +21,9 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
-TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials allowed")
+TEST_CASE("eapis_exit_handler_verifiers: json clear denials allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -45,7 +41,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials allowed")
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials logged")
+TEST_CASE("eapis_exit_handler_verifiers: json clear denials logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -63,7 +59,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials logged")
     CHECK(ehlr->m_denials.empty());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials denied")
+TEST_CASE("eapis_exit_handler_verifiers: json clear denials denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -81,7 +77,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json clear denials denied")
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy allowed")
+TEST_CASE("eapis_exit_handler_verifiers: json dump policy allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -96,7 +92,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy allowed")
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy logged")
+TEST_CASE("eapis_exit_handler_verifiers: json dump policy logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -111,7 +107,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy logged")
     CHECK_NOTHROW(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy denied")
+TEST_CASE("eapis_exit_handler_verifiers: json dump policy denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -126,7 +122,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump policy denied")
     CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials allowed")
+TEST_CASE("eapis_exit_handler_verifiers: json dump denials allowed")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -144,7 +140,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials allowed")
     CHECK(ehlr->m_denials.size() == 1);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials logged")
+TEST_CASE("eapis_exit_handler_verifiers: json dump denials logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);
@@ -161,7 +157,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials logged")
     CHECK(ehlr->m_denials.size() == 2);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_verifiers: json dump denials denied")
+TEST_CASE("eapis_exit_handler_verifiers: json dump denials denied")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, 0x0);

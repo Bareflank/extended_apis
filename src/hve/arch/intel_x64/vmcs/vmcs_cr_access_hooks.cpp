@@ -22,15 +22,14 @@
 #include "../../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
 #include <intrinsics.h>
 
-namespace vmcs = ::intel_x64::vmcs;
-namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
+namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_controls;
 namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 
 void
 vmcs_eapis::vmcs::enable_cr0_load_hook(mask_type mask, shadow_type shadow)
 {
-    vmcs::cr0_guest_host_mask::set(mask);
-    vmcs::cr0_read_shadow::set(shadow);
+    ::intel_x64::vmcs::cr0_guest_host_mask::set(mask);
+    ::intel_x64::vmcs::cr0_read_shadow::set(shadow);
 }
 
 void
@@ -48,8 +47,8 @@ vmcs_eapis::vmcs::enable_cr3_store_hook()
 void
 vmcs_eapis::vmcs::enable_cr4_load_hook(mask_type mask, shadow_type shadow)
 {
-    vmcs::cr4_guest_host_mask::set(mask);
-    vmcs::cr4_read_shadow::set(shadow);
+    ::intel_x64::vmcs::cr4_guest_host_mask::set(mask);
+    ::intel_x64::vmcs::cr4_read_shadow::set(shadow);
 }
 
 void
@@ -66,8 +65,8 @@ vmcs_eapis::vmcs::enable_cr8_store_hook()
 
 void vmcs_eapis::vmcs::disable_cr0_load_hook()
 {
-    vmcs::cr0_guest_host_mask::set(0ULL);
-    vmcs::cr0_read_shadow::set(0ULL);
+    ::intel_x64::vmcs::cr0_guest_host_mask::set(0ULL);
+    ::intel_x64::vmcs::cr0_read_shadow::set(0ULL);
 }
 
 void vmcs_eapis::vmcs::disable_cr3_load_hook()
@@ -82,8 +81,8 @@ void vmcs_eapis::vmcs::disable_cr3_store_hook()
 
 void vmcs_eapis::vmcs::disable_cr4_load_hook()
 {
-    vmcs::cr4_guest_host_mask::set(0ULL);
-    vmcs::cr4_read_shadow::set(0ULL);
+    ::intel_x64::vmcs::cr4_guest_host_mask::set(0ULL);
+    ::intel_x64::vmcs::cr4_read_shadow::set(0ULL);
 }
 
 void vmcs_eapis::vmcs::disable_cr8_load_hook()

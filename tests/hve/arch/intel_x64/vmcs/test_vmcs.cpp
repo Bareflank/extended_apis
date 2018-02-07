@@ -21,22 +21,22 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
+namespace intel = bfvmm::intel_x64;
+namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
-TEST_CASE("vmcs_intel_x64_eapis: construction / destruction")
+TEST_CASE("eapis_vmcs: construction / destruction")
 {
-    CHECK_NOTHROW(std::make_unique<vmcs_intel_x64_eapis>());
+    CHECK_NOTHROW(std::make_unique<vmcs_eapis::vmcs>());
 }
 
-TEST_CASE("vmcs_intel_x64_eapis: launch")
+TEST_CASE("eapis_vmcs: launch")
 {
     MockRepository mocks;
     setup_mm(mocks);
     auto vmcs = setup_vmcs(mocks);
-    auto vmss = std::make_unique<vmcs_intel_x64_state>();
+    auto vmss = std::make_unique<intel::vmcs_state>();
 
     vmcs->launch(vmss.get(), vmss.get());
 }

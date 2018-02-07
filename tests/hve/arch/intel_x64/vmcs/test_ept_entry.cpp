@@ -23,12 +23,14 @@
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 #include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
 
-using epte_type = ept_entry_intel_x64::integer_pointer;
+namespace intel = eapis::hve::intel_x64;
 
-TEST_CASE("ept_entry_intel_x64: read access")
+using epte_type = intel::ept_entry::integer_pointer;
+
+TEST_CASE("ept_entry: read access")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_read_access(true);
     CHECK(epte->read_access());
@@ -40,10 +42,10 @@ TEST_CASE("ept_entry_intel_x64: read access")
     CHECK(num_bits_set(entry) == 0);
 }
 
-TEST_CASE("ept_entry_intel_x64: write access")
+TEST_CASE("ept_entry: write access")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_write_access(true);
     CHECK(epte->write_access());
@@ -55,10 +57,10 @@ TEST_CASE("ept_entry_intel_x64: write access")
     CHECK(num_bits_set(entry) == 0);
 }
 
-TEST_CASE("ept_entry_intel_x64: execute access")
+TEST_CASE("ept_entry: execute access")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_execute_access(true);
     CHECK(epte->execute_access());
@@ -70,10 +72,10 @@ TEST_CASE("ept_entry_intel_x64: execute access")
     CHECK(num_bits_set(entry) == 0);
 }
 
-TEST_CASE("ept_entry_intel_x64: memory type")
+TEST_CASE("ept_entry: memory type")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_read_access(true);
     epte->set_write_access(true);
@@ -93,10 +95,10 @@ TEST_CASE("ept_entry_intel_x64: memory type")
     CHECK(epte->memory_type() == 0x0);
 }
 
-TEST_CASE("ept_entry_intel_x64: ignore pat")
+TEST_CASE("ept_entry: ignore pat")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_ignore_pat(true);
     CHECK(epte->ignore_pat());
@@ -108,10 +110,10 @@ TEST_CASE("ept_entry_intel_x64: ignore pat")
     CHECK(num_bits_set(entry) == 0);
 }
 
-TEST_CASE("ept_entry_intel_x64: entry type")
+TEST_CASE("ept_entry: entry type")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_entry_type(true);
     CHECK(epte->entry_type());
@@ -123,10 +125,10 @@ TEST_CASE("ept_entry_intel_x64: entry type")
     CHECK(num_bits_set(entry) == 0);
 }
 
-TEST_CASE("ept_entry_intel_x64: accessed")
+TEST_CASE("ept_entry: accessed")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_accessed(true);
     CHECK(epte->accessed());
@@ -138,10 +140,10 @@ TEST_CASE("ept_entry_intel_x64: accessed")
     CHECK(num_bits_set(entry) == 0);
 }
 
-TEST_CASE("ept_entry_intel_x64: dirty")
+TEST_CASE("ept_entry: dirty")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_dirty(true);
     CHECK(epte->dirty());
@@ -153,10 +155,10 @@ TEST_CASE("ept_entry_intel_x64: dirty")
     CHECK(num_bits_set(entry) == 0);
 }
 
-TEST_CASE("ept_entry_intel_x64: execute access user")
+TEST_CASE("ept_entry: execute access user")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_execute_access_user(true);
     CHECK(epte->execute_access_user());
@@ -168,10 +170,10 @@ TEST_CASE("ept_entry_intel_x64: execute access user")
     CHECK(num_bits_set(entry) == 0);
 }
 
-TEST_CASE("ept_entry_intel_x64: physical address")
+TEST_CASE("ept_entry: physical address")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_read_access(true);
     epte->set_write_access(true);
@@ -191,10 +193,10 @@ TEST_CASE("ept_entry_intel_x64: physical address")
     CHECK(epte->phys_addr() == 0x0);
 }
 
-TEST_CASE("ept_entry_intel_x64: suppress ve")
+TEST_CASE("ept_entry: suppress ve")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->set_suppress_ve(true);
     CHECK(epte->suppress_ve());
@@ -206,10 +208,10 @@ TEST_CASE("ept_entry_intel_x64: suppress ve")
     CHECK(num_bits_set(entry) == 0);
 }
 
-TEST_CASE("ept_entry_intel_x64: trap on access")
+TEST_CASE("ept_entry: trap on access")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->trap_on_access();
     CHECK(!epte->read_access());
@@ -217,10 +219,10 @@ TEST_CASE("ept_entry_intel_x64: trap on access")
     CHECK(!epte->execute_access());
 }
 
-TEST_CASE("ept_entry_intel_x64: pass through access")
+TEST_CASE("ept_entry: pass through access")
 {
     epte_type entry = 0;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->pass_through_access();
     CHECK(epte->read_access());
@@ -228,10 +230,10 @@ TEST_CASE("ept_entry_intel_x64: pass through access")
     CHECK(epte->execute_access());
 }
 
-TEST_CASE("ept_entry_intel_x64: clear")
+TEST_CASE("ept_entry: clear")
 {
     epte_type entry = 0xFFFFFFFFFFFFFFFF;
-    auto epte = std::make_unique<ept_entry_intel_x64>(&entry);
+    auto epte = std::make_unique<intel::ept_entry>(&entry);
 
     epte->clear();
     CHECK(entry == 0);

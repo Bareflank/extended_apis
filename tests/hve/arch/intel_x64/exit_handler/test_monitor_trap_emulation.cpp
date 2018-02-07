@@ -21,14 +21,11 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-using namespace x64;
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-namespace reason = vmcs::exit_reason::basic_exit_reason;
+namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
-TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: exit")
+TEST_CASE("eapis_exit_handler_monitor_trap_emulation: exit")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, reason::monitor_trap_flag);
@@ -38,7 +35,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: exit")
     CHECK_NOTHROW(ehlr->dispatch());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: register trap")
+TEST_CASE("eapis_exit_handler_monitor_trap_emulation: register trap")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, reason::monitor_trap_flag);
@@ -52,7 +49,7 @@ TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: register trap")
     CHECK_THROWS(ehlr->dispatch());
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_monitor_trap_emulation: clear trap")
+TEST_CASE("eapis_exit_handler_monitor_trap_emulation: clear trap")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, reason::monitor_trap_flag);

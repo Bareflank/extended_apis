@@ -21,21 +21,20 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-namespace intel = intel_x64;
-namespace vmcs = intel_x64::vmcs;
-namespace reason = vmcs::exit_reason::basic_exit_reason;
+namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
+namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_emulation: passthrough not logged")
+TEST_CASE("eapis_exit_handler_cpuid_emulation: passthrough not logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, reason::cpuid);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_intel_x64_eapis::cpuid_type leaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_type subleaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_regs_type m_regs = x64::cpuid::get(leaf, 0, subleaf, 0);
+    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_regs_type m_regs = x64::cpuid::get(leaf, 0, subleaf, 0);
 
     CHECK_NOTHROW(ehlr->log_cpuid_access(false));
     CHECK_NOTHROW(ehlr->clear_cpuid_access_log());
@@ -52,15 +51,15 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_emulation: passthrough not logged"
     CHECK(ehlr->m_state_save->rdx == m_regs.rdx);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_emulation: passthrough logged")
+TEST_CASE("eapis_exit_handler_cpuid_emulation: passthrough logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, reason::cpuid);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_intel_x64_eapis::cpuid_type leaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_type subleaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_regs_type m_regs = x64::cpuid::get(leaf, 0, subleaf, 0);
+    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_regs_type m_regs = x64::cpuid::get(leaf, 0, subleaf, 0);
 
     CHECK_NOTHROW(ehlr->log_cpuid_access(true));
     CHECK_NOTHROW(ehlr->clear_cpuid_access_log());
@@ -69,7 +68,6 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_emulation: passthrough logged")
 
     bfdebug_nhex(0, "log size:",  ehlr->m_cpuid_access_log.size());
     CHECK_NOTHROW(ehlr->dispatch());
-    ehlr->m_cpuid_access_log[0] = 1;
     CHECK(ehlr->m_cpuid_access_log[0] == 1);
     CHECK(ehlr->m_cpuid_emu_map.empty());
 
@@ -79,15 +77,15 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_emulation: passthrough logged")
     CHECK(ehlr->m_state_save->rdx == m_regs.rdx);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_emulation: emulation not logged")
+TEST_CASE("eapis_exit_handler_cpuid_emulation: emulation not logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, reason::cpuid);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_intel_x64_eapis::cpuid_type leaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_type subleaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_regs_type regs = { 1, 7, 3, 8 };
+    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_regs_type regs = { 1, 7, 3, 8 };
     ehlr->m_cpuid_emu_map[0] = regs;
 
     CHECK_NOTHROW(ehlr->log_cpuid_access(false));
@@ -105,15 +103,15 @@ TEST_CASE("exit_handler_intel_x64_eapis_cpuid_emulation: emulation not logged")
     CHECK(ehlr->m_state_save->rdx == 8);
 }
 
-TEST_CASE("exit_handler_intel_x64_eapis_cpuid_emulation: emulation logged")
+TEST_CASE("eapis_exit_handler_cpuid_emulation: emulation logged")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks, reason::cpuid);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_intel_x64_eapis::cpuid_type leaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_type subleaf = 0;
-    exit_handler_intel_x64_eapis::cpuid_regs_type regs = { 1, 7, 3, 8 };
+    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
+    exit_handler_eapis::exit_handler::cpuid_regs_type regs = { 1, 7, 3, 8 };
     ehlr->m_cpuid_emu_map[0] = regs;
 
     CHECK_NOTHROW(ehlr->log_cpuid_access(true));
