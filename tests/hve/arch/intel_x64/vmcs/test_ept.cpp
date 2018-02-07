@@ -19,12 +19,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 #include "../../../../../include/hve/arch/intel_x64/vmcs/ept.h"
 
 constexpr const ept_intel_x64::integer_pointer virt = 0x0000100000000000ULL;
 
-#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 TEST_CASE("ept_intel_x64: add / remove page without touching page settings")
 {

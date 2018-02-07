@@ -19,6 +19,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
+
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
 namespace intel = intel_x64;
@@ -27,7 +29,6 @@ namespace io_qual = vmcs::exit_qualification::io_instruction;
 namespace reason = vmcs::exit_reason::basic_exit_reason;
 namespace proc_ctls = vmcs::primary_processor_based_vm_execution_controls;
 
-#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 TEST_CASE("exit_handler_intel_x64_eapis_io_instruction_emulation: exit")
 {
