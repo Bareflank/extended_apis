@@ -59,6 +59,15 @@ namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 #pragma warning(disable : 4251)
 #endif
 
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+namespace exit_handler
+{
+
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
@@ -69,15 +78,6 @@ namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 /// subclassed, and certain functions need to be handled based on how the
 /// VMCS is setup.
 ///
-namespace eapis
-{
-namespace hve
-{
-namespace intel_x64
-{
-namespace exit_handler
-{
-
 class EXPORT_EAPIS_HVE exit_handler : public bfvmm::intel_x64::exit_handler
 {
 public:

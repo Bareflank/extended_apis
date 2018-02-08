@@ -41,6 +41,15 @@
 #define EXPORT_EAPIS_HVE
 #endif
 
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+namespace vmcs
+{
+
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
@@ -51,15 +60,6 @@
 /// is used here except the constructor, were EAPI specific resources are
 /// initialized.
 ///
-namespace eapis
-{
-namespace hve
-{
-namespace intel_x64
-{
-namespace vmcs
-{
-
 class EXPORT_EAPIS_HVE vmcs_state_vmm : public bfvmm::intel_x64::vmcs_state_vmm
 {
 public:

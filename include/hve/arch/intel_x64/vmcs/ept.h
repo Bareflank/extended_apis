@@ -53,6 +53,13 @@
 #pragma warning(disable : 4251)
 #endif
 
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
@@ -61,13 +68,6 @@
 ///
 /// Defines an Extended Page Table
 ///
-namespace eapis
-{
-namespace hve
-{
-namespace intel_x64
-{
-
 class EXPORT_EAPIS_HVE ept
 {
 public:

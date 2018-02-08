@@ -54,6 +54,15 @@
 #pragma warning(disable : 4251)
 #endif
 
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+namespace vmcs
+{
+
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
@@ -75,15 +84,6 @@
 /// Defines the EAPIs version of the VMCS. Note that this is intended to be
 /// subclassed.
 ///
-namespace eapis
-{
-namespace hve
-{
-namespace intel_x64
-{
-namespace vmcs
-{
-
 class EXPORT_EAPIS_HVE vmcs : public bfvmm::intel_x64::vmcs
 {
 public:

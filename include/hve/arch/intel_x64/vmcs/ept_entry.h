@@ -103,6 +103,13 @@ namespace ept
 /// @endcond
 // *INDENT-ON*
 
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+
 // -----------------------------------------------------------------------------
 // Definition
 // -----------------------------------------------------------------------------
@@ -111,13 +118,6 @@ namespace ept
 ///
 /// Defines an entry in an EPT table.
 ///
-namespace eapis
-{
-namespace hve
-{
-namespace intel_x64
-{
-
 class EXPORT_EAPIS_HVE ept_entry
 {
 public:

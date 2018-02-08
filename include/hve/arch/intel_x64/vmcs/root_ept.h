@@ -53,6 +53,13 @@
 #pragma warning(disable : 4251)
 #endif
 
+namespace eapis
+{
+namespace hve
+{
+namespace intel_x64
+{
+
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
@@ -67,13 +74,6 @@
 /// This needs to be done manually. In general, this class should not be used
 /// directly, but instead mapping should be done via a unique_map_ptr_x64.
 ///
-namespace eapis
-{
-namespace hve
-{
-namespace intel_x64
-{
-
 class EXPORT_EAPIS_HVE root_ept
 {
 public:
@@ -115,7 +115,7 @@ public:
     /// physical address, the physical address and a set of attributes.
     ///
     /// @note: the user should ensure that this level of page granularity is
-    ///     supported by hardware using ::intel_x64::msrs::ia32_vmx_ept_vpid_cap
+    ///     supported by hardware using the Intel msr ia32_vmx_ept_vpid_cap
     ///
     /// @expects
     /// @ensures
@@ -133,7 +133,7 @@ public:
     /// physical address, the physical address and a set of attributes.
     ///
     /// @note: the user should ensure that this level of page granularity is
-    ///     supported by hardware using ::intel_x64::msrs::ia32_vmx_ept_vpid_cap
+    ///     supported by hardware using the Intel msr ia32_vmx_ept_vpid_cap
     ///
     /// @expects
     /// @ensures
@@ -151,7 +151,7 @@ public:
     /// physical address, the physical address and a set of attributes.
     ///
     /// @note: the user should ensure that this level of page granularity is
-    ///     supported by hardware using ::intel_x64::msrs::ia32_vmx_ept_vpid_cap
+    ///     supported by hardware using the Intel msr ia32_vmx_ept_vpid_cap
     ///
     /// @expects
     /// @ensures
