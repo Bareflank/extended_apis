@@ -72,11 +72,11 @@ intel::ept_entry::set_execute_access(bool enabled) noexcept
 
 intel::ept_entry::memory_type_type
 intel::ept_entry::memory_type() const noexcept
-{ return get_bits(*m_epte, 0x0000000000000038UL) >> 3; }
+{ return get_bits(*m_epte, 0x0000000000000038ULL) >> 3; }
 
 void
 intel::ept_entry::set_memory_type(memory_type_type val) noexcept
-{ *m_epte = set_bits(*m_epte, 0x0000000000000038UL, val << 3); }
+{ *m_epte = set_bits(*m_epte, 0x0000000000000038ULL, val << 3); }
 
 bool
 intel::ept_entry::ignore_pat() const noexcept
@@ -120,11 +120,11 @@ intel::ept_entry::set_execute_access_user(bool enabled) noexcept
 
 intel::ept_entry::integer_pointer
 intel::ept_entry::phys_addr() const noexcept
-{ return get_bits(*m_epte, 0x0000FFFFFFFFF000UL); }
+{ return get_bits(*m_epte, 0x0000FFFFFFFFF000ULL); }
 
 void
 intel::ept_entry::set_phys_addr(integer_pointer addr) noexcept
-{ *m_epte = set_bits(*m_epte, 0x0000FFFFFFFFF000UL, addr); }
+{ *m_epte = set_bits(*m_epte, 0x0000FFFFFFFFF000ULL, addr); }
 
 bool
 intel::ept_entry::suppress_ve() const noexcept

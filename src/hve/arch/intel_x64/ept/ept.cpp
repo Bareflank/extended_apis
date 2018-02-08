@@ -45,15 +45,16 @@ intel::ept::get_entry(index_type index)
         throw std::invalid_argument("index must be less than ::intel_x64::ept::num_entries");
     }
 
-    auto ept = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
-    return intel::ept_entry(&ept.at(index));
+    auto table = gsl::make_span(m_ept, ::intel_x64::ept::num_entries);
+    return intel::ept_entry(&table.at(index));
 }
 
 intel::ept_entry
 intel::ept::add_page(integer_pointer gpa, integer_pointer bits, integer_pointer end)
 {
     auto index = ::intel_x64::ept::index(gpa, bits);
-    auto entry = get_entry(index);
+    auto uindex = static_cast<std::make_unsigned<decltype(index)>::type>(index);
+    auto entry = get_entry(uindex);
 
     if (bits > end) {
         if (entry.entry_type()) {
@@ -93,7 +94,8 @@ void
 intel::ept::remove_page(integer_pointer gpa, integer_pointer bits)
 {
     auto index = ::intel_x64::ept::index(gpa, bits);
-    auto entry = get_entry(index);
+    auto uindex = static_cast<std::make_unsigned<decltype(index)>::type>(index);
+    auto entry = get_entry(uindex);
 
     if (entry.entry_type()) {
         entry.clear();

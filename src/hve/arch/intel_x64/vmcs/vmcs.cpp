@@ -31,7 +31,7 @@ vmcs::vmcs()
 
 void
 vmcs::write_fields(gsl::not_null<bfvmm::intel_x64::vmcs_state *> host_state,
-                               gsl::not_null<bfvmm::intel_x64::vmcs_state *> guest_state)
+                   gsl::not_null<bfvmm::intel_x64::vmcs_state *> guest_state)
 {
     bfignored(host_state);
     bfignored(guest_state);
