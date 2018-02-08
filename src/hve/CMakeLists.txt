@@ -17,6 +17,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 list(APPEND SOURCES
+    arch/intel_x64/ept/ept.cpp
+    arch/intel_x64/ept/ept_entry.cpp
+    arch/intel_x64/ept/root_ept.cpp
+
     arch/intel_x64/exit_handler/cpuid_emulation.cpp
     arch/intel_x64/exit_handler/cpuid_vmcall.cpp
     arch/intel_x64/exit_handler/cr_emulation.cpp
@@ -35,9 +39,7 @@ list(APPEND SOURCES
     arch/intel_x64/exit_handler/vpid_vmcall.cpp
     arch/intel_x64/exit_handler/wrmsr_emulation.cpp
     arch/intel_x64/exit_handler/wrmsr_vmcall.cpp
-    arch/intel_x64/vmcs/ept.cpp
-    arch/intel_x64/vmcs/ept_entry.cpp
-    arch/intel_x64/vmcs/root_ept.cpp
+
     arch/intel_x64/vmcs/vmcs.cpp
     arch/intel_x64/vmcs/vmcs_cr_access_hooks.cpp
     arch/intel_x64/vmcs/vmcs_ept.cpp

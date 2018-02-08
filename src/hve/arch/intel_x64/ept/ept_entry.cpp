@@ -20,7 +20,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <util/bitmanip.h>
-#include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
+#include "../../../../../include/hve/arch/intel_x64/ept/ept_entry.h"
 
 #include <arch/x64/misc.h>
 

@@ -29,8 +29,7 @@
 #include <vector>
 #include <memory>
 
-#include <bfmemory.h>
-#include <hve/arch/intel_x64/vmcs/ept_entry.h>
+#include "ept_entry.h"
 
 // -----------------------------------------------------------------------------
 // Exports

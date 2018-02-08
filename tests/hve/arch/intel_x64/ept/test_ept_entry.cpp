@@ -23,7 +23,7 @@
 
 #include <util/bitmanip.h>
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
-#include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
+#include "../../../../../include/hve/arch/intel_x64/ept/ept_entry.h"
 
 namespace intel = eapis::intel_x64;
 

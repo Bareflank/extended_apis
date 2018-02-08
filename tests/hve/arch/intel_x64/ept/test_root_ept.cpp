@@ -22,8 +22,8 @@
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
-#include "../../../../../include/hve/arch/intel_x64/vmcs/root_ept.h"
-#include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
+#include "../../../../../include/hve/arch/intel_x64/ept/root_ept.h"
+#include "../../../../../include/hve/arch/intel_x64/ept/ept_entry.h"
 
 namespace intel = eapis::intel_x64;
 namespace mem_attr = intel_x64::ept::memory_attr;

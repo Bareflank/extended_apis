@@ -22,7 +22,7 @@
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
-#include "../../../../../include/hve/arch/intel_x64/vmcs/ept.h"
+#include "../../../../../include/hve/arch/intel_x64/ept/ept.h"
 
 namespace intel = eapis::intel_x64;
 

@@ -107,17 +107,17 @@ do_test(test_wrmsr_vmcall
 )
 
 do_test(test_ept
-    SOURCES arch/intel_x64/vmcs/test_ept.cpp
+    SOURCES arch/intel_x64/ept/test_ept.cpp
     ${ARGN}
 )
 
 do_test(test_ept_entry
-    SOURCES arch/intel_x64/vmcs/test_ept_entry.cpp
+    SOURCES arch/intel_x64/ept/test_ept_entry.cpp
     ${ARGN}
 )
 
 do_test(test_root_ept
-    SOURCES arch/intel_x64/vmcs/test_root_ept.cpp
+    SOURCES arch/intel_x64/ept/test_root_ept.cpp
     ${ARGN}
 )
 
