@@ -25,12 +25,12 @@
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
 namespace intel = bfvmm::intel_x64;
-namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
+using vmcs = eapis::intel_x64::vmcs;
 
 
 TEST_CASE("eapis_vmcs: construction / destruction")
 {
-    CHECK_NOTHROW(std::make_unique<vmcs_eapis::vmcs>());
+    CHECK_NOTHROW(std::make_unique<vmcs_eapis::>());
 }
 
 TEST_CASE("eapis_vmcs: launch")

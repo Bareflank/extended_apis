@@ -24,7 +24,7 @@
 //
 //#include "../../../../../include/hve/arch/intel_x64/vmcs/apic.h"
 //
-//namespace intel = eapis::hve::intel_x64;
+//namespace intel = eapis::intel_x64;
 //
 //intel::apic::apic()
 //{

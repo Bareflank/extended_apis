@@ -26,10 +26,10 @@
 
 namespace ept_p = ::intel_x64::vmcs::ept_pointer;
 namespace proc_ctls2 = ::intel_x64::vmcs::secondary_processor_based_vm_execution_controls;
-namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
+using vmcs = eapis::intel_x64::vmcs;
 
 void
-vmcs_eapis::vmcs::enable_ept(eptp_type eptp)
+vmcs::enable_ept(vmcs::eptp_type eptp)
 {
     ept_entry entry{&eptp};
 
@@ -41,7 +41,7 @@ vmcs_eapis::vmcs::enable_ept(eptp_type eptp)
 }
 
 void
-vmcs_eapis::vmcs::disable_ept()
+vmcs::disable_ept()
 {
     ::intel_x64::vmx::invept_global();
     proc_ctls2::enable_ept::disable();
@@ -50,7 +50,7 @@ vmcs_eapis::vmcs::disable_ept()
 }
 
 void
-vmcs_eapis::vmcs::set_eptp(integer_pointer eptp)
+vmcs::set_eptp(integer_pointer eptp)
 {
     auto &&entry = ept_entry{&eptp};
 

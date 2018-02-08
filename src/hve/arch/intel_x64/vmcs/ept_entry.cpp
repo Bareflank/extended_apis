@@ -24,7 +24,7 @@
 
 #include <arch/x64/misc.h>
 
-namespace intel = eapis::hve::intel_x64;
+namespace intel = eapis::intel_x64;
 
 intel::ept_entry::ept_entry(gsl::not_null<pointer> pte) noexcept :
     m_epte(pte.get())

@@ -105,8 +105,6 @@ namespace ept
 
 namespace eapis
 {
-namespace hve
-{
 namespace intel_x64
 {
 
@@ -421,7 +419,6 @@ public:
     /// @endcond
 };
 
-}
 }
 }
 

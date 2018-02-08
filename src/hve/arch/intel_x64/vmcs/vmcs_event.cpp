@@ -23,10 +23,10 @@
 
 namespace pin_ctls = ::intel_x64::vmcs::pin_based_vm_execution_controls;
 namespace exit_ctls = ::intel_x64::vmcs::vm_exit_controls;
-namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
+using vmcs = eapis::intel_x64::vmcs;
 
 void
-vmcs_eapis::vmcs::enable_event_management()
+vmcs::enable_event_management()
 {
     // if (intel_x64::cpuid::feature_information::ecx::x2apic::is_disabled()) {
     //     throw std::runtime_error("x2apic not supported: failed to enable event management");
@@ -72,7 +72,7 @@ vmcs_eapis::vmcs::enable_event_management()
 }
 
 void
-vmcs_eapis::vmcs::disable_event_management()
+vmcs::disable_event_management()
 {
     // if (proc_ctls::use_msr_bitmap::is_disabled()) {
     //     throw std::runtime_error("msr bitmaps not enabled: failed to disable event management");

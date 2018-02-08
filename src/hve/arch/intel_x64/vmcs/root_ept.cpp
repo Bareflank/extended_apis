@@ -23,7 +23,7 @@
 #include "../../../../../include/hve/arch/intel_x64/vmcs/root_ept.h"
 #include <bfvmm/memory_manager/memory_manager_x64.h>
 
-namespace intel = eapis::hve::intel_x64;
+namespace intel = eapis::intel_x64;
 namespace mem_attr = ::intel_x64::ept::memory_attr;
 
 // -----------------------------------------------------------------------------

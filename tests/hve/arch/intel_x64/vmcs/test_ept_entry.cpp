@@ -25,7 +25,7 @@
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 #include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
 
-namespace intel = eapis::hve::intel_x64;
+namespace intel = eapis::intel_x64;
 
 using epte_type = intel::ept_entry::integer_pointer;
 

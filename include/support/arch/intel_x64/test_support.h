@@ -38,7 +38,7 @@ namespace pin_ctls = ::intel_x64::vmcs::pin_based_vm_execution_controls;
 namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_controls;
 namespace proc_ctls2 = ::intel_x64::vmcs::secondary_processor_based_vm_execution_controls;
 using ehlr_eapis = eapis::intel_x64::exit_handler;
-namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
+using vmcs_eapis = eapis::intel_x64::vmcs;
 
 extern bool g_deny_all;
 extern bool g_log_denials;
@@ -82,44 +82,44 @@ public:
     }
 };
 
-vmcs_eapis::vmcs *
+vmcs_type *
 setup_vmcs(MockRepository &mocks,
     ::intel_x64::vmcs::value_type reason,
     ::intel_x64::vmcs::value_type qualification = 0)
 {
-    auto vmcs = mocks.Mock<vmcs_eapis::vmcs>();
+    auto vmcs = mocks.Mock<vmcs_eapis::>();
 
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::launch);
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::resume);
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::promote);
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::load);
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::clear);
+    mocks.OnCall(vmcs, vmcs_eapis::::launch);
+    mocks.OnCall(vmcs, vmcs_eapis::::resume);
+    mocks.OnCall(vmcs, vmcs_eapis::::promote);
+    mocks.OnCall(vmcs, vmcs_eapis::::load);
+    mocks.OnCall(vmcs, vmcs_eapis::::clear);
 
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::enable_vpid).Do([&] { g_enable_vpid = true; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::disable_vpid).Do([&] { g_enable_vpid = false; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::enable_io_bitmaps).Do([&] { g_enable_io_bitmaps = true; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::disable_io_bitmaps).Do([&] { g_enable_io_bitmaps = false; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::trap_on_io_access).Do([&](auto port) { g_port = port; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::trap_on_all_io_accesses).Do([&]() { g_port = 42; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::pass_through_io_access).Do([&](auto port) { g_port = port; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::pass_through_all_io_accesses).Do([&]() { g_port = 42; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::whitelist_io_access).Do([&](auto ports) { g_port = ports[0]; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::blacklist_io_access).Do([&](auto ports) { g_port = ports[0]; });
+    mocks.OnCall(vmcs, vmcs_eapis::::enable_vpid).Do([&] { g_enable_vpid = true; });
+    mocks.OnCall(vmcs, vmcs_eapis::::disable_vpid).Do([&] { g_enable_vpid = false; });
+    mocks.OnCall(vmcs, vmcs_eapis::::enable_io_bitmaps).Do([&] { g_enable_io_bitmaps = true; });
+    mocks.OnCall(vmcs, vmcs_eapis::::disable_io_bitmaps).Do([&] { g_enable_io_bitmaps = false; });
+    mocks.OnCall(vmcs, vmcs_eapis::::trap_on_io_access).Do([&](auto port) { g_port = port; });
+    mocks.OnCall(vmcs, vmcs_eapis::::trap_on_all_io_accesses).Do([&]() { g_port = 42; });
+    mocks.OnCall(vmcs, vmcs_eapis::::pass_through_io_access).Do([&](auto port) { g_port = port; });
+    mocks.OnCall(vmcs, vmcs_eapis::::pass_through_all_io_accesses).Do([&]() { g_port = 42; });
+    mocks.OnCall(vmcs, vmcs_eapis::::whitelist_io_access).Do([&](auto ports) { g_port = ports[0]; });
+    mocks.OnCall(vmcs, vmcs_eapis::::blacklist_io_access).Do([&](auto ports) { g_port = ports[0]; });
 
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::enable_msr_bitmap).Do([&] { g_enable_msr_bitmap = true; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::disable_msr_bitmap).Do([&] { g_enable_msr_bitmap = false; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::trap_on_rdmsr_access).Do([&](auto msr) { g_rdmsr = msr; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::trap_on_wrmsr_access).Do([&](auto msr) { g_wrmsr = msr; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::trap_on_all_rdmsr_accesses).Do([&]() { g_rdmsr = 42; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::trap_on_all_wrmsr_accesses).Do([&]() { g_wrmsr = 42; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::pass_through_rdmsr_access).Do([&](auto msr) { g_rdmsr = msr; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::pass_through_wrmsr_access).Do([&](auto msr) { g_wrmsr = msr; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::pass_through_all_rdmsr_accesses).Do([&]() { g_rdmsr = 42; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::pass_through_all_wrmsr_accesses).Do([&]() { g_wrmsr = 42; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::whitelist_rdmsr_access).Do([&](auto msrs) { g_rdmsr = msrs[0]; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::whitelist_wrmsr_access).Do([&](auto msrs) { g_wrmsr = msrs[0]; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::blacklist_rdmsr_access).Do([&](auto msrs) { g_rdmsr = msrs[0]; });
-    mocks.OnCall(vmcs, vmcs_eapis::vmcs::blacklist_wrmsr_access).Do([&](auto msrs) { g_wrmsr = msrs[0]; });
+    mocks.OnCall(vmcs, vmcs_eapis::::enable_msr_bitmap).Do([&] { g_enable_msr_bitmap = true; });
+    mocks.OnCall(vmcs, vmcs_eapis::::disable_msr_bitmap).Do([&] { g_enable_msr_bitmap = false; });
+    mocks.OnCall(vmcs, vmcs_eapis::::trap_on_rdmsr_access).Do([&](auto msr) { g_rdmsr = msr; });
+    mocks.OnCall(vmcs, vmcs_eapis::::trap_on_wrmsr_access).Do([&](auto msr) { g_wrmsr = msr; });
+    mocks.OnCall(vmcs, vmcs_eapis::::trap_on_all_rdmsr_accesses).Do([&]() { g_rdmsr = 42; });
+    mocks.OnCall(vmcs, vmcs_eapis::::trap_on_all_wrmsr_accesses).Do([&]() { g_wrmsr = 42; });
+    mocks.OnCall(vmcs, vmcs_eapis::::pass_through_rdmsr_access).Do([&](auto msr) { g_rdmsr = msr; });
+    mocks.OnCall(vmcs, vmcs_eapis::::pass_through_wrmsr_access).Do([&](auto msr) { g_wrmsr = msr; });
+    mocks.OnCall(vmcs, vmcs_eapis::::pass_through_all_rdmsr_accesses).Do([&]() { g_rdmsr = 42; });
+    mocks.OnCall(vmcs, vmcs_eapis::::pass_through_all_wrmsr_accesses).Do([&]() { g_wrmsr = 42; });
+    mocks.OnCall(vmcs, vmcs_eapis::::whitelist_rdmsr_access).Do([&](auto msrs) { g_rdmsr = msrs[0]; });
+    mocks.OnCall(vmcs, vmcs_eapis::::whitelist_wrmsr_access).Do([&](auto msrs) { g_wrmsr = msrs[0]; });
+    mocks.OnCall(vmcs, vmcs_eapis::::blacklist_rdmsr_access).Do([&](auto msrs) { g_rdmsr = msrs[0]; });
+    mocks.OnCall(vmcs, vmcs_eapis::::blacklist_wrmsr_access).Do([&](auto msrs) { g_wrmsr = msrs[0]; });
 
     g_msrs[msrs::ia32_vmx_procbased_ctls2::addr] = 0xFFFFFFFF00000000UL;
     g_msrs[msrs::ia32_vmx_true_pinbased_ctls::addr] = 0xFFFFFFFF00000000UL;
@@ -146,7 +146,7 @@ setup_vmcs(MockRepository &mocks,
 }
 
 std::unique_ptr<exit_handler_ut>
-setup_ehlr(gsl::not_null<vmcs_eapis::vmcs *> vmcs)
+setup_ehlr(gsl::not_null<vmcs_type *> vmcs)
 {
     auto ehlr = std::make_unique<exit_handler_ut>();
     ehlr->set_vmcs(vmcs);
@@ -168,10 +168,10 @@ setup_mm(MockRepository &mocks)
     return mm;
 }
 
-std::unique_ptr<vmcs_eapis::vmcs>
+std::unique_ptr<vmcs_eapis::>
 setup_vmcs(MockRepository &mocks)
 {
-    auto vmcs = std::make_unique<vmcs_eapis::vmcs>();
+    auto vmcs = std::make_unique<vmcs_eapis::>();
 
     g_msrs[msrs::ia32_vmx_procbased_ctls2::addr] = 0xFFFFFFFF00000000UL;
     g_msrs[msrs::ia32_vmx_true_pinbased_ctls::addr] = 0xFFFFFFFF00000000UL;

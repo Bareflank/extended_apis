@@ -47,8 +47,6 @@
 
 namespace eapis
 {
-namespace hve
-{
 namespace intel_x64
 {
 
@@ -240,7 +238,6 @@ namespace intel_x64
 //};
 
 
-}
 }
 }
 

@@ -24,7 +24,7 @@
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 #include "../../../../../include/hve/arch/intel_x64/vmcs/ept.h"
 
-namespace intel = eapis::hve::intel_x64;
+namespace intel = eapis::intel_x64;
 
 constexpr const intel::ept::integer_pointer virt = 0x0000100000000000ULL;
 

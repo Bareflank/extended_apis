@@ -21,80 +21,80 @@
 
 #include <arch/intel_x64/vmcs.h>
 
-namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
+using vmcs = eapis::intel_x64::vmcs;
 
 void
-vmcs_eapis::vmcs::enable_cr0_load_hook(mask_type mask, shadow_type shadow)
+vmcs::enable_cr0_load_hook(mask_type mask, shadow_type shadow)
 {
     cr0_guest_host_mask::set(mask);
     cr0_read_shadow::set(shadow);
 }
 
 void
-vmcs_eapis::vmcs::enable_cr3_load_hook()
+vmcs::enable_cr3_load_hook()
 {
     proc_ctls::cr3_load_exiting::enable();
 }
 
 void
-vmcs_eapis::vmcs::enable_cr3_store_hook()
+vmcs::enable_cr3_store_hook()
 {
     proc_ctls::cr3_store_exiting::enable();
 }
 
 void
-vmcs_eapis::vmcs::enable_cr4_load_hook(mask_type mask, shadow_type shadow)
+vmcs::enable_cr4_load_hook(mask_type mask, shadow_type shadow)
 {
     cr4_guest_host_mask::set(mask);
     cr4_read_shadow::set(shadow);
 }
 
 void
-vmcs_eapis::vmcs::enable_cr8_load_hook()
+vmcs::enable_cr8_load_hook()
 {
     proc_ctls::cr8_load_exiting::enable();
 }
 
 void
-vmcs_eapis::vmcs::enable_cr8_store_hook()
+vmcs::enable_cr8_store_hook()
 {
     proc_ctls::cr8_store_exiting::enable();
 }
 
 void
-vmcs_eapis::vmcs::disable_cr0_load_hook()
+vmcs::disable_cr0_load_hook()
 {
     cr0_guest_host_mask::set(0ULL);
     cr0_read_shadow::set(0ULL);
 }
 
 void
-vmcs_eapis::vmcs::disable_cr3_load_hook()
+vmcs::disable_cr3_load_hook()
 {
     proc_ctls::cr3_load_exiting::disable();
 }
 
 void
-vmcs_eapis::vmcs::disable_cr3_store_hook()
+vmcs::disable_cr3_store_hook()
 {
     proc_ctls::cr3_store_exiting::disable();
 }
 
 void
-vmcs_eapis::vmcs::disable_cr4_load_hook()
+vmcs::disable_cr4_load_hook()
 {
     cr4_guest_host_mask::set(0ULL);
     cr4_read_shadow::set(0ULL);
 }
 
 void
-vmcs_eapis::vmcs::disable_cr8_load_hook()
+vmcs::disable_cr8_load_hook()
 {
     proc_ctls::cr8_load_exiting::disable();
 }
 
 void
-vmcs_eapis::vmcs::disable_cr8_store_hook()
+vmcs::disable_cr8_store_hook()
 {
     proc_ctls::cr8_store_exiting::disable();
 }

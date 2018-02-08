@@ -43,11 +43,7 @@
 
 namespace eapis
 {
-namespace hve
-{
 namespace intel_x64
-{
-namespace vmcs
 {
 
 // -----------------------------------------------------------------------------
@@ -85,8 +81,6 @@ public:
     /// @endcond
 };
 
-}
-}
 }
 }
 

@@ -24,7 +24,7 @@
 #include <arch/x64/misc.h>
 #include "../../../../../include/hve/arch/intel_x64/vmcs/ept.h"
 
-namespace intel = eapis::hve::intel_x64;
+namespace intel = eapis::intel_x64;
 
 intel::ept::ept(pointer epte)
 {

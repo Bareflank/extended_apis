@@ -25,7 +25,7 @@
 #include "../../../../../include/hve/arch/intel_x64/vmcs/root_ept.h"
 #include "../../../../../include/hve/arch/intel_x64/vmcs/ept_entry.h"
 
-namespace intel = eapis::hve::intel_x64;
+namespace intel = eapis::intel_x64;
 namespace mem_attr = intel_x64::ept::memory_attr;
 namespace ept = intel_x64::ept;
 
