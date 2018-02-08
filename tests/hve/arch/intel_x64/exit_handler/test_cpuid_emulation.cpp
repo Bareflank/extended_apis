@@ -24,7 +24,7 @@
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
 namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 
 TEST_CASE("eapis_exit_handler_cpuid_emulation: passthrough not logged")
@@ -33,9 +33,9 @@ TEST_CASE("eapis_exit_handler_cpuid_emulation: passthrough not logged")
     auto vmcs = setup_vmcs(mocks, reason::cpuid);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_regs_type m_regs = x64::cpuid::get(leaf, 0, subleaf, 0);
+    ehlr_eapis::cpuid_type leaf = 0;
+    ehlr_eapis::cpuid_type subleaf = 0;
+    ehlr_eapis::cpuid_regs_type m_regs = x64::cpuid::get(leaf, 0, subleaf, 0);
 
     CHECK_NOTHROW(ehlr->log_cpuid_access(false));
     CHECK_NOTHROW(ehlr->clear_cpuid_access_log());
@@ -58,9 +58,9 @@ TEST_CASE("eapis_exit_handler_cpuid_emulation: passthrough logged")
     auto vmcs = setup_vmcs(mocks, reason::cpuid);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_regs_type m_regs = x64::cpuid::get(leaf, 0, subleaf, 0);
+    ehlr_eapis::cpuid_type leaf = 0;
+    ehlr_eapis::cpuid_type subleaf = 0;
+    ehlr_eapis::cpuid_regs_type m_regs = x64::cpuid::get(leaf, 0, subleaf, 0);
 
     CHECK_NOTHROW(ehlr->log_cpuid_access(true));
     CHECK_NOTHROW(ehlr->clear_cpuid_access_log());
@@ -84,9 +84,9 @@ TEST_CASE("eapis_exit_handler_cpuid_emulation: emulation not logged")
     auto vmcs = setup_vmcs(mocks, reason::cpuid);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_regs_type regs = { 1, 7, 3, 8 };
+    ehlr_eapis::cpuid_type leaf = 0;
+    ehlr_eapis::cpuid_type subleaf = 0;
+    ehlr_eapis::cpuid_regs_type regs = { 1, 7, 3, 8 };
     ehlr->m_cpuid_emu_map[0] = regs;
 
     CHECK_NOTHROW(ehlr->log_cpuid_access(false));
@@ -110,9 +110,9 @@ TEST_CASE("eapis_exit_handler_cpuid_emulation: emulation logged")
     auto vmcs = setup_vmcs(mocks, reason::cpuid);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_regs_type regs = { 1, 7, 3, 8 };
+    ehlr_eapis::cpuid_type leaf = 0;
+    ehlr_eapis::cpuid_type subleaf = 0;
+    ehlr_eapis::cpuid_regs_type regs = { 1, 7, 3, 8 };
     ehlr->m_cpuid_emu_map[0] = regs;
 
     CHECK_NOTHROW(ehlr->log_cpuid_access(true));

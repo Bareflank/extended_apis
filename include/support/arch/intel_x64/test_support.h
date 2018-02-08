@@ -37,7 +37,7 @@ namespace entry_ctls = ::intel_x64::vmcs::vm_entry_controls;
 namespace pin_ctls = ::intel_x64::vmcs::pin_based_vm_execution_controls;
 namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_controls;
 namespace proc_ctls2 = ::intel_x64::vmcs::secondary_processor_based_vm_execution_controls;
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 
 extern bool g_deny_all;
@@ -60,15 +60,15 @@ bool g_enable_vpid;
 bool g_enable_io_bitmaps;
 bool g_enable_msr_bitmap;
 
-exit_handler_eapis::exit_handler::port_type g_port;
-exit_handler_eapis::exit_handler::msr_type g_rdmsr;
-exit_handler_eapis::exit_handler::msr_type g_wrmsr;
+ehlr_eapis::port_type g_port;
+ehlr_eapis::msr_type g_rdmsr;
+ehlr_eapis::msr_type g_wrmsr;
 
 /// Exit handler unit test class
 ///
 /// Extends the eapi exit handler for unit testing
 ///
-class exit_handler_ut : public exit_handler_eapis::exit_handler
+class exit_handler_ut : public ehlr_eapis::exit_handler
 {
 public:
 

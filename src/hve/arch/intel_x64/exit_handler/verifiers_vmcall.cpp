@@ -23,10 +23,10 @@
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/verifiers.h"
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/vmcall_interface.h"
 
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 void
-exit_handler_eapis::exit_handler::register_json_vmcall__verifiers()
+ehlr_eapis::register_json_vmcall__verifiers()
 {
     m_json_commands["clear_denials"] = [&](const auto &, auto & ojson) {
         this->handle_vmcall__clear_denials();
@@ -47,7 +47,7 @@ std::string get_typename(const T &t)
 { return typeid(t).name(); }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__clear_denials()
+ehlr_eapis::handle_vmcall__clear_denials()
 {
     if (policy(clear_denials)->verify() != vmcall_verifier::allow) {
         policy(clear_denials)->deny_vmcall();
@@ -58,7 +58,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__clear_denials()
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__dump_policy(json &ojson)
+ehlr_eapis::handle_vmcall__dump_policy(json &ojson)
 {
     if (policy(dump_policy)->verify() != vmcall_verifier::allow) {
         policy(dump_policy)->deny_vmcall();
@@ -72,7 +72,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__dump_policy(json &ojson)
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__dump_denials(json &ojson)
+ehlr_eapis::handle_vmcall__dump_denials(json &ojson)
 {
     if (policy(dump_denials)->verify() != vmcall_verifier::allow) {
         policy(dump_denials)->deny_vmcall();

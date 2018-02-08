@@ -22,18 +22,18 @@
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
 #include <bfvmm/hve/arch/intel_x64/state_save.h>
 
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 void
-exit_handler_eapis::exit_handler::log_cpuid_access(bool enable)
+ehlr_eapis::log_cpuid_access(bool enable)
 { m_cpuid_access_log_enabled = enable; }
 
 void
-exit_handler_eapis::exit_handler::clear_cpuid_access_log()
+ehlr_eapis::clear_cpuid_access_log()
 { m_cpuid_access_log.clear(); }
 
 void
-exit_handler_eapis::exit_handler::handle_exit__cpuid()
+ehlr_eapis::handle_exit__cpuid()
 {
     cpuid_key_type leaf = m_state_save->rax;
     cpuid_key_type subleaf = m_state_save->rcx;

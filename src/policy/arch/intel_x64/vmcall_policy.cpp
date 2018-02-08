@@ -27,10 +27,10 @@
 #include <hve/arch/intel_x64/exit_handler/rdmsr_verifiers.h>
 #include <hve/arch/intel_x64/exit_handler/wrmsr_verifiers.h>
 
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 void
-exit_handler_eapis::exit_handler::init_policy()
+ehlr_eapis::init_policy()
 {
     m_verifiers[vp::index_clear_denials] = std::make_unique<default_verifier__clear_denials>();
     m_verifiers[vp::index_dump_policy] = std::make_unique<default_verifier__dump_policy>();

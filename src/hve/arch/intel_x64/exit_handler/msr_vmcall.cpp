@@ -27,10 +27,10 @@
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/verifiers.h"
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/msr_verifiers.h"
 
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 void
-exit_handler_eapis::exit_handler::register_json_vmcall__msr()
+ehlr_eapis::register_json_vmcall__msr()
 {
     m_json_commands["enable_msr_bitmap"] = [&](const auto & ijson, auto & ojson) {
         this->handle_vmcall__enable_msr_bitmap(ijson.at("enabled"));
@@ -39,7 +39,7 @@ exit_handler_eapis::exit_handler::register_json_vmcall__msr()
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__msr(
+ehlr_eapis::handle_vmcall__msr(
     vmcall_registers_t &regs)
 {
     switch (regs.r03) {
@@ -57,7 +57,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__msr(
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__enable_msr_bitmap(
+ehlr_eapis::handle_vmcall__enable_msr_bitmap(
     bool enabled)
 {
     if (policy(enable_msr_bitmap)->verify(enabled) != vmcall_verifier::allow) {

@@ -28,10 +28,10 @@
 
 namespace cr_access = ::intel_x64::vmcs::exit_qualification::control_register_access;
 namespace gpr = cr_access::general_purpose_register;
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 
-exit_handler_eapis::exit_handler::gpr_value_type
-exit_handler_eapis::exit_handler::get_gpr(gpr_index_type index)
+ehlr_eapis::gpr_value_type
+ehlr_eapis::get_gpr(gpr_index_type index)
 {
     switch (index) {
         case gpr::rax:
@@ -88,7 +88,7 @@ exit_handler_eapis::exit_handler::get_gpr(gpr_index_type index)
 
 
 void
-exit_handler_eapis::exit_handler::set_gpr(
+ehlr_eapis::set_gpr(
     gpr_index_type index, gpr_value_type val)
 {
     switch (index) {
@@ -161,7 +161,7 @@ exit_handler_eapis::exit_handler::set_gpr(
 }
 
 void
-exit_handler_eapis::exit_handler::handle_exit__ctl_reg_access()
+ehlr_eapis::handle_exit__ctl_reg_access()
 {
     auto type = cr_access::access_type::get();
     auto index = gpr::get();
@@ -232,26 +232,26 @@ exit_handler_eapis::exit_handler::handle_exit__ctl_reg_access()
     }
 }
 
-exit_handler_eapis::exit_handler::cr0_value_type
-exit_handler_eapis::exit_handler::cr0_ld_callback(cr0_value_type val)
+ehlr_eapis::cr0_value_type
+ehlr_eapis::cr0_ld_callback(cr0_value_type val)
 { return val; }
 
-exit_handler_eapis::exit_handler::cr3_value_type
-exit_handler_eapis::exit_handler::cr3_ld_callback(cr3_value_type val)
+ehlr_eapis::cr3_value_type
+ehlr_eapis::cr3_ld_callback(cr3_value_type val)
 { return val; }
 
-exit_handler_eapis::exit_handler::cr3_value_type
-exit_handler_eapis::exit_handler::cr3_st_callback(cr3_value_type val)
+ehlr_eapis::cr3_value_type
+ehlr_eapis::cr3_st_callback(cr3_value_type val)
 { return val; }
 
-exit_handler_eapis::exit_handler::cr4_value_type
-exit_handler_eapis::exit_handler::cr4_ld_callback(cr4_value_type val)
+ehlr_eapis::cr4_value_type
+ehlr_eapis::cr4_ld_callback(cr4_value_type val)
 { return val; }
 
-exit_handler_eapis::exit_handler::cr8_value_type
-exit_handler_eapis::exit_handler::cr8_ld_callback(cr8_value_type val)
+ehlr_eapis::cr8_value_type
+ehlr_eapis::cr8_ld_callback(cr8_value_type val)
 { return val; }
 
-exit_handler_eapis::exit_handler::cr8_value_type
-exit_handler_eapis::exit_handler::cr8_st_callback(cr8_value_type val)
+ehlr_eapis::cr8_value_type
+ehlr_eapis::cr8_st_callback(cr8_value_type val)
 { return val; }

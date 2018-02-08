@@ -31,7 +31,7 @@
 
 using eapis_vmcs = eapis::hve::intel_x64::vmcs::vmcs;
 using eapis_vmm_state = eapis::hve::intel_x64::vmcs::vmcs_state_vmm;
-using eapis_exit_handler = eapis::hve::intel_x64::exit_handler::exit_handler;
+using eapis_exit_handler = eapis::intel_x64::exit_handler::exit_handler;
 
 std::unique_ptr<bfvmm::vcpu>
 bfvmm::vcpu_factory::make_vcpu(vcpuid::type vcpuid, user_data *data)

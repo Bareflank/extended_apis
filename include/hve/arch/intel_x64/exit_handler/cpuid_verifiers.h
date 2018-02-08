@@ -25,7 +25,7 @@
 #include "../../../../hve/arch/intel_x64/exit_handler/exit_handler.h"
 #include "../../../../hve/arch/intel_x64/exit_handler/verifiers.h"
 
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 /// @cond
 
@@ -91,8 +91,8 @@ public:
     }
 
     virtual verifier_result verify(
-        exit_handler_eapis::exit_handler::cpuid_type leaf,
-        exit_handler_eapis::exit_handler::cpuid_type subleaf,
+        ehlr_eapis::cpuid_type leaf,
+        ehlr_eapis::cpuid_type subleaf,
         std::string eax, std::string ebx, std::string ecx, std::string edx)
     {
         bfignored(leaf);
@@ -114,8 +114,8 @@ public:
     default_verifier__reset_cpuid_leaf() = default;
     ~default_verifier__reset_cpuid_leaf() override = default;
 
-    virtual verifier_result verify(exit_handler_eapis::exit_handler::cpuid_type leaf,
-                                   exit_handler_eapis::exit_handler::cpuid_type subleaf)
+    virtual verifier_result verify(ehlr_eapis::cpuid_type leaf,
+                                   ehlr_eapis::cpuid_type subleaf)
     { bfignored(leaf); bfignored(subleaf); return default_verify(); }
 };
 

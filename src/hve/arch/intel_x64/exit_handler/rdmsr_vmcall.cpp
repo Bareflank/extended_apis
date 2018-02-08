@@ -27,10 +27,10 @@
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/verifiers.h"
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/rdmsr_verifiers.h"
 
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 void
-exit_handler_eapis::exit_handler::register_json_vmcall__rdmsr()
+ehlr_eapis::register_json_vmcall__rdmsr()
 {
     m_json_commands["trap_on_rdmsr_access"] = [&](const auto & ijson, auto & ojson) {
         this->handle_vmcall__trap_on_rdmsr_access(json_hex_or_dec<msr_type>(ijson, "msr"));
@@ -68,7 +68,7 @@ exit_handler_eapis::exit_handler::register_json_vmcall__rdmsr()
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__rdmsr(
+ehlr_eapis::handle_vmcall__rdmsr(
     vmcall_registers_t &regs)
 {
     switch (regs.r03) {
@@ -94,7 +94,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__rdmsr(
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__trap_on_rdmsr_access(
+ehlr_eapis::handle_vmcall__trap_on_rdmsr_access(
     msr_type msr)
 {
     if (policy(trap_on_rdmsr_access)->verify(msr) != vmcall_verifier::allow) {
@@ -106,7 +106,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__trap_on_rdmsr_access(
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__trap_on_all_rdmsr_accesses()
+ehlr_eapis::handle_vmcall__trap_on_all_rdmsr_accesses()
 {
     if (policy(trap_on_all_rdmsr_accesses)->verify() != vmcall_verifier::allow) {
         policy(trap_on_all_rdmsr_accesses)->deny_vmcall();
@@ -117,7 +117,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__trap_on_all_rdmsr_accesses()
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__pass_through_rdmsr_access(
+ehlr_eapis::handle_vmcall__pass_through_rdmsr_access(
     msr_type msr)
 {
     if (policy(pass_through_rdmsr_access)->verify(msr) != vmcall_verifier::allow) {
@@ -129,7 +129,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__pass_through_rdmsr_access(
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__pass_through_all_rdmsr_accesses()
+ehlr_eapis::handle_vmcall__pass_through_all_rdmsr_accesses()
 {
     if (policy(pass_through_all_rdmsr_accesses)->verify() != vmcall_verifier::allow) {
         policy(pass_through_all_rdmsr_accesses)->deny_vmcall();
@@ -140,7 +140,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__pass_through_all_rdmsr_accesses
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__whitelist_rdmsr_access(
+ehlr_eapis::handle_vmcall__whitelist_rdmsr_access(
     msr_list_type msrs)
 {
     if (policy(whitelist_rdmsr_access)->verify(msrs) != vmcall_verifier::allow) {
@@ -156,7 +156,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__whitelist_rdmsr_access(
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__blacklist_rdmsr_access(
+ehlr_eapis::handle_vmcall__blacklist_rdmsr_access(
     msr_list_type msrs)
 {
     if (policy(blacklist_rdmsr_access)->verify(msrs) != vmcall_verifier::allow) {
@@ -172,7 +172,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__blacklist_rdmsr_access(
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__log_rdmsr_access(
+ehlr_eapis::handle_vmcall__log_rdmsr_access(
     bool enabled)
 {
     if (policy(log_rdmsr_access)->verify(enabled) != vmcall_verifier::allow) {
@@ -184,7 +184,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__log_rdmsr_access(
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__clear_rdmsr_access_log()
+ehlr_eapis::handle_vmcall__clear_rdmsr_access_log()
 {
     if (policy(clear_rdmsr_access_log)->verify() != vmcall_verifier::allow) {
         policy(clear_rdmsr_access_log)->deny_vmcall();
@@ -195,7 +195,7 @@ exit_handler_eapis::exit_handler::handle_vmcall__clear_rdmsr_access_log()
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall__rdmsr_access_log(
+ehlr_eapis::handle_vmcall__rdmsr_access_log(
     json &ojson)
 {
     if (policy(rdmsr_access_log)->verify() != vmcall_verifier::allow) {

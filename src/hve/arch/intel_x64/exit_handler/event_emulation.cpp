@@ -31,10 +31,10 @@ namespace exit_irq_info = ::intel_x64::vmcs::vm_exit_interruption_information;
 namespace exit_irq_type = ::intel_x64::vmcs::vm_exit_interruption_information::interruption_type;
 namespace guest_irq_state = ::intel_x64::vmcs::guest_interruptibility_state;
 namespace guest_act_state = ::intel_x64::vmcs::guest_activity_state;
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 static void
-set_vm_entry_interruption_information(const exit_handler_eapis::exit_handler::event &event)
+set_vm_entry_interruption_information(const ehlr_eapis::event &event)
 {
     auto eii = 0ULL;
     auto deliver_error_code = false;
@@ -91,7 +91,7 @@ set_vm_entry_interruption_information(const exit_handler_eapis::exit_handler::ev
 }
 
 void
-exit_handler_eapis::exit_handler::queue_event(
+ehlr_eapis::queue_event(
     vector_type vector, event_type type, instr_len_type len, error_code_type error_code)
 {
     m_event_queue.push_back({
@@ -105,7 +105,7 @@ exit_handler_eapis::exit_handler::queue_event(
 }
 
 void
-exit_handler_eapis::exit_handler::inject_event(
+ehlr_eapis::inject_event(
     vector_type vector, event_type type, instr_len_type len, error_code_type error_code)
 {
     if (guest_irq_state::blocking_by_sti::is_enabled()) {
@@ -144,7 +144,7 @@ exit_handler_eapis::exit_handler::inject_event(
 }
 
 void
-exit_handler_eapis::exit_handler::handle_exit__external_interrupt()
+ehlr_eapis::handle_exit__external_interrupt()
 {
     auto eii = exit_irq_info::get();
 
@@ -169,7 +169,7 @@ exit_handler_eapis::exit_handler::handle_exit__external_interrupt()
 }
 
 void
-exit_handler_eapis::exit_handler::handle_exit__interrupt_window()
+ehlr_eapis::handle_exit__interrupt_window()
 {
     if (m_event_queue.empty()) {
         bfalert_info(0, "event queue empty: interrupt window ignored");
@@ -184,7 +184,7 @@ exit_handler_eapis::exit_handler::handle_exit__interrupt_window()
 }
 
 void
-exit_handler_eapis::exit_handler::enable_vmm_exceptions() noexcept
+ehlr_eapis::enable_vmm_exceptions() noexcept
 {
     m_tpr_shadow = ::intel_x64::cr8::get();
     ::intel_x64::cr8::set(0x0FU);
@@ -193,7 +193,7 @@ exit_handler_eapis::exit_handler::enable_vmm_exceptions() noexcept
 }
 
 void
-exit_handler_eapis::exit_handler::disable_vmm_exceptions() noexcept
+ehlr_eapis::disable_vmm_exceptions() noexcept
 {
     ::x64::rflags::interrupt_enable_flag::disable();
     ::intel_x64::cr8::set(m_tpr_shadow);

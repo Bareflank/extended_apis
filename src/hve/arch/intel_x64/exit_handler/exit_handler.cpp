@@ -25,10 +25,10 @@
 #include <intrinsics.h>
 
 namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using exit_handler = eapis::intel_x64::exit_handler;
 
-exit_handler_eapis::exit_handler::exit_handler() :
-    m_monitor_trap_callback(&exit_handler_eapis::exit_handler::unhandled_monitor_trap_callback),
+exit_handler::exit_handler() :
+    m_monitor_trap_callback(&exit_handler::unhandled_monitor_trap_callback),
     m_io_access_log_enabled(false),
     m_vmcs_eapis(nullptr)
 {
@@ -44,20 +44,20 @@ exit_handler_eapis::exit_handler::exit_handler() :
 }
 
 void
-exit_handler_eapis::exit_handler::resume()
+exit_handler::resume()
 {
     m_vmcs_eapis->resume();
 }
 
 void
-exit_handler_eapis::exit_handler::advance_and_resume()
+exit_handler::advance_and_resume()
 {
     this->advance_rip();
     m_vmcs_eapis->resume();
 }
 
 void
-exit_handler_eapis::exit_handler::handle_exit(::intel_x64::vmcs::value_type reason)
+exit_handler::handle_exit(::intel_x64::vmcs::value_type reason)
 {
     switch (reason) {
         case reason::monitor_trap_flag:
@@ -91,7 +91,7 @@ exit_handler_eapis::exit_handler::handle_exit(::intel_x64::vmcs::value_type reas
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall_registers(vmcall_registers_t &regs)
+exit_handler::handle_vmcall_registers(vmcall_registers_t &regs)
 {
     switch (regs.r02) {
         case eapis_cat__io_instruction:
@@ -120,12 +120,12 @@ exit_handler_eapis::exit_handler::handle_vmcall_registers(vmcall_registers_t &re
 }
 
 void
-exit_handler_eapis::exit_handler::handle_vmcall_data_string_json(
+exit_handler::handle_vmcall_data_string_json(
     const json &ijson, json &ojson)
 {
     m_json_commands.at(ijson.at("command"))(ijson, ojson);
 }
 
 void
-exit_handler_eapis::exit_handler::json_success(json &ojson)
+exit_handler::json_success(json &ojson)
 { ojson = {"success"}; }

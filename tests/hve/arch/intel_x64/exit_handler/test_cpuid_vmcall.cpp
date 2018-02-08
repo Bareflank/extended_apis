@@ -23,7 +23,7 @@
 
 #include "../../../../../include/support/arch/intel_x64/test_support.h"
 
-namespace exit_handler_eapis = eapis::hve::intel_x64::exit_handler;
+using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 
 TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid missing args")
@@ -32,8 +32,8 @@ TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid missing args")
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
+    ehlr_eapis::cpuid_type leaf = 0;
+    ehlr_eapis::cpuid_type subleaf = 0;
     std::string valid = "00000000000000000000000000001000";
 
     json ijson1 = {{"command", "emulate_cpuid"}};
@@ -52,8 +52,8 @@ TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid invalid args")
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
+    ehlr_eapis::cpuid_type leaf = 0;
+    ehlr_eapis::cpuid_type subleaf = 0;
     std::string valid = "00000000000000000000000000001000";
 
     json ijson1 = {{"command", "emulate_cpuid"}, {"leaf", "bad leaf"}, {"subleaf", "bad subleaf"},
@@ -78,8 +78,8 @@ TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid invalid string")
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
+    ehlr_eapis::cpuid_type leaf = 0;
+    ehlr_eapis::cpuid_type subleaf = 0;
     std::string long_string = "0000000000000000000000000000001000";
     std::string short_string =                        "0000001000";
     std::string unknown_chars = "00000000000000000000000000001jwz";
@@ -135,8 +135,8 @@ TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid allowed")
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
+    ehlr_eapis::cpuid_type leaf = 0;
+    ehlr_eapis::cpuid_type subleaf = 0;
     std::string valid =   "00000000000000000000000000001000";
 
     json ijson = {{"command", "emulate_cpuid"}, {"leaf", leaf}, {"subleaf", subleaf},
@@ -165,8 +165,8 @@ TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid logged")
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
+    ehlr_eapis::cpuid_type leaf = 0;
+    ehlr_eapis::cpuid_type subleaf = 0;
     std::string valid =   "00000000000000000000000000001000";
 
     json ijson = {{"command", "emulate_cpuid"}, {"leaf", leaf}, {"subleaf", subleaf},
@@ -196,8 +196,8 @@ TEST_CASE("eapis_exit_handler_cpuid_vmcall: json emulate cpuid denied")
     auto vmcs = setup_vmcs(mocks, 0x0);
     auto ehlr = setup_ehlr(vmcs);
 
-    exit_handler_eapis::exit_handler::cpuid_type leaf = 0;
-    exit_handler_eapis::exit_handler::cpuid_type subleaf = 0;
+    ehlr_eapis::cpuid_type leaf = 0;
+    ehlr_eapis::cpuid_type subleaf = 0;
     std::string valid =   "00000000000000000000000000001000";
 
     json ijson = {{"command", "emulate_cpuid"}, {"leaf", leaf}, {"subleaf", subleaf},

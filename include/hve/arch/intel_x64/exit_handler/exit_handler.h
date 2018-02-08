@@ -61,11 +61,7 @@ namespace vmcs_eapis = eapis::hve::intel_x64::vmcs;
 
 namespace eapis
 {
-namespace hve
-{
 namespace intel_x64
-{
-namespace exit_handler
 {
 
 // -----------------------------------------------------------------------------
@@ -647,8 +643,6 @@ public:
     /// @endcond
 };
 
-}
-}
 }
 }
 
