@@ -35,7 +35,6 @@ list(APPEND SOURCES
     arch/intel_x64/exit_handler/vpid_vmcall.cpp
     arch/intel_x64/exit_handler/wrmsr_emulation.cpp
     arch/intel_x64/exit_handler/wrmsr_vmcall.cpp
-    arch/intel_x64/vmcs/apic.cpp
     arch/intel_x64/vmcs/ept.cpp
     arch/intel_x64/vmcs/ept_entry.cpp
     arch/intel_x64/vmcs/root_ept.cpp

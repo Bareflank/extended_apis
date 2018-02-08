@@ -22,7 +22,7 @@
 //#include <bfdebug.h>
 //#include <intrinsics.h>
 //
-//#include "../../../../../include/hve/arch/intel_x64/vmcs/apic.h"
+//#include "../../../../../include/vic/arch/intel_x64/vapic/vpic.h"
 //
 //namespace intel = eapis::intel_x64;
 //
