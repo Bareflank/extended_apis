@@ -24,20 +24,8 @@
 using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 void
-ehlr_eapis::log_rdmsr_access(bool enable)
-{ m_rdmsr_access_log_enabled = enable; }
-
-void
-ehlr_eapis::clear_rdmsr_access_log()
-{ m_rdmsr_access_log.clear(); }
-
-void
 ehlr_eapis::handle_exit__rdmsr()
 {
-    if (m_rdmsr_access_log_enabled) {
-        m_rdmsr_access_log[static_cast<msr_type>(m_state_save->rcx)]++;
-    }
-
     this->handle_rdmsr();
     this->resume();
 }

@@ -26,16 +26,6 @@ list(APPEND ARGN
     DEFINES STATIC_INTRINSICS
 )
 
-do_test(test_cpuid_emulation
-    SOURCES arch/intel_x64/exit_handler/test_cpuid_emulation.cpp
-    ${ARGN}
-)
-
-do_test(test_cpuid_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_cpuid_vmcall.cpp
-    ${ARGN}
-)
-
 do_test(test_cr_emulation
     SOURCES arch/intel_x64/exit_handler/test_cr_emulation.cpp
     ${ARGN}
@@ -46,63 +36,8 @@ do_test(test_exit_handler
     ${ARGN}
 )
 
-do_test(test_io_instruction_emulation
-    SOURCES arch/intel_x64/exit_handler/test_io_instruction_emulation.cpp
-    ${ARGN}
-)
-
-do_test(test_io_instruction_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_io_instruction_vmcall.cpp
-    ${ARGN}
-)
-
 do_test(test_monitor_trap_emulation
     SOURCES arch/intel_x64/exit_handler/test_monitor_trap_emulation.cpp
-    ${ARGN}
-)
-
-do_test(test_msr_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_msr_vmcall.cpp
-    ${ARGN}
-)
-
-do_test(test_policy
-    SOURCES arch/intel_x64/exit_handler/test_policy.cpp
-    ${ARGN}
-)
-
-do_test(test_rdmsr_emulation
-    SOURCES arch/intel_x64/exit_handler/test_rdmsr_emulation.cpp
-    ${ARGN}
-)
-
-do_test(test_rdmsr_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_rdmsr_vmcall.cpp
-    ${ARGN}
-)
-
-do_test(test_verifiers
-    SOURCES arch/intel_x64/exit_handler/test_verifiers.cpp
-    ${ARGN}
-)
-
-do_test(test_verifiers_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_verifiers_vmcall.cpp
-    ${ARGN}
-)
-
-do_test(test_vpid_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_vpid_vmcall.cpp
-    ${ARGN}
-)
-
-do_test(test_wrmsr_emulation
-    SOURCES arch/intel_x64/exit_handler/test_wrmsr_emulation.cpp
-    ${ARGN}
-)
-
-do_test(test_wrmsr_vmcall
-    SOURCES arch/intel_x64/exit_handler/test_wrmsr_vmcall.cpp
     ${ARGN}
 )
 

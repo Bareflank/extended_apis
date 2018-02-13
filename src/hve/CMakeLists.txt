@@ -22,23 +22,13 @@ list(APPEND SOURCES
     arch/intel_x64/ept/root_ept.cpp
 
     arch/intel_x64/exit_handler/cpuid_emulation.cpp
-    arch/intel_x64/exit_handler/cpuid_vmcall.cpp
     arch/intel_x64/exit_handler/cr_emulation.cpp
     arch/intel_x64/exit_handler/event_emulation.cpp
-    arch/intel_x64/exit_handler/event_vmcall.cpp
     arch/intel_x64/exit_handler/exit_handler.cpp
     arch/intel_x64/exit_handler/io_instruction_emulation.cpp
-    arch/intel_x64/exit_handler/io_instruction_vmcall.cpp
     arch/intel_x64/exit_handler/monitor_trap_emulation.cpp
-    arch/intel_x64/exit_handler/msr_vmcall.cpp
-    arch/intel_x64/exit_handler/policy.cpp
     arch/intel_x64/exit_handler/rdmsr_emulation.cpp
-    arch/intel_x64/exit_handler/rdmsr_vmcall.cpp
-    arch/intel_x64/exit_handler/verifiers.cpp
-    arch/intel_x64/exit_handler/verifiers_vmcall.cpp
-    arch/intel_x64/exit_handler/vpid_vmcall.cpp
     arch/intel_x64/exit_handler/wrmsr_emulation.cpp
-    arch/intel_x64/exit_handler/wrmsr_vmcall.cpp
 
     arch/intel_x64/vmcs/vmcs.cpp
     arch/intel_x64/vmcs/vmcs_cr_access_hooks.cpp

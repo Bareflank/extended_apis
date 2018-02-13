@@ -25,7 +25,6 @@ init_project(
 )
 
 add_subdirectory(hve)
-#add_subdirectory(policy)
 #add_subdirectory(vcpu)
 
 # -----------------------------------------------------------------------------

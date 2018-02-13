@@ -29,7 +29,6 @@
 
 #include "../../../hve/arch/intel_x64/vmcs/vmcs.h"
 #include "../../../hve/arch/intel_x64/exit_handler/exit_handler.h"
-#include "../../../hve/arch/intel_x64/exit_handler/vmcall_interface.h"
 
 namespace msrs = ::intel_x64::msrs;
 namespace exit_ctls = ::intel_x64::vmcs::vm_exit_controls;
@@ -41,7 +40,6 @@ using ehlr_eapis = eapis::intel_x64::exit_handler;
 using vmcs_eapis = eapis::intel_x64::vmcs;
 
 extern bool g_deny_all;
-extern bool g_log_denials;
 
 std::map<msrs::field_type, msrs::value_type> g_msrs;
 std::map<::intel_x64::vmcs::field_type, ::intel_x64::vmcs::value_type> g_vmcs;

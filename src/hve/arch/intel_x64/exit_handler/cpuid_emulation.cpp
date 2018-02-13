@@ -25,23 +25,11 @@
 using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 void
-ehlr_eapis::log_cpuid_access(bool enable)
-{ m_cpuid_access_log_enabled = enable; }
-
-void
-ehlr_eapis::clear_cpuid_access_log()
-{ m_cpuid_access_log.clear(); }
-
-void
 ehlr_eapis::handle_exit__cpuid()
 {
     cpuid_key_type leaf = m_state_save->rax;
     cpuid_key_type subleaf = m_state_save->rcx;
     cpuid_key_type key = create_key(leaf, subleaf);
-
-    if (m_cpuid_access_log_enabled) {
-        m_cpuid_access_log[key]++;
-    }
 
     auto i = m_cpuid_emu_map.find(key);
     if (i != m_cpuid_emu_map.end()) {

@@ -20,7 +20,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
-#include "../../../../../include/hve/arch/intel_x64/exit_handler/vmcall_interface.h"
 
 #include <intrinsics.h>
 
@@ -29,18 +28,8 @@ using exit_handler = eapis::intel_x64::exit_handler;
 
 exit_handler::exit_handler() :
     m_monitor_trap_callback(&exit_handler::unhandled_monitor_trap_callback),
-    m_io_access_log_enabled(false),
     m_vmcs_eapis(nullptr)
 {
-    init_policy();
-
-    register_json_vmcall__verifiers();
-    register_json_vmcall__io_instruction();
-    register_json_vmcall__vpid();
-    register_json_vmcall__msr();
-    register_json_vmcall__rdmsr();
-    register_json_vmcall__wrmsr();
-    register_json_vmcall__cpuid();
 }
 
 void
@@ -89,43 +78,3 @@ exit_handler::handle_exit(::intel_x64::vmcs::value_type reason)
             break;
     }
 }
-
-void
-exit_handler::handle_vmcall_registers(vmcall_registers_t &regs)
-{
-    switch (regs.r02) {
-        case eapis_cat__io_instruction:
-            handle_vmcall__io_instruction(regs);
-            break;
-
-        case eapis_cat__vpid:
-            handle_vmcall__vpid(regs);
-            break;
-
-        case eapis_cat__msr:
-            handle_vmcall__msr(regs);
-            break;
-
-        case eapis_cat__rdmsr:
-            handle_vmcall__rdmsr(regs);
-            break;
-
-        case eapis_cat__wrmsr:
-            handle_vmcall__wrmsr(regs);
-            break;
-
-        default:
-            throw std::runtime_error("unknown vmcall category");
-    }
-}
-
-void
-exit_handler::handle_vmcall_data_string_json(
-    const json &ijson, json &ojson)
-{
-    m_json_commands.at(ijson.at("command"))(ijson, ojson);
-}
-
-void
-exit_handler::json_success(json &ojson)
-{ ojson = {"success"}; }

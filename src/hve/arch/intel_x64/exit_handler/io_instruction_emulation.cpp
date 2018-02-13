@@ -28,14 +28,6 @@ namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_co
 using ehlr_eapis = eapis::intel_x64::exit_handler;
 
 void
-ehlr_eapis::log_io_access(bool enable)
-{ m_io_access_log_enabled = enable; }
-
-void
-ehlr_eapis::clear_io_access_log()
-{ m_io_access_log.clear(); }
-
-void
 ehlr_eapis::trap_on_io_access_callback()
 {
     proc_ctls::use_io_bitmaps::enable();
@@ -46,10 +38,6 @@ void
 ehlr_eapis::handle_exit__io_instruction()
 {
     register_monitor_trap(&ehlr_eapis::trap_on_io_access_callback);
-
-    if (m_io_access_log_enabled) {
-        m_io_access_log[::intel_x64::vmcs::exit_qualification::io_instruction::port_number::get()]++;
-    }
 
     proc_ctls::use_io_bitmaps::disable();
     this->resume();

@@ -51,28 +51,4 @@ TEST_CASE("eapis_exit_handler: exit invalid")
     CHECK_NOTHROW(ehlr->dispatch());
 }
 
-TEST_CASE("eapis_exit_handler: vmcall registers unknown")
-{
-    MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, 0x0);
-    auto ehlr = setup_ehlr(vmcs);
-
-    vmcall_registers_t regs = {};
-    regs.r02 = 0xDEADBEEF;
-
-    CHECK_THROWS(ehlr->handle_vmcall_registers(regs));
-}
-
-TEST_CASE("eapis_exit_handler: vmcall json unknown")
-{
-    MockRepository mocks;
-    auto vmcs = setup_vmcs(mocks, 0x0);
-    auto ehlr = setup_ehlr(vmcs);
-
-    json ijson = {{"command", "unknown_api"}};
-    json ojson = {};
-
-    CHECK_THROWS(ehlr->handle_vmcall_data_string_json(ijson, ojson));
-}
-
 #endif
