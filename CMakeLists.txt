@@ -30,10 +30,10 @@ if(ENABLE_BUILD_VMM)
     )
 endif()
 
-#if(ENABLE_BUILD_TEST OR ENABLE_TESTS_ONLY)
-#    add_subproject(
-#        eapis test
-#        DEPENDS bfvmm bfintrinsics
-#        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
-#    )
-#endif()
+if(ENABLE_BUILD_TEST OR ENABLE_TESTS_ONLY)
+    add_subproject(
+        eapis test
+        DEPENDS bfvmm bfintrinsics
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
+    )
+endif()
