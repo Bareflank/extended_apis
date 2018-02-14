@@ -31,7 +31,7 @@ void
 ehlr_eapis::trap_on_io_access_callback()
 {
     proc_ctls::use_io_bitmaps::enable();
-    this->resume();
+    m_vmcs_eapis->resume();
 }
 
 void
@@ -40,5 +40,5 @@ ehlr_eapis::handle_exit__io_instruction()
     register_monitor_trap(&ehlr_eapis::trap_on_io_access_callback);
 
     proc_ctls::use_io_bitmaps::disable();
-    this->resume();
+    m_vmcs_eapis->resume();
 }

@@ -22,6 +22,8 @@
 #ifndef EXIT_HANDLER_INTEL_X64_EAPIS_H
 #define EXIT_HANDLER_INTEL_X64_EAPIS_H
 
+#include <bfgsl.h>
+
 #include <deque>
 #include <list>
 #include <vector>
@@ -34,6 +36,7 @@
 
 #include <bfvmm/memory_manager/object_allocator.h>
 #include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
+#include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
 
 // -----------------------------------------------------------------------------
 // Exports
@@ -134,7 +137,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    exit_handler();
+    exit_handler(gsl::not_null<eapis::intel_x64::vmcs *> vmcs);
 
     /// Destructor
     ///
@@ -230,8 +233,8 @@ protected:
 
     /// @cond
 
-    void resume() override;
-    void advance_and_resume() override;
+    void resume();
+    void advance_and_resume();
 
     /// @endcond
 
@@ -250,7 +253,7 @@ protected:
 
     /// @cond
 
-    void handle_exit(::intel_x64::vmcs::value_type reason) override;
+    void handle_exit(::intel_x64::vmcs::value_type reason);
 
     virtual void handle_exit__monitor_trap_flag();
     virtual void handle_exit__io_instruction();
@@ -351,6 +354,8 @@ private:
     monitor_trap_callback m_monitor_trap_callback{
         &exit_handler::unhandled_monitor_trap_callback};
 
+    void trap_on_io_access_callback();
+
 #ifndef ENABLE_BUILD_TEST
 private:
 #endif
@@ -372,12 +377,12 @@ public:
 
     /// @cond
 
-    void
-    set_vmcs(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs) override
-    {
-        m_vmcs = vmcs;
-        m_vmcs_eapis = dynamic_cast<vmcs_type *>(m_vmcs);
-    }
+//    void
+//    set_vmcs(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+//    {
+//        m_vmcs = vmcs;
+//        m_vmcs_eapis = dynamic_cast<vmcs_type *>(m_vmcs);
+//    }
 
     /// @endcond
 

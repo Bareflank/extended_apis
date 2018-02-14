@@ -26,6 +26,6 @@ using ehlr_eapis = eapis::intel_x64::exit_handler;
 void
 ehlr_eapis::handle_exit__rdmsr()
 {
-    this->handle_rdmsr();
-    this->resume();
+//    this->handle_rdmsr();
+    m_vmcs_eapis->resume();
 }

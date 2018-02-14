@@ -35,52 +35,52 @@ ehlr_eapis::get_gpr(gpr_index_type index)
 {
     switch (index) {
         case gpr::rax:
-            return m_state_save->rax;
+            return m_vmcs_eapis->save_state()->rax;
 
         case gpr::rbx:
-            return m_state_save->rbx;
+            return m_vmcs_eapis->save_state()->rbx;
 
         case gpr::rcx:
-            return m_state_save->rcx;
+            return m_vmcs_eapis->save_state()->rcx;
 
         case gpr::rdx:
-            return m_state_save->rdx;
+            return m_vmcs_eapis->save_state()->rdx;
 
         case gpr::rsp:
-            return m_state_save->rsp;
+            return m_vmcs_eapis->save_state()->rsp;
 
         case gpr::rbp:
-            return m_state_save->rbp;
+            return m_vmcs_eapis->save_state()->rbp;
 
         case gpr::rsi:
-            return m_state_save->rsi;
+            return m_vmcs_eapis->save_state()->rsi;
 
         case gpr::rdi:
-            return m_state_save->rdi;
+            return m_vmcs_eapis->save_state()->rdi;
 
         case gpr::r8:
-            return m_state_save->r08;
+            return m_vmcs_eapis->save_state()->r08;
 
         case gpr::r9:
-            return m_state_save->r09;
+            return m_vmcs_eapis->save_state()->r09;
 
         case gpr::r10:
-            return m_state_save->r10;
+            return m_vmcs_eapis->save_state()->r10;
 
         case gpr::r11:
-            return m_state_save->r11;
+            return m_vmcs_eapis->save_state()->r11;
 
         case gpr::r12:
-            return m_state_save->r12;
+            return m_vmcs_eapis->save_state()->r12;
 
         case gpr::r13:
-            return m_state_save->r13;
+            return m_vmcs_eapis->save_state()->r13;
 
         case gpr::r14:
-            return m_state_save->r14;
+            return m_vmcs_eapis->save_state()->r14;
 
         case gpr::r15:
-            return m_state_save->r15;
+            return m_vmcs_eapis->save_state()->r15;
     }
 
     throw std::runtime_error("unknown index");
@@ -93,67 +93,67 @@ ehlr_eapis::set_gpr(
 {
     switch (index) {
         case gpr::rax:
-            m_state_save->rax = val;
+            m_vmcs_eapis->save_state()->rax = val;
             return;
 
         case gpr::rbx:
-            m_state_save->rbx = val;
+            m_vmcs_eapis->save_state()->rbx = val;
             return;
 
         case gpr::rcx:
-            m_state_save->rcx = val;
+            m_vmcs_eapis->save_state()->rcx = val;
             return;
 
         case gpr::rdx:
-            m_state_save->rdx = val;
+            m_vmcs_eapis->save_state()->rdx = val;
             return;
 
         case gpr::rsp:
-            m_state_save->rsp = val;
+            m_vmcs_eapis->save_state()->rsp = val;
             return;
 
         case gpr::rbp:
-            m_state_save->rbp = val;
+            m_vmcs_eapis->save_state()->rbp = val;
             return;
 
         case gpr::rsi:
-            m_state_save->rsi = val;
+            m_vmcs_eapis->save_state()->rsi = val;
             return;
 
         case gpr::rdi:
-            m_state_save->rdi = val;
+            m_vmcs_eapis->save_state()->rdi = val;
             return;
 
         case gpr::r8:
-            m_state_save->r08 = val;
+            m_vmcs_eapis->save_state()->r08 = val;
             return;
 
         case gpr::r9:
-            m_state_save->r09 = val;
+            m_vmcs_eapis->save_state()->r09 = val;
             return;
 
         case gpr::r10:
-            m_state_save->r10 = val;
+            m_vmcs_eapis->save_state()->r10 = val;
             return;
 
         case gpr::r11:
-            m_state_save->r11 = val;
+            m_vmcs_eapis->save_state()->r11 = val;
             return;
 
         case gpr::r12:
-            m_state_save->r12 = val;
+            m_vmcs_eapis->save_state()->r12 = val;
             return;
 
         case gpr::r13:
-            m_state_save->r13 = val;
+            m_vmcs_eapis->save_state()->r13 = val;
             return;
 
         case gpr::r14:
-            m_state_save->r14 = val;
+            m_vmcs_eapis->save_state()->r14 = val;
             return;
 
         case gpr::r15:
-            m_state_save->r15 = val;
+            m_vmcs_eapis->save_state()->r15 = val;
             return;
     }
 
@@ -171,7 +171,7 @@ ehlr_eapis::handle_exit__ctl_reg_access()
             auto ret = this->cr0_ld_callback(this->get_gpr(index));
             ::intel_x64::vmcs::guest_cr0::set(ret);
 
-            this->advance_and_resume();
+//            this->advance_and_resume();
             return;
         }
 
@@ -181,7 +181,7 @@ ehlr_eapis::handle_exit__ctl_reg_access()
                     auto ret = this->cr3_ld_callback(this->get_gpr(index));
                     ::intel_x64::vmcs::guest_cr3::set(ret);
 
-                    this->advance_and_resume();
+//                    this->advance_and_resume();
                     return;
                 }
 
@@ -189,7 +189,7 @@ ehlr_eapis::handle_exit__ctl_reg_access()
                     auto ret = this->cr3_st_callback(::intel_x64::vmcs::guest_cr3::get());
                     this->set_gpr(index, ret);
 
-                    this->advance_and_resume();
+//                    this->advance_and_resume();
                     return;
                 }
             }
@@ -200,7 +200,7 @@ ehlr_eapis::handle_exit__ctl_reg_access()
             auto ret = this->cr4_ld_callback(this->get_gpr(index));
             ::intel_x64::vmcs::guest_cr4::set(ret);
 
-            this->advance_and_resume();
+//            this->advance_and_resume();
             return;
         }
 
@@ -210,7 +210,7 @@ ehlr_eapis::handle_exit__ctl_reg_access()
                     auto ret = this->cr8_ld_callback(this->get_gpr(index));
                     ::intel_x64::cr8::set(ret);
 
-                    this->advance_and_resume();
+//                    this->advance_and_resume();
                     return;
                 }
 
@@ -218,7 +218,7 @@ ehlr_eapis::handle_exit__ctl_reg_access()
                     auto ret = this->cr8_st_callback(::intel_x64::cr8::get());
                     this->set_gpr(index, ret);
 
-                    this->advance_and_resume();
+//                    this->advance_and_resume();
                     return;
                 }
             }

@@ -19,6 +19,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <bfdebug.h>
 #include <bftypes.h>
 #include <bfdelegate.h>
 
@@ -26,27 +27,75 @@
 #include <bfvmm/vcpu/arch/intel_x64/vcpu.h>
 
 #include "../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
-#include "../../../../include/hve/arch/intel_x64/vmcs/vmcs_vmm_state.h"
 #include "../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
 
-using eapis_vmcs = eapis::intel_x64::vmcs::vmcs;
-using eapis_vmm_state = eapis::intel_x64::vmcs::vmcs_state_vmm;
-using eapis_exit_handler = eapis::intel_x64::exit_handler::exit_handler;
-
-std::unique_ptr<bfvmm::vcpu>
-bfvmm::vcpu_factory::make_vcpu(vcpuid::type vcpuid, user_data *data)
+namespace eapis
 {
-    bfignored(data);
+namespace intel_x64
+{
 
-    auto vmcs = std::make_unique<eapis_vmcs>();
-    auto vmm_state = std::make_unique<eapis_vmm_state>();
-    auto exit_handler = std::make_unique<eapis_exit_handler>();
+class vcpu : public bfvmm::vcpu
+{
+public:
+    using run_dlg_t = bfvmm::vcpu::run_delegate_t;
 
-    return std::make_unique<bfvmm::intel_x64::vcpu>(
-               vcpuid,
-               nullptr,                         // default vmxon
-               std::move(vmcs),
-               std::move(exit_handler),
-               std::move(vmm_state),
-               nullptr);                        // default guest_state
+    vcpu(vcpuid::type id) : bfvmm::vcpu{id}
+    {
+        if (this->is_host_vm_vcpu()) {
+            m_vmx = std::make_unique<bfvmm::intel_x64::vmx>();
+        }
+
+        m_vmcs = std::make_unique<eapis::intel_x64::vmcs>(id);
+        m_exit_hdlr = std::make_unique<eapis::intel_x64::exit_handler>(m_vmcs.get());
+
+        this->add_run_delegate(
+            run_dlg_t::create<eapis::intel_x64::vcpu, &eapis::intel_x64::vcpu::run>(this)
+        );
+    }
+
+    ~vcpu() override
+    {
+        if (this->is_host_vm_vcpu()) {
+            m_vmx.reset();
+        }
+
+        m_vmcs.reset();
+        m_exit_hdlr.reset();
+    }
+
+    void run(bfobject *obj)
+    {
+        bfignored(obj);
+
+        m_vmcs->load();
+        m_vmcs->launch();
+    }
+
+    auto vmcs() const noexcept
+    { return m_vmcs.get(); }
+
+    auto exit_hdlr() const noexcept
+    { return m_exit_hdlr.get(); }
+
+private:
+
+    std::unique_ptr<bfvmm::intel_x64::vmx> m_vmx;
+    std::unique_ptr<eapis::intel_x64::vmcs> m_vmcs;
+    std::unique_ptr<eapis::intel_x64::exit_handler> m_exit_hdlr;
+};
+
+} // namespace intel_x64
+} // namespace eapis
+
+namespace bfvmm
+{
+
+WEAK_SYM std::unique_ptr<vcpu>
+vcpu_factory::make_vcpu(vcpuid::type vcpuid, bfobject *obj)
+{
+    bfignored(obj);
+    bfdebug_info(0, "eapis: make_vcpu");
+    return std::make_unique<eapis::intel_x64::vcpu>(vcpuid);
+}
+
 }

@@ -150,12 +150,12 @@ ehlr_eapis::handle_exit__external_interrupt()
 
     if (exit_irq_info::valid_bit::is_disabled(eii)) {
         bfalert_info(0, "invalid interruption exit information. interrupt ignored");
-        this->resume();
+        m_vmcs_eapis->resume();
     }
 
     if (exit_irq_info::nmi_unblocking_due_to_iret::is_enabled(eii)) {
         bfalert_info(0, "nmi_unblocking_due_to_iret is unsupported. interrupt ignored");
-        this->resume();
+        m_vmcs_eapis->resume();
     }
 
     inject_event(
@@ -165,7 +165,7 @@ ehlr_eapis::handle_exit__external_interrupt()
         ::intel_x64::vmcs::vm_exit_interruption_error_code::get()
     );
 
-    this->resume();
+    m_vmcs_eapis->resume();
 }
 
 void
@@ -173,14 +173,14 @@ ehlr_eapis::handle_exit__interrupt_window()
 {
     if (m_event_queue.empty()) {
         bfalert_info(0, "event queue empty: interrupt window ignored");
-        this->resume();
+        m_vmcs_eapis->resume();
     }
 
     set_vm_entry_interruption_information(m_event_queue.front());
     m_event_queue.pop_front();
 
     proc_ctls::interrupt_window_exiting::set(!m_event_queue.empty());
-    this->resume();
+    m_vmcs_eapis->resume();
 }
 
 void

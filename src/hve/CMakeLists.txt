@@ -37,7 +37,6 @@ list(APPEND SOURCES
     arch/intel_x64/vmcs/vmcs_io.cpp
     arch/intel_x64/vmcs/vmcs_isr.cpp
     arch/intel_x64/vmcs/vmcs_msr.cpp
-    arch/intel_x64/vmcs/vmcs_vmm_state.cpp
     arch/intel_x64/vmcs/vmcs_vpid.cpp
 )
 

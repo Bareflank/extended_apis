@@ -23,17 +23,17 @@ if(ENABLE_BUILD_VMM)
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src
     )
 
-    add_subproject(
-        eapis_main vmm
+    vmm_extension(
+        eapis_main
         DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/main
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/vcpu
     )
 endif()
 
-if(ENABLE_BUILD_TEST OR ENABLE_TESTS_ONLY)
-    add_subproject(
-        eapis test
-        DEPENDS bfvmm bfintrinsics
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
-    )
-endif()
+#if(ENABLE_BUILD_TEST OR ENABLE_TESTS_ONLY)
+#    add_subproject(
+#        eapis test
+#        DEPENDS bfvmm bfintrinsics
+#        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
+#    )
+#endif()

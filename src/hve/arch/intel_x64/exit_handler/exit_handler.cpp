@@ -19,31 +19,38 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
-
+#include <bfdebug.h>
 #include <intrinsics.h>
 
+#include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
+
+namespace eapis
+{
+namespace intel_x64
+{
+
 namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
-using exit_handler = eapis::intel_x64::exit_handler;
 
-exit_handler::exit_handler() :
-    m_monitor_trap_callback(&exit_handler::unhandled_monitor_trap_callback),
-    m_vmcs_eapis(nullptr)
+exit_handler::exit_handler(gsl::not_null<eapis::intel_x64::vmcs *> vmcs) :
+    bfvmm::intel_x64::exit_handler(vmcs),
+    m_monitor_trap_callback{&exit_handler::unhandled_monitor_trap_callback},
+    m_vmcs_eapis{vmcs}
 {
+    bfdebug_info(0, "constructed eapis::exit_handler");
 }
 
-void
-exit_handler::resume()
-{
-    m_vmcs_eapis->resume();
-}
-
-void
-exit_handler::advance_and_resume()
-{
-    this->advance_rip();
-    m_vmcs_eapis->resume();
-}
+//void
+//exit_handler::resume()
+//{
+//    m_vmcs_eapis->resume();
+//}
+//
+//void
+//exit_handler::advance_and_resume()
+//{
+//    this->advance_rip();
+//    m_vmcs_eapis->resume();
+//}
 
 void
 exit_handler::handle_exit(::intel_x64::vmcs::value_type reason)
@@ -74,7 +81,10 @@ exit_handler::handle_exit(::intel_x64::vmcs::value_type reason)
             break;
 
         default:
-            bfvmm::intel_x64::exit_handler::handle_exit(reason);
+            //bfvmm::intel_x64::exit_handler::handle_exit(reason);
             break;
     }
+}
+
+}
 }

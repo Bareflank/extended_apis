@@ -23,6 +23,7 @@
 #define VMCS_INTEL_X64_EAPIS_H
 
 #include <bfgsl.h>
+#include <bfvcpuid.h>
 
 #include <vector>
 #include <memory>
@@ -80,7 +81,7 @@ namespace intel_x64
 /// Defines the EAPIs version of the VMCS. Note that this is intended to be
 /// subclassed.
 ///
-class EXPORT_EAPIS_HVE vmcs : public bfvmm::intel_x64::vmcs
+class EXPORT_EAPIS_HVE vmcs : public ::bfvmm::intel_x64::vmcs
 {
 public:
 
@@ -98,7 +99,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    vmcs();
+    vmcs(vcpuid::type vcpuid);
 
     /// Destructor
     ///
@@ -813,8 +814,8 @@ protected:
     /// @param host_state pointer to host state
     /// @param guest_state pointer to guest state
     ///
-    virtual void write_fields(gsl::not_null<bfvmm::intel_x64::vmcs_state *> host_state,
-                              gsl::not_null<bfvmm::intel_x64::vmcs_state *> guest_state);
+//    virtual void write_fields(gsl::not_null<bfvmm::intel_x64::vmcs_state *> host_state,
+//                              gsl::not_null<bfvmm::intel_x64::vmcs_state *> guest_state);
 
 public:
 

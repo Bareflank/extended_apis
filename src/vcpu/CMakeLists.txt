@@ -16,36 +16,14 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
-    if(NOT ENABLE_MOCKING)
-        list(APPEND SOURCES
-            arch/intel_x64/vcpu_factory.cpp
-        )
-    endif()
-elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
-    message(WARNING "Unimplemented")
-else()
-    message(FATAL_ERROR "Unsupported archiecture")
-endif()
+cmake_minimum_required(VERSION 3.6)
+project(eapis_main C CXX)
 
-add_shared_library(
-    eapis_vcpu
-    SOURCES ${SOURCES}
-    DEFINES SHARED_EAPIS_VCPU
-    DEFINES SHARED_EAPIS_HVE
-    DEFINES SHARED_VCPU
-    DEFINES SHARED_HVE
-    DEFINES SHARED_MEMORY_MANAGER
-    DEFINES SHARED_INTRINSICS
-)
+include(${SOURCE_CMAKE_DIR}/project.cmake)
+init_project()
 
-add_static_library(
-    eapis_vcpu
-    SOURCES ${SOURCES}
-    DEFINES STATIC_EAPIS_VCPU
-    DEFINES STATIC_EAPIS_HVE
-    DEFINES STATIC_VCPU
-    DEFINES STATIC_HVE
-    DEFINES STATIC_MEMORY_MANAGER
-    DEFINES STATIC_INTRINSICS
+add_vmm_executable(
+    eapis
+    SOURCES arch/intel_x64/vcpu_factory.cpp
+    LIBRARIES eapis_hve
 )

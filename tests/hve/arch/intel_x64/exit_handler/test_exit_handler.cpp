@@ -39,7 +39,7 @@ TEST_CASE("eapis_exit_handler: resume_and_advance")
     auto ehlr = setup_ehlr(vmcs);
 
     CHECK_NOTHROW(ehlr->advance_and_resume());
-    CHECK(ehlr->m_state_save->rip == g_rip);
+    CHECK(ehlr->m_vmcs_eapis->save_state()->rip == g_rip);
 }
 
 TEST_CASE("eapis_exit_handler: exit invalid")
