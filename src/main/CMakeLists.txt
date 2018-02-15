@@ -22,4 +22,18 @@ project(eapis_main C CXX)
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project()
 
-add_vmm_executable(eapis)
+if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
+    list(APPEND SOURCES
+        arch/intel_x64/vcpu_factory.cpp
+    )
+elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
+    message(WARNING "Unimplemented")
+else()
+    message(FATAL_ERROR "Unsupported archiecture")
+endif()
+
+add_vmm_executable(
+    eapis_vmm
+    SOURCES ${SOURCES}
+    LIBRARIES eapis_hve
+)

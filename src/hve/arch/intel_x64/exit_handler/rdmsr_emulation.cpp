@@ -27,5 +27,5 @@ void
 ehlr_eapis::handle_exit__rdmsr()
 {
 //    this->handle_rdmsr();
-    m_vmcs_eapis->resume();
+    m_vmcs->resume();    /// ****************************************************** There is no longer a need to resume. You should return true instead
 }

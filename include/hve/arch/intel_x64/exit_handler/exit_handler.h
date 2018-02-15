@@ -74,7 +74,7 @@ namespace intel_x64
 /// subclassed, and certain functions need to be handled based on how the
 /// VMCS is setup.
 ///
-class EXPORT_EAPIS_HVE exit_handler : public bfvmm::intel_x64::exit_handler
+class EXPORT_EAPIS_HVE exit_handler
 {
 public:
 
@@ -137,14 +137,16 @@ public:
     /// @expects
     /// @ensures
     ///
-    exit_handler(gsl::not_null<eapis::intel_x64::vmcs *> vmcs);
+    exit_handler(
+        gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs
+    );
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~exit_handler() override = default;
+    ~exit_handler() = default;
 
     /// Inject Event
     ///
@@ -386,7 +388,7 @@ public:
 
     /// @endcond
 
-    vmcs_type *m_vmcs_eapis{nullptr};    ///< Pointer to the EAPIS vmcs
+    bfvmm::intel_x64::vmcs *m_vmcs;
 
 public:
 

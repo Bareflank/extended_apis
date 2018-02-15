@@ -35,52 +35,52 @@ ehlr_eapis::get_gpr(gpr_index_type index)
 {
     switch (index) {
         case gpr::rax:
-            return m_vmcs_eapis->save_state()->rax;
+            return m_vmcs->save_state()->rax;
 
         case gpr::rbx:
-            return m_vmcs_eapis->save_state()->rbx;
+            return m_vmcs->save_state()->rbx;
 
         case gpr::rcx:
-            return m_vmcs_eapis->save_state()->rcx;
+            return m_vmcs->save_state()->rcx;
 
         case gpr::rdx:
-            return m_vmcs_eapis->save_state()->rdx;
+            return m_vmcs->save_state()->rdx;
 
         case gpr::rsp:
-            return m_vmcs_eapis->save_state()->rsp;
+            return m_vmcs->save_state()->rsp;
 
         case gpr::rbp:
-            return m_vmcs_eapis->save_state()->rbp;
+            return m_vmcs->save_state()->rbp;
 
         case gpr::rsi:
-            return m_vmcs_eapis->save_state()->rsi;
+            return m_vmcs->save_state()->rsi;
 
         case gpr::rdi:
-            return m_vmcs_eapis->save_state()->rdi;
+            return m_vmcs->save_state()->rdi;
 
         case gpr::r8:
-            return m_vmcs_eapis->save_state()->r08;
+            return m_vmcs->save_state()->r08;
 
         case gpr::r9:
-            return m_vmcs_eapis->save_state()->r09;
+            return m_vmcs->save_state()->r09;
 
         case gpr::r10:
-            return m_vmcs_eapis->save_state()->r10;
+            return m_vmcs->save_state()->r10;
 
         case gpr::r11:
-            return m_vmcs_eapis->save_state()->r11;
+            return m_vmcs->save_state()->r11;
 
         case gpr::r12:
-            return m_vmcs_eapis->save_state()->r12;
+            return m_vmcs->save_state()->r12;
 
         case gpr::r13:
-            return m_vmcs_eapis->save_state()->r13;
+            return m_vmcs->save_state()->r13;
 
         case gpr::r14:
-            return m_vmcs_eapis->save_state()->r14;
+            return m_vmcs->save_state()->r14;
 
         case gpr::r15:
-            return m_vmcs_eapis->save_state()->r15;
+            return m_vmcs->save_state()->r15;
     }
 
     throw std::runtime_error("unknown index");
@@ -93,67 +93,67 @@ ehlr_eapis::set_gpr(
 {
     switch (index) {
         case gpr::rax:
-            m_vmcs_eapis->save_state()->rax = val;
+            m_vmcs->save_state()->rax = val;
             return;
 
         case gpr::rbx:
-            m_vmcs_eapis->save_state()->rbx = val;
+            m_vmcs->save_state()->rbx = val;
             return;
 
         case gpr::rcx:
-            m_vmcs_eapis->save_state()->rcx = val;
+            m_vmcs->save_state()->rcx = val;
             return;
 
         case gpr::rdx:
-            m_vmcs_eapis->save_state()->rdx = val;
+            m_vmcs->save_state()->rdx = val;
             return;
 
         case gpr::rsp:
-            m_vmcs_eapis->save_state()->rsp = val;
+            m_vmcs->save_state()->rsp = val;
             return;
 
         case gpr::rbp:
-            m_vmcs_eapis->save_state()->rbp = val;
+            m_vmcs->save_state()->rbp = val;
             return;
 
         case gpr::rsi:
-            m_vmcs_eapis->save_state()->rsi = val;
+            m_vmcs->save_state()->rsi = val;
             return;
 
         case gpr::rdi:
-            m_vmcs_eapis->save_state()->rdi = val;
+            m_vmcs->save_state()->rdi = val;
             return;
 
         case gpr::r8:
-            m_vmcs_eapis->save_state()->r08 = val;
+            m_vmcs->save_state()->r08 = val;
             return;
 
         case gpr::r9:
-            m_vmcs_eapis->save_state()->r09 = val;
+            m_vmcs->save_state()->r09 = val;
             return;
 
         case gpr::r10:
-            m_vmcs_eapis->save_state()->r10 = val;
+            m_vmcs->save_state()->r10 = val;
             return;
 
         case gpr::r11:
-            m_vmcs_eapis->save_state()->r11 = val;
+            m_vmcs->save_state()->r11 = val;
             return;
 
         case gpr::r12:
-            m_vmcs_eapis->save_state()->r12 = val;
+            m_vmcs->save_state()->r12 = val;
             return;
 
         case gpr::r13:
-            m_vmcs_eapis->save_state()->r13 = val;
+            m_vmcs->save_state()->r13 = val;
             return;
 
         case gpr::r14:
-            m_vmcs_eapis->save_state()->r14 = val;
+            m_vmcs->save_state()->r14 = val;
             return;
 
         case gpr::r15:
-            m_vmcs_eapis->save_state()->r15 = val;
+            m_vmcs->save_state()->r15 = val;
             return;
     }
 

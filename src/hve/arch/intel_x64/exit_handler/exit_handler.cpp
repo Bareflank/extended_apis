@@ -31,10 +31,11 @@ namespace intel_x64
 
 namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
 
-exit_handler::exit_handler(gsl::not_null<eapis::intel_x64::vmcs *> vmcs) :
-    bfvmm::intel_x64::exit_handler(vmcs),
+exit_handler::exit_handler(
+    gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs
+) :
     m_monitor_trap_callback{&exit_handler::unhandled_monitor_trap_callback},
-    m_vmcs_eapis{vmcs}
+    m_vmcs{vmcs}
 {
     bfdebug_info(0, "constructed eapis::exit_handler");
 }

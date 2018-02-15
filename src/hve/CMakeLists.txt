@@ -16,44 +16,44 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-list(APPEND SOURCES
-    arch/intel_x64/ept/ept.cpp
-    arch/intel_x64/ept/ept_entry.cpp
-    arch/intel_x64/ept/root_ept.cpp
-
-    arch/intel_x64/exit_handler/cpuid_emulation.cpp
-    arch/intel_x64/exit_handler/cr_emulation.cpp
-    arch/intel_x64/exit_handler/event_emulation.cpp
-    arch/intel_x64/exit_handler/exit_handler.cpp
-    arch/intel_x64/exit_handler/io_instruction_emulation.cpp
-    arch/intel_x64/exit_handler/monitor_trap_emulation.cpp
-    arch/intel_x64/exit_handler/rdmsr_emulation.cpp
-    arch/intel_x64/exit_handler/wrmsr_emulation.cpp
-
-    arch/intel_x64/vmcs/vmcs.cpp
-    arch/intel_x64/vmcs/vmcs_cr_access_hooks.cpp
-    arch/intel_x64/vmcs/vmcs_ept.cpp
-    arch/intel_x64/vmcs/vmcs_event.cpp
-    arch/intel_x64/vmcs/vmcs_io.cpp
-    arch/intel_x64/vmcs/vmcs_isr.cpp
-    arch/intel_x64/vmcs/vmcs_msr.cpp
-    arch/intel_x64/vmcs/vmcs_vpid.cpp
-)
-
-if(ENABLE_MOCKING)
+if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
-        arch/intel_x64/vmcs/vmcs_isr_support_mock.cpp
+        arch/intel_x64/ept/ept.cpp
+        arch/intel_x64/ept/ept_entry.cpp
+        arch/intel_x64/ept/root_ept.cpp
+
+        arch/intel_x64/exit_handler/cpuid_emulation.cpp
+        arch/intel_x64/exit_handler/cr_emulation.cpp
+        arch/intel_x64/exit_handler/event_emulation.cpp
+        arch/intel_x64/exit_handler/exit_handler.cpp
+        arch/intel_x64/exit_handler/io_instruction_emulation.cpp
+        arch/intel_x64/exit_handler/monitor_trap_emulation.cpp
+        arch/intel_x64/exit_handler/rdmsr_emulation.cpp
+        arch/intel_x64/exit_handler/wrmsr_emulation.cpp
+
+        arch/intel_x64/vmcs/vmcs.cpp
+        arch/intel_x64/vmcs/vmcs_cr_access_hooks.cpp
+        arch/intel_x64/vmcs/vmcs_ept.cpp
+        arch/intel_x64/vmcs/vmcs_event.cpp
+        arch/intel_x64/vmcs/vmcs_io.cpp
+        arch/intel_x64/vmcs/vmcs_isr.cpp
+        arch/intel_x64/vmcs/vmcs_msr.cpp
+        arch/intel_x64/vmcs/vmcs_vpid.cpp
     )
-elseif(NOT WIN32)
-    list(APPEND SOURCES
-        arch/intel_x64/vmcs/vmcs_isr_support.asm
-    )
+
+    if(NOT WIN32 AND NOT ENABLE_MOCKING)
+        list(APPEND SOURCES
+            arch/intel_x64/vmcs/vmcs_isr_support.asm
+        )
+    endif()
+elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
+    message(WARNING "Unimplemented")
+else()
+    message(FATAL_ERROR "Unsupported archiecture")
 endif()
 
 add_shared_library(
     eapis_hve
-    DEPENDS bfvmm_hve
-    DEPENDS bfvmm_memory_manager
     SOURCES ${SOURCES}
     DEFINES SHARED_EAPIS_HVE
     DEFINES SHARED_HVE
@@ -63,8 +63,6 @@ add_shared_library(
 
 add_static_library(
     eapis_hve
-    DEPENDS bfvmm_hve
-    DEPENDS bfvmm_memory_manager
     SOURCES ${SOURCES}
     DEFINES STATIC_EAPIS_HVE
     DEFINES STATIC_HVE

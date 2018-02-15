@@ -25,9 +25,10 @@ init_project(
 )
 
 add_subdirectory(hve)
+#add_subdirectory(vic)
 
 # -----------------------------------------------------------------------------
 # Install
 # -----------------------------------------------------------------------------
 
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/../include/ DESTINATION include/eapis)
+install(DIRECTORY ../include/ DESTINATION include/eapis)

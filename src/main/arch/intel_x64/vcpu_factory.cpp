@@ -29,59 +29,35 @@
 #include "../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
 #include "../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
 
+// Same thing.... search for the headers in cpp files. I would go through all
+// of the source files and make sure this is fixed.
+
 namespace eapis
 {
 namespace intel_x64
 {
 
-class vcpu : public bfvmm::vcpu
+class vcpu : public bfvmm::intel_x64::vcpu
 {
 public:
-    using run_dlg_t = bfvmm::vcpu::run_delegate_t;
-
-    vcpu(vcpuid::type id) : bfvmm::vcpu{id}
+    vcpu(vcpuid::type id) :
+        bfvmm::intel_x64::vcpu{id}
     {
-        if (this->is_host_vm_vcpu()) {
-            m_vmx = std::make_unique<bfvmm::intel_x64::vmx>();
-        }
-
-        m_vmcs = std::make_unique<eapis::intel_x64::vmcs>(id);
-        m_exit_hdlr = std::make_unique<eapis::intel_x64::exit_handler>(m_vmcs.get());
-
-        this->add_run_delegate(
-            run_dlg_t::create<eapis::intel_x64::vcpu, &eapis::intel_x64::vcpu::run>(this)
-        );
+        m_vmcs_clean_me_up = std::make_unique<eapis::intel_x64::vmcs>();
+        m_exit_handler_clean_me_up = std::make_unique<eapis::intel_x64::exit_handler>(vmcs());
     }
 
     ~vcpu() override
-    {
-        if (this->is_host_vm_vcpu()) {
-            m_vmx.reset();
-        }
-
-        m_vmcs.reset();
-        m_exit_hdlr.reset();
-    }
-
-    void run(bfobject *obj)
-    {
-        bfignored(obj);
-
-        m_vmcs->load();
-        m_vmcs->launch();
-    }
-
-    auto vmcs() const noexcept
-    { return m_vmcs.get(); }
-
-    auto exit_hdlr() const noexcept
-    { return m_exit_hdlr.get(); }
+    { }
 
 private:
 
-    std::unique_ptr<bfvmm::intel_x64::vmx> m_vmx;
-    std::unique_ptr<eapis::intel_x64::vmcs> m_vmcs;
-    std::unique_ptr<eapis::intel_x64::exit_handler> m_exit_hdlr;
+    // When the cleanup is done, the VMCS and exit handler will be gone. Instead,
+    // each API will have it's own class, and all of the setup, APIs, and handlers
+    // will be in that class, created here, and registered here.
+
+    std::unique_ptr<eapis::intel_x64::vmcs> m_vmcs_clean_me_up;
+    std::unique_ptr<eapis::intel_x64::exit_handler> m_exit_handler_clean_me_up;
 };
 
 } // namespace intel_x64
@@ -90,7 +66,7 @@ private:
 namespace bfvmm
 {
 
-WEAK_SYM std::unique_ptr<vcpu>
+std::unique_ptr<vcpu>
 vcpu_factory::make_vcpu(vcpuid::type vcpuid, bfobject *obj)
 {
     bfignored(obj);

@@ -31,7 +31,7 @@ void
 ehlr_eapis::trap_on_io_access_callback()
 {
     proc_ctls::use_io_bitmaps::enable();
-    m_vmcs_eapis->resume();
+    m_vmcs->resume();    /// ****************************************************** There is no longer a need to resume. You should return true instead
 }
 
 void
@@ -40,5 +40,5 @@ ehlr_eapis::handle_exit__io_instruction()
     register_monitor_trap(&ehlr_eapis::trap_on_io_access_callback);
 
     proc_ctls::use_io_bitmaps::disable();
-    m_vmcs_eapis->resume();
+    m_vmcs->resume();    /// ****************************************************** There is no longer a need to resume. You should return true instead
 }

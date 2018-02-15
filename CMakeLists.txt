@@ -17,23 +17,21 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 if(ENABLE_BUILD_VMM)
-    add_subproject(
-        eapis vmm
-        DEPENDS bfvmm bfintrinsics
+    vmm_extension(
+        eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src
     )
 
     vmm_extension(
         eapis_main
         DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/vcpu
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/main
     )
 endif()
 
-if(ENABLE_BUILD_TEST OR ENABLE_TESTS_ONLY)
-    add_subproject(
-        eapis test
-        DEPENDS bfvmm bfintrinsics
+if(ENABLE_BUILD_TEST)
+    test_extension(
+        eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
     )
 endif()

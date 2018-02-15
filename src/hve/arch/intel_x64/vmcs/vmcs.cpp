@@ -27,8 +27,7 @@ namespace eapis
 namespace intel_x64
 {
 
-vmcs::vmcs(vcpuid::type vcpuid) :
-    ::bfvmm::intel_x64::vmcs(vcpuid)
+vmcs::vmcs()
 {
     static ::intel_x64::vmcs::value_type g_vpid = 1;
     m_vpid = g_vpid++;
@@ -38,6 +37,7 @@ vmcs::vmcs(vcpuid::type vcpuid) :
 
 }
 }
+
 //void
 //vmcs::write_fields(gsl::not_null<bfvmm::intel_x64::vmcs_state *> host_state,
 //                   gsl::not_null<bfvmm::intel_x64::vmcs_state *> guest_state)

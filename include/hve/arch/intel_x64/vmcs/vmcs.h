@@ -81,7 +81,7 @@ namespace intel_x64
 /// Defines the EAPIs version of the VMCS. Note that this is intended to be
 /// subclassed.
 ///
-class EXPORT_EAPIS_HVE vmcs : public ::bfvmm::intel_x64::vmcs
+class EXPORT_EAPIS_HVE vmcs
 {
 public:
 
@@ -99,14 +99,14 @@ public:
     /// @expects
     /// @ensures
     ///
-    vmcs(vcpuid::type vcpuid);
+    vmcs();
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~vmcs() override  = default;
+    ~vmcs() = default;
 
     /// Enable VPID
     ///
@@ -698,7 +698,7 @@ public:
 protected:
 #endif
 
-    ::intel_x64::vmcs::value_type m_vpid;             ///< VPID for this VMCS
+    ::intel_x64::vmcs::value_type m_vpid;           ///< VPID for this VMCS
 
     std::unique_ptr<uint8_t[]> m_io_bitmapa;        ///< IO bitmap A
     std::unique_ptr<uint8_t[]> m_io_bitmapb;        ///< IO bitmap B

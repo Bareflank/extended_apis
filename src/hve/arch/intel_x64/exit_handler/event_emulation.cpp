@@ -24,6 +24,21 @@
 #include <intrinsics.h>
 #include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
 
+// Don't use "" includes in cpp files. Search for them instead.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 namespace proc_ctls = ::intel_x64::vmcs::primary_processor_based_vm_execution_controls;
 namespace entry_irq_info = ::intel_x64::vmcs::vm_entry_interruption_information;
 namespace entry_irq_type = ::intel_x64::vmcs::vm_entry_interruption_information::interruption_type;
@@ -150,12 +165,12 @@ ehlr_eapis::handle_exit__external_interrupt()
 
     if (exit_irq_info::valid_bit::is_disabled(eii)) {
         bfalert_info(0, "invalid interruption exit information. interrupt ignored");
-        m_vmcs_eapis->resume();
+        m_vmcs->resume();    /// ****************************************************** There is no longer a need to resume. You should return true instead
     }
 
     if (exit_irq_info::nmi_unblocking_due_to_iret::is_enabled(eii)) {
         bfalert_info(0, "nmi_unblocking_due_to_iret is unsupported. interrupt ignored");
-        m_vmcs_eapis->resume();
+        m_vmcs->resume();    /// ****************************************************** There is no longer a need to resume. You should return true instead
     }
 
     inject_event(
@@ -165,7 +180,7 @@ ehlr_eapis::handle_exit__external_interrupt()
         ::intel_x64::vmcs::vm_exit_interruption_error_code::get()
     );
 
-    m_vmcs_eapis->resume();
+    m_vmcs->resume();    /// ****************************************************** There is no longer a need to resume. You should return true instead
 }
 
 void
@@ -173,14 +188,14 @@ ehlr_eapis::handle_exit__interrupt_window()
 {
     if (m_event_queue.empty()) {
         bfalert_info(0, "event queue empty: interrupt window ignored");
-        m_vmcs_eapis->resume();
+        m_vmcs->resume();    /// ****************************************************** There is no longer a need to resume. You should return true instead
     }
 
     set_vm_entry_interruption_information(m_event_queue.front());
     m_event_queue.pop_front();
 
     proc_ctls::interrupt_window_exiting::set(!m_event_queue.empty());
-    m_vmcs_eapis->resume();
+    m_vmcs->resume();    /// ****************************************************** There is no longer a need to resume. You should return true instead
 }
 
 void
