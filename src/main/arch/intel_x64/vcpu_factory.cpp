@@ -26,11 +26,8 @@
 #include <bfvmm/vcpu/vcpu_factory.h>
 #include <bfvmm/vcpu/arch/intel_x64/vcpu.h>
 
-#include "../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
-#include "../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
-
-// Same thing.... search for the headers in cpp files. I would go through all
-// of the source files and make sure this is fixed.
+#include <eapis/hve/arch/intel_x64/vmcs/vmcs.h>
+#include <eapis/hve/arch/intel_x64/exit_handler/exit_handler.h>
 
 namespace eapis
 {
@@ -43,8 +40,6 @@ public:
     vcpu(vcpuid::type id) :
         bfvmm::intel_x64::vcpu{id}
     {
-        m_vmcs_clean_me_up = std::make_unique<eapis::intel_x64::vmcs>();
-        m_exit_handler_clean_me_up = std::make_unique<eapis::intel_x64::exit_handler>(vmcs());
     }
 
     ~vcpu() override
@@ -56,8 +51,7 @@ private:
     // each API will have it's own class, and all of the setup, APIs, and handlers
     // will be in that class, created here, and registered here.
 
-    std::unique_ptr<eapis::intel_x64::vmcs> m_vmcs_clean_me_up;
-    std::unique_ptr<eapis::intel_x64::exit_handler> m_exit_handler_clean_me_up;
+    // handler pointers std::unique_ptr<>
 };
 
 } // namespace intel_x64

@@ -20,7 +20,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include "../../../../../include/hve/arch/intel_x64/vmcs/vmcs.h"
+#include <eapis/hve/arch/intel_x64/vmcs/vmcs.h>
 
 namespace eapis
 {

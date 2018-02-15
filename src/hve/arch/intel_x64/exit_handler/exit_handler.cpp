@@ -22,7 +22,7 @@
 #include <bfdebug.h>
 #include <intrinsics.h>
 
-#include "../../../../../include/hve/arch/intel_x64/exit_handler/exit_handler.h"
+#include <eapis/hve/arch/intel_x64/exit_handler/exit_handler.h>
 
 namespace eapis
 {
