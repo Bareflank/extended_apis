@@ -29,32 +29,8 @@ namespace intel_x64
 
 vmcs::vmcs()
 {
-    static ::intel_x64::vmcs::value_type g_vpid = 1;
-    m_vpid = g_vpid++;
-
     bfdebug_info(0, "constructed eapis::vmcs");
 }
 
 }
 }
-
-//void
-//vmcs::write_fields(gsl::not_null<bfvmm::intel_x64::vmcs_state *> host_state,
-//                   gsl::not_null<bfvmm::intel_x64::vmcs_state *> guest_state)
-//{
-//    bfignored(host_state);
-//    bfignored(guest_state);
-//
-//    this->disable_ept();
-//    this->disable_vpid();
-//    this->disable_io_bitmaps();
-//    this->disable_msr_bitmap();
-//    this->disable_msr_bitmap();
-//    this->disable_cr0_load_hook();
-//    this->disable_cr3_load_hook();
-//    this->disable_cr3_store_hook();
-//    this->disable_cr4_load_hook();
-//    this->disable_cr8_load_hook();
-//    this->disable_cr8_store_hook();
-//    this->disable_event_management();
-//}

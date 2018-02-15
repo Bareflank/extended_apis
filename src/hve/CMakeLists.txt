@@ -22,30 +22,10 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/ept/ept_entry.cpp
         arch/intel_x64/ept/root_ept.cpp
 
-        arch/intel_x64/exit_handler/cpuid_emulation.cpp
-        arch/intel_x64/exit_handler/cr_emulation.cpp
-        arch/intel_x64/exit_handler/event_emulation.cpp
         arch/intel_x64/exit_handler/exit_handler.cpp
-        arch/intel_x64/exit_handler/io_instruction_emulation.cpp
-        arch/intel_x64/exit_handler/monitor_trap_emulation.cpp
-        arch/intel_x64/exit_handler/rdmsr_emulation.cpp
-        arch/intel_x64/exit_handler/wrmsr_emulation.cpp
 
         arch/intel_x64/vmcs/vmcs.cpp
-        arch/intel_x64/vmcs/vmcs_cr_access_hooks.cpp
-        arch/intel_x64/vmcs/vmcs_ept.cpp
-        arch/intel_x64/vmcs/vmcs_event.cpp
-        arch/intel_x64/vmcs/vmcs_io.cpp
-        arch/intel_x64/vmcs/vmcs_isr.cpp
-        arch/intel_x64/vmcs/vmcs_msr.cpp
-        arch/intel_x64/vmcs/vmcs_vpid.cpp
     )
-
-    if(NOT WIN32 AND NOT ENABLE_MOCKING)
-        list(APPEND SOURCES
-            arch/intel_x64/vmcs/vmcs_isr_support.asm
-        )
-    endif()
 elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
     message(WARNING "Unimplemented")
 else()

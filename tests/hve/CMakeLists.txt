@@ -26,18 +26,8 @@ list(APPEND ARGN
     DEFINES STATIC_INTRINSICS
 )
 
-do_test(test_cr_emulation
-    SOURCES arch/intel_x64/exit_handler/test_cr_emulation.cpp
-    ${ARGN}
-)
-
 do_test(test_exit_handler
     SOURCES arch/intel_x64/exit_handler/test_exit_handler.cpp
-    ${ARGN}
-)
-
-do_test(test_monitor_trap_emulation
-    SOURCES arch/intel_x64/exit_handler/test_monitor_trap_emulation.cpp
     ${ARGN}
 )
 
@@ -58,30 +48,5 @@ do_test(test_root_ept
 
 do_test(test_vmcs
     SOURCES arch/intel_x64/vmcs/test_vmcs.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs_cr
-    SOURCES arch/intel_x64/vmcs/test_vmcs_cr.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs_ept
-    SOURCES arch/intel_x64/vmcs/test_vmcs_ept.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs_io
-    SOURCES arch/intel_x64/vmcs/test_vmcs_io.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs_msr
-    SOURCES arch/intel_x64/vmcs/test_vmcs_msr.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs_vpid
-    SOURCES arch/intel_x64/vmcs/test_vmcs_vpid.cpp
     ${ARGN}
 )
