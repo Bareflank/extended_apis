@@ -26,27 +26,7 @@ list(APPEND ARGN
     DEFINES STATIC_INTRINSICS
 )
 
-do_test(test_exit_handler
-    SOURCES arch/intel_x64/exit_handler/test_exit_handler.cpp
-    ${ARGN}
-)
-
-do_test(test_ept
-    SOURCES arch/intel_x64/ept/test_ept.cpp
-    ${ARGN}
-)
-
-do_test(test_ept_entry
-    SOURCES arch/intel_x64/ept/test_ept_entry.cpp
-    ${ARGN}
-)
-
-do_test(test_root_ept
-    SOURCES arch/intel_x64/ept/test_root_ept.cpp
-    ${ARGN}
-)
-
-do_test(test_vmcs
-    SOURCES arch/intel_x64/vmcs/test_vmcs.cpp
-    ${ARGN}
-)
+# do_test(test_vmcs
+#     SOURCES arch/intel_x64/vmcs/test_vmcs.cpp
+#     ${ARGN}
+# )

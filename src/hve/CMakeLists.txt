@@ -18,13 +18,7 @@
 
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
-        arch/intel_x64/ept/ept.cpp
-        arch/intel_x64/ept/ept_entry.cpp
-        arch/intel_x64/ept/root_ept.cpp
 
-        arch/intel_x64/exit_handler/exit_handler.cpp
-
-        arch/intel_x64/vmcs/vmcs.cpp
     )
 elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
     message(WARNING "Unimplemented")
