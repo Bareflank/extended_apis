@@ -24,7 +24,7 @@ if(ENABLE_BUILD_VMM)
 
     vmm_extension(
         eapis_main
-        DEPENDS eapis
+        #       DEPENDS eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/main
     )
 endif()
