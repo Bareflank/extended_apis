@@ -81,10 +81,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    rdmsr()
-    {
-
-    }
+    rdmsr() = default;
 
     /// Destructor
     ///
@@ -204,9 +201,12 @@ public:
     {
         const auto addr = vmcs->save_state()->rcx;
         if (m_handlers.count(addr) == 0) {
-            if (m_def_hdlr) {
-                return m_def_hdlr(vmcs);
+            if (m_def_hdlr.is_valid()) {
+                bfdebug_info(0, "v");
+                 return m_def_hdlr(vmcs);
             }
+
+            bfdebug_info(0, "i");
 
             return false;
         }

@@ -25,7 +25,7 @@
 #include <memory>
 #include <bfgsl.h>
 #include <intrinsics.h>
-#include <bfvmm/memory_manager/memory_manager_x64.h>
+#include <bfvmm/memory_manager/memory_manager.h>
 
 #include "../../../hve/arch/intel_x64/vmcs/vmcs.h"
 #include "../../../hve/arch/intel_x64/exit_handler/exit_handler.h"
@@ -158,10 +158,10 @@ setup_ehlr(gsl::not_null<vmcs_type *> vmcs)
 memory_manager_x64 *
 setup_mm(MockRepository &mocks)
 {
-    auto mm = mocks.Mock<memory_manager_x64>();
-    mocks.OnCallFunc(memory_manager_x64::instance).Return(mm);
-    mocks.OnCall(mm, memory_manager_x64::virtptr_to_physint).Return(0x0000000ABCDEF0000);
-    mocks.OnCall(mm, memory_manager_x64::virtint_to_physint).Return(0x0000000ABCDEF0000);
+    auto mm = mocks.Mock<bfvmm::memory_manager>();
+    mocks.OnCallFunc(bfvmm::memory_manager::instance).Return(mm);
+    mocks.OnCall(mm, bfvmm::memory_manager::virtptr_to_physint).Return(0x0000000ABCDEF0000);
+    mocks.OnCall(mm, bfvmm::memory_manager::virtint_to_physint).Return(0x0000000ABCDEF0000);
 
     return mm;
 }
