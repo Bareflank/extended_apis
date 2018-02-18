@@ -54,8 +54,9 @@ public:
 
         auto base_hdlr = this->exit_handler();
 
-        m_rdmsr = std::make_unique<eapis::intel_x64::rdmsr>(base_hdlr);
+        m_rdmsr = std::make_unique<eapis::intel_x64::rdmsr>();
         m_rdmsr->set(msr_3b, hdlr_t::create<handle_msr_3b>());
+        m_rdmsr->enable(base_hdlr);
     }
 
     ~vcpu() override

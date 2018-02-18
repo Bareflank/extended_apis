@@ -74,14 +74,6 @@ public:
     using hdlr_t = delegate<bool(gsl::not_null<vmcs_t *>)>;
     using addr_t = uint64_t;
 
-    static bool
-    nop(gsl::not_null<vmcs_t *> vmcs)
-    {
-        bfignored(vmcs);
-        return false;
-    }
-
-    static hdlr_t s_nop_hdlr;
     constexpr static auto s_reason = reason::rdmsr;
 
     /// Constructor
@@ -89,14 +81,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    rdmsr(gsl::not_null<exit_hdlr_t *> exit_hdlr)
+    rdmsr()
     {
-        //set_default(std::move(s_nop_hdlr));
 
-        exit_hdlr->add_dispatch_delegate(
-            s_reason,
-            hdlr_t::create<rdmsr_t, &rdmsr_t::handle>(this)
-        );
     }
 
     /// Destructor
@@ -105,6 +92,22 @@ public:
     /// @ensures
     ///
     ~rdmsr() = default;
+
+    /// Enable
+    ///
+    /// Register the set handlers with the base vmm. These
+    /// handlers may be called via any exit after the next vm entry
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void enable(gsl::not_null<exit_hdlr_t *> exit_hdlr)
+    {
+        exit_hdlr->add_dispatch_delegate(
+            s_reason,
+            hdlr_t::create<rdmsr_t, &rdmsr_t::handle>(this)
+        );
+    }
 
     /// Set default
     ///
@@ -155,7 +158,7 @@ public:
     ///
     void clear_default()
     {
-        set_default(std::move(s_nop_hdlr));
+        set_default(hdlr_t::create<nullptr>());
         return;
     }
 
@@ -225,9 +228,6 @@ private:
     std::map<const addr_t, hdlr_t> m_handlers{};
     hdlr_t m_def_hdlr;
 };
-
-rdmsr::hdlr_t
-rdmsr::s_nop_hdlr = rdmsr::hdlr_t::create<nop>();
 
 } // namespace intel_x64
 } // namespace eapis
