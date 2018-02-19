@@ -16,22 +16,15 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-if(ENABLE_BUILD_VMM)
-    vmm_extension(
-        eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src
-    )
+cmake_minimum_required(VERSION 3.6)
+project(eapis_test C CXX)
 
-    vmm_extension(
-        eapis_main
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/main
-    )
-endif()
+include(${SOURCE_CMAKE_DIR}/project.cmake)
+init_project(
+    INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../include
+)
 
-# if(ENABLE_BUILD_TEST)
-#     test_extension(
-#         eapis
-#         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
-#     )
-# endif()
+add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
+
+add_subdirectory(hve)
+add_subdirectory(util)

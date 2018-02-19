@@ -16,22 +16,33 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-if(ENABLE_BUILD_VMM)
-    vmm_extension(
-        eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src
+if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
+    list(APPEND SOURCES
+        arch/intel_x64/exit_handler/rdmsr.cpp
+        arch/intel_x64/exit_handler/wrmsr.cpp
+        arch/intel_x64/exit_handler/cr_access.cpp
+        arch/intel_x64/exit_handler/misc.cpp
     )
-
-    vmm_extension(
-        eapis_main
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/main
-    )
+elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
+    message(WARNING "Unimplemented")
+else()
+    message(FATAL_ERROR "Unsupported archiecture")
 endif()
 
-# if(ENABLE_BUILD_TEST)
-#     test_extension(
-#         eapis
-#         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
-#     )
-# endif()
+add_shared_library(
+    eapis_hve
+    SOURCES ${SOURCES}
+    DEFINES SHARED_EAPIS_HVE
+    DEFINES SHARED_HVE
+    DEFINES SHARED_MEMORY_MANAGER
+    DEFINES SHARED_INTRINSICS
+)
+
+add_static_library(
+    eapis_hve
+    SOURCES ${SOURCES}
+    DEFINES STATIC_EAPIS_HVE
+    DEFINES STATIC_HVE
+    DEFINES STATIC_MEMORY_MANAGER
+    DEFINES STATIC_INTRINSICS
+)

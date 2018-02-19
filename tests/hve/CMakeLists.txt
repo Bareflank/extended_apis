@@ -16,22 +16,17 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-if(ENABLE_BUILD_VMM)
-    vmm_extension(
-        eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src
-    )
+list(APPEND ARGN
+    DEPENDS eapis_hve
+    DEPENDS bfvmm_hve
+    DEPENDS bfvmm_memory_manager
+    DEFINES STATIC_EAPIS_HVE
+    DEFINES STATIC_HVE
+    DEFINES STATIC_MEMORY_MANAGER
+    DEFINES STATIC_INTRINSICS
+)
 
-    vmm_extension(
-        eapis_main
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/main
-    )
-endif()
-
-# if(ENABLE_BUILD_TEST)
-#     test_extension(
-#         eapis
-#         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
-#     )
-# endif()
+# do_test(test_vmcs
+#     SOURCES arch/intel_x64/vmcs/test_vmcs.cpp
+#     ${ARGN}
+# )

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #
 # Bareflank Hypervisor
 # Copyright (C) 2018 Assured Information Security, Inc.
@@ -16,22 +18,35 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-if(ENABLE_BUILD_VMM)
-    vmm_extension(
-        eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src
-    )
+#
+# A helper script to initialize exit handler boilerplate
+#
 
-    vmm_extension(
-        eapis_main
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/main
-    )
-endif()
+set -e
 
-# if(ENABLE_BUILD_TEST)
-#     test_extension(
-#         eapis
-#         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
-#     )
-# endif()
+if [ $# -ne 1 ];
+then
+    echo "USAGE: <eapis-src>/scrpts/make-hdlr.sh <handler class name>"
+    exit 1
+fi
+
+if [ ! -d scripts ];
+then
+    echo "ERROR: Please ./scripts/make-hdlr.sh <name> from the src root"
+    exit 1
+fi
+
+INC=include/hve/arch/intel_x64/exit_handler
+SRC=src/hve/arch/intel_x64/exit_handler
+
+lower=$1
+upper=$(echo $1 | awk '{print toupper($0)}')
+
+cp -vn scripts/hdlr_tmpl.h $INC/$lower.h
+cp -vn scripts/hdlr_tmpl.cpp $SRC/$lower.cpp
+
+sed -i "s|CLASS|$lower|g" $SRC/$lower.cpp
+sed -i "s|CLASS|$lower|g" $INC/$lower.h
+
+sed -i "s|ifndef "$lower"\(.*\)|ifndef "$upper"_HDLR\1|"  $INC/$lower.h
+sed -i "s|define "$lower"\(.*\)|define "$upper"_HDLR\1|"  $INC/$lower.h
