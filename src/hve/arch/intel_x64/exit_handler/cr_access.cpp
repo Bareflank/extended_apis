@@ -17,7 +17,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <hve/arch/intel_x64/exit_handler/rdmsr.h>
+#include <hve/arch/intel_x64/exit_handler/cr_access.h>
 
 namespace eapis
 {
@@ -25,22 +25,22 @@ namespace intel_x64
 {
 
 void
-rdmsr::enable(gsl::not_null<exit_hdlr_t *> exit_hdlr)
+cr_access::enable(gsl::not_null<exit_hdlr_t *> exit_hdlr)
 {
     exit_hdlr->add_dispatch_delegate(
         s_reason,
-        hdlr_t::create<rdmsr_t, &rdmsr_t::handle>(this)
+        hdlr_t::create<cr_access_t, &cr_access_t::handle>(this)
     );
 }
 
 void
-rdmsr::set_default(hdlr_t &&hdlr)
+cr_access::set_default(hdlr_t &&hdlr)
 {
     m_def_hdlr = hdlr;
 }
 
 void
-rdmsr::set(const key_t key, hdlr_t &&hdlr)
+cr_access::set(const key_t key, hdlr_t &&hdlr)
 {
     if (m_handlers.count(key) > 0) {
         return;
@@ -50,14 +50,14 @@ rdmsr::set(const key_t key, hdlr_t &&hdlr)
 }
 
 void
-rdmsr::clear_default()
+cr_access::clear_default()
 {
     set_default(hdlr_t::create<nullptr>());
     return;
 }
 
 void
-rdmsr::clear(const key_t key)
+cr_access::clear(const key_t key)
 {
     if (m_handlers.count(key) == 0) {
         return;
@@ -68,9 +68,10 @@ rdmsr::clear(const key_t key)
 }
 
 bool
-rdmsr::handle(gsl::not_null<vmcs_t *> vmcs)
+cr_access::handle(gsl::not_null<vmcs_t *> vmcs)
 {
-    const auto key = vmcs->save_state()->rcx;
+    const auto key = cra::access_type::get();
+
     if (m_handlers.count(key) == 0) {
         if (m_def_hdlr.is_valid()) {
              return m_def_hdlr(vmcs);

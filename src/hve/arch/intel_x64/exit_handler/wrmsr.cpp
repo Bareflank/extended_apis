@@ -40,13 +40,13 @@ wrmsr::set_default(hdlr_t &&hdlr)
 }
 
 void
-wrmsr::set(const addr_t addr, hdlr_t &&hdlr)
+wrmsr::set(const key_t key, hdlr_t &&hdlr)
 {
-    if (m_handlers.count(addr) > 0) {
+    if (m_handlers.count(key) > 0) {
         return;
     }
 
-    m_handlers[addr] = hdlr;
+    m_handlers[key] = hdlr;
 }
 
 void
@@ -57,21 +57,21 @@ wrmsr::clear_default()
 }
 
 void
-wrmsr::clear(const addr_t addr)
+wrmsr::clear(const key_t key)
 {
-    if (m_handlers.count(addr) == 0) {
+    if (m_handlers.count(key) == 0) {
         return;
     }
 
-    m_handlers.erase(addr);
+    m_handlers.erase(key);
     return;
 }
 
 bool
 wrmsr::handle(gsl::not_null<vmcs_t *> vmcs)
 {
-    const auto addr = vmcs->save_state()->rcx;
-    if (m_handlers.count(addr) == 0) {
+    const auto key = vmcs->save_state()->rcx;
+    if (m_handlers.count(key) == 0) {
         if (m_def_hdlr.is_valid()) {
              return m_def_hdlr(vmcs);
         }
@@ -79,7 +79,7 @@ wrmsr::handle(gsl::not_null<vmcs_t *> vmcs)
         return false;
     }
 
-    return m_handlers[addr](vmcs);
+    return m_handlers[key](vmcs);
 }
 
 } // namespace intel_x64

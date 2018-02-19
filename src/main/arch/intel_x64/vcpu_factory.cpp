@@ -28,6 +28,8 @@
 
 #include <hve/arch/intel_x64/exit_handler/rdmsr.h>
 #include <hve/arch/intel_x64/exit_handler/wrmsr.h>
+#include <hve/arch/intel_x64/exit_handler/cr_access.h>
+
 #include <vic/arch/intel_x64/isr.h>
 
 namespace eapis
@@ -47,6 +49,19 @@ bool handle_wrmsr_3b(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
     return false;
 }
 
+bool handle_cr8(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+{
+    switch (cra::control_register_number::get()) {
+        case 8:
+            bfdebug_info(0, "handling cr8 access");
+            break;
+        default:
+            break;
+    }
+
+    return false;
+}
+
 class vcpu : public bfvmm::intel_x64::vcpu
 {
 public:
@@ -54,21 +69,23 @@ public:
         bfvmm::intel_x64::vcpu{id}
     {
         using vmcs_t = bfvmm::intel_x64::vmcs;
-        using hdlr_t = delegate<bool(gsl::not_null<vmcs_t *>)>;
+        using delegate_t = delegate<bool(gsl::not_null<vmcs_t *>)>;
 
         auto exit_hdlr = this->exit_handler();
 
         isr::init_vmm_idt(exit_hdlr);
-        //enable_interrupts();
-
 
         m_rdmsr = std::make_unique<eapis::intel_x64::rdmsr>();
-        m_rdmsr->set(msr_3b, hdlr_t::create<handle_rdmsr_3b>());
+        m_rdmsr->set(msr_3b, delegate_t::create<handle_rdmsr_3b>());
         m_rdmsr->enable(exit_hdlr);
 
         m_wrmsr = std::make_unique<eapis::intel_x64::wrmsr>();
-        m_wrmsr->set(msr_3b, hdlr_t::create<handle_wrmsr_3b>());
+        m_wrmsr->set(msr_3b, delegate_t::create<handle_wrmsr_3b>());
         m_wrmsr->enable(exit_hdlr);
+
+        m_cr8 = std::make_unique<eapis::intel_x64::cr_access>();
+        m_cr8->set(8, delegate_t::create<handle_cr8>());
+        m_cr8->enable(exit_hdlr);
     }
 
     ~vcpu() override
@@ -78,6 +95,7 @@ public:
 private:
     std::unique_ptr<eapis::intel_x64::rdmsr> m_rdmsr;
     std::unique_ptr<eapis::intel_x64::wrmsr> m_wrmsr;
+    std::unique_ptr<eapis::intel_x64::cr_access> m_cr8;
 };
 
 } // namespace intel_x64

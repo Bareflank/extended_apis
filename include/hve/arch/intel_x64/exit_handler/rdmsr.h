@@ -71,7 +71,7 @@ public:
     using vmcs_t = bfvmm::intel_x64::vmcs;
     using rdmsr_t = eapis::intel_x64::rdmsr;
     using hdlr_t = delegate<bool(gsl::not_null<vmcs_t *>)>;
-    using addr_t = uint64_t;
+    using key_t = uint64_t;
 
     constexpr static auto s_reason = reason::rdmsr;
 
@@ -123,10 +123,10 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param addr the address to listen to
+    /// @param key the address to listen to
     /// @param hdlr the handler to call when an exit at the address occurs
     ///
-    void set(const addr_t addr, hdlr_t &&hdlr);
+    void set(const key_t key, hdlr_t &&hdlr);
 
     /// Clear default
     ///
@@ -149,9 +149,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param addr the address that identifies the handler to remove
+    /// @param key the address that identifies the handler to remove
     ///
-    void clear(const addr_t addr);
+    void clear(const key_t key);
 
     /// Handle
     ///
@@ -181,7 +181,7 @@ public:
     /// @endcond
 
 private:
-    std::map<const addr_t, hdlr_t> m_handlers{};
+    std::map<const key_t, hdlr_t> m_handlers{};
     hdlr_t m_def_hdlr;
 };
 
