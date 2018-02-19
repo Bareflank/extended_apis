@@ -19,8 +19,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <eapis/util/bitmanip.h>
-#include <eapis/hve/arch/intel_x64/ept/ept_entry.h>
+#include <util/bitmanip.h>
+#include <hve/arch/intel_x64/ept/ept_entry.h>
 
 #include <arch/x64/misc.h>
 

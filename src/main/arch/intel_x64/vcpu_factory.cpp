@@ -26,16 +26,14 @@
 #include <bfvmm/vcpu/vcpu_factory.h>
 #include <bfvmm/vcpu/arch/intel_x64/vcpu.h>
 
-// TODO: have to reinstall when header is changed
-#include <eapis/hve/arch/intel_x64/exit_handler/rdmsr.h>
+#include <hve/arch/intel_x64/exit_handler/rdmsr.h>
+#include <vic/arch/intel_x64/isr.h>
 
 namespace eapis
 {
 namespace intel_x64
 {
 
-// This is the TSC_ADJUST 'hot' msr with linux, so you
-// really have to be fast for the box to not lockup
 static const auto msr_3b = 0x3b;
 
 bool handle_msr_3b(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
@@ -52,11 +50,14 @@ public:
         using vmcs_t = bfvmm::intel_x64::vmcs;
         using hdlr_t = delegate<bool(gsl::not_null<vmcs_t *>)>;
 
-        auto base_hdlr = this->exit_handler();
+        auto exit_hdlr = this->exit_handler();
 
         m_rdmsr = std::make_unique<eapis::intel_x64::rdmsr>();
         m_rdmsr->set(msr_3b, hdlr_t::create<handle_msr_3b>());
-        m_rdmsr->enable(base_hdlr);
+        m_rdmsr->enable(exit_hdlr);
+
+        isr::init_vmm_idt(exit_hdlr);
+        //enable_interrupts();
     }
 
     ~vcpu() override
@@ -80,4 +81,4 @@ vcpu_factory::make_vcpu(vcpuid::type vcpuid, bfobject *obj)
     return std::make_unique<eapis::intel_x64::vcpu>(vcpuid);
 }
 
-}
+} // namespace bfvmm

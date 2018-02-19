@@ -21,7 +21,7 @@
 
 #include <bfexception.h>
 #include <bfvmm/memory_manager/memory_manager.h>
-#include <eapis/hve/arch/intel_x64/ept/root_ept.h>
+#include <hve/arch/intel_x64/ept/root_ept.h>
 
 namespace intel = eapis::intel_x64;
 namespace mem_attr = ::intel_x64::ept::memory_attr;

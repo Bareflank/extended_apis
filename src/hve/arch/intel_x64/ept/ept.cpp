@@ -22,7 +22,7 @@
 #include <arch/x64/misc.h>
 #include <bfvector.h>
 #include <bfvmm/memory_manager/memory_manager.h>
-#include <eapis/hve/arch/intel_x64/ept/ept.h>
+#include <hve/arch/intel_x64/ept/ept.h>
 
 namespace intel = eapis::intel_x64;
 

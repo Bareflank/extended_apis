@@ -21,11 +21,11 @@ project(eapis C CXX)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
-    INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../..
+    INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../include
 )
 
 add_subdirectory(hve)
-#add_subdirectory(vic)
+add_subdirectory(vic)
 
 # -----------------------------------------------------------------------------
 # Install

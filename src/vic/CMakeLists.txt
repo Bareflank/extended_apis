@@ -16,28 +16,35 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-list(APPEND SOURCES
-    arch/intel_x64/vapic/vapic.cpp
-)
+if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
+    list(APPEND SOURCES
+        arch/intel_x64/isr.cpp
+    )
+
+    if (NOT WIN32 AND NOT ENABLE_MOCKING)
+        list(APPEND SOURCES
+                arch/intel_x64/isr.asm
+        )
+    endif()
+
+elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
+    message(WARNING "Unimplemented")
+else()
+    message(FATAL_ERROR "Unsupported archiecture")
+endif()
 
 add_shared_library(
     eapis_vic
-    #    DEPENDS bfvmm_hve
-    #    DEPENDS bfvmm_memory_manager
-    #    SOURCES ${SOURCES}
-    #    DEFINES SHARED_EAPIS_HVE
-    #    DEFINES SHARED_HVE
-    #    DEFINES SHARED_MEMORY_MANAGER
-    #    DEFINES SHARED_INTRINSICS
+    SOURCES ${SOURCES}
+    DEFINES SHARED_EAPIS_VIC
+    DEFINES SHARED_VIC
+    DEFINES SHARED_INTRINSICS
 )
 
 add_static_library(
     eapis_vic
-    #    DEPENDS bfvmm_hve
-    #    DEPENDS bfvmm_memory_manager
-    #    SOURCES ${SOURCES}
-    #    DEFINES STATIC_EAPIS_HVE
-    #    DEFINES STATIC_HVE
-    #    DEFINES STATIC_MEMORY_MANAGER
-    #    DEFINES STATIC_INTRINSICS
+    SOURCES ${SOURCES}
+    DEFINES STATIC_EAPIS_VIC
+    DEFINES STATIC_VIC
+    DEFINES STATIC_INTRINSICS
 )

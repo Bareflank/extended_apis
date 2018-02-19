@@ -20,7 +20,9 @@ cmake_minimum_required(VERSION 3.6)
 project(eapis_main C CXX)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project()
+init_project(
+    INCLUDES "../../include"
+)
 
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
@@ -35,5 +37,5 @@ endif()
 add_vmm_executable(
     eapis_vmm
     SOURCES ${SOURCES}
-    #    LIBRARIES eapis_hve
+    LIBRARIES eapis_vic
 )
