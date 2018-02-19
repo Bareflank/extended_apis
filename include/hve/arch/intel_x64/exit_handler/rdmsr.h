@@ -60,7 +60,7 @@ namespace reason = ::intel_x64::vmcs::exit_reason::basic_exit_reason;
 // Definitions
 // -----------------------------------------------------------------------------
 
-/// rdmsr
+/// rdmsr handler
 ///
 ///
 class EXPORT_EAPIS_HVE rdmsr
@@ -69,7 +69,6 @@ public:
 
     using exit_hdlr_t = bfvmm::intel_x64::exit_handler;
     using vmcs_t = bfvmm::intel_x64::vmcs;
-
     using rdmsr_t = eapis::intel_x64::rdmsr;
     using hdlr_t = delegate<bool(gsl::not_null<vmcs_t *>)>;
     using addr_t = uint64_t;
@@ -98,13 +97,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    void enable(gsl::not_null<exit_hdlr_t *> exit_hdlr)
-    {
-        exit_hdlr->add_dispatch_delegate(
-            s_reason,
-            hdlr_t::create<rdmsr_t, &rdmsr_t::handle>(this)
-        );
-    }
+    void enable(gsl::not_null<exit_hdlr_t *> exit_hdlr);
 
     /// Set default
     ///
@@ -116,10 +109,7 @@ public:
     ///
     /// @param hdlr the handler to call when a rdmsr exit occurs
     ///
-    void set_default(hdlr_t &&hdlr)
-    {
-        m_def_hdlr = hdlr;
-    }
+    void set_default(hdlr_t &&hdlr);
 
     /// Set single address handler
     ///
@@ -136,14 +126,7 @@ public:
     /// @param addr the address to listen to
     /// @param hdlr the handler to call when an exit at the address occurs
     ///
-    void set(const addr_t addr, hdlr_t &&hdlr)
-    {
-        if (m_handlers.count(addr) > 0) {
-            return;
-        }
-
-        m_handlers[addr] = hdlr;
-    }
+    void set(const addr_t addr, hdlr_t &&hdlr);
 
     /// Clear default
     ///
@@ -153,11 +136,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    void clear_default()
-    {
-        set_default(hdlr_t::create<nullptr>());
-        return;
-    }
+    void clear_default();
 
     /// Clear
     ///
@@ -172,15 +151,7 @@ public:
     ///
     /// @param addr the address that identifies the handler to remove
     ///
-    void clear(const addr_t addr)
-    {
-        if (m_handlers.count(addr) == 0) {
-            return;
-        }
-
-        m_handlers.erase(addr);
-        return;
-    }
+    void clear(const addr_t addr);
 
     /// Handle
     ///
@@ -197,22 +168,7 @@ public:
     ///
     /// @param vmcs the vmcs state passed to each handler
     ///
-    bool handle(gsl::not_null<vmcs_t *> vmcs)
-    {
-        const auto addr = vmcs->save_state()->rcx;
-        if (m_handlers.count(addr) == 0) {
-            if (m_def_hdlr.is_valid()) {
-                bfdebug_info(0, "v");
-                 return m_def_hdlr(vmcs);
-            }
-
-            bfdebug_info(0, "i");
-
-            return false;
-        }
-
-        return m_handlers[addr](vmcs);
-    }
+    bool handle(gsl::not_null<vmcs_t *> vmcs);
 
     /// @cond
 

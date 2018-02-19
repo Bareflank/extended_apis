@@ -24,8 +24,62 @@ namespace eapis
 namespace intel_x64
 {
 
-rdmsr::rdmsr()
+void
+rdmsr::enable(gsl::not_null<exit_hdlr_t *> exit_hdlr)
 {
+    exit_hdlr->add_dispatch_delegate(
+        s_reason,
+        hdlr_t::create<rdmsr_t, &rdmsr_t::handle>(this)
+    );
+}
+
+void
+rdmsr::set_default(hdlr_t &&hdlr)
+{
+    m_def_hdlr = hdlr;
+}
+
+void
+rdmsr::set(const addr_t addr, hdlr_t &&hdlr)
+{
+    if (m_handlers.count(addr) > 0) {
+        return;
+    }
+
+    m_handlers[addr] = hdlr;
+}
+
+void
+rdmsr::clear_default()
+{
+    set_default(hdlr_t::create<nullptr>());
+    return;
+}
+
+void
+rdmsr::clear(const addr_t addr)
+{
+    if (m_handlers.count(addr) == 0) {
+        return;
+    }
+
+    m_handlers.erase(addr);
+    return;
+}
+
+bool
+rdmsr::handle(gsl::not_null<vmcs_t *> vmcs)
+{
+    const auto addr = vmcs->save_state()->rcx;
+    if (m_handlers.count(addr) == 0) {
+        if (m_def_hdlr.is_valid()) {
+             return m_def_hdlr(vmcs);
+        }
+
+        return false;
+    }
+
+    return m_handlers[addr](vmcs);
 }
 
 } // namespace intel_x64

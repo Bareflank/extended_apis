@@ -18,7 +18,7 @@
 
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
-
+        arch/intel_x64/exit_handler/rdmsr.cpp
     )
 elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
     message(WARNING "Unimplemented")
