@@ -1,6 +1,6 @@
 #
 # Bareflank Hypervisor
-# Copyright (C) 2018 Assured Information Security, Inc.
+# Copyright (C) 2015 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,14 +17,31 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 cmake_minimum_required(VERSION 3.6)
-project(eapis_test C CXX)
+project(eapis_main C CXX)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project(
-    INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../include
+init_project()
+
+add_vmm_executable(
+    eapis_integration_intel_x64_crs_trap_cr0
+    SOURCES trap_cr0.cpp
+    LIBRARIES eapis_hve
 )
 
-add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
+add_vmm_executable(
+    eapis_integration_intel_x64_crs_trap_cr3
+    SOURCES trap_cr3.cpp
+    LIBRARIES eapis_hve
+)
 
-add_subdirectory(hve)
-add_subdirectory(util)
+add_vmm_executable(
+    eapis_integration_intel_x64_crs_trap_cr4
+    SOURCES trap_cr4.cpp
+    LIBRARIES eapis_hve
+)
+
+add_vmm_executable(
+    eapis_integration_intel_x64_crs_trap_cr8
+    SOURCES trap_cr8.cpp
+    LIBRARIES eapis_hve
+)
