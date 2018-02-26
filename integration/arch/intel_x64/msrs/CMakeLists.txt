@@ -1,6 +1,6 @@
-
+#
 # Bareflank Hypervisor
-# Copyright (C) 2018 Assured Information Security, Inc.
+# Copyright (C) 2015 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,10 +16,32 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-list(APPEND ARGN
+cmake_minimum_required(VERSION 3.6)
+project(eapis_main C CXX)
+
+include(${SOURCE_CMAKE_DIR}/project.cmake)
+init_project()
+
+add_vmm_executable(
+    eapis_integration_intel_x64_msrs_pass_through_all_vmm
+    SOURCES pass_through_all.cpp
+    LIBRARIES eapis_hve
 )
 
-do_test(test_bitmanip
-    SOURCES test_bitmanip.cpp
-    ${ARGN}
+add_vmm_executable(
+    eapis_integration_intel_x64_msrs_pass_through_specific_vmm
+    SOURCES pass_through_specific.cpp
+    LIBRARIES eapis_hve
+)
+
+add_vmm_executable(
+    eapis_integration_intel_x64_msrs_trap_all_vmm
+    SOURCES trap_all.cpp
+    LIBRARIES eapis_hve
+)
+
+add_vmm_executable(
+    eapis_integration_intel_x64_msrs_trap_specific_vmm
+    SOURCES trap_specific.cpp
+    LIBRARIES eapis_hve
 )

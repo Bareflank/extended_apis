@@ -55,8 +55,8 @@ build_script:
   #
   # Cygwin (Shared Libraries)
   #
-  - set PATH=%BFPATH%;%APPVEYOR_BUILD_FOLDER%/hypervisor/build_cygwin/bfprefix/bin
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; mkdir hypervisor/build_cygwin"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; cmake -DEXTENSIONS="../../CMakeLists.txt" -DENABLE_BUILD_TEST=ON .."'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make -j3"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make unittest"'
+  # - set PATH=%BFPATH%;%APPVEYOR_BUILD_FOLDER%/hypervisor/build_cygwin/bfprefix/bin
+  # - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; mkdir hypervisor/build_cygwin"'
+  # - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; cmake -DEXTENSIONS="../../CMakeLists.txt" -DENABLE_BUILD_TEST=ON .."'
+  # - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make -j3"'
+  # - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make unittest"'

@@ -1,6 +1,5 @@
 //
 // Bareflank Extended APIs
-//
 // Copyright (C) 2018 Assured Information Security, Inc.
 //
 // This library is free software; you can redistribute it and/or
@@ -17,46 +16,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef CLASS_INTEL_X64_EAPIS_H
-#define CLASS_INTEL_X64_EAPIS_H
+#include <bfvmm/vcpu/vcpu_factory.h>
+#include <eapis/vcpu/arch/intel_x64/vcpu.h>
 
-#include <bfgsl.h>
-#include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
+using namespace eapis::intel_x64;
 
 // -----------------------------------------------------------------------------
-// Exports
+// Handlers
 // -----------------------------------------------------------------------------
 
-#include <bfexports.h>
-
-#ifndef STATIC_EAPIS_HVE
-#ifdef SHARED_EAPIS_HVE
-#define EXPORT_EAPIS_HVE EXPORT_SYM
-#else
-#define EXPORT_EAPIS_HVE IMPORT_SYM
-#endif
-#else
-#define EXPORT_EAPIS_HVE
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#endif
-
-namespace eapis
+bool
+test_handler(
+    gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs, crs::info_t &info)
 {
-namespace intel_x64
+    bfignored(vmcs);
+
+    info.shadow = info.val;
+    info.val |= ::intel_x64::cr4::vmx_enable_bit::mask;
+
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+// vCPU
+// -----------------------------------------------------------------------------
+
+namespace test
 {
 
-// -----------------------------------------------------------------------------
-// Definitions
-// -----------------------------------------------------------------------------
-
-/// CLASS
-///
-///
-class EXPORT_EAPIS_HVE CLASS
+class vcpu : public eapis::intel_x64::vcpu
 {
 public:
 
@@ -65,31 +53,43 @@ public:
     /// @expects
     /// @ensures
     ///
-    CLASS();
+    vcpu(vcpuid::type id) :
+        eapis::intel_x64::vcpu{id}
+    {
+        enable_cr_trapping();
+
+        crs()->enable_wrcr4_trapping(
+            0xFFFFFFFFFFFFFFFF,
+            ::intel_x64::vmcs::guest_cr4::get()
+        );
+
+        crs()->add_wrcr4_handler(
+            crs::wrcr4_handler_delegate_t::create<test_handler>()
+        );
+    }
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~CLASS() = default;
-
-    /// @cond
-
-    CLASS(CLASS &&) = default;
-    CLASS &operator=(CLASS &&) = default;
-
-    CLASS(const CLASS &) = delete;
-    CLASS &operator=(const CLASS &) = delete;
-
-    /// @endcond
+    ~vcpu() = default;
 };
 
-} // namespace intel_x64
-} // namespace eapis
+}
 
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+// -----------------------------------------------------------------------------
+// vCPU Factory
+// -----------------------------------------------------------------------------
 
-#endif
+namespace bfvmm
+{
+
+std::unique_ptr<vcpu>
+vcpu_factory::make_vcpu(vcpuid::type vcpuid, bfobject *obj)
+{
+    bfignored(obj);
+    return std::make_unique<test::vcpu>(vcpuid);
+}
+
+}

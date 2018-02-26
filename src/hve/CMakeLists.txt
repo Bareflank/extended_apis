@@ -18,10 +18,8 @@
 
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
-        arch/intel_x64/exit_handler/rdmsr.cpp
-        arch/intel_x64/exit_handler/wrmsr.cpp
-        arch/intel_x64/exit_handler/cr_access.cpp
-        arch/intel_x64/exit_handler/misc.cpp
+        arch/intel_x64/crs.cpp
+        arch/intel_x64/msrs.cpp
     )
 elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
     message(WARNING "Unimplemented")
