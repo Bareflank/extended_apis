@@ -219,14 +219,21 @@ msrs::handle_rdmsr(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 
         struct info_t info = {
             msr,
-            val
+            val,
+            false,
+            false
         };
 
         for (const auto &d : hdlrs->second) {
             if (d(vmcs, info)) {
                 vmcs->save_state()->rax = ((info.val >> 0x00) & 0x00000000FFFFFFFF);
                 vmcs->save_state()->rdx = ((info.val >> 0x20) & 0x00000000FFFFFFFF);
-                return advance(vmcs);
+
+                if (!info.ignore_advance) {
+                    return advance(vmcs);
+                }
+
+                return true;
             }
         }
     }
@@ -259,13 +266,22 @@ msrs::handle_wrmsr(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 
         struct info_t info = {
             msr,
-            val
+            val,
+            false,
+            false
         };
 
         for (const auto &d : hdlrs->second) {
             if (d(vmcs, info)) {
-                emulate_wrmsr(msr, info.val);
-                return advance(vmcs);
+                if (!info.ignore_write) {
+                    emulate_wrmsr(msr, info.val);
+                }
+
+                if (!info.ignore_advance) {
+                    return advance(vmcs);
+                }
+
+                return true;
             }
         }
     }

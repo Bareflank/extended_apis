@@ -66,6 +66,8 @@ public:
     struct info_t {
         ::x64::msrs::field_type msr;    // In
         ::x64::msrs::value_type val;    // In / Out
+        bool ignore_write;              // Out
+        bool ignore_advance;            // Out
     };
 
     using rdmsr_handler_delegate_t =
