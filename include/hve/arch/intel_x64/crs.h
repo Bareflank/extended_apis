@@ -19,34 +19,7 @@
 #ifndef CRS_INTEL_X64_EAPIS_H
 #define CRS_INTEL_X64_EAPIS_H
 
-#include <bfgsl.h>
-
-#include <list>
-#include <unordered_map>
-
-#include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
-#include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
-
-// -----------------------------------------------------------------------------
-// Exports
-// -----------------------------------------------------------------------------
-
-#include <bfexports.h>
-
-#ifndef STATIC_EAPIS_HVE
-#ifdef SHARED_EAPIS_HVE
-#define EXPORT_EAPIS_HVE EXPORT_SYM
-#else
-#define EXPORT_EAPIS_HVE IMPORT_SYM
-#endif
-#else
-#define EXPORT_EAPIS_HVE
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#endif
+#include "base.h"
 
 // -----------------------------------------------------------------------------
 // Definitions
@@ -57,35 +30,34 @@ namespace eapis
 namespace intel_x64
 {
 
-class EXPORT_EAPIS_HVE crs
+class EXPORT_EAPIS_HVE crs : public base
 {
 public:
 
-    using mask_t = ::intel_x64::vmcs::value_type;
-    using shadow_t = ::intel_x64::vmcs::value_type;
-
     struct info_t {
-        uint64_t val;     // In / Out
-        uint64_t shadow;  // Out
+        uint64_t val;           // In / Out
+        uint64_t shadow;        // Out
+        bool ignore_write;      // Out
+        bool ignore_advance;    // Out
     };
 
     using wrcr0_handler_delegate_t =
-        delegate<bool(gsl::not_null<bfvmm::intel_x64::vmcs *>, info_t &)>;
+        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     using rdcr3_handler_delegate_t =
-        delegate<bool(gsl::not_null<bfvmm::intel_x64::vmcs *>, info_t &)>;
+        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     using wrcr3_handler_delegate_t =
-        delegate<bool(gsl::not_null<bfvmm::intel_x64::vmcs *>, info_t &)>;
+        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     using wrcr4_handler_delegate_t =
-        delegate<bool(gsl::not_null<bfvmm::intel_x64::vmcs *>, info_t &)>;
+        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     using rdcr8_handler_delegate_t =
-        delegate<bool(gsl::not_null<bfvmm::intel_x64::vmcs *>, info_t &)>;
+        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     using wrcr8_handler_delegate_t =
-        delegate<bool(gsl::not_null<bfvmm::intel_x64::vmcs *>, info_t &)>;
+        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     /// Constructor
     ///
@@ -93,7 +65,7 @@ public:
     /// @ensures
     ///
     crs(
-        gsl::not_null<bfvmm::intel_x64::exit_handler *> exit_handler
+        gsl::not_null<exit_handler_t *> exit_handler
     );
 
     /// Destructor
@@ -101,7 +73,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~crs();
+    ~crs() final;
 
 public:
 
@@ -169,7 +141,8 @@ public:
     /// @expects
     /// @ensures
     ///
-    void enable_wrcr0_trapping(mask_t mask, shadow_t shadow);
+    void enable_wrcr0_trapping(
+        vmcs_n::value_type mask, vmcs_n::value_type shadow);
 
     /// Enable Read CR3 Trapping
     ///
@@ -205,7 +178,8 @@ public:
     /// @expects
     /// @ensures
     ///
-    void enable_wrcr4_trapping(mask_t mask, shadow_t shadow);
+    void enable_wrcr4_trapping(
+        vmcs_n::value_type mask, vmcs_n::value_type shadow);
 
     /// Enable Read CR8 Trapping
     ///
@@ -231,34 +205,9 @@ public:
     ///
     void enable_wrcr8_trapping();
 
-#ifndef NDEBUG
 public:
 
-    /// Enable Log
-    ///
-    /// Example:
-    /// @code
-    /// this->enable_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void enable_log();
-
-    /// Disable Log
-    ///
-    /// Example:
-    /// @code
-    /// this->disable_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable_log();
-
-    /// Dump CR0 Log
+    /// Dump Log
     ///
     /// Example:
     /// @code
@@ -268,39 +217,29 @@ public:
     /// @expects
     /// @ensures
     ///
-    void dump_log();
-#endif
+    void dump_log() final;
 
 public:
 
     /// @cond
 
-    bool handle_crs(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
-    bool handle_cr3(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
-    bool handle_cr8(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
-
-    bool handle_wrcr0(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
-    bool handle_rdcr3(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
-    bool handle_wrcr3(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
-    bool handle_wrcr4(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
-    bool handle_rdcr8(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
-    bool handle_wrcr8(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
+    bool handle_crs(gsl::not_null<vmcs_t *> vmcs);
 
     /// @endcond
 
 private:
 
-    uintptr_t emulate_rdgpr(
-        gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs
-    );
+    bool handle_cr3(gsl::not_null<vmcs_t *> vmcs);
+    bool handle_cr8(gsl::not_null<vmcs_t *> vmcs);
 
-    void emulate_wrgpr(
-        gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs, uintptr_t val
-    );
+    bool handle_wrcr0(gsl::not_null<vmcs_t *> vmcs);
+    bool handle_rdcr3(gsl::not_null<vmcs_t *> vmcs);
+    bool handle_wrcr3(gsl::not_null<vmcs_t *> vmcs);
+    bool handle_wrcr4(gsl::not_null<vmcs_t *> vmcs);
+    bool handle_rdcr8(gsl::not_null<vmcs_t *> vmcs);
+    bool handle_wrcr8(gsl::not_null<vmcs_t *> vmcs);
 
-private:
-
-    bfvmm::intel_x64::exit_handler *m_exit_handler;
+    exit_handler_t *m_exit_handler;
 
     std::list<wrcr0_handler_delegate_t> m_wrcr0_handlers;
     std::list<rdcr3_handler_delegate_t> m_rdcr3_handlers;
@@ -309,15 +248,19 @@ private:
     std::list<rdcr8_handler_delegate_t> m_rdcr8_handlers;
     std::list<wrcr8_handler_delegate_t> m_wrcr8_handlers;
 
-#ifndef NDEBUG
-    bool m_log_enabled{false};
-    std::list<::intel_x64::cr0::value_type> m_wrcr0_log;
-    std::list<::intel_x64::cr3::value_type> m_rdcr3_log;
-    std::list<::intel_x64::cr3::value_type> m_wrcr3_log;
-    std::list<::intel_x64::cr4::value_type> m_wrcr4_log;
-    std::list<::intel_x64::cr8::value_type> m_rdcr8_log;
-    std::list<::intel_x64::cr8::value_type> m_wrcr8_log;
-#endif
+private:
+
+    struct cr_record_t {
+        uint64_t val;
+        uint64_t shadow;
+        bool out;           // True == out
+        bool dir;           // True == read
+    };
+
+    std::list<cr_record_t> m_cr0_log;
+    std::list<cr_record_t> m_cr3_log;
+    std::list<cr_record_t> m_cr4_log;
+    std::list<cr_record_t> m_cr8_log;
 
 public:
 
@@ -334,9 +277,5 @@ public:
 
 }
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 #endif

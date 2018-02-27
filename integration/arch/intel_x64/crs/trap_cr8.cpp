@@ -42,6 +42,10 @@ public:
     {
         enable_cr_trapping();
 
+        if (!ndebug) {
+            crs()->enable_log();
+        }
+
         crs()->enable_rdcr8_trapping();
         crs()->enable_wrcr8_trapping();
 
@@ -70,7 +74,7 @@ public:
     ///
     bool
     test_rdcr8_handler(
-        gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs, crs::info_t &info)
+        gsl::not_null<vmcs_t *> vmcs, crs::info_t &info)
     {
         bfignored(vmcs);
 
@@ -85,7 +89,7 @@ public:
     ///
     bool
     test_wrcr8_handler(
-        gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs, crs::info_t &info)
+        gsl::not_null<vmcs_t *> vmcs, crs::info_t &info)
     {
         bfignored(vmcs);
 

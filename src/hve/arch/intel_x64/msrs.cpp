@@ -27,12 +27,10 @@ namespace eapis
 namespace intel_x64
 {
 
-msrs::msrs(
-    gsl::not_null<bfvmm::intel_x64::exit_handler *> exit_handler)
-:
+msrs::msrs(gsl::not_null<exit_handler_t *> exit_handler) :
     m_exit_handler{exit_handler}
 {
-    using namespace ::intel_x64::vmcs;
+    using namespace vmcs_n;
 
     m_msr_bitmap = std::make_unique<uint8_t[]>(::x64::page_size);
     m_msr_bitmap_view = gsl::make_span(m_msr_bitmap, ::x64::page_size);
@@ -41,23 +39,21 @@ msrs::msrs(
     primary_processor_based_vm_execution_controls::use_msr_bitmap::enable();
 
     m_exit_handler->add_handler(
-        ::intel_x64::vmcs::exit_reason::basic_exit_reason::rdmsr,
+        exit_reason::basic_exit_reason::rdmsr,
         handler_delegate_t::create<msrs, &msrs::handle_rdmsr>(this)
     );
 
     m_exit_handler->add_handler(
-        ::intel_x64::vmcs::exit_reason::basic_exit_reason::wrmsr,
+        exit_reason::basic_exit_reason::wrmsr,
         handler_delegate_t::create<msrs, &msrs::handle_wrmsr>(this)
     );
 }
 
 msrs::~msrs()
 {
-#ifndef NDEBUG
-    if(m_log_enabled) {
+    if (!ndebug && this->is_logging_enabled()) {
         dump_log();
     }
-#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -65,11 +61,12 @@ msrs::~msrs()
 // -----------------------------------------------------------------------------
 
 void
-msrs::add_rdmsr_handler(msr_t msr, rdmsr_handler_delegate_t &&d)
+msrs::add_rdmsr_handler(
+    vmcs_n::value_type msr, rdmsr_handler_delegate_t &&d)
 { m_rdmsr_handlers[msr].push_front(std::move(d)); }
 
 void
-msrs::trap_on_rdmsr_access(msr_t msr)
+msrs::trap_on_rdmsr_access(vmcs_n::value_type msr)
 {
     if (msr <= 0x00001FFFUL) {
         return set_bit(m_msr_bitmap_view, (msr - 0x00000000UL) + 0);
@@ -87,7 +84,7 @@ msrs::trap_on_all_rdmsr_accesses()
 { memset(&m_msr_bitmap_view[0], 0xFF, ::x64::page_size >> 1); }
 
 void
-msrs::pass_through_rdmsr_access(msr_t msr)
+msrs::pass_through_rdmsr_access(vmcs_n::value_type msr)
 {
     if (msr <= 0x00001FFFUL) {
         return clear_bit(m_msr_bitmap_view, (msr - 0x00000000) + 0);
@@ -109,11 +106,12 @@ msrs::pass_through_all_rdmsr_accesses()
 // -----------------------------------------------------------------------------
 
 void
-msrs::add_wrmsr_handler(msr_t msr, wrmsr_handler_delegate_t &&d)
+msrs::add_wrmsr_handler(
+    vmcs_n::value_type msr, wrmsr_handler_delegate_t &&d)
 { m_wrmsr_handlers[msr].push_front(std::move(d)); }
 
 void
-msrs::trap_on_wrmsr_access(msr_t msr)
+msrs::trap_on_wrmsr_access(vmcs_n::value_type msr)
 {
     if (msr <= 0x00001FFFUL) {
         return set_bit(m_msr_bitmap_view, (msr - 0x00000000UL) + 0x4000);
@@ -131,7 +129,7 @@ msrs::trap_on_all_wrmsr_accesses()
 { memset(&m_msr_bitmap_view[2048], 0xFF, ::x64::page_size >> 1); }
 
 void
-msrs::pass_through_wrmsr_access(msr_t msr)
+msrs::pass_through_wrmsr_access(vmcs_n::value_type msr)
 {
     if (msr <= 0x00001FFFUL) {
         return clear_bit(m_msr_bitmap_view, (msr - 0x00000000UL) + 0x4000);
@@ -152,16 +150,6 @@ msrs::pass_through_all_wrmsr_accesses()
 // Debug
 // -----------------------------------------------------------------------------
 
-#ifndef NDEBUG
-
-void
-msrs::enable_log()
-{ m_log_enabled = true; }
-
-void
-msrs::disable_log()
-{ m_log_enabled = false; }
-
 void
 msrs::dump_log()
 {
@@ -170,62 +158,58 @@ msrs::dump_log()
         bfdebug_info(0, "msrs log", msg);
         bfdebug_brk2(0, msg);
 
-        bfdebug_info(0, "rdmsr log", msg);
-        for(const auto &msr : m_rdmsr_log) {
-            for(const auto &record : msr.second) {
-                bfdebug_subnhex(0, bfn::to_string(msr.first, 16).c_str(), record, msg);
-            }
-        }
-
-        bfdebug_info(0, "wrmsr log", msg);
-        for(const auto &msr : m_wrmsr_log) {
-            for(const auto &record : msr.second) {
-                bfdebug_subnhex(0, bfn::to_string(msr.first, 16).c_str(), record, msg);
-            }
+        for (const auto &record : m_log) {
+            bfdebug_info(0, "record", msg);
+            bfdebug_subnhex(0, "msr", record.msr, msg);
+            bfdebug_subnhex(0, "val", record.val, msg);
+            bfdebug_subbool(0, "out", record.out, msg);
+            bfdebug_subbool(0, "dir", record.dir, msg);
         }
 
         bfdebug_lnbr(0, msg);
     });
 }
 
-#endif
-
 // -----------------------------------------------------------------------------
 // Handlers
 // -----------------------------------------------------------------------------
 
 bool
-msrs::handle_rdmsr(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+msrs::handle_rdmsr(gsl::not_null<vmcs_t *> vmcs)
 {
-    auto msr = gsl::narrow_cast<::x64::msrs::field_type>(
-        vmcs->save_state()->rcx
-    );
-
-    auto val = emulate_rdmsr(
-        msr
-    );
-
-    const auto &hdlrs = m_rdmsr_handlers.find(
-        msr
-    );
-
-#ifndef NDEBUG
-    if (m_log_enabled) {
-        m_rdmsr_log[msr].push_back(val);
-    }
-#endif
+    const auto &hdlrs =
+        m_rdmsr_handlers.find(
+            vmcs->save_state()->rcx
+        );
 
     if (GSL_LIKELY(hdlrs != m_rdmsr_handlers.end())) {
 
+        auto val = emulate_rdmsr(
+                       gsl::narrow_cast<::x64::msrs::field_type>(vmcs->save_state()->rcx)
+                   );
+
         struct info_t info = {
-            msr,
+            vmcs->save_state()->rcx,
             val,
             false,
             false
         };
 
+        if (!ndebug && this->is_logging_enabled()) {
+            add_record(m_log, {
+                info.msr, info.val, false, true
+            });
+        }
+
         for (const auto &d : hdlrs->second) {
             if (d(vmcs, info)) {
+
+                if (!ndebug && this->is_logging_enabled()) {
+                    add_record(m_log, {
+                        info.msr, info.val, true, true
+                    });
+                }
+
                 vmcs->save_state()->rax = ((info.val >> 0x00) & 0x00000000FFFFFFFF);
                 vmcs->save_state()->rdx = ((info.val >> 0x20) & 0x00000000FFFFFFFF);
 
@@ -242,39 +226,45 @@ msrs::handle_rdmsr(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 }
 
 bool
-msrs::handle_wrmsr(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+msrs::handle_wrmsr(gsl::not_null<vmcs_t *> vmcs)
 {
-    auto msr = gsl::narrow_cast<::x64::msrs::field_type>(
-        vmcs->save_state()->rcx
-    );
-
-    auto val =
-        ((vmcs->save_state()->rax & 0x00000000FFFFFFFF) << 0x00) |
-        ((vmcs->save_state()->rdx & 0x00000000FFFFFFFF) << 0x20);
-
-    const auto &hdlrs = m_wrmsr_handlers.find(
-        msr
-    );
-
-#ifndef NDEBUG
-    if (m_log_enabled) {
-        m_wrmsr_log[msr].push_back(val);
-    }
-#endif
+    const auto &hdlrs =
+        m_wrmsr_handlers.find(
+            vmcs->save_state()->rcx
+        );
 
     if (GSL_LIKELY(hdlrs != m_wrmsr_handlers.end())) {
 
+        auto val = ((vmcs->save_state()->rax & 0x00000000FFFFFFFF) << 0) |
+                   ((vmcs->save_state()->rdx & 0x00000000FFFFFFFF) << 32);
+
         struct info_t info = {
-            msr,
+            vmcs->save_state()->rcx,
             val,
             false,
             false
         };
 
+        if (!ndebug && this->is_logging_enabled()) {
+            add_record(m_log, {
+                info.msr, info.val, true, false
+            });
+        }
+
         for (const auto &d : hdlrs->second) {
             if (d(vmcs, info)) {
+
+                if (!ndebug && this->is_logging_enabled()) {
+                    add_record(m_log, {
+                        info.msr, info.val, false, false
+                    });
+                }
+
                 if (!info.ignore_write) {
-                    emulate_wrmsr(msr, info.val);
+                    emulate_wrmsr(
+                        gsl::narrow_cast<::x64::msrs::field_type>(info.msr),
+                        info.val
+                    );
                 }
 
                 if (!info.ignore_advance) {

@@ -29,15 +29,33 @@ if(ENABLE_BUILD_VMM)
     )
 
     vmm_extension(
+        eapis_integration_intel_x64_cpuid
+        DEPENDS eapis
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/integration/arch/intel_x64/cpuid/
+    )
+
+    vmm_extension(
         eapis_integration_intel_x64_crs
         DEPENDS eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/integration/arch/intel_x64/crs/
     )
 
     vmm_extension(
+        eapis_integration_intel_x64_drs
+        DEPENDS eapis
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/integration/arch/intel_x64/drs/
+    )
+
+    vmm_extension(
         eapis_integration_intel_x64_msrs
         DEPENDS eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/integration/arch/intel_x64/msrs/
+    )
+
+    vmm_extension(
+        eapis_integration_intel_x64_vpid
+        DEPENDS eapis
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/integration/arch/intel_x64/vpid/
     )
 endif()
 

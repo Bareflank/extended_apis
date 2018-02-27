@@ -18,8 +18,11 @@
 
 #include <bfvmm/vcpu/arch/intel_x64/vcpu.h>
 
+#include "../../../hve/arch/intel_x64/cpuid.h"
 #include "../../../hve/arch/intel_x64/crs.h"
+#include "../../../hve/arch/intel_x64/drs.h"
 #include "../../../hve/arch/intel_x64/msrs.h"
+#include "../../../hve/arch/intel_x64/vpid.h"
 
 namespace eapis
 {
@@ -49,6 +52,29 @@ public:
 public:
 
     //--------------------------------------------------------------------------
+    // CPUID
+    //--------------------------------------------------------------------------
+
+    /// Enable CPUID Trapping
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void enable_cpuid_trapping()
+    { m_cpuid = std::make_unique<eapis::intel_x64::cpuid>(this->exit_handler()); }
+
+    /// Get CPUID Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the CPUID object stored in the vCPU if CPUID trapping is
+    ///     enabled, otherwise a nullptr is returned.
+    ///
+    auto *cpuid()
+    { return m_cpuid.get(); }
+
+    //--------------------------------------------------------------------------
     // CRs
     //--------------------------------------------------------------------------
 
@@ -70,6 +96,29 @@ public:
     ///
     auto *crs()
     { return m_crs.get(); }
+
+    //--------------------------------------------------------------------------
+    // DRs
+    //--------------------------------------------------------------------------
+
+    /// Enable DR Trapping
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void enable_dr_trapping()
+    { m_drs = std::make_unique<eapis::intel_x64::drs>(this->exit_handler()); }
+
+    /// Get DR Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the DR object stored in the vCPU if DR trapping is
+    ///     enabled, otherwise a nullptr is returned.
+    ///
+    auto *drs()
+    { return m_drs.get(); }
 
     //--------------------------------------------------------------------------
     // MSRs
@@ -94,10 +143,36 @@ public:
     auto *msrs()
     { return m_msrs.get(); }
 
+    //--------------------------------------------------------------------------
+    // VPID
+    //--------------------------------------------------------------------------
+
+    /// Enable VPID
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void enable_vpid(uint16_t id)
+    { m_vpid = std::make_unique<eapis::intel_x64::vpid>(id); }
+
+    /// Get VPID Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the VPID object stored in the vCPU if VPID trapping is
+    ///     enabled, otherwise a nullptr is returned.
+    ///
+    auto *vpid()
+    { return m_vpid.get(); }
+
 private:
 
+    std::unique_ptr<eapis::intel_x64::cpuid> m_cpuid;
     std::unique_ptr<eapis::intel_x64::crs> m_crs;
+    std::unique_ptr<eapis::intel_x64::drs> m_drs;
     std::unique_ptr<eapis::intel_x64::msrs> m_msrs;
+    std::unique_ptr<eapis::intel_x64::vpid> m_vpid;
 };
 
 }

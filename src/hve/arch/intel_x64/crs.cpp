@@ -26,16 +26,16 @@ namespace intel_x64
 
 static bool
 default_handler(
-    gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs, crs::info_t &info)
-{ bfignored(vmcs); bfignored(info); return false; }
+    gsl::not_null<vmcs_t *> vmcs, crs::info_t &info)
+{ bfignored(vmcs); bfignored(info); return true; }
 
-crs::crs(
-    gsl::not_null<bfvmm::intel_x64::exit_handler *> exit_handler)
-:
+crs::crs(gsl::not_null<exit_handler_t *> exit_handler) :
     m_exit_handler{exit_handler}
 {
+    using namespace vmcs_n;
+
     m_exit_handler->add_handler(
-        ::intel_x64::vmcs::exit_reason::basic_exit_reason::control_register_accesses,
+        exit_reason::basic_exit_reason::control_register_accesses,
         handler_delegate_t::create<crs, &crs::handle_crs>(this)
     );
 
@@ -66,11 +66,9 @@ crs::crs(
 
 crs::~crs()
 {
-#ifndef NDEBUG
-    if(m_log_enabled) {
+    if (!ndebug && this->is_logging_enabled()) {
         dump_log();
     }
-#endif
 }
 
 // -----------------------------------------------------------------------------
@@ -102,44 +100,48 @@ crs::add_wrcr8_handler(wrcr8_handler_delegate_t &&d)
 { m_wrcr8_handlers.push_front(std::move(d)); }
 
 void
-crs::enable_wrcr0_trapping(mask_t mask, shadow_t shadow)
+crs::enable_wrcr0_trapping(vmcs_n::value_type mask, vmcs_n::value_type shadow)
 {
-    ::intel_x64::vmcs::cr0_guest_host_mask::set(mask);
-    ::intel_x64::vmcs::cr0_read_shadow::set(shadow);
+    using namespace vmcs_n;
+
+    cr0_guest_host_mask::set(mask);
+    cr0_read_shadow::set(shadow);
 }
 
 void
 crs::enable_rdcr3_trapping()
 {
-    using namespace ::intel_x64::vmcs;
+    using namespace vmcs_n;
     primary_processor_based_vm_execution_controls::cr3_store_exiting::enable();
 }
 
 void
 crs::enable_wrcr3_trapping()
 {
-    using namespace ::intel_x64::vmcs;
+    using namespace vmcs_n;
     primary_processor_based_vm_execution_controls::cr3_load_exiting::enable();
 }
 
 void
-crs::enable_wrcr4_trapping(mask_t mask, shadow_t shadow)
+crs::enable_wrcr4_trapping(vmcs_n::value_type mask, vmcs_n::value_type shadow)
 {
-    ::intel_x64::vmcs::cr4_guest_host_mask::set(mask);
-    ::intel_x64::vmcs::cr4_read_shadow::set(shadow);
+    using namespace vmcs_n;
+
+    cr4_guest_host_mask::set(mask);
+    cr4_read_shadow::set(shadow);
 }
 
 void
 crs::enable_rdcr8_trapping()
 {
-    using namespace ::intel_x64::vmcs;
+    using namespace vmcs_n;
     primary_processor_based_vm_execution_controls::cr8_store_exiting::enable();
 }
 
 void
 crs::enable_wrcr8_trapping()
 {
-    using namespace ::intel_x64::vmcs;
+    using namespace vmcs_n;
     primary_processor_based_vm_execution_controls::cr8_load_exiting::enable();
 }
 
@@ -147,205 +149,90 @@ crs::enable_wrcr8_trapping()
 // Debug
 // -----------------------------------------------------------------------------
 
-#ifndef NDEBUG
-
-void
-crs::enable_log()
-{ m_log_enabled = true; }
-
-void
-crs::disable_log()
-{ m_log_enabled = false; }
-
 void
 crs::dump_log()
 {
-    bfdebug_transaction(0, [&](std::string * msg) {
-        bfdebug_lnbr(0, msg);
-        bfdebug_info(0, "crs log", msg);
-        bfdebug_brk2(0, msg);
+    if (!m_cr0_log.empty()) {
+        bfdebug_transaction(0, [&](std::string * msg) {
+            bfdebug_lnbr(0, msg);
+            bfdebug_info(0, "cr0 log", msg);
+            bfdebug_brk2(0, msg);
 
-        bfdebug_info(0, "wrcr0 log", msg);
-        for(const auto &val : m_wrcr0_log) {
-            bfdebug_subnhex(0, "value", val, msg);
-        }
+            for (const auto &record : m_cr0_log) {
+                bfdebug_info(0, "record", msg);
+                bfdebug_subnhex(0, "val", record.val, msg);
+                bfdebug_subnhex(0, "shadow", record.shadow, msg);
+                bfdebug_subbool(0, "out", record.out, msg);
+                bfdebug_subbool(0, "dir", record.dir, msg);
+            }
 
-        bfdebug_info(0, "rdcr3 log", msg);
-        for(const auto &val : m_rdcr3_log) {
-            bfdebug_subnhex(0, "value", val, msg);
-        }
+            bfdebug_lnbr(0, msg);
+        });
+    }
 
-        bfdebug_info(0, "wrcr3 log", msg);
-        for(const auto &val : m_wrcr3_log) {
-            bfdebug_subnhex(0, "value", val, msg);
-        }
+    if (!m_cr3_log.empty()) {
+        bfdebug_transaction(0, [&](std::string * msg) {
+            bfdebug_lnbr(0, msg);
+            bfdebug_info(0, "cr3 log", msg);
+            bfdebug_brk2(0, msg);
 
-        bfdebug_info(0, "wrcr4 log", msg);
-        for(const auto &val : m_wrcr4_log) {
-            bfdebug_subnhex(0, "value", val, msg);
-        }
+            for (const auto &record : m_cr3_log) {
+                bfdebug_info(0, "record", msg);
+                bfdebug_subnhex(0, "val", record.val, msg);
+                bfdebug_subnhex(0, "shadow", record.shadow, msg);
+                bfdebug_subbool(0, "out", record.out, msg);
+                bfdebug_subbool(0, "dir", record.dir, msg);
+            }
 
-        bfdebug_info(0, "rdcr8 log", msg);
-        for(const auto &val : m_rdcr8_log) {
-            bfdebug_subnhex(0, "value", val, msg);
-        }
+            bfdebug_lnbr(0, msg);
+        });
+    }
 
-        bfdebug_info(0, "wrcr8 log", msg);
-        for(const auto &val : m_wrcr8_log) {
-            bfdebug_subnhex(0, "value", val, msg);
-        }
+    if (!m_cr4_log.empty()) {
+        bfdebug_transaction(0, [&](std::string * msg) {
+            bfdebug_lnbr(0, msg);
+            bfdebug_info(0, "cr4 log", msg);
+            bfdebug_brk2(0, msg);
 
-        bfdebug_lnbr(0, msg);
-    });
+            for (const auto &record : m_cr4_log) {
+                bfdebug_info(0, "record", msg);
+                bfdebug_subnhex(0, "val", record.val, msg);
+                bfdebug_subnhex(0, "shadow", record.shadow, msg);
+                bfdebug_subbool(0, "out", record.out, msg);
+                bfdebug_subbool(0, "dir", record.dir, msg);
+            }
+
+            bfdebug_lnbr(0, msg);
+        });
+    }
+
+    if (!m_cr8_log.empty()) {
+        bfdebug_transaction(0, [&](std::string * msg) {
+            bfdebug_lnbr(0, msg);
+            bfdebug_info(0, "cr8 log", msg);
+            bfdebug_brk2(0, msg);
+
+            for (const auto &record : m_cr8_log) {
+                bfdebug_info(0, "record", msg);
+                bfdebug_subnhex(0, "val", record.val, msg);
+                bfdebug_subnhex(0, "shadow", record.shadow, msg);
+                bfdebug_subbool(0, "out", record.out, msg);
+                bfdebug_subbool(0, "dir", record.dir, msg);
+            }
+
+            bfdebug_lnbr(0, msg);
+        });
+    }
 }
-
-#endif
 
 // -----------------------------------------------------------------------------
 // Handlers
 // -----------------------------------------------------------------------------
 
-uintptr_t
-crs::emulate_rdgpr(
-    gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
-{
-    using namespace ::intel_x64::vmcs::exit_qualification::control_register_access;
-
-    switch (general_purpose_register::get())
-    {
-        case general_purpose_register::rax:
-            return get_bits(vmcs->save_state()->rax, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::rbx:
-            return get_bits(vmcs->save_state()->rbx, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::rcx:
-            return get_bits(vmcs->save_state()->rcx, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::rdx:
-            return get_bits(vmcs->save_state()->rdx, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::rsp:
-            return get_bits(vmcs->save_state()->rsp, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::rbp:
-            return get_bits(vmcs->save_state()->rbp, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::rsi:
-            return get_bits(vmcs->save_state()->rsi, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::rdi:
-            return get_bits(vmcs->save_state()->rdi, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::r8:
-            return get_bits(vmcs->save_state()->r08, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::r9:
-            return get_bits(vmcs->save_state()->r09, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::r10:
-            return get_bits(vmcs->save_state()->r10, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::r11:
-            return get_bits(vmcs->save_state()->r11, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::r12:
-            return get_bits(vmcs->save_state()->r12, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::r13:
-            return get_bits(vmcs->save_state()->r13, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::r14:
-            return get_bits(vmcs->save_state()->r14, 0x7FFFFFFFFFFFFFFF);
-
-        case general_purpose_register::r15:
-            return get_bits(vmcs->save_state()->r15, 0x7FFFFFFFFFFFFFFF);
-
-        default:
-            throw std::runtime_error("crs::gpr: unknown index");
-    }
-}
-
-void
-crs::emulate_wrgpr(
-    gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs, uintptr_t val)
-{
-    using namespace ::intel_x64::vmcs::exit_qualification::control_register_access;
-
-    switch (general_purpose_register::get()) {
-        case general_purpose_register::rax:
-            vmcs->save_state()->rax = val;
-            return;
-
-        case general_purpose_register::rbx:
-            vmcs->save_state()->rbx = val;
-            return;
-
-        case general_purpose_register::rcx:
-            vmcs->save_state()->rcx = val;
-            return;
-
-        case general_purpose_register::rdx:
-            vmcs->save_state()->rdx = val;
-            return;
-
-        case general_purpose_register::rsp:
-            vmcs->save_state()->rsp = val;
-            return;
-
-        case general_purpose_register::rbp:
-            vmcs->save_state()->rbp = val;
-            return;
-
-        case general_purpose_register::rsi:
-            vmcs->save_state()->rsi = val;
-            return;
-
-        case general_purpose_register::rdi:
-            vmcs->save_state()->rdi = val;
-            return;
-
-        case general_purpose_register::r8:
-            vmcs->save_state()->r08 = val;
-            return;
-
-        case general_purpose_register::r9:
-            vmcs->save_state()->r09 = val;
-            return;
-
-        case general_purpose_register::r10:
-            vmcs->save_state()->r10 = val;
-            return;
-
-        case general_purpose_register::r11:
-            vmcs->save_state()->r11 = val;
-            return;
-
-        case general_purpose_register::r12:
-            vmcs->save_state()->r12 = val;
-            return;
-
-        case general_purpose_register::r13:
-            vmcs->save_state()->r13 = val;
-            return;
-
-        case general_purpose_register::r14:
-            vmcs->save_state()->r14 = val;
-            return;
-
-        case general_purpose_register::r15:
-            vmcs->save_state()->r15 = val;
-            return;
-
-        default:
-            throw std::runtime_error("crs::set_gpr: unknown index");
-    }
-}
-
 bool
-crs::handle_crs(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+crs::handle_crs(gsl::not_null<vmcs_t *> vmcs)
 {
-    using namespace ::intel_x64::vmcs::exit_qualification::control_register_access;
+    using namespace vmcs_n::exit_qualification::control_register_access;
 
     switch (control_register_number::get()) {
         case 0:
@@ -366,9 +253,9 @@ crs::handle_crs(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 }
 
 bool
-crs::handle_cr3(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+crs::handle_cr3(gsl::not_null<vmcs_t *> vmcs)
 {
-    using namespace ::intel_x64::vmcs::exit_qualification::control_register_access;
+    using namespace vmcs_n::exit_qualification::control_register_access;
 
     switch (access_type::get()) {
         case access_type::mov_from_cr:
@@ -383,9 +270,9 @@ crs::handle_cr3(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 }
 
 bool
-crs::handle_cr8(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+crs::handle_cr8(gsl::not_null<vmcs_t *> vmcs)
 {
-    using namespace ::intel_x64::vmcs::exit_qualification::control_register_access;
+    using namespace vmcs_n::exit_qualification::control_register_access;
 
     switch (access_type::get()) {
         case access_type::mov_from_cr:
@@ -400,18 +287,40 @@ crs::handle_cr8(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 }
 
 bool
-crs::handle_wrcr0(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+crs::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         this->emulate_rdgpr(vmcs),
-        ::intel_x64::vmcs::cr0_read_shadow::get()
+        vmcs_n::cr0_read_shadow::get(),
+        false,
+        false
     };
+
+    if (!ndebug && this->is_logging_enabled()) {
+        add_record(m_cr0_log, {
+            info.val, info.shadow, false, false
+        });
+    }
 
     for (const auto &d : m_wrcr0_handlers) {
         if (d(vmcs, info)) {
-            ::intel_x64::vmcs::guest_cr0::set(info.val);
-            ::intel_x64::vmcs::cr0_read_shadow::set(info.shadow);
-            return advance(vmcs);
+
+            if (!ndebug && this->is_logging_enabled()) {
+                add_record(m_cr0_log, {
+                    info.val, info.shadow, true, false
+                });
+            }
+
+            if (!info.ignore_write) {
+                vmcs_n::guest_cr0::set(info.val);
+                vmcs_n::cr0_read_shadow::set(info.shadow);
+            }
+
+            if (!info.ignore_advance) {
+                return advance(vmcs);
+            }
+
+            return true;
         }
     }
 
@@ -419,17 +328,39 @@ crs::handle_wrcr0(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 }
 
 bool
-crs::handle_rdcr3(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+crs::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
-        ::intel_x64::vmcs::guest_cr3::get(),
-        0
+        vmcs_n::guest_cr3::get(),
+        0,
+        false,
+        false
     };
+
+    if (!ndebug && this->is_logging_enabled()) {
+        add_record(m_cr3_log, {
+            info.val, info.shadow, false, true
+        });
+    }
 
     for (const auto &d : m_rdcr3_handlers) {
         if (d(vmcs, info)) {
-            this->emulate_wrgpr(vmcs, info.val);
-            return advance(vmcs);
+
+            if (!ndebug && this->is_logging_enabled()) {
+                add_record(m_cr3_log, {
+                    info.val, info.shadow, true, true
+                });
+            }
+
+            if (!info.ignore_write) {
+                this->emulate_wrgpr(vmcs, info.val);
+            }
+
+            if (!info.ignore_advance) {
+                return advance(vmcs);
+            }
+
+            return true;
         }
     }
 
@@ -437,17 +368,41 @@ crs::handle_rdcr3(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 }
 
 bool
-crs::handle_wrcr3(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+crs::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         this->emulate_rdgpr(vmcs),
-        0
+        0,
+        false,
+        false
     };
+
+    if (!ndebug && this->is_logging_enabled()) {
+        add_record(m_cr3_log, {
+            info.val, info.shadow, false, false
+        });
+    }
 
     for (const auto &d : m_wrcr3_handlers) {
         if (d(vmcs, info)) {
-            ::intel_x64::vmcs::guest_cr3::set(info.val);
-            return advance(vmcs);
+
+            info.val &= 0x7FFFFFFFFFFFFFFF;
+
+            if (!ndebug && this->is_logging_enabled()) {
+                add_record(m_cr3_log, {
+                    info.val, info.shadow, true, false
+                });
+            }
+
+            if (!info.ignore_write) {
+                vmcs_n::guest_cr3::set(info.val);
+            }
+
+            if (!info.ignore_advance) {
+                return advance(vmcs);
+            }
+
+            return true;
         }
     }
 
@@ -455,18 +410,40 @@ crs::handle_wrcr3(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 }
 
 bool
-crs::handle_wrcr4(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+crs::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         this->emulate_rdgpr(vmcs),
-        ::intel_x64::vmcs::cr4_read_shadow::get()
+        vmcs_n::cr4_read_shadow::get(),
+        false,
+        false
     };
+
+    if (!ndebug && this->is_logging_enabled()) {
+        add_record(m_cr4_log, {
+            info.val, info.shadow, false, false
+        });
+    }
 
     for (const auto &d : m_wrcr4_handlers) {
         if (d(vmcs, info)) {
-            ::intel_x64::vmcs::guest_cr4::set(info.val);
-            ::intel_x64::vmcs::cr4_read_shadow::set(info.shadow);
-            return advance(vmcs);
+
+            if (!ndebug && this->is_logging_enabled()) {
+                add_record(m_cr4_log, {
+                    info.val, info.shadow, true, false
+                });
+            }
+
+            if (!info.ignore_write) {
+                vmcs_n::guest_cr4::set(info.val);
+                vmcs_n::cr4_read_shadow::set(info.shadow);
+            }
+
+            if (!info.ignore_advance) {
+                return advance(vmcs);
+            }
+
+            return true;
         }
     }
 
@@ -474,17 +451,39 @@ crs::handle_wrcr4(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 }
 
 bool
-crs::handle_rdcr8(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+crs::handle_rdcr8(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         0,
-        0
+        0,
+        false,
+        false
     };
+
+    if (!ndebug && this->is_logging_enabled()) {
+        add_record(m_cr8_log, {
+            info.val, info.shadow, false, true
+        });
+    }
 
     for (const auto &d : m_rdcr8_handlers) {
         if (d(vmcs, info)) {
-            this->emulate_wrgpr(vmcs, info.val);
-            return advance(vmcs);
+
+            if (!ndebug && this->is_logging_enabled()) {
+                add_record(m_cr8_log, {
+                    info.val, info.shadow, true, true
+                });
+            }
+
+            if (!info.ignore_write) {
+                this->emulate_wrgpr(vmcs, info.val);
+            }
+
+            if (!info.ignore_advance) {
+                return advance(vmcs);
+            }
+
+            return true;
         }
     }
 
@@ -492,16 +491,35 @@ crs::handle_rdcr8(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
 }
 
 bool
-crs::handle_wrcr8(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs)
+crs::handle_wrcr8(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         this->emulate_rdgpr(vmcs),
-        0
+        0,
+        false,
+        false
     };
+
+    if (!ndebug && this->is_logging_enabled()) {
+        add_record(m_cr0_log, {
+            info.val, info.shadow, false, false
+        });
+    }
 
     for (const auto &d : m_wrcr8_handlers) {
         if (d(vmcs, info)) {
-            return advance(vmcs);
+
+            if (!ndebug && this->is_logging_enabled()) {
+                add_record(m_cr8_log, {
+                    info.val, info.shadow, true, false
+                });
+            }
+
+            if (!info.ignore_advance) {
+                return advance(vmcs);
+            }
+
+            return true;
         }
     }
 

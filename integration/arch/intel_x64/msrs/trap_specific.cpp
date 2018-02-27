@@ -27,7 +27,7 @@ using namespace eapis::intel_x64;
 
 bool
 test_handler(
-    gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs, msrs::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, msrs::info_t &info)
 { bfignored(vmcs); bfignored(info); return true; }
 
 // -----------------------------------------------------------------------------
@@ -51,9 +51,9 @@ public:
     {
         enable_msr_trapping();
 
-#ifndef NDEBUG
-        msrs()->enable_log();
-#endif
+        if (!ndebug) {
+            msrs()->enable_log();
+        }
 
         msrs()->pass_through_all_rdmsr_accesses();
         msrs()->pass_through_all_wrmsr_accesses();
