@@ -49,7 +49,7 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        enable_msr_trapping();
+        this->enable_msr_trapping();
 
         if (!ndebug) {
             msrs()->enable_log();
@@ -60,12 +60,12 @@ public:
 
         msrs()->add_rdmsr_handler(
             0x000000000000003B,
-            msrs::rdmsr_handler_delegate_t::create<test_handler>()
+            msrs::handler_delegate_t::create<test_handler>()
         );
 
         msrs()->add_wrmsr_handler(
             0x000000000000080B,
-            msrs::wrmsr_handler_delegate_t::create<test_handler>()
+            msrs::handler_delegate_t::create<test_handler>()
         );
     }
 

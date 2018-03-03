@@ -40,7 +40,7 @@ public:
         bool ignore_advance;    // Out
     };
 
-    using wrdr7_handler_delegate_t =
+    using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     /// Constructor
@@ -66,7 +66,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_wrdr7_handler(wrdr7_handler_delegate_t &&d);
+    void add_handler(handler_delegate_t &&d);
 
     /// Enable Write DR7 Trapping
     ///
@@ -105,7 +105,7 @@ public:
 private:
 
     exit_handler_t *m_exit_handler;
-    std::list<wrdr7_handler_delegate_t> m_wrdr7_handlers;
+    std::list<handler_delegate_t> m_handlers;
 
 private:
 

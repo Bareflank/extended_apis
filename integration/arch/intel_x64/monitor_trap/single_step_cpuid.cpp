@@ -22,15 +22,6 @@
 using namespace eapis::intel_x64;
 
 // -----------------------------------------------------------------------------
-// Handlers
-// -----------------------------------------------------------------------------
-
-bool
-test_handler(
-    gsl::not_null<vmcs_t *> vmcs, drs::info_t &info)
-{ bfignored(vmcs); bfignored(info); return false; }
-
-// -----------------------------------------------------------------------------
 // vCPU
 // -----------------------------------------------------------------------------
 
@@ -49,16 +40,16 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_dr_trapping();
+        this->enable_monitor_trap();
+        this->enable_cpuid_trapping();
 
-        if (!ndebug) {
-            drs()->enable_log();
-        }
+        cpuid()->add_handler(
+            42, 0,
+            cpuid::handler_delegate_t::create<vcpu, &vcpu::cpuid_handler>(this)
+        );
 
-        drs()->enable_wrdr7_trapping();
-
-        drs()->add_handler(
-            drs::handler_delegate_t::create<test_handler>()
+        monitor_trap()->add_handler(
+            monitor_trap::handler_delegate_t::create<vcpu, &vcpu::monitor_trap_handler>(this)
         );
     }
 
@@ -69,7 +60,31 @@ public:
     ///
     ~vcpu()
     {
-        ::intel_x64::dr7::set(::intel_x64::dr7::get());
+        ::x64::cpuid::get(42, 0, 0, 0);
+    }
+
+    bool cpuid_handler(
+        gsl::not_null<vmcs_t *> vmcs, cpuid::info_t &info)
+    {
+        bfignored(vmcs);
+
+        info.rax = 42;
+        info.rbx = 42;
+        info.rcx = 42;
+        info.rdx = 42;
+
+        monitor_trap()->enable();
+        return false;
+    }
+
+    bool monitor_trap_handler(
+        gsl::not_null<vmcs_t *> vmcs, monitor_trap::info_t &info)
+    {
+        bfignored(vmcs);
+        bfignored(info);
+
+        bfdebug_info(0, "instrution after cpuid trapped");
+        return false;
     }
 };
 

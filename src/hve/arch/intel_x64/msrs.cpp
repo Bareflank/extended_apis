@@ -40,12 +40,12 @@ msrs::msrs(gsl::not_null<exit_handler_t *> exit_handler) :
 
     m_exit_handler->add_handler(
         exit_reason::basic_exit_reason::rdmsr,
-        handler_delegate_t::create<msrs, &msrs::handle_rdmsr>(this)
+        ::handler_delegate_t::create<msrs, &msrs::handle_rdmsr>(this)
     );
 
     m_exit_handler->add_handler(
         exit_reason::basic_exit_reason::wrmsr,
-        handler_delegate_t::create<msrs, &msrs::handle_wrmsr>(this)
+        ::handler_delegate_t::create<msrs, &msrs::handle_wrmsr>(this)
     );
 }
 
@@ -62,7 +62,7 @@ msrs::~msrs()
 
 void
 msrs::add_rdmsr_handler(
-    vmcs_n::value_type msr, rdmsr_handler_delegate_t &&d)
+    vmcs_n::value_type msr, handler_delegate_t &&d)
 { m_rdmsr_handlers[msr].push_front(std::move(d)); }
 
 void
@@ -107,7 +107,7 @@ msrs::pass_through_all_rdmsr_accesses()
 
 void
 msrs::add_wrmsr_handler(
-    vmcs_n::value_type msr, wrmsr_handler_delegate_t &&d)
+    vmcs_n::value_type msr, handler_delegate_t &&d)
 { m_wrmsr_handlers[msr].push_front(std::move(d)); }
 
 void

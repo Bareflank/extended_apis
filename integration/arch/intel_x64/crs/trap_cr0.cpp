@@ -54,7 +54,7 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        enable_cr_trapping();
+        this->enable_cr_trapping();
 
         if (!ndebug) {
             crs()->enable_log();

@@ -41,10 +41,7 @@ public:
         bool ignore_advance;    // Out
     };
 
-    using rdmsr_handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
-
-    using wrmsr_handler_delegate_t =
+    using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     /// Constructor
@@ -74,7 +71,7 @@ public:
     /// @param d the handler to call when an exit occurs
     ///
     void add_rdmsr_handler(
-        vmcs_n::value_type msr, rdmsr_handler_delegate_t &&d);
+        vmcs_n::value_type msr, handler_delegate_t &&d);
 
     /// Trap On RDMSR Access
     ///
@@ -155,7 +152,7 @@ public:
     /// @param d the handler to call when an exit occurs
     ///
     void add_wrmsr_handler(
-        vmcs_n::value_type msr, wrmsr_handler_delegate_t &&d);
+        vmcs_n::value_type msr, handler_delegate_t &&d);
 
     /// Trap On WRMSR Access
     ///
@@ -255,8 +252,8 @@ private:
     std::unique_ptr<uint8_t[]> m_msr_bitmap;
     gsl::span<uint8_t> m_msr_bitmap_view;
 
-    std::unordered_map<vmcs_n::value_type, std::list<rdmsr_handler_delegate_t>> m_rdmsr_handlers;
-    std::unordered_map<vmcs_n::value_type, std::list<wrmsr_handler_delegate_t>> m_wrmsr_handlers;
+    std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_rdmsr_handlers;
+    std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_wrmsr_handlers;
 
 private:
 

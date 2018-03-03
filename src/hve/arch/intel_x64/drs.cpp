@@ -36,11 +36,11 @@ drs::drs(gsl::not_null<exit_handler_t *> exit_handler) :
 
     m_exit_handler->add_handler(
         exit_reason::basic_exit_reason::mov_dr,
-        handler_delegate_t::create<drs, &drs::handle_drs>(this)
+        ::handler_delegate_t::create<drs, &drs::handle_drs>(this)
     );
 
-    this->add_wrdr7_handler(
-        wrdr7_handler_delegate_t::create<default_handler>()
+    this->add_handler(
+        handler_delegate_t::create<default_handler>()
     );
 }
 
@@ -56,8 +56,8 @@ drs::~drs()
 // -----------------------------------------------------------------------------
 
 void
-drs::add_wrdr7_handler(wrdr7_handler_delegate_t &&d)
-{ m_wrdr7_handlers.push_front(std::move(d)); }
+drs::add_handler(handler_delegate_t &&d)
+{ m_handlers.push_front(std::move(d)); }
 
 void
 drs::enable_wrdr7_trapping()
@@ -107,7 +107,7 @@ drs::handle_drs(gsl::not_null<vmcs_t *> vmcs)
         });
     }
 
-    for (const auto &d : m_wrdr7_handlers) {
+    for (const auto &d : m_handlers) {
         if (d(vmcs, info)) {
 
             if (!ndebug && this->is_logging_enabled()) {

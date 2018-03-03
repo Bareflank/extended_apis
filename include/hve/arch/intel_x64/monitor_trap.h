@@ -16,8 +16,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef CPUID_INTEL_X64_EAPIS_H
-#define CPUID_INTEL_X64_EAPIS_H
+#ifndef MONITOR_TRAP_INTEL_X64_EAPIS_H
+#define MONITOR_TRAP_INTEL_X64_EAPIS_H
 
 #include "base.h"
 
@@ -30,28 +30,12 @@ namespace eapis
 namespace intel_x64
 {
 
-struct pair_hash {
-    template <typename T1, typename T2>
-    std::size_t operator () (const std::pair<T1,T2> &p) const {
-        return ((std::hash<T1>{}(p.first) & 0x00000000FFFFFFFF) > 0) |
-               ((std::hash<T2>{}(p.second) & 0xFFFFFFFF00000000) > 32);
-    }
-};
-
-class EXPORT_EAPIS_HVE cpuid : public base
+class EXPORT_EAPIS_HVE monitor_trap : public base
 {
 public:
 
-    using leaf_t = uint64_t;
-    using subleaf_t = uint64_t;
-
     struct info_t {
-        uint64_t rax;           // In / Out
-        uint64_t rbx;           // In / Out
-        uint64_t rcx;           // In / Out
-        uint64_t rdx;           // In / Out
-        bool ignore_write;      // Out
-        bool ignore_advance;    // Out
+        bool ignore_clear;      // Out
     };
 
     using handler_delegate_t =
@@ -62,79 +46,60 @@ public:
     /// @expects
     /// @ensures
     ///
-    cpuid(
-        gsl::not_null<exit_handler_t *> exit_handler
-    );
+    monitor_trap(gsl::not_null<exit_handler_t *> exit_handler);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~cpuid() final;
+    ~monitor_trap() final = default;
 
 public:
 
-    /// Add CPUID Handler
+    /// Add Monitor Trap Handler
     ///
     /// @expects
     /// @ensures
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_handler(
-        leaf_t leaf, subleaf_t subleaf, handler_delegate_t &&d);
+    void add_handler(handler_delegate_t &&d);
 
-public:
-
-    /// Dump Log
+    /// Enable
     ///
     /// Example:
     /// @code
-    /// this->dump_log();
+    /// this->enable();
     /// @endcode
     ///
     /// @expects
     /// @ensures
     ///
-    void dump_log() final;
+    void enable();
 
 public:
 
     /// @cond
 
-    bool handle_cpuid(gsl::not_null<vmcs_t *> vmcs);
+    bool handle_monitor_trap(gsl::not_null<vmcs_t *> vmcs);
 
     /// @endcond
 
 private:
 
     exit_handler_t *m_exit_handler;
-    std::unordered_map<std::pair<leaf_t, subleaf_t>, std::list<handler_delegate_t>, pair_hash> m_handlers;
-
-private:
-
-    struct cpuid_record_t {
-        uint64_t leaf;
-        uint64_t subleaf;
-        uint64_t rax;
-        uint64_t rbx;
-        uint64_t rcx;
-        uint64_t rdx;
-        bool out;
-    };
-
-    std::list<cpuid_record_t> m_log;
+    std::list<handler_delegate_t> m_handlers;
 
 public:
 
     /// @cond
 
-    cpuid(cpuid &&) = default;
-    cpuid &operator=(cpuid &&) = default;
+    monitor_trap(monitor_trap &&) = default;
+    monitor_trap &operator=(monitor_trap &&) = default;
 
-    cpuid(const cpuid &) = delete;
-    cpuid &operator=(const cpuid &) = delete;
+    monitor_trap(const monitor_trap &) = delete;
+    monitor_trap &operator=(const monitor_trap &) = delete;
 
     /// @endcond
 };
