@@ -58,14 +58,14 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        enable_cpuid_trapping();
+        this->enable_cpuid_trapping();
 
         if (!ndebug) {
             cpuid()->enable_log();
         }
 
-        cpuid()->add_cpuid_handler(
-            42, 0, cpuid::cpuid_handler_delegate_t::create<test_handler>()
+        cpuid()->add_handler(
+            42, 0, cpuid::handler_delegate_t::create<test_handler>()
         );
     }
 

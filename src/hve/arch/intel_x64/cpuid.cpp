@@ -31,7 +31,7 @@ cpuid::cpuid(gsl::not_null<exit_handler_t *> exit_handler) :
 
     m_exit_handler->add_handler(
         exit_reason::basic_exit_reason::cpuid,
-        handler_delegate_t::create<cpuid, &cpuid::handle_cpuid>(this)
+        ::handler_delegate_t::create<cpuid, &cpuid::handle_cpuid>(this)
     );
 }
 
@@ -46,9 +46,9 @@ cpuid::~cpuid()
 // CR0
 // -----------------------------------------------------------------------------
 
-void cpuid::add_cpuid_handler(
-    leaf_t leaf, subleaf_t subleaf, cpuid_handler_delegate_t &&d)
-{ m_cpuid_handlers[ {leaf, subleaf}].push_front(std::move(d)); }
+void cpuid::add_handler(
+    leaf_t leaf, subleaf_t subleaf, handler_delegate_t &&d)
+{ m_handlers[ {leaf, subleaf}].push_front(std::move(d)); }
 
 // -----------------------------------------------------------------------------
 // Debug
@@ -84,11 +84,11 @@ cpuid::dump_log()
 bool
 cpuid::handle_cpuid(gsl::not_null<vmcs_t *> vmcs)
 {
-    const auto &hdlrs = m_cpuid_handlers.find({
+    const auto &hdlrs = m_handlers.find({
         vmcs->save_state()->rax, vmcs->save_state()->rcx
     });
 
-    if (GSL_LIKELY(hdlrs != m_cpuid_handlers.end())) {
+    if (GSL_LIKELY(hdlrs != m_handlers.end())) {
 
         auto ret =
             ::x64::cpuid::get(

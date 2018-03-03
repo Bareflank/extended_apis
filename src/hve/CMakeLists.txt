@@ -21,6 +21,7 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/cpuid.cpp
         arch/intel_x64/crs.cpp
         arch/intel_x64/drs.cpp
+        arch/intel_x64/monitor_trap.cpp
         arch/intel_x64/msrs.cpp
         arch/intel_x64/vpid.cpp
     )

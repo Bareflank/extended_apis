@@ -21,6 +21,7 @@
 #include "../../../hve/arch/intel_x64/cpuid.h"
 #include "../../../hve/arch/intel_x64/crs.h"
 #include "../../../hve/arch/intel_x64/drs.h"
+#include "../../../hve/arch/intel_x64/monitor_trap.h"
 #include "../../../hve/arch/intel_x64/msrs.h"
 #include "../../../hve/arch/intel_x64/vpid.h"
 
@@ -69,10 +70,10 @@ public:
     /// @ensures
     ///
     /// @return Returns the CPUID object stored in the vCPU if CPUID trapping is
-    ///     enabled, otherwise a nullptr is returned.
+    ///     enabled, otherwise an exception is thrown
     ///
     auto *cpuid()
-    { return m_cpuid.get(); }
+    { expects(m_cpuid); return m_cpuid.get(); }
 
     //--------------------------------------------------------------------------
     // CRs
@@ -92,10 +93,10 @@ public:
     /// @ensures
     ///
     /// @return Returns the CR object stored in the vCPU if CR trapping is
-    ///     enabled, otherwise a nullptr is returned.
+    ///     enabled, otherwise an exception is thrown
     ///
     auto *crs()
-    { return m_crs.get(); }
+    { expects(m_crs); return m_crs.get(); }
 
     //--------------------------------------------------------------------------
     // DRs
@@ -115,10 +116,33 @@ public:
     /// @ensures
     ///
     /// @return Returns the DR object stored in the vCPU if DR trapping is
-    ///     enabled, otherwise a nullptr is returned.
+    ///     enabled, otherwise an exception is thrown
     ///
     auto *drs()
-    { return m_drs.get(); }
+    { expects(m_drs); return m_drs.get(); }
+
+    //--------------------------------------------------------------------------
+    // Monitor Trap
+    //--------------------------------------------------------------------------
+
+    /// Enable Monitor Trap
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void enable_monitor_trap()
+    { m_monitor_trap = std::make_unique<eapis::intel_x64::monitor_trap>(this->exit_handler()); }
+
+    /// Get Monitor Trap Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the Monitor Trap object stored in the vCPU if Monitor
+    ///     Trap is enabled, otherwise an exception is thrown
+    ///
+    auto *monitor_trap()
+    { expects(m_monitor_trap); return m_monitor_trap.get(); }
 
     //--------------------------------------------------------------------------
     // MSRs
@@ -138,10 +162,10 @@ public:
     /// @ensures
     ///
     /// @return Returns the MSR object stored in the vCPU if MSR trapping is
-    ///     enabled, otherwise a nullptr is returned.
+    ///     enabled, otherwise an exception is thrown
     ///
     auto *msrs()
-    { return m_msrs.get(); }
+    { expects(m_msrs); return m_msrs.get(); }
 
     //--------------------------------------------------------------------------
     // VPID
@@ -161,16 +185,17 @@ public:
     /// @ensures
     ///
     /// @return Returns the VPID object stored in the vCPU if VPID trapping is
-    ///     enabled, otherwise a nullptr is returned.
+    ///     enabled, otherwise an exception is thrown
     ///
     auto *vpid()
-    { return m_vpid.get(); }
+    { expects(m_vpid); return m_vpid.get(); }
 
 private:
 
     std::unique_ptr<eapis::intel_x64::cpuid> m_cpuid;
     std::unique_ptr<eapis::intel_x64::crs> m_crs;
     std::unique_ptr<eapis::intel_x64::drs> m_drs;
+    std::unique_ptr<eapis::intel_x64::monitor_trap> m_monitor_trap;
     std::unique_ptr<eapis::intel_x64::msrs> m_msrs;
     std::unique_ptr<eapis::intel_x64::vpid> m_vpid;
 };
