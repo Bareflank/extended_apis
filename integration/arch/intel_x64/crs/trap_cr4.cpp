@@ -27,7 +27,7 @@ using namespace eapis::intel_x64;
 
 bool
 test_handler(
-    gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs, crs::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, crs::info_t &info)
 {
     bfignored(vmcs);
 
@@ -57,6 +57,10 @@ public:
         eapis::intel_x64::vcpu{id}
     {
         enable_cr_trapping();
+
+        if (!ndebug) {
+            crs()->enable_log();
+        }
 
         crs()->enable_wrcr4_trapping(
             0xFFFFFFFFFFFFFFFF,

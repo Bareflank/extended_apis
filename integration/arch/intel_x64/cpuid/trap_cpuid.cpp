@@ -27,11 +27,15 @@ using namespace eapis::intel_x64;
 
 bool
 test_handler(
-    gsl::not_null<vmcs_t *> vmcs, crs::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, cpuid::info_t &info)
 {
     bfignored(vmcs);
 
-    info.shadow = info.val;
+    info.rax = 42;
+    info.rbx = 42;
+    info.rcx = 42;
+    info.rdx = 42;
+
     return true;
 }
 
@@ -54,19 +58,14 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        enable_cr_trapping();
+        enable_cpuid_trapping();
 
         if (!ndebug) {
-            crs()->enable_log();
+            cpuid()->enable_log();
         }
 
-        crs()->enable_wrcr0_trapping(
-            0xFFFFFFFFFFFFFFFF,
-            ::intel_x64::vmcs::guest_cr0::get()
-        );
-
-        crs()->add_wrcr0_handler(
-            crs::wrcr0_handler_delegate_t::create<test_handler>()
+        cpuid()->add_cpuid_handler(
+            42, 0, cpuid::cpuid_handler_delegate_t::create<test_handler>()
         );
     }
 
@@ -75,7 +74,18 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~vcpu() = default;
+    ~vcpu()
+    {
+        auto ret =
+            ::x64::cpuid::get(
+                42, 0, 0, 0
+            );
+
+        bfdebug_nhex(0, "ret.rax", ret.rax);
+        bfdebug_nhex(0, "ret.rbx", ret.rbx);
+        bfdebug_nhex(0, "ret.rcx", ret.rcx);
+        bfdebug_nhex(0, "ret.rdx", ret.rdx);
+    }
 };
 
 }

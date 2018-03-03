@@ -19,34 +19,7 @@
 #ifndef MSRS_INTEL_X64_EAPIS_H
 #define MSRS_INTEL_X64_EAPIS_H
 
-#include <bfgsl.h>
-
-#include <list>
-#include <unordered_map>
-
-#include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
-#include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
-
-// -----------------------------------------------------------------------------
-// Exports
-// -----------------------------------------------------------------------------
-
-#include <bfexports.h>
-
-#ifndef STATIC_EAPIS_HVE
-#ifdef SHARED_EAPIS_HVE
-#define EXPORT_EAPIS_HVE EXPORT_SYM
-#else
-#define EXPORT_EAPIS_HVE IMPORT_SYM
-#endif
-#else
-#define EXPORT_EAPIS_HVE
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#endif
+#include "base.h"
 
 // -----------------------------------------------------------------------------
 // Definitions
@@ -57,24 +30,22 @@ namespace eapis
 namespace intel_x64
 {
 
-class EXPORT_EAPIS_HVE msrs
+class EXPORT_EAPIS_HVE msrs : public base
 {
 public:
 
-    using msr_t = ::intel_x64::vmcs::value_type;
-
     struct info_t {
-        ::x64::msrs::field_type msr;    // In
-        ::x64::msrs::value_type val;    // In / Out
-        bool ignore_write;              // Out
-        bool ignore_advance;            // Out
+        uint64_t msr;           // In
+        uint64_t val;           // In / Out
+        bool ignore_write;      // Out
+        bool ignore_advance;    // Out
     };
 
     using rdmsr_handler_delegate_t =
-        delegate<bool(gsl::not_null<bfvmm::intel_x64::vmcs *>, info_t &)>;
+        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     using wrmsr_handler_delegate_t =
-        delegate<bool(gsl::not_null<bfvmm::intel_x64::vmcs *>, info_t &)>;
+        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     /// Constructor
     ///
@@ -82,7 +53,7 @@ public:
     /// @ensures
     ///
     msrs(
-        gsl::not_null<bfvmm::intel_x64::exit_handler *> exit_handler
+        gsl::not_null<exit_handler_t *> exit_handler
     );
 
     /// Destructor
@@ -90,7 +61,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~msrs();
+    ~msrs() final;
 
 public:
 
@@ -102,7 +73,8 @@ public:
     /// @param msr the address to listen to
     /// @param d the handler to call when an exit occurs
     ///
-    void add_rdmsr_handler(msr_t msr, rdmsr_handler_delegate_t &&d);
+    void add_rdmsr_handler(
+        vmcs_n::value_type msr, rdmsr_handler_delegate_t &&d);
 
     /// Trap On RDMSR Access
     ///
@@ -120,7 +92,7 @@ public:
     ///
     /// @param msr the msr to trap on
     ///
-    void trap_on_rdmsr_access(msr_t msr);
+    void trap_on_rdmsr_access(vmcs_n::value_type msr);
 
     /// Trap On All RDMSR Accesses
     ///
@@ -154,7 +126,7 @@ public:
     ///
     /// @param msr the msr to pass through
     ///
-    void pass_through_rdmsr_access(msr_t msr);
+    void pass_through_rdmsr_access(vmcs_n::value_type msr);
 
     /// Pass Through All RDMSR Access
     ///
@@ -182,7 +154,8 @@ public:
     /// @param msr the address to listen to
     /// @param d the handler to call when an exit occurs
     ///
-    void add_wrmsr_handler(msr_t msr, wrmsr_handler_delegate_t &&d);
+    void add_wrmsr_handler(
+        vmcs_n::value_type msr, wrmsr_handler_delegate_t &&d);
 
     /// Trap On WRMSR Access
     ///
@@ -200,7 +173,7 @@ public:
     ///
     /// @param msr the msr to trap on
     ///
-    void trap_on_wrmsr_access(msr_t msr);
+    void trap_on_wrmsr_access(vmcs_n::value_type msr);
 
     /// Trap On All WRMSR Accesses
     ///
@@ -234,7 +207,7 @@ public:
     ///
     /// @param msr the msr to pass through
     ///
-    void pass_through_wrmsr_access(msr_t msr);
+    void pass_through_wrmsr_access(vmcs_n::value_type msr);
 
     /// Pass Through All WRMSR Access
     ///
@@ -252,34 +225,9 @@ public:
     ///
     void pass_through_all_wrmsr_accesses();
 
-#ifndef NDEBUG
 public:
 
-    /// Enable  Log
-    ///
-    /// Example:
-    /// @code
-    /// this->enable_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void enable_log();
-
-    /// Disable  Log
-    ///
-    /// Example:
-    /// @code
-    /// this->disable_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable_log();
-
-    /// Dump  Log
+    /// Dump Log
     ///
     /// Example:
     /// @code
@@ -289,33 +237,37 @@ public:
     /// @expects
     /// @ensures
     ///
-    void dump_log();
-#endif
+    void dump_log() final;
 
 public:
 
     /// @cond
 
-    bool handle_rdmsr(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
-    bool handle_wrmsr(gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs);
+    bool handle_rdmsr(gsl::not_null<vmcs_t *> vmcs);
+    bool handle_wrmsr(gsl::not_null<vmcs_t *> vmcs);
 
     /// @endcond
 
 private:
 
-    bfvmm::intel_x64::exit_handler *m_exit_handler;
+    exit_handler_t *m_exit_handler;
 
     std::unique_ptr<uint8_t[]> m_msr_bitmap;
     gsl::span<uint8_t> m_msr_bitmap_view;
 
-    std::unordered_map<msr_t, std::list<rdmsr_handler_delegate_t>> m_rdmsr_handlers;
-    std::unordered_map<msr_t, std::list<wrmsr_handler_delegate_t>> m_wrmsr_handlers;
+    std::unordered_map<vmcs_n::value_type, std::list<rdmsr_handler_delegate_t>> m_rdmsr_handlers;
+    std::unordered_map<vmcs_n::value_type, std::list<wrmsr_handler_delegate_t>> m_wrmsr_handlers;
 
-#ifndef NDEBUG
-    bool m_log_enabled{false};
-    std::unordered_map<msr_t, std::list<uint64_t>> m_rdmsr_log;
-    std::unordered_map<msr_t, std::list<uint64_t>> m_wrmsr_log;
-#endif
+private:
+
+    struct msr_record_t {
+        uint64_t msr;
+        uint64_t val;
+        bool out;           // True == out
+        bool dir;           // True == read
+    };
+
+    std::list<msr_record_t> m_log;
 
 public:
 
@@ -332,9 +284,5 @@ public:
 
 }
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 #endif
