@@ -27,13 +27,11 @@ using namespace eapis::intel_x64;
 
 bool
 test_handler(
-    gsl::not_null<vmcs_t *> vmcs, crs::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info)
 {
     bfignored(vmcs);
 
     info.shadow = info.val;
-    info.val |= ::intel_x64::cr4::vmx_enable_bit::mask;
-
     return true;
 }
 
@@ -56,20 +54,15 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_cr_trapping();
-
-        if (!ndebug) {
-            crs()->enable_log();
-        }
-
-        crs()->enable_wrcr4_trapping(
-            0xFFFFFFFFFFFFFFFF,
-            ::intel_x64::vmcs::guest_cr4::get()
+        this->enable_wrcr0_exiting(
+            0xFFFFFFFFFFFFFFFF, ::intel_x64::vmcs::guest_cr0::get()
         );
 
-        crs()->add_wrcr4_handler(
-            crs::wrcr4_handler_delegate_t::create<test_handler>()
+        this->add_wrcr0_handler(
+            control_register::handler_delegate_t::create<test_handler>()
         );
+
+        control_register()->enable_log();
     }
 
     /// Destructor

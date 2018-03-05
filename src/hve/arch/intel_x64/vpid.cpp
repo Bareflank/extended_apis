@@ -24,13 +24,13 @@ namespace eapis
 namespace intel_x64
 {
 
-vpid::vpid(uint16_t id) :
-    m_id{id}
+vpid::vpid()
 {
-    using namespace vmcs_n;
+    static uint16_t s_id = 1;
+    m_id = s_id++;
 
-    virtual_processor_identifier::set(id);
-    secondary_processor_based_vm_execution_controls::enable_vpid::enable();
+    vmcs_n::virtual_processor_identifier::set(m_id);
+    vmcs_n::secondary_processor_based_vm_execution_controls::enable_vpid::enable();
 }
 
 }

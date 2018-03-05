@@ -40,15 +40,12 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_monitor_trap();
-        this->enable_cpuid_trapping();
-
-        cpuid()->add_handler(
+        this->add_cpuid_handler(
             42, 0,
             cpuid::handler_delegate_t::create<vcpu, &vcpu::cpuid_handler>(this)
         );
 
-        monitor_trap()->add_handler(
+        this->add_monitor_trap_handler(
             monitor_trap::handler_delegate_t::create<vcpu, &vcpu::monitor_trap_handler>(this)
         );
     }
@@ -73,7 +70,7 @@ public:
         info.rcx = 42;
         info.rdx = 42;
 
-        monitor_trap()->enable();
+        this->enable_monitor_trap_flag();
         return false;
     }
 

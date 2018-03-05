@@ -17,25 +17,29 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/cpuid.h>
+#include <hve/arch/intel_x64/wrmsr.h>
 
 namespace eapis
 {
 namespace intel_x64
 {
 
-cpuid::cpuid(gsl::not_null<exit_handler_t *> exit_handler) :
+wrmsr::wrmsr(
+    gsl::not_null<uint8_t *> msr_bitmap,
+    gsl::not_null<exit_handler_t *> exit_handler
+) :
+    m_msr_bitmap{gsl::make_span(msr_bitmap.get(), ::x64::page_size)},
     m_exit_handler{exit_handler}
 {
     using namespace vmcs_n;
 
     m_exit_handler->add_handler(
-        exit_reason::basic_exit_reason::cpuid,
-        ::handler_delegate_t::create<cpuid, &cpuid::handle>(this)
+        exit_reason::basic_exit_reason::wrmsr,
+        ::handler_delegate_t::create<wrmsr, &wrmsr::handle>(this)
     );
 }
 
-cpuid::~cpuid()
+wrmsr::~wrmsr()
 {
     if (!ndebug && m_log_enabled) {
         dump_log();
@@ -43,34 +47,71 @@ cpuid::~cpuid()
 }
 
 // -----------------------------------------------------------------------------
-// CR0
+// RDMSR
 // -----------------------------------------------------------------------------
 
-void cpuid::add_handler(
-    leaf_t leaf, subleaf_t subleaf, handler_delegate_t &&d)
-{ m_handlers[ {leaf, subleaf}].push_front(std::move(d)); }
+void
+wrmsr::add_handler(
+    vmcs_n::value_type msr, handler_delegate_t &&d)
+{
+    trap_on_access(msr);
+    m_handlers[msr].push_front(std::move(d));
+}
+
+void
+wrmsr::trap_on_access(vmcs_n::value_type msr)
+{
+    if (msr <= 0x00001FFFUL) {
+        return set_bit(m_msr_bitmap, (msr - 0x00000000UL) + 0x4000);
+    }
+
+    if (msr >= 0xC0000000UL && msr <= 0xC0001FFFUL) {
+        return set_bit(m_msr_bitmap, (msr - 0xC0000000UL) + 0x6000);
+    }
+
+    throw std::runtime_error("invalid msr: " + std::to_string(msr));
+}
+
+void
+wrmsr::trap_on_all_accesses()
+{ memset(&m_msr_bitmap[2048], 0xFF, ::x64::page_size >> 1); }
+
+void
+wrmsr::pass_through_access(vmcs_n::value_type msr)
+{
+    if (msr <= 0x00001FFFUL) {
+        return clear_bit(m_msr_bitmap, (msr - 0x00000000UL) + 0x4000);
+    }
+
+    if (msr >= 0xC0000000UL && msr <= 0xC0001FFFUL) {
+        return clear_bit(m_msr_bitmap, (msr - 0xC0000000UL) + 0x6000);
+    }
+
+    throw std::runtime_error("invalid msr: " + std::to_string(msr));
+}
+
+void
+wrmsr::pass_through_all_accesses()
+{ memset(&m_msr_bitmap[2048], 0x0, ::x64::page_size >> 1); }
 
 // -----------------------------------------------------------------------------
 // Debug
 // -----------------------------------------------------------------------------
 
 void
-cpuid::dump_log()
+wrmsr::dump_log()
 {
     bfdebug_transaction(0, [&](std::string * msg) {
         bfdebug_lnbr(0, msg);
-        bfdebug_info(0, "cpuid log", msg);
+        bfdebug_info(0, "wrmsr log", msg);
         bfdebug_brk2(0, msg);
 
         for (const auto &record : m_log) {
             bfdebug_info(0, "record", msg);
-            bfdebug_subnhex(0, "leaf", record.leaf, msg);
-            bfdebug_subnhex(0, "subleaf", record.subleaf, msg);
-            bfdebug_subnhex(0, "rax", record.rax, msg);
-            bfdebug_subnhex(0, "rbx", record.rbx, msg);
-            bfdebug_subnhex(0, "rcx", record.rcx, msg);
-            bfdebug_subnhex(0, "rdx", record.rdx, msg);
+            bfdebug_subnhex(0, "msr", record.msr, msg);
+            bfdebug_subnhex(0, "val", record.val, msg);
             bfdebug_subbool(0, "out", record.out, msg);
+            bfdebug_subbool(0, "dir", record.dir, msg);
         }
 
         bfdebug_lnbr(0, msg);
@@ -82,36 +123,28 @@ cpuid::dump_log()
 // -----------------------------------------------------------------------------
 
 bool
-cpuid::handle(gsl::not_null<vmcs_t *> vmcs)
+wrmsr::handle(gsl::not_null<vmcs_t *> vmcs)
 {
-    const auto &hdlrs = m_handlers.find({
-        vmcs->save_state()->rax, vmcs->save_state()->rcx
-    });
+    const auto &hdlrs =
+        m_handlers.find(
+            vmcs->save_state()->rcx
+        );
 
     if (GSL_LIKELY(hdlrs != m_handlers.end())) {
 
-        auto ret =
-            ::x64::cpuid::get(
-                gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rax),
-                gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rbx),
-                gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rcx),
-                gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rdx)
-            );
+        auto val = ((vmcs->save_state()->rax & 0x00000000FFFFFFFF) << 0) |
+                   ((vmcs->save_state()->rdx & 0x00000000FFFFFFFF) << 32);
 
         struct info_t info = {
-            ret.rax,
-            ret.rbx,
-            ret.rcx,
-            ret.rdx,
+            vmcs->save_state()->rcx,
+            val,
             false,
             false
         };
 
         if (!ndebug && m_log_enabled) {
             add_record(m_log, {
-                vmcs->save_state()->rax,
-                vmcs->save_state()->rcx,
-                info.rax, info.rbx, info.rcx, info.rdx, false
+                info.msr, info.val, true, false
             });
         }
 
@@ -120,17 +153,15 @@ cpuid::handle(gsl::not_null<vmcs_t *> vmcs)
 
                 if (!ndebug && m_log_enabled) {
                     add_record(m_log, {
-                        vmcs->save_state()->rax,
-                        vmcs->save_state()->rcx,
-                        info.rax, info.rbx, info.rcx, info.rdx, true
+                        info.msr, info.val, false, false
                     });
                 }
 
                 if (!info.ignore_write) {
-                    vmcs->save_state()->rax = set_bits(vmcs->save_state()->rax, 0x00000000FFFFFFFF, info.rax);
-                    vmcs->save_state()->rbx = set_bits(vmcs->save_state()->rbx, 0x00000000FFFFFFFF, info.rbx);
-                    vmcs->save_state()->rcx = set_bits(vmcs->save_state()->rcx, 0x00000000FFFFFFFF, info.rcx);
-                    vmcs->save_state()->rdx = set_bits(vmcs->save_state()->rdx, 0x00000000FFFFFFFF, info.rdx);
+                    emulate_wrmsr(
+                        gsl::narrow_cast<::x64::msrs::field_type>(info.msr),
+                        info.val
+                    );
                 }
 
                 if (!info.ignore_advance) {
@@ -142,7 +173,8 @@ cpuid::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    return false;
+    throw std::runtime_error(
+        "wrmsr::handle: unhandled msr #" + std::to_string(vmcs->save_state()->rcx));
 }
 
 }

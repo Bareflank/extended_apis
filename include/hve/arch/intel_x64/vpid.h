@@ -41,7 +41,7 @@ public:
     ///
     /// @param id the vpid to use
     ///
-    vpid(uint16_t id);
+    vpid();
 
     /// Destructor
     ///
@@ -57,12 +57,27 @@ public:
     ///
     /// @return Returns the VPID
     ///
-    auto id() const noexcept
+    vmcs_n::value_type id() const noexcept
     { return m_id; }
+
+public:
+
+    /// Dump Log
+    ///
+    /// Example:
+    /// @code
+    /// this->dump_log();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void dump_log() final
+    { }
 
 private:
 
-    uint16_t m_id;
+    vmcs_n::value_type m_id;
 
 public:
 

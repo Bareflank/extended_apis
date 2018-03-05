@@ -27,7 +27,7 @@ using namespace eapis::intel_x64;
 
 bool
 test_handler(
-    gsl::not_null<vmcs_t *> vmcs, msrs::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 { bfignored(vmcs); bfignored(info); return true; }
 
 // -----------------------------------------------------------------------------
@@ -49,27 +49,12 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_msr_trapping();
-
-        if (!ndebug) {
-            msrs()->enable_log();
-        }
-
-        msrs()->trap_on_all_rdmsr_accesses();
-        msrs()->trap_on_all_wrmsr_accesses();
-
-        msrs()->pass_through_rdmsr_access(0x000000000000003B); // IA32_TSC_ADJUST
-        msrs()->pass_through_wrmsr_access(0x000000000000080B); // IA32_X2APIC_EOI
-
-        msrs()->add_rdmsr_handler(
-            0x000000000000003B,
-            msrs::handler_delegate_t::create<test_handler>()
-        );
-
-        msrs()->add_wrmsr_handler(
+        this->add_wrmsr_handler(
             0x000000000000080B,
-            msrs::handler_delegate_t::create<test_handler>()
+            wrmsr::handler_delegate_t::create<test_handler>()
         );
+
+        wrmsr()->enable_log();
     }
 
     /// Destructor

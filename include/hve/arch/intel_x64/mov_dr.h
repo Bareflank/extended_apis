@@ -16,8 +16,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef DRS_INTEL_X64_EAPIS_H
-#define DRS_INTEL_X64_EAPIS_H
+#ifndef MOV_DR_INTEL_X64_EAPIS_H
+#define MOV_DR_INTEL_X64_EAPIS_H
 
 #include "base.h"
 
@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class EXPORT_EAPIS_HVE drs : public base
+class EXPORT_EAPIS_HVE mov_dr : public base
 {
 public:
 
@@ -48,14 +48,14 @@ public:
     /// @expects
     /// @ensures
     ///
-    drs(gsl::not_null<exit_handler_t *> exit_handler);
+    mov_dr(gsl::not_null<exit_handler_t *> exit_handler);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~drs() final;
+    ~mov_dr() final;
 
 public:
 
@@ -67,18 +67,6 @@ public:
     /// @param d the handler to call when an exit occurs
     ///
     void add_handler(handler_delegate_t &&d);
-
-    /// Enable Write DR7 Trapping
-    ///
-    /// Example:
-    /// @code
-    /// this->enable_wrdr7_trapping();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void enable_wrdr7_trapping();
 
 public:
 
@@ -98,7 +86,7 @@ public:
 
     /// @cond
 
-    bool handle_drs(gsl::not_null<vmcs_t *> vmcs);
+    bool handle(gsl::not_null<vmcs_t *> vmcs);
 
     /// @endcond
 
@@ -120,11 +108,11 @@ public:
 
     /// @cond
 
-    drs(drs &&) = default;
-    drs &operator=(drs &&) = default;
+    mov_dr(mov_dr &&) = default;
+    mov_dr &operator=(mov_dr &&) = default;
 
-    drs(const drs &) = delete;
-    drs &operator=(const drs &) = delete;
+    mov_dr(const mov_dr &) = delete;
+    mov_dr &operator=(const mov_dr &) = delete;
 
     /// @endcond
 };

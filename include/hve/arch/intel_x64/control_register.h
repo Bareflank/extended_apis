@@ -16,8 +16,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef CRS_INTEL_X64_EAPIS_H
-#define CRS_INTEL_X64_EAPIS_H
+#ifndef CONTROL_REGISTER_INTEL_X64_EAPIS_H
+#define CONTROL_REGISTER_INTEL_X64_EAPIS_H
 
 #include "base.h"
 
@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class EXPORT_EAPIS_HVE crs : public base
+class EXPORT_EAPIS_HVE control_register : public base
 {
 public:
 
@@ -41,22 +41,7 @@ public:
         bool ignore_advance;    // Out
     };
 
-    using wrcr0_handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
-
-    using rdcr3_handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
-
-    using wrcr3_handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
-
-    using wrcr4_handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
-
-    using rdcr8_handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
-
-    using wrcr8_handler_delegate_t =
+    using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     /// Constructor
@@ -64,16 +49,14 @@ public:
     /// @expects
     /// @ensures
     ///
-    crs(
-        gsl::not_null<exit_handler_t *> exit_handler
-    );
+    control_register(gsl::not_null<exit_handler_t *> exit_handler);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~crs() final;
+    ~control_register() final;
 
 public:
 
@@ -84,7 +67,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_wrcr0_handler(wrcr0_handler_delegate_t &&d);
+    void add_wrcr0_handler(handler_delegate_t &&d);
 
     /// Add Read CR3 Handler
     ///
@@ -93,7 +76,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_rdcr3_handler(rdcr3_handler_delegate_t &&d);
+    void add_rdcr3_handler(handler_delegate_t &&d);
 
     /// Add Write CR3 Handler
     ///
@@ -102,7 +85,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_wrcr3_handler(wrcr3_handler_delegate_t &&d);
+    void add_wrcr3_handler(handler_delegate_t &&d);
 
     /// Add Write CR4 Handler
     ///
@@ -111,7 +94,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_wrcr4_handler(wrcr4_handler_delegate_t &&d);
+    void add_wrcr4_handler(handler_delegate_t &&d);
 
     /// Add Read CR8 Handler
     ///
@@ -120,7 +103,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_rdcr8_handler(rdcr8_handler_delegate_t &&d);
+    void add_rdcr8_handler(handler_delegate_t &&d);
 
     /// Add Write CR8 Handler
     ///
@@ -129,81 +112,83 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_wrcr8_handler(wrcr8_handler_delegate_t &&d);
+    void add_wrcr8_handler(handler_delegate_t &&d);
 
-    /// Enable Write CR0 Trapping
+public:
+
+    /// Enable Write CR0 Exiting
     ///
     /// Example:
     /// @code
-    /// this->enable_wrcr0_trapping();
+    /// this->enable_wrcr0_exiting();
     /// @endcode
     ///
     /// @expects
     /// @ensures
     ///
-    void enable_wrcr0_trapping(
+    void enable_wrcr0_exiting(
         vmcs_n::value_type mask, vmcs_n::value_type shadow);
 
-    /// Enable Read CR3 Trapping
+    /// Enable Read CR3 Exiting
     ///
     /// Example:
     /// @code
-    /// this->enable_rdcr3_trapping();
+    /// this->enable_rdcr3_exiting();
     /// @endcode
     ///
     /// @expects
     /// @ensures
     ///
-    void enable_rdcr3_trapping();
+    void enable_rdcr3_exiting();
 
-    /// Enable Write CR3 Trapping
+    /// Enable Write CR3 Exiting
     ///
     /// Example:
     /// @code
-    /// this->enable_wrcr3_trapping();
+    /// this->enable_wrcr3_exiting();
     /// @endcode
     ///
     /// @expects
     /// @ensures
     ///
-    void enable_wrcr3_trapping();
+    void enable_wrcr3_exiting();
 
-    /// Enable Write CR4 Trapping
+    /// Enable Write CR4 Exiting
     ///
     /// Example:
     /// @code
-    /// this->enable_wrcr4_trapping();
+    /// this->enable_wrcr4_exiting();
     /// @endcode
     ///
     /// @expects
     /// @ensures
     ///
-    void enable_wrcr4_trapping(
+    void enable_wrcr4_exiting(
         vmcs_n::value_type mask, vmcs_n::value_type shadow);
 
-    /// Enable Read CR8 Trapping
+    /// Enable Read CR8 Exiting
     ///
     /// Example:
     /// @code
-    /// this->enable_rdcr8_trapping();
+    /// this->enable_rdcr8_exiting();
     /// @endcode
     ///
     /// @expects
     /// @ensures
     ///
-    void enable_rdcr8_trapping();
+    void enable_rdcr8_exiting();
 
-    /// Enable Write CR8 Trapping
+    /// Enable Write CR8 Exiting
     ///
     /// Example:
     /// @code
-    /// this->enable_wrcr8_trapping();
+    /// this->enable_wrcr8_exiting();
     /// @endcode
     ///
     /// @expects
     /// @ensures
     ///
-    void enable_wrcr8_trapping();
+    void enable_wrcr8_exiting();
 
 public:
 
@@ -223,7 +208,7 @@ public:
 
     /// @cond
 
-    bool handle_crs(gsl::not_null<vmcs_t *> vmcs);
+    bool handle(gsl::not_null<vmcs_t *> vmcs);
 
     /// @endcond
 
@@ -239,38 +224,40 @@ private:
     bool handle_rdcr8(gsl::not_null<vmcs_t *> vmcs);
     bool handle_wrcr8(gsl::not_null<vmcs_t *> vmcs);
 
-    exit_handler_t *m_exit_handler;
+private:
 
-    std::list<wrcr0_handler_delegate_t> m_wrcr0_handlers;
-    std::list<rdcr3_handler_delegate_t> m_rdcr3_handlers;
-    std::list<wrcr3_handler_delegate_t> m_wrcr3_handlers;
-    std::list<wrcr4_handler_delegate_t> m_wrcr4_handlers;
-    std::list<rdcr8_handler_delegate_t> m_rdcr8_handlers;
-    std::list<wrcr8_handler_delegate_t> m_wrcr8_handlers;
+    gsl::not_null<exit_handler_t *> m_exit_handler;
+
+    std::list<handler_delegate_t> m_wrcr0_handlers;
+    std::list<handler_delegate_t> m_rdcr3_handlers;
+    std::list<handler_delegate_t> m_wrcr3_handlers;
+    std::list<handler_delegate_t> m_wrcr4_handlers;
+    std::list<handler_delegate_t> m_rdcr8_handlers;
+    std::list<handler_delegate_t> m_wrcr8_handlers;
 
 private:
 
-    struct cr_record_t {
+    struct record_t {
         uint64_t val;
         uint64_t shadow;
         bool out;           // True == out
         bool dir;           // True == read
     };
 
-    std::list<cr_record_t> m_cr0_log;
-    std::list<cr_record_t> m_cr3_log;
-    std::list<cr_record_t> m_cr4_log;
-    std::list<cr_record_t> m_cr8_log;
+    std::list<record_t> m_cr0_log;
+    std::list<record_t> m_cr3_log;
+    std::list<record_t> m_cr4_log;
+    std::list<record_t> m_cr8_log;
 
 public:
 
     /// @cond
 
-    crs(crs &&) = default;
-    crs &operator=(crs &&) = default;
+    control_register(control_register &&) = default;
+    control_register &operator=(control_register &&) = default;
 
-    crs(const crs &) = delete;
-    crs &operator=(const crs &) = delete;
+    control_register(const control_register &) = delete;
+    control_register &operator=(const control_register &) = delete;
 
     /// @endcond
 };

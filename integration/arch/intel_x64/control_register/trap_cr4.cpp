@@ -27,8 +27,15 @@ using namespace eapis::intel_x64;
 
 bool
 test_handler(
-    gsl::not_null<vmcs_t *> vmcs, msrs::info_t &info)
-{ bfignored(vmcs); bfignored(info); return true; }
+    gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info)
+{
+    bfignored(vmcs);
+
+    info.shadow = info.val;
+    info.val |= ::intel_x64::cr4::vmx_enable_bit::mask;
+
+    return true;
+}
 
 // -----------------------------------------------------------------------------
 // vCPU
@@ -49,27 +56,15 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_msr_trapping();
-
-        if (!ndebug) {
-            msrs()->enable_log();
-        }
-
-        msrs()->pass_through_all_rdmsr_accesses();
-        msrs()->pass_through_all_wrmsr_accesses();
-
-        msrs()->trap_on_rdmsr_access(0x000000000000003B); // IA32_TSC_ADJUST
-        msrs()->trap_on_wrmsr_access(0x000000000000080B); // IA32_X2APIC_EOI
-
-        msrs()->add_rdmsr_handler(
-            0x000000000000003B,
-            msrs::handler_delegate_t::create<test_handler>()
+        this->enable_wrcr4_exiting(
+            0xFFFFFFFFFFFFFFFF, ::intel_x64::vmcs::guest_cr4::get()
         );
 
-        msrs()->add_wrmsr_handler(
-            0x000000000000080B,
-            msrs::handler_delegate_t::create<test_handler>()
+        this->add_wrcr4_handler(
+            control_register::handler_delegate_t::create<test_handler>()
         );
+
+        control_register()->enable_log();
     }
 
     /// Destructor
