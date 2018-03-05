@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/crs.h>
+#include <hve/arch/intel_x64/control_register.h>
 
 namespace eapis
 {
@@ -26,47 +26,49 @@ namespace intel_x64
 
 static bool
 default_handler(
-    gsl::not_null<vmcs_t *> vmcs, crs::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info)
 { bfignored(vmcs); bfignored(info); return true; }
 
-crs::crs(gsl::not_null<exit_handler_t *> exit_handler) :
+control_register::control_register(
+    gsl::not_null<exit_handler_t *> exit_handler
+) :
     m_exit_handler{exit_handler}
 {
     using namespace vmcs_n;
 
     m_exit_handler->add_handler(
         exit_reason::basic_exit_reason::control_register_accesses,
-        handler_delegate_t::create<crs, &crs::handle_crs>(this)
+        ::handler_delegate_t::create<control_register, &control_register::handle>(this)
     );
 
     this->add_wrcr0_handler(
-        wrcr0_handler_delegate_t::create<default_handler>()
+        handler_delegate_t::create<default_handler>()
     );
 
     this->add_rdcr3_handler(
-        rdcr3_handler_delegate_t::create<default_handler>()
+        handler_delegate_t::create<default_handler>()
     );
 
     this->add_wrcr3_handler(
-        wrcr3_handler_delegate_t::create<default_handler>()
+        handler_delegate_t::create<default_handler>()
     );
 
     this->add_wrcr4_handler(
-        wrcr4_handler_delegate_t::create<default_handler>()
+        handler_delegate_t::create<default_handler>()
     );
 
     this->add_rdcr8_handler(
-        rdcr8_handler_delegate_t::create<default_handler>()
+        handler_delegate_t::create<default_handler>()
     );
 
     this->add_wrcr8_handler(
-        wrcr8_handler_delegate_t::create<default_handler>()
+        handler_delegate_t::create<default_handler>()
     );
 }
 
-crs::~crs()
+control_register::~control_register()
 {
-    if (!ndebug && this->is_logging_enabled()) {
+    if (!ndebug && m_log_enabled) {
         dump_log();
     }
 }
@@ -76,31 +78,32 @@ crs::~crs()
 // -----------------------------------------------------------------------------
 
 void
-crs::add_wrcr0_handler(wrcr0_handler_delegate_t &&d)
+control_register::add_wrcr0_handler(handler_delegate_t &&d)
 { m_wrcr0_handlers.push_front(std::move(d)); }
 
 void
-crs::add_rdcr3_handler(rdcr3_handler_delegate_t &&d)
+control_register::add_rdcr3_handler(handler_delegate_t &&d)
 { m_rdcr3_handlers.push_front(std::move(d)); }
 
 void
-crs::add_wrcr3_handler(wrcr3_handler_delegate_t &&d)
+control_register::add_wrcr3_handler(handler_delegate_t &&d)
 { m_wrcr3_handlers.push_front(std::move(d)); }
 
 void
-crs::add_wrcr4_handler(wrcr4_handler_delegate_t &&d)
+control_register::add_wrcr4_handler(handler_delegate_t &&d)
 { m_wrcr4_handlers.push_front(std::move(d)); }
 
 void
-crs::add_rdcr8_handler(rdcr8_handler_delegate_t &&d)
+control_register::add_rdcr8_handler(handler_delegate_t &&d)
 { m_rdcr8_handlers.push_front(std::move(d)); }
 
 void
-crs::add_wrcr8_handler(wrcr8_handler_delegate_t &&d)
+control_register::add_wrcr8_handler(handler_delegate_t &&d)
 { m_wrcr8_handlers.push_front(std::move(d)); }
 
 void
-crs::enable_wrcr0_trapping(vmcs_n::value_type mask, vmcs_n::value_type shadow)
+control_register::enable_wrcr0_exiting(
+    vmcs_n::value_type mask, vmcs_n::value_type shadow)
 {
     using namespace vmcs_n;
 
@@ -109,21 +112,22 @@ crs::enable_wrcr0_trapping(vmcs_n::value_type mask, vmcs_n::value_type shadow)
 }
 
 void
-crs::enable_rdcr3_trapping()
+control_register::enable_rdcr3_exiting()
 {
     using namespace vmcs_n;
     primary_processor_based_vm_execution_controls::cr3_store_exiting::enable();
 }
 
 void
-crs::enable_wrcr3_trapping()
+control_register::enable_wrcr3_exiting()
 {
     using namespace vmcs_n;
     primary_processor_based_vm_execution_controls::cr3_load_exiting::enable();
 }
 
 void
-crs::enable_wrcr4_trapping(vmcs_n::value_type mask, vmcs_n::value_type shadow)
+control_register::enable_wrcr4_exiting(
+    vmcs_n::value_type mask, vmcs_n::value_type shadow)
 {
     using namespace vmcs_n;
 
@@ -132,14 +136,14 @@ crs::enable_wrcr4_trapping(vmcs_n::value_type mask, vmcs_n::value_type shadow)
 }
 
 void
-crs::enable_rdcr8_trapping()
+control_register::enable_rdcr8_exiting()
 {
     using namespace vmcs_n;
     primary_processor_based_vm_execution_controls::cr8_store_exiting::enable();
 }
 
 void
-crs::enable_wrcr8_trapping()
+control_register::enable_wrcr8_exiting()
 {
     using namespace vmcs_n;
     primary_processor_based_vm_execution_controls::cr8_load_exiting::enable();
@@ -150,7 +154,7 @@ crs::enable_wrcr8_trapping()
 // -----------------------------------------------------------------------------
 
 void
-crs::dump_log()
+control_register::dump_log()
 {
     if (!m_cr0_log.empty()) {
         bfdebug_transaction(0, [&](std::string * msg) {
@@ -230,7 +234,7 @@ crs::dump_log()
 // -----------------------------------------------------------------------------
 
 bool
-crs::handle_crs(gsl::not_null<vmcs_t *> vmcs)
+control_register::handle(gsl::not_null<vmcs_t *> vmcs)
 {
     using namespace vmcs_n::exit_qualification::control_register_access;
 
@@ -248,12 +252,12 @@ crs::handle_crs(gsl::not_null<vmcs_t *> vmcs)
             return handle_cr8(vmcs);
 
         default:
-            throw std::runtime_error("crs::handle_crs: invalid cr number");
+            throw std::runtime_error("control_register::handle: invalid cr number");
     }
 }
 
 bool
-crs::handle_cr3(gsl::not_null<vmcs_t *> vmcs)
+control_register::handle_cr3(gsl::not_null<vmcs_t *> vmcs)
 {
     using namespace vmcs_n::exit_qualification::control_register_access;
 
@@ -265,12 +269,12 @@ crs::handle_cr3(gsl::not_null<vmcs_t *> vmcs)
             return handle_wrcr3(vmcs);
 
         default:
-            throw std::runtime_error("crs::handle_cr3: invalid access type");
+            throw std::runtime_error("control_register::handle_cr3: invalid access type");
     }
 }
 
 bool
-crs::handle_cr8(gsl::not_null<vmcs_t *> vmcs)
+control_register::handle_cr8(gsl::not_null<vmcs_t *> vmcs)
 {
     using namespace vmcs_n::exit_qualification::control_register_access;
 
@@ -282,12 +286,12 @@ crs::handle_cr8(gsl::not_null<vmcs_t *> vmcs)
             return handle_wrcr8(vmcs);
 
         default:
-            throw std::runtime_error("crs::handle_cr8: invalid access type");
+            throw std::runtime_error("control_register::handle_cr8: invalid access type");
     }
 }
 
 bool
-crs::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
+control_register::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         this->emulate_rdgpr(vmcs),
@@ -296,7 +300,7 @@ crs::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
         false
     };
 
-    if (!ndebug && this->is_logging_enabled()) {
+    if (!ndebug && m_log_enabled) {
         add_record(m_cr0_log, {
             info.val, info.shadow, false, false
         });
@@ -305,7 +309,7 @@ crs::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
     for (const auto &d : m_wrcr0_handlers) {
         if (d(vmcs, info)) {
 
-            if (!ndebug && this->is_logging_enabled()) {
+            if (!ndebug && m_log_enabled) {
                 add_record(m_cr0_log, {
                     info.val, info.shadow, true, false
                 });
@@ -328,7 +332,7 @@ crs::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-crs::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
+control_register::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         vmcs_n::guest_cr3::get(),
@@ -337,7 +341,7 @@ crs::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
         false
     };
 
-    if (!ndebug && this->is_logging_enabled()) {
+    if (!ndebug && m_log_enabled) {
         add_record(m_cr3_log, {
             info.val, info.shadow, false, true
         });
@@ -346,7 +350,7 @@ crs::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
     for (const auto &d : m_rdcr3_handlers) {
         if (d(vmcs, info)) {
 
-            if (!ndebug && this->is_logging_enabled()) {
+            if (!ndebug && m_log_enabled) {
                 add_record(m_cr3_log, {
                     info.val, info.shadow, true, true
                 });
@@ -368,7 +372,7 @@ crs::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-crs::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
+control_register::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         this->emulate_rdgpr(vmcs),
@@ -377,7 +381,7 @@ crs::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
         false
     };
 
-    if (!ndebug && this->is_logging_enabled()) {
+    if (!ndebug && m_log_enabled) {
         add_record(m_cr3_log, {
             info.val, info.shadow, false, false
         });
@@ -388,7 +392,7 @@ crs::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
 
             info.val &= 0x7FFFFFFFFFFFFFFF;
 
-            if (!ndebug && this->is_logging_enabled()) {
+            if (!ndebug && m_log_enabled) {
                 add_record(m_cr3_log, {
                     info.val, info.shadow, true, false
                 });
@@ -410,7 +414,7 @@ crs::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-crs::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
+control_register::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         this->emulate_rdgpr(vmcs),
@@ -419,7 +423,7 @@ crs::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
         false
     };
 
-    if (!ndebug && this->is_logging_enabled()) {
+    if (!ndebug && m_log_enabled) {
         add_record(m_cr4_log, {
             info.val, info.shadow, false, false
         });
@@ -428,7 +432,7 @@ crs::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
     for (const auto &d : m_wrcr4_handlers) {
         if (d(vmcs, info)) {
 
-            if (!ndebug && this->is_logging_enabled()) {
+            if (!ndebug && m_log_enabled) {
                 add_record(m_cr4_log, {
                     info.val, info.shadow, true, false
                 });
@@ -451,7 +455,7 @@ crs::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-crs::handle_rdcr8(gsl::not_null<vmcs_t *> vmcs)
+control_register::handle_rdcr8(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         0,
@@ -460,7 +464,7 @@ crs::handle_rdcr8(gsl::not_null<vmcs_t *> vmcs)
         false
     };
 
-    if (!ndebug && this->is_logging_enabled()) {
+    if (!ndebug && m_log_enabled) {
         add_record(m_cr8_log, {
             info.val, info.shadow, false, true
         });
@@ -469,7 +473,7 @@ crs::handle_rdcr8(gsl::not_null<vmcs_t *> vmcs)
     for (const auto &d : m_rdcr8_handlers) {
         if (d(vmcs, info)) {
 
-            if (!ndebug && this->is_logging_enabled()) {
+            if (!ndebug && m_log_enabled) {
                 add_record(m_cr8_log, {
                     info.val, info.shadow, true, true
                 });
@@ -491,7 +495,7 @@ crs::handle_rdcr8(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-crs::handle_wrcr8(gsl::not_null<vmcs_t *> vmcs)
+control_register::handle_wrcr8(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         this->emulate_rdgpr(vmcs),
@@ -500,7 +504,7 @@ crs::handle_wrcr8(gsl::not_null<vmcs_t *> vmcs)
         false
     };
 
-    if (!ndebug && this->is_logging_enabled()) {
+    if (!ndebug && m_log_enabled) {
         add_record(m_cr0_log, {
             info.val, info.shadow, false, false
         });
@@ -509,7 +513,7 @@ crs::handle_wrcr8(gsl::not_null<vmcs_t *> vmcs)
     for (const auto &d : m_wrcr8_handlers) {
         if (d(vmcs, info)) {
 
-            if (!ndebug && this->is_logging_enabled()) {
+            if (!ndebug && m_log_enabled) {
                 add_record(m_cr8_log, {
                     info.val, info.shadow, true, false
                 });

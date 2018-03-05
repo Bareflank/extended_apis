@@ -27,7 +27,7 @@ using namespace eapis::intel_x64;
 
 bool
 test_handler(
-    gsl::not_null<vmcs_t *> vmcs, drs::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, mov_dr::info_t &info)
 { bfignored(vmcs); bfignored(info); return false; }
 
 // -----------------------------------------------------------------------------
@@ -49,17 +49,11 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_dr_trapping();
-
-        if (!ndebug) {
-            drs()->enable_log();
-        }
-
-        drs()->enable_wrdr7_trapping();
-
-        drs()->add_handler(
-            drs::handler_delegate_t::create<test_handler>()
+        this->add_mov_dr_handler(
+            mov_dr::handler_delegate_t::create<test_handler>()
         );
+
+        mov_dr()->enable_log();
     }
 
     /// Destructor

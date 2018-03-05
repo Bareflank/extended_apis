@@ -58,15 +58,11 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_cpuid_trapping();
-
-        if (!ndebug) {
-            cpuid()->enable_log();
-        }
-
-        cpuid()->add_handler(
+        this->add_cpuid_handler(
             42, 0, cpuid::handler_delegate_t::create<test_handler>()
         );
+
+        cpuid()->enable_log();
     }
 
     /// Destructor

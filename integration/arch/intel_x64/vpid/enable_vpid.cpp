@@ -40,9 +40,7 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        static uint16_t s_id = 1;
-        this->enable_vpid(s_id++);
-
+        this->enable_vpid();
         bfdebug_nhex(0, "vpid", vpid()->id());
     }
 

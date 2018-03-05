@@ -22,6 +22,15 @@
 using namespace eapis::intel_x64;
 
 // -----------------------------------------------------------------------------
+// Handlers
+// -----------------------------------------------------------------------------
+
+bool
+test_handler(
+    gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
+{ bfignored(vmcs); bfignored(info); return true; }
+
+// -----------------------------------------------------------------------------
 // vCPU
 // -----------------------------------------------------------------------------
 
@@ -40,24 +49,12 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_cr_trapping();
-
-        if (!ndebug) {
-            crs()->enable_log();
-        }
-
-        crs()->enable_rdcr8_trapping();
-        crs()->enable_wrcr8_trapping();
-
-        crs()->add_rdcr8_handler(
-            crs::rdcr8_handler_delegate_t::create<vcpu, &vcpu::test_rdcr8_handler>(this)
+        this->add_rdmsr_handler(
+            0x000000000000003B,
+            rdmsr::handler_delegate_t::create<test_handler>()
         );
 
-        crs()->add_wrcr8_handler(
-            crs::wrcr8_handler_delegate_t::create<vcpu, &vcpu::test_wrcr8_handler>(this)
-        );
-
-        m_tpr_shadow = ::intel_x64::cr8::get();
+        rdmsr()->enable_log();
     }
 
     /// Destructor
@@ -66,40 +63,6 @@ public:
     /// @ensures
     ///
     ~vcpu() = default;
-
-    /// Read CR8
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    bool
-    test_rdcr8_handler(
-        gsl::not_null<vmcs_t *> vmcs, crs::info_t &info)
-    {
-        bfignored(vmcs);
-
-        info.val = m_tpr_shadow;
-        return true;
-    }
-
-    /// Write CR8
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    bool
-    test_wrcr8_handler(
-        gsl::not_null<vmcs_t *> vmcs, crs::info_t &info)
-    {
-        bfignored(vmcs);
-
-        m_tpr_shadow = info.val;
-        return true;
-    }
-
-private:
-
-    uint64_t m_tpr_shadow;
 };
 
 }

@@ -77,8 +77,6 @@ namespace intel_x64
 class EXPORT_EAPIS_HVE base
 {
 
-    bool m_log_enabled{false};
-
 public:
 
     /// Default Constructor
@@ -133,13 +131,21 @@ public:
     /// @expects
     /// @ensures
     ///
-    virtual void dump_log()
-    { }
+    virtual void dump_log() = 0;
 
-    auto is_logging_enabled() {
-        return m_log_enabled;
-    }
-
+    /// Add Record to Log
+    ///
+    /// Example:
+    /// @code
+    /// this->add_record();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param log The log to add a record to
+    /// @param record The record to add to the log
+    ///
     template<typename T> void
     add_record(std::list<T> &log, const T &record)
     {
@@ -148,7 +154,7 @@ public:
         }
     }
 
-public:
+protected:
 
     uintptr_t emulate_rdgpr(
         gsl::not_null<vmcs_t *> vmcs)
@@ -284,6 +290,10 @@ public:
                 throw std::runtime_error("emulate_wrgpr: unknown index");
         }
     }
+
+protected:
+
+    bool m_log_enabled{false};
 
 public:
 

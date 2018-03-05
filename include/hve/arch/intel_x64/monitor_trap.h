@@ -80,9 +80,24 @@ public:
 
 public:
 
+    /// Dump Log
+    ///
+    /// Example:
+    /// @code
+    /// this->dump_log();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void dump_log() final
+    { }
+
+public:
+
     /// @cond
 
-    bool handle_monitor_trap(gsl::not_null<vmcs_t *> vmcs);
+    bool handle(gsl::not_null<vmcs_t *> vmcs);
 
     /// @endcond
 

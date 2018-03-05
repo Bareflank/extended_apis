@@ -103,7 +103,7 @@ public:
 
     /// @cond
 
-    bool handle_cpuid(gsl::not_null<vmcs_t *> vmcs);
+    bool handle(gsl::not_null<vmcs_t *> vmcs);
 
     /// @endcond
 

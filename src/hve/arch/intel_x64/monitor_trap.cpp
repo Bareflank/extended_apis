@@ -36,7 +36,7 @@ monitor_trap::monitor_trap(gsl::not_null<exit_handler_t *> exit_handler) :
 
     m_exit_handler->add_handler(
         exit_reason::basic_exit_reason::monitor_trap_flag,
-        ::handler_delegate_t::create<monitor_trap, &monitor_trap::handle_monitor_trap>(this)
+        ::handler_delegate_t::create<monitor_trap, &monitor_trap::handle>(this)
     );
 
     this->add_handler(
@@ -64,7 +64,7 @@ monitor_trap::enable()
 // -----------------------------------------------------------------------------
 
 bool
-monitor_trap::handle_monitor_trap(gsl::not_null<vmcs_t *> vmcs)
+monitor_trap::handle(gsl::not_null<vmcs_t *> vmcs)
 {
     using namespace vmcs_n;
 
