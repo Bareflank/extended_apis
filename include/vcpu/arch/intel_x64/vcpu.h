@@ -21,6 +21,7 @@
 
 #include "../../../hve/arch/intel_x64/control_register.h"
 #include "../../../hve/arch/intel_x64/cpuid.h"
+#include "../../../hve/arch/intel_x64/io_instruction.h"
 #include "../../../hve/arch/intel_x64/monitor_trap.h"
 #include "../../../hve/arch/intel_x64/mov_dr.h"
 #include "../../../hve/arch/intel_x64/rdmsr.h"
@@ -187,6 +188,43 @@ public:
         }
 
         m_cpuid->add_handler(leaf, subleaf, std::move(d));
+    }
+
+    //--------------------------------------------------------------------------
+    // IO Instruction
+    //--------------------------------------------------------------------------
+
+    /// Get IO Instruction Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the IO Instruction object stored in the vCPU if IO
+    ///     Instruction trapping is enabled, otherwise an exception is thrown
+    ///
+    gsl::not_null<io_instruction *> io_instruction()
+    { return m_io_instruction.get(); }
+
+    /// Add CPUID Handler
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void add_io_instruction_handler(
+        vmcs_n::value_type port,
+        io_instruction::handler_delegate_t &&in_d,
+        io_instruction::handler_delegate_t &&out_d)
+    {
+        check_io_bitmaps();
+
+        if (!m_io_instruction) {
+            m_io_instruction = std::make_unique<eapis::intel_x64::io_instruction>(
+                gsl::make_span(m_io_bitmaps.get(), ::x64::page_size * 2),
+                this->exit_handler()
+            );
+        }
+
+        m_io_instruction->add_handler(port, std::move(in_d), std::move(out_d));
     }
 
     //--------------------------------------------------------------------------
@@ -401,6 +439,20 @@ private:
         }
     }
 
+    void check_io_bitmaps()
+    {
+        using namespace vmcs_n;
+
+        if (!m_io_bitmaps) {
+            m_io_bitmaps = std::make_unique<uint8_t[]>(::x64::page_size * 2);
+
+            address_of_io_bitmap_a::set(g_mm->virtptr_to_physint(&m_io_bitmaps[0x0000]));
+            address_of_io_bitmap_b::set(g_mm->virtptr_to_physint(&m_io_bitmaps[010000]));
+
+            primary_processor_based_vm_execution_controls::use_io_bitmaps::enable();
+        }
+    }
+
     void check_monitor_trap()
     {
         if (!m_monitor_trap) {
@@ -426,7 +478,8 @@ private:
 
         if (!m_rdmsr) {
             m_rdmsr = std::make_unique<eapis::intel_x64::rdmsr>(
-                m_msr_bitmap.get(), this->exit_handler()
+                gsl::make_span(m_msr_bitmap.get(), ::x64::page_size),
+                this->exit_handler()
             );
         }
     }
@@ -437,7 +490,8 @@ private:
 
         if (!m_wrmsr) {
             m_wrmsr = std::make_unique<eapis::intel_x64::wrmsr>(
-                m_msr_bitmap.get(), this->exit_handler()
+                gsl::make_span(m_msr_bitmap.get(), ::x64::page_size),
+                this->exit_handler()
             );
         }
     }
@@ -450,9 +504,11 @@ private:
     bool m_is_wrcr8_enabled{false};
 
     std::unique_ptr<uint8_t[]> m_msr_bitmap;
+    std::unique_ptr<uint8_t[]> m_io_bitmaps;
 
     std::unique_ptr<eapis::intel_x64::control_register> m_control_register;
     std::unique_ptr<eapis::intel_x64::cpuid> m_cpuid;
+    std::unique_ptr<eapis::intel_x64::io_instruction> m_io_instruction;
     std::unique_ptr<eapis::intel_x64::monitor_trap> m_monitor_trap;
     std::unique_ptr<eapis::intel_x64::mov_dr> m_mov_dr;
     std::unique_ptr<eapis::intel_x64::rdmsr> m_rdmsr;

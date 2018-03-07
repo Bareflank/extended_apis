@@ -24,11 +24,6 @@ namespace eapis
 namespace intel_x64
 {
 
-static bool
-default_handler(
-    gsl::not_null<vmcs_t *> vmcs, mov_dr::info_t &info)
-{ bfignored(vmcs); bfignored(info); return true; }
-
 mov_dr::mov_dr(gsl::not_null<exit_handler_t *> exit_handler) :
     m_exit_handler{exit_handler}
 {
@@ -37,10 +32,6 @@ mov_dr::mov_dr(gsl::not_null<exit_handler_t *> exit_handler) :
     m_exit_handler->add_handler(
         exit_reason::basic_exit_reason::mov_dr,
         ::handler_delegate_t::create<mov_dr, &mov_dr::handle>(this)
-    );
-
-    this->add_handler(
-        handler_delegate_t::create<default_handler>()
     );
 
     using namespace vmcs_n;
@@ -77,7 +68,6 @@ mov_dr::dump_log()
         for(const auto &record : m_log) {
             bfdebug_info(0, "record", msg);
             bfdebug_subnhex(0, "val", record.val, msg);
-            bfdebug_subbool(0, "out", record.out, msg);
         }
 
         bfdebug_lnbr(0, msg);
@@ -99,18 +89,12 @@ mov_dr::handle(gsl::not_null<vmcs_t *> vmcs)
 
     if (!ndebug && m_log_enabled) {
         add_record(m_log, {
-            info.val, false
+            info.val
         });
     }
 
     for (const auto &d : m_handlers) {
         if (d(vmcs, info)) {
-
-            if (!ndebug && m_log_enabled) {
-                add_record(m_log, {
-                    info.val, true
-                });
-            }
 
             if(!info.ignore_write) {
                 vmcs_n::guest_dr7::set(info.val & 0x00000000FFFFFFFF);
@@ -124,7 +108,8 @@ mov_dr::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    return false;
+    throw std::runtime_error(
+        "mov_dr::unhandled");
 }
 
 }

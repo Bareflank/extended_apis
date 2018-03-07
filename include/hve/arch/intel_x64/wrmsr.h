@@ -50,7 +50,7 @@ public:
     /// @ensures
     ///
     wrmsr(
-        gsl::not_null<uint8_t *> msr_bitmap,
+        gsl::span<uint8_t> msr_bitmap,
         gsl::not_null<exit_handler_t *> exit_handler
     );
 
@@ -169,7 +169,6 @@ private:
     gsl::span<uint8_t> m_msr_bitmap;
     gsl::not_null<exit_handler_t *> m_exit_handler;
 
-    handler_delegate_t m_default_handler;
     std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_handlers;
 
 private:
@@ -177,8 +176,6 @@ private:
     struct msr_record_t {
         uint64_t msr;
         uint64_t val;
-        bool out;           // True == out
-        bool dir;           // True == read
     };
 
     std::list<msr_record_t> m_log;

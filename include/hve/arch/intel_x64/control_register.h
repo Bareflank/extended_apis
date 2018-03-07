@@ -240,8 +240,6 @@ private:
     struct record_t {
         uint64_t val;
         uint64_t shadow;
-        bool out;           // True == out
-        bool dir;           // True == read
     };
 
     std::list<record_t> m_cr0_log;

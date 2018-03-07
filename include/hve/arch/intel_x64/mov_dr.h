@@ -99,7 +99,6 @@ private:
 
     struct dr_record_t {
         uint64_t val;
-        bool out;           // True == out
     };
 
     std::list<dr_record_t> m_log;

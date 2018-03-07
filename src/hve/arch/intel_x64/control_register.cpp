@@ -166,8 +166,6 @@ control_register::dump_log()
                 bfdebug_info(0, "record", msg);
                 bfdebug_subnhex(0, "val", record.val, msg);
                 bfdebug_subnhex(0, "shadow", record.shadow, msg);
-                bfdebug_subbool(0, "out", record.out, msg);
-                bfdebug_subbool(0, "dir", record.dir, msg);
             }
 
             bfdebug_lnbr(0, msg);
@@ -184,8 +182,6 @@ control_register::dump_log()
                 bfdebug_info(0, "record", msg);
                 bfdebug_subnhex(0, "val", record.val, msg);
                 bfdebug_subnhex(0, "shadow", record.shadow, msg);
-                bfdebug_subbool(0, "out", record.out, msg);
-                bfdebug_subbool(0, "dir", record.dir, msg);
             }
 
             bfdebug_lnbr(0, msg);
@@ -202,8 +198,6 @@ control_register::dump_log()
                 bfdebug_info(0, "record", msg);
                 bfdebug_subnhex(0, "val", record.val, msg);
                 bfdebug_subnhex(0, "shadow", record.shadow, msg);
-                bfdebug_subbool(0, "out", record.out, msg);
-                bfdebug_subbool(0, "dir", record.dir, msg);
             }
 
             bfdebug_lnbr(0, msg);
@@ -220,8 +214,6 @@ control_register::dump_log()
                 bfdebug_info(0, "record", msg);
                 bfdebug_subnhex(0, "val", record.val, msg);
                 bfdebug_subnhex(0, "shadow", record.shadow, msg);
-                bfdebug_subbool(0, "out", record.out, msg);
-                bfdebug_subbool(0, "dir", record.dir, msg);
             }
 
             bfdebug_lnbr(0, msg);
@@ -302,18 +294,12 @@ control_register::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
 
     if (!ndebug && m_log_enabled) {
         add_record(m_cr0_log, {
-            info.val, info.shadow, false, false
+            info.val, info.shadow
         });
     }
 
     for (const auto &d : m_wrcr0_handlers) {
         if (d(vmcs, info)) {
-
-            if (!ndebug && m_log_enabled) {
-                add_record(m_cr0_log, {
-                    info.val, info.shadow, true, false
-                });
-            }
 
             if (!info.ignore_write) {
                 vmcs_n::guest_cr0::set(info.val);
@@ -328,7 +314,8 @@ control_register::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    return false;
+    throw std::runtime_error(
+        "control_register::unhandled wrcr0");
 }
 
 bool
@@ -343,18 +330,12 @@ control_register::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
 
     if (!ndebug && m_log_enabled) {
         add_record(m_cr3_log, {
-            info.val, info.shadow, false, true
+            info.val, info.shadow
         });
     }
 
     for (const auto &d : m_rdcr3_handlers) {
         if (d(vmcs, info)) {
-
-            if (!ndebug && m_log_enabled) {
-                add_record(m_cr3_log, {
-                    info.val, info.shadow, true, true
-                });
-            }
 
             if (!info.ignore_write) {
                 this->emulate_wrgpr(vmcs, info.val);
@@ -368,7 +349,8 @@ control_register::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    return false;
+    throw std::runtime_error(
+        "control_register::unhandled rdcr3");
 }
 
 bool
@@ -383,23 +365,15 @@ control_register::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
 
     if (!ndebug && m_log_enabled) {
         add_record(m_cr3_log, {
-            info.val, info.shadow, false, false
+            info.val, info.shadow
         });
     }
 
     for (const auto &d : m_wrcr3_handlers) {
         if (d(vmcs, info)) {
 
-            info.val &= 0x7FFFFFFFFFFFFFFF;
-
-            if (!ndebug && m_log_enabled) {
-                add_record(m_cr3_log, {
-                    info.val, info.shadow, true, false
-                });
-            }
-
             if (!info.ignore_write) {
-                vmcs_n::guest_cr3::set(info.val);
+                vmcs_n::guest_cr3::set(info.val & 0x7FFFFFFFFFFFFFFF);
             }
 
             if (!info.ignore_advance) {
@@ -410,7 +384,8 @@ control_register::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    return false;
+    throw std::runtime_error(
+        "control_register::unhandled wrcr3");
 }
 
 bool
@@ -425,18 +400,12 @@ control_register::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
 
     if (!ndebug && m_log_enabled) {
         add_record(m_cr4_log, {
-            info.val, info.shadow, false, false
+            info.val, info.shadow
         });
     }
 
     for (const auto &d : m_wrcr4_handlers) {
         if (d(vmcs, info)) {
-
-            if (!ndebug && m_log_enabled) {
-                add_record(m_cr4_log, {
-                    info.val, info.shadow, true, false
-                });
-            }
 
             if (!info.ignore_write) {
                 vmcs_n::guest_cr4::set(info.val);
@@ -451,7 +420,8 @@ control_register::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    return false;
+    throw std::runtime_error(
+        "control_register::unhandled wrcr4");
 }
 
 bool
@@ -466,18 +436,12 @@ control_register::handle_rdcr8(gsl::not_null<vmcs_t *> vmcs)
 
     if (!ndebug && m_log_enabled) {
         add_record(m_cr8_log, {
-            info.val, info.shadow, false, true
+            info.val, info.shadow
         });
     }
 
     for (const auto &d : m_rdcr8_handlers) {
         if (d(vmcs, info)) {
-
-            if (!ndebug && m_log_enabled) {
-                add_record(m_cr8_log, {
-                    info.val, info.shadow, true, true
-                });
-            }
 
             if (!info.ignore_write) {
                 this->emulate_wrgpr(vmcs, info.val);
@@ -491,7 +455,8 @@ control_register::handle_rdcr8(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    return false;
+    throw std::runtime_error(
+        "control_register::unhandled rdcr8");
 }
 
 bool
@@ -506,18 +471,12 @@ control_register::handle_wrcr8(gsl::not_null<vmcs_t *> vmcs)
 
     if (!ndebug && m_log_enabled) {
         add_record(m_cr0_log, {
-            info.val, info.shadow, false, false
+            info.val, info.shadow
         });
     }
 
     for (const auto &d : m_wrcr8_handlers) {
         if (d(vmcs, info)) {
-
-            if (!ndebug && m_log_enabled) {
-                add_record(m_cr8_log, {
-                    info.val, info.shadow, true, false
-                });
-            }
 
             if (!info.ignore_advance) {
                 return advance(vmcs);
@@ -527,7 +486,8 @@ control_register::handle_wrcr8(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    return false;
+    throw std::runtime_error(
+        "control_register::unhandled rdcr8");
 }
 
 }

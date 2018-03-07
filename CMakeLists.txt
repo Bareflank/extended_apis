@@ -28,6 +28,8 @@ if(ENABLE_BUILD_VMM)
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src/main
     )
 
+# MOVE ME
+
     vmm_extension(
         eapis_integration_intel_x64_control_register
         DEPENDS eapis
@@ -38,6 +40,12 @@ if(ENABLE_BUILD_VMM)
         eapis_integration_intel_x64_cpuid
         DEPENDS eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/integration/arch/intel_x64/cpuid/
+    )
+
+    vmm_extension(
+        eapis_integration_intel_x64_io_instruction
+        DEPENDS eapis
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/integration/arch/intel_x64/io_instruction/
     )
 
     vmm_extension(

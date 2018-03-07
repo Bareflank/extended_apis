@@ -25,10 +25,10 @@ namespace intel_x64
 {
 
 rdmsr::rdmsr(
-    gsl::not_null<uint8_t *> msr_bitmap,
+    gsl::span<uint8_t> msr_bitmap,
     gsl::not_null<exit_handler_t *> exit_handler
 ) :
-    m_msr_bitmap{gsl::make_span(msr_bitmap.get(), ::x64::page_size)},
+    m_msr_bitmap{msr_bitmap},
     m_exit_handler{exit_handler}
 {
     using namespace vmcs_n;
@@ -54,7 +54,9 @@ void
 rdmsr::add_handler(
     vmcs_n::value_type msr, handler_delegate_t &&d)
 {
-    trap_on_access(msr);
+#ifndef DISABLE_AUTO_TRAP_ON_ACCESS
+    this->trap_on_access(msr);
+#endif
     m_handlers[msr].push_front(std::move(d));
 }
 
@@ -74,7 +76,7 @@ rdmsr::trap_on_access(vmcs_n::value_type msr)
 
 void
 rdmsr::trap_on_all_accesses()
-{ memset(&m_msr_bitmap[0], 0xFF, ::x64::page_size >> 1); }
+{ gsl::memset(m_msr_bitmap.subspan(0, m_msr_bitmap.size() >> 1), 0xFF); }
 
 void
 rdmsr::pass_through_access(vmcs_n::value_type msr)
@@ -92,7 +94,7 @@ rdmsr::pass_through_access(vmcs_n::value_type msr)
 
 void
 rdmsr::pass_through_all_accesses()
-{ memset(&m_msr_bitmap[0], 0x0, ::x64::page_size >> 1); }
+{ gsl::memset(m_msr_bitmap.subspan(0, m_msr_bitmap.size() >> 1), 0x00); }
 
 // -----------------------------------------------------------------------------
 // Debug
@@ -110,8 +112,6 @@ rdmsr::dump_log()
             bfdebug_info(0, "record", msg);
             bfdebug_subnhex(0, "msr", record.msr, msg);
             bfdebug_subnhex(0, "val", record.val, msg);
-            bfdebug_subbool(0, "out", record.out, msg);
-            bfdebug_subbool(0, "dir", record.dir, msg);
         }
 
         bfdebug_lnbr(0, msg);
@@ -125,6 +125,20 @@ rdmsr::dump_log()
 bool
 rdmsr::handle(gsl::not_null<vmcs_t *> vmcs)
 {
+
+// TODO: IMPORTANT!!!
+//
+// We need to create a list of MSRs that are implemented and GP when the
+// MSR is not implemented. We also need to test to make sure the the hardware
+// is enforcing the privilege level of this instruction while the hypervisor
+// is loaded.
+//
+// To fire a GP, we need to add a Bareflank specific exception that can be
+// thrown. The base hypervisor can then trap on this type of exception and
+// have delegates that can be registered to handle the exeption type, which in
+// this case would be the interrupt code that would then inject a GP.
+//
+
     const auto &hdlrs =
         m_handlers.find(
             vmcs->save_state()->rcx
@@ -132,35 +146,31 @@ rdmsr::handle(gsl::not_null<vmcs_t *> vmcs)
 
     if (GSL_LIKELY(hdlrs != m_handlers.end())) {
 
-        auto val =
-            emulate_rdmsr(
-                gsl::narrow_cast<::x64::msrs::field_type>(vmcs->save_state()->rcx)
-            );
-
         struct info_t info = {
             vmcs->save_state()->rcx,
-            val,
+            0,
             false,
             false
         };
 
+        info.val =
+            emulate_rdmsr(
+                gsl::narrow_cast<::x64::msrs::field_type>(vmcs->save_state()->rcx)
+            );
+
         if (!ndebug && m_log_enabled) {
             add_record(m_log, {
-                info.msr, info.val, false, true
+                info.msr, info.val
             });
         }
 
         for (const auto &d : hdlrs->second) {
             if (d(vmcs, info)) {
 
-                if (!ndebug && m_log_enabled) {
-                    add_record(m_log, {
-                        info.msr, info.val, true, true
-                    });
+                if (!info.ignore_write) {
+                    vmcs->save_state()->rax = ((info.val >> 0x00) & 0x00000000FFFFFFFF);
+                    vmcs->save_state()->rdx = ((info.val >> 0x20) & 0x00000000FFFFFFFF);
                 }
-
-                vmcs->save_state()->rax = ((info.val >> 0x00) & 0x00000000FFFFFFFF);
-                vmcs->save_state()->rdx = ((info.val >> 0x20) & 0x00000000FFFFFFFF);
 
                 if (!info.ignore_advance) {
                     return advance(vmcs);
@@ -171,8 +181,14 @@ rdmsr::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    throw std::runtime_error(
-        "rdmsr::handle: unhandled msr #" + std::to_string(vmcs->save_state()->rcx));
+#ifndef SECURE_MODE
+    return false;
+#endif
+
+    vmcs->save_state()->rax = 0;
+    vmcs->save_state()->rdx = 0;
+
+    return advance(vmcs);
 }
 
 }
