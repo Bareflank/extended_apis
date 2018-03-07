@@ -121,7 +121,6 @@ private:
         uint64_t rbx;
         uint64_t rcx;
         uint64_t rdx;
-        bool out;
     };
 
     std::list<cpuid_record_t> m_log;

@@ -24,11 +24,6 @@ namespace eapis
 namespace intel_x64
 {
 
-static bool
-default_handler(
-    gsl::not_null<vmcs_t *> vmcs, monitor_trap::info_t &info)
-{ bfignored(vmcs); bfignored(info); return true; }
-
 monitor_trap::monitor_trap(gsl::not_null<exit_handler_t *> exit_handler) :
     m_exit_handler{exit_handler}
 {
@@ -37,10 +32,6 @@ monitor_trap::monitor_trap(gsl::not_null<exit_handler_t *> exit_handler) :
     m_exit_handler->add_handler(
         exit_reason::basic_exit_reason::monitor_trap_flag,
         ::handler_delegate_t::create<monitor_trap, &monitor_trap::handle>(this)
-    );
-
-    this->add_handler(
-        handler_delegate_t::create<default_handler>()
     );
 }
 
@@ -74,16 +65,15 @@ monitor_trap::handle(gsl::not_null<vmcs_t *> vmcs)
 
     for (const auto &d : m_handlers) {
         if (d(vmcs, info)) {
-
-            if(!info.ignore_clear) {
-                primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
-            }
-
-            return true;
+            break;
         }
     }
 
-    return false;
+    if(!info.ignore_clear) {
+        primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
+    }
+
+    return true;
 }
 
 }

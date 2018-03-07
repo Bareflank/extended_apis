@@ -70,7 +70,6 @@ cpuid::dump_log()
             bfdebug_subnhex(0, "rbx", record.rbx, msg);
             bfdebug_subnhex(0, "rcx", record.rcx, msg);
             bfdebug_subnhex(0, "rdx", record.rdx, msg);
-            bfdebug_subbool(0, "out", record.out, msg);
         }
 
         bfdebug_lnbr(0, msg);
@@ -111,20 +110,12 @@ cpuid::handle(gsl::not_null<vmcs_t *> vmcs)
             add_record(m_log, {
                 vmcs->save_state()->rax,
                 vmcs->save_state()->rcx,
-                info.rax, info.rbx, info.rcx, info.rdx, false
+                info.rax, info.rbx, info.rcx, info.rdx
             });
         }
 
         for (const auto &d : hdlrs->second) {
             if (d(vmcs, info)) {
-
-                if (!ndebug && m_log_enabled) {
-                    add_record(m_log, {
-                        vmcs->save_state()->rax,
-                        vmcs->save_state()->rcx,
-                        info.rax, info.rbx, info.rcx, info.rdx, true
-                    });
-                }
 
                 if (!info.ignore_write) {
                     vmcs->save_state()->rax = set_bits(vmcs->save_state()->rax, 0x00000000FFFFFFFF, info.rax);
@@ -142,7 +133,16 @@ cpuid::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
+#ifndef SECURE_MODE
     return false;
+#endif
+
+    vmcs->save_state()->rax = 0;
+    vmcs->save_state()->rbx = 0;
+    vmcs->save_state()->rcx = 0;
+    vmcs->save_state()->rdx = 0;
+
+    return advance(vmcs);
 }
 
 }

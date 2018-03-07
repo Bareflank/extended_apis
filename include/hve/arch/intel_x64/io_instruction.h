@@ -35,10 +35,12 @@ class EXPORT_EAPIS_HVE io_instruction : public base
 public:
 
     struct info_t {
-        uint64_t port;          // In
-        uint64_t val;           // In / Out
-        bool ignore_write;      // Out
-        bool ignore_advance;    // Out
+        uint64_t port_number;           // In
+        uint64_t size_of_access;        // In
+        uint64_t address;               // In
+        uint64_t val;                   // In / Out
+        bool ignore_write;              // Out
+        bool ignore_advance;            // Out
     };
 
     using handler_delegate_t =
@@ -49,7 +51,10 @@ public:
     /// @expects
     /// @ensures
     ///
-    io_instruction(gsl::not_null<exit_handler_t *> exit_handler);
+    io_instruction(
+        gsl::span<uint8_t> io_bitmaps,
+        gsl::not_null<exit_handler_t *> exit_handler
+    );
 
     /// Destructor
     ///
@@ -65,34 +70,38 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param msr the address to listen to
-    /// @param d the handler to call when an exit occurs
+    /// @param port the port to listen to
+    /// @param in_d the handler to call when an in exit occurs
+    /// @param out_d the handler to call when an out exit occurs
     ///
     void add_handler(
-        vmcs_n::value_type msr, handler_delegate_t &&d);
+        vmcs_n::value_type port,
+        handler_delegate_t &&in_d,
+        handler_delegate_t &&out_d
+    );
 
     /// Trap On Access
     ///
-    /// Sets a '1' in the MSR bitmap corresponding with the provided msr. All
-    /// attempts made by the guest to read from the provided msr will
+    /// Sets a '1' in the MSR bitmap corresponding with the provided port. All
+    /// attempts made by the guest to read from the provided port will
     /// trap to hypervisor.
     ///
     /// Example:
     /// @code
-    /// this->trap_on_msr_access(0x42);
+    /// this->trap_on_port_access(0x42);
     /// @endcode
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param msr the msr to trap on
+    /// @param port the port to trap on
     ///
-    void trap_on_access(vmcs_n::value_type msr);
+    void trap_on_access(vmcs_n::value_type port);
 
     /// Trap On All Accesses
     ///
     /// Sets a '1' in the MSR bitmap corresponding with all of the io_instruction. All
-    /// attempts made by the guest to read from any msr will
+    /// attempts made by the guest to read from any port will
     /// trap to hypervisor.
     ///
     /// Example:
@@ -107,8 +116,8 @@ public:
 
     /// Pass Through Access
     ///
-    /// Sets a '0' in the MSR bitmap corresponding with the provided msr. All
-    /// attempts made by the guest to read from the provided msr will be
+    /// Sets a '0' in the MSR bitmap corresponding with the provided port. All
+    /// attempts made by the guest to read from the provided port will be
     /// executed by the guest and will not trap to the hypervisor.
     ///
     /// Example:
@@ -119,9 +128,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param msr the msr to pass through
+    /// @param port the port to pass through
     ///
-    void pass_through_access(vmcs_n::value_type msr);
+    void pass_through_access(vmcs_n::value_type port);
 
     /// Pass Through All Access
     ///
@@ -163,22 +172,32 @@ public:
 
 private:
 
-    gsl::span<uint8_t> m_msr_bitmap;
+    bool handle_in(gsl::not_null<vmcs_t *> vmcs, info_t &info);
+    bool handle_out(gsl::not_null<vmcs_t *> vmcs, info_t &info);
+
+    void emulate_in(info_t &info);
+    void emulate_out(info_t &info);
+
+    void load_operand(gsl::not_null<vmcs_t *> vmcs, info_t &info);
+    void store_operand(gsl::not_null<vmcs_t *> vmcs, info_t &info);
+
+    gsl::span<uint8_t> m_io_bitmaps;
     gsl::not_null<exit_handler_t *> m_exit_handler;
 
-    handler_delegate_t m_default_handler;
-    std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_handlers;
+    std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_in_handlers;
+    std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_out_handlers;
 
 private:
 
-    struct msr_record_t {
-        uint64_t msr;
+    struct port_record_t {
+        uint64_t port_number;
+        uint64_t size_of_access;
+        uint64_t direction_of_access;
+        uint64_t address;
         uint64_t val;
-        bool out;           // True == out
-        bool dir;           // True == read
     };
 
-    std::list<msr_record_t> m_log;
+    std::list<port_record_t> m_log;
 
 public:
 

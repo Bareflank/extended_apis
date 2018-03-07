@@ -25,10 +25,10 @@ namespace intel_x64
 {
 
 wrmsr::wrmsr(
-    gsl::not_null<uint8_t *> msr_bitmap,
+    gsl::span<uint8_t> msr_bitmap,
     gsl::not_null<exit_handler_t *> exit_handler
 ) :
-    m_msr_bitmap{gsl::make_span(msr_bitmap.get(), ::x64::page_size)},
+    m_msr_bitmap{msr_bitmap},
     m_exit_handler{exit_handler}
 {
     using namespace vmcs_n;
@@ -54,7 +54,9 @@ void
 wrmsr::add_handler(
     vmcs_n::value_type msr, handler_delegate_t &&d)
 {
-    trap_on_access(msr);
+#ifndef DISABLE_AUTO_TRAP_ON_ACCESS
+    this->trap_on_access(msr);
+#endif
     m_handlers[msr].push_front(std::move(d));
 }
 
@@ -74,7 +76,7 @@ wrmsr::trap_on_access(vmcs_n::value_type msr)
 
 void
 wrmsr::trap_on_all_accesses()
-{ memset(&m_msr_bitmap[2048], 0xFF, ::x64::page_size >> 1); }
+{ gsl::memset(m_msr_bitmap.subspan(2048, m_msr_bitmap.size() >> 1), 0xFF); }
 
 void
 wrmsr::pass_through_access(vmcs_n::value_type msr)
@@ -92,7 +94,7 @@ wrmsr::pass_through_access(vmcs_n::value_type msr)
 
 void
 wrmsr::pass_through_all_accesses()
-{ memset(&m_msr_bitmap[2048], 0x0, ::x64::page_size >> 1); }
+{ gsl::memset(m_msr_bitmap.subspan(2048, m_msr_bitmap.size() >> 1), 0x00); }
 
 // -----------------------------------------------------------------------------
 // Debug
@@ -110,8 +112,6 @@ wrmsr::dump_log()
             bfdebug_info(0, "record", msg);
             bfdebug_subnhex(0, "msr", record.msr, msg);
             bfdebug_subnhex(0, "val", record.val, msg);
-            bfdebug_subbool(0, "out", record.out, msg);
-            bfdebug_subbool(0, "dir", record.dir, msg);
         }
 
         bfdebug_lnbr(0, msg);
@@ -125,6 +125,20 @@ wrmsr::dump_log()
 bool
 wrmsr::handle(gsl::not_null<vmcs_t *> vmcs)
 {
+
+// TODO: IMPORTANT!!!
+//
+// We need to create a list of MSRs that are implemented and GP when the
+// MSR is not implemented. We also need to test to make sure the the hardware
+// is enforcing the privilege level of this instruction while the hypervisor
+// is loaded.
+//
+// To fire a GP, we need to add a Bareflank specific exception that can be
+// thrown. The base hypervisor can then trap on this type of exception and
+// have delegates that can be registered to handle the exeption type, which in
+// this case would be the interrupt code that would then inject a GP.
+//
+
     const auto &hdlrs =
         m_handlers.find(
             vmcs->save_state()->rcx
@@ -132,30 +146,25 @@ wrmsr::handle(gsl::not_null<vmcs_t *> vmcs)
 
     if (GSL_LIKELY(hdlrs != m_handlers.end())) {
 
-        auto val = ((vmcs->save_state()->rax & 0x00000000FFFFFFFF) << 0) |
-                   ((vmcs->save_state()->rdx & 0x00000000FFFFFFFF) << 32);
-
         struct info_t info = {
             vmcs->save_state()->rcx,
-            val,
+            0,
             false,
             false
         };
 
+        info.val =
+            ((vmcs->save_state()->rax & 0x00000000FFFFFFFF) << 0) |
+            ((vmcs->save_state()->rdx & 0x00000000FFFFFFFF) << 32);
+
         if (!ndebug && m_log_enabled) {
             add_record(m_log, {
-                info.msr, info.val, true, false
+                info.msr, info.val
             });
         }
 
         for (const auto &d : hdlrs->second) {
             if (d(vmcs, info)) {
-
-                if (!ndebug && m_log_enabled) {
-                    add_record(m_log, {
-                        info.msr, info.val, false, false
-                    });
-                }
 
                 if (!info.ignore_write) {
                     emulate_wrmsr(
@@ -173,8 +182,11 @@ wrmsr::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    throw std::runtime_error(
-        "wrmsr::handle: unhandled msr #" + std::to_string(vmcs->save_state()->rcx));
+#ifndef SECURE_MODE
+    return false;
+#endif
+
+    return advance(vmcs);
 }
 
 }

@@ -38,19 +38,14 @@ install:
 build_script:
 
   #
-  # Download Repos
-  #
-  - git clone -b no-namespace https://github.com/connojd/hypervisor.git hypervisor
-
-  #
   # Visual Studio (MSBuild / Static Libraries)
   #
-  - mkdir hypervisor\build
-  - cd hypervisor\build
-  - cmake -G "Visual Studio 15 2017 Win64" -DEXTENSIONS="C:/projects/extended-apis/CMakeLists.txt" -DENABLE_BUILD_VMM=OFF -DENABLE_BUILD_USERSPACE=OFF -DENABLE_BUILD_TEST=ON ..
-  - msbuild /m:3 hypervisor.sln
-  - cmake --build . --target eapis_x86_64-test-pe
-  - cd ..
+  # - mkdir hypervisor\build
+  # - cd hypervisor\build
+  # - cmake -G "Visual Studio 15 2017 Win64" -DEXTENSIONS="C:/projects/extended-apis/CMakeLists.txt" -DENABLE_BUILD_VMM=OFF -DENABLE_BUILD_USERSPACE=OFF -DENABLE_BUILD_TEST=ON ..
+  # - msbuild /m:3 hypervisor.sln
+  # - cmake --build . --target eapis_x86_64-test-pe
+  # - cd ..
 
   #
   # Cygwin (Shared Libraries)
