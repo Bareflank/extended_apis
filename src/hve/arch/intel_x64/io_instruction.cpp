@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/io_instruction.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
 #include <bfvmm/memory_manager/arch/x64/map_ptr.h>
 
@@ -26,12 +26,9 @@ namespace eapis
 namespace intel_x64
 {
 
-io_instruction::io_instruction(
-    gsl::span<uint8_t> io_bitmaps,
-    gsl::not_null<exit_handler_t *> exit_handler
-) :
-    m_io_bitmaps{io_bitmaps},
-    m_exit_handler{exit_handler}
+io_instruction::io_instruction(gsl::not_null<eapis::intel_x64::vcpu *> vcpu) :
+    m_io_bitmaps{vcpu->io_bitmaps()},
+    m_exit_handler{vcpu->exit_handler()}
 {
     using namespace vmcs_n;
 

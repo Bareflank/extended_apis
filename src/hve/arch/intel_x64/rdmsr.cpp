@@ -17,19 +17,16 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/rdmsr.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
 namespace eapis
 {
 namespace intel_x64
 {
 
-rdmsr::rdmsr(
-    gsl::span<uint8_t> msr_bitmap,
-    gsl::not_null<exit_handler_t *> exit_handler
-) :
-    m_msr_bitmap{msr_bitmap},
-    m_exit_handler{exit_handler}
+rdmsr::rdmsr(gsl::not_null<eapis::intel_x64::vcpu *> vcpu) :
+    m_msr_bitmap{vcpu->msr_bitmap()},
+    m_exit_handler{vcpu->exit_handler()}
 {
     using namespace vmcs_n;
 

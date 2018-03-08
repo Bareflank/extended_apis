@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/control_register.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
 namespace eapis
 {
@@ -30,9 +30,9 @@ default_handler(
 { bfignored(vmcs); bfignored(info); return true; }
 
 control_register::control_register(
-    gsl::not_null<exit_handler_t *> exit_handler
+    gsl::not_null<eapis::intel_x64::vcpu *> vcpu
 ) :
-    m_exit_handler{exit_handler}
+    m_exit_handler{vcpu->exit_handler()}
 {
     using namespace vmcs_n;
 
