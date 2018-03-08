@@ -166,7 +166,7 @@ io_instruction::handle(gsl::not_null<vmcs_t *> vmcs)
                 break;
         }
 
-        info.address += info.size_of_access;
+        info.address += info.size_of_access + 1;
     }
 
     return true;
