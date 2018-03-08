@@ -30,6 +30,8 @@ namespace eapis
 namespace intel_x64
 {
 
+class vcpu;
+
 class EXPORT_EAPIS_HVE io_instruction : public base
 {
 public:
@@ -51,10 +53,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    io_instruction(
-        gsl::span<uint8_t> io_bitmaps,
-        gsl::not_null<exit_handler_t *> exit_handler
-    );
+    io_instruction(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
 
     /// Destructor
     ///

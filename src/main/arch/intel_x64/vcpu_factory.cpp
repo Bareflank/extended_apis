@@ -20,7 +20,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfvmm/vcpu/vcpu_factory.h>
-#include <eapis/vcpu/arch/intel_x64/vcpu.h>
+#include <eapis/hve/arch/intel_x64/vcpu.h>
 
 namespace bfvmm
 {

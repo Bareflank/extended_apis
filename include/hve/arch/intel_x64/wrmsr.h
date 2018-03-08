@@ -30,6 +30,8 @@ namespace eapis
 namespace intel_x64
 {
 
+class vcpu;
+
 class EXPORT_EAPIS_HVE wrmsr : public base
 {
 public:
@@ -49,10 +51,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    wrmsr(
-        gsl::span<uint8_t> msr_bitmap,
-        gsl::not_null<exit_handler_t *> exit_handler
-    );
+    wrmsr(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
 
     /// Destructor
     ///
