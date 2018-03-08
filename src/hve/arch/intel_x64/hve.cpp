@@ -134,6 +134,23 @@ void hve::add_external_interrupt_handler(
 }
 
 //--------------------------------------------------------------------------
+// Interrupt Window
+//--------------------------------------------------------------------------
+
+gsl::not_null<interrupt_window *> hve::interrupt_window()
+{ return m_interrupt_window.get(); }
+
+void hve::add_interrupt_window_handler(interrupt_window::handler_delegate_t &&d)
+{
+    if (!m_interrupt_window) {
+        m_interrupt_window =
+            std::make_unique<eapis::intel_x64::interrupt_window>(this);
+    }
+
+    m_interrupt_window->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
 // IO Instruction
 //--------------------------------------------------------------------------
 
