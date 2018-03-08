@@ -24,6 +24,7 @@
 #include "control_register.h"
 #include "cpuid.h"
 #include "external_interrupt.h"
+#include "interrupt_window.h"
 #include "io_instruction.h"
 #include "monitor_trap.h"
 #include "mov_dr.h"
@@ -194,6 +195,26 @@ public:
     ///
     void add_external_interrupt_handler(
         vmcs_n::value_type v, external_interrupt::handler_delegate_t &&d);
+
+    //--------------------------------------------------------------------------
+    // Interrupt Window
+    //--------------------------------------------------------------------------
+
+    /// Get Interrupt Window Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the interrupt window object stored in the hve if
+    ///
+    gsl::not_null<interrupt_window *> interrupt_window();
+
+    /// Add Interrupt Window Handler
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void add_interrupt_window_handler(interrupt_window::handler_delegate_t &&d);
 
     //--------------------------------------------------------------------------
     // IO Instruction
@@ -391,6 +412,7 @@ private:
     std::unique_ptr<eapis::intel_x64::control_register> m_control_register;
     std::unique_ptr<eapis::intel_x64::cpuid> m_cpuid;
     std::unique_ptr<eapis::intel_x64::external_interrupt> m_external_interrupt;
+    std::unique_ptr<eapis::intel_x64::interrupt_window> m_interrupt_window;
     std::unique_ptr<eapis::intel_x64::io_instruction> m_io_instruction;
     std::unique_ptr<eapis::intel_x64::monitor_trap> m_monitor_trap;
     std::unique_ptr<eapis::intel_x64::mov_dr> m_mov_dr;
