@@ -105,6 +105,24 @@ void vcpu::add_cpuid_handler(
 }
 
 //--------------------------------------------------------------------------
+// External Interrupt
+//--------------------------------------------------------------------------
+
+gsl::not_null<external_interrupt *> vcpu::external_interrupt()
+{ return m_external_interrupt.get(); }
+
+void vcpu::add_external_interrupt_handler(
+    vmcs_n::value_type vector, external_interrupt::handler_delegate_t &&d)
+{
+    if (!m_external_interrupt) {
+        m_external_interrupt =
+            std::make_unique<eapis::intel_x64::external_interrupt>(this);
+    }
+
+    m_external_interrupt->add_handler(vector, std::move(d));
+}
+
+//--------------------------------------------------------------------------
 // IO Instruction
 //--------------------------------------------------------------------------
 

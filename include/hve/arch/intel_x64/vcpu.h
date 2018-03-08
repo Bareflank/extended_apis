@@ -24,6 +24,7 @@
 
 #include "control_register.h"
 #include "cpuid.h"
+#include "external_interrupt.h"
 #include "io_instruction.h"
 #include "monitor_trap.h"
 #include "mov_dr.h"
@@ -150,6 +151,29 @@ public:
     ///
     void add_cpuid_handler(
         cpuid::leaf_t leaf, cpuid::subleaf_t subleaf, cpuid::handler_delegate_t &&d);
+
+    //--------------------------------------------------------------------------
+    // External Interrupt
+    //--------------------------------------------------------------------------
+
+    /// Get External Interrupt Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the external interrupt object stored in the vCPU if
+    ///     external-interrupt exiting is enabled, otherwise an exception is
+    ///     thrown
+    ///
+    gsl::not_null<external_interrupt *> external_interrupt();
+
+    /// Add External Interrupt Handler
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void add_external_interrupt_handler(
+        vmcs_n::value_type v, external_interrupt::handler_delegate_t &&d);
 
     //--------------------------------------------------------------------------
     // IO Instruction
@@ -346,6 +370,7 @@ private:
 
     std::unique_ptr<eapis::intel_x64::control_register> m_control_register;
     std::unique_ptr<eapis::intel_x64::cpuid> m_cpuid;
+    std::unique_ptr<eapis::intel_x64::external_interrupt> m_external_interrupt;
     std::unique_ptr<eapis::intel_x64::io_instruction> m_io_instruction;
     std::unique_ptr<eapis::intel_x64::monitor_trap> m_monitor_trap;
     std::unique_ptr<eapis::intel_x64::mov_dr> m_mov_dr;
