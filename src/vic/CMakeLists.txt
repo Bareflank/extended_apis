@@ -20,7 +20,7 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
         #        arch/intel_x64/isr.cpp
         #        arch/intel_x64/interrupt_manager.cpp
-        arch/intel_x64/virt_x2apic.cpp
+        # arch/intel_x64/virt_x2apic.cpp
         arch/intel_x64/phys_x2apic.cpp
         arch/intel_x64/lapic_register.cpp
     )

@@ -25,7 +25,7 @@ init_project(
 )
 
 add_subdirectory(hve)
-# add_subdirectory(vic)
+add_subdirectory(vic)
 
 # -----------------------------------------------------------------------------
 # Install
