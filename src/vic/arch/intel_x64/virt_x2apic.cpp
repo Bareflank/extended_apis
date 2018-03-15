@@ -1,6 +1,6 @@
 //
 // Bareflank Hypervisor
-// Copyright (C) 2017 Assured Information Security, Inc.
+// Copyright (C) 2018 Assured Information Security, Inc.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,27 +27,74 @@ namespace eapis
 namespace intel_x64
 {
 
-using namespace lapic_register;
 using namespace ::intel_x64::msrs;
+using namespace lapic_register;
+
+///----------------------------------------------------------------------------
+/// Initialization
+///----------------------------------------------------------------------------
 
 virt_x2apic::virt_x2apic(gsl::not_null<eapis::intel_x64::vcpu *> vcpu) :
-    m_vcpu{vcpu}
+    m_vcpu{vcpu},
+    m_interrupt_window{vcpu->interrupt_window()}
 {
-    this->reset_registers();
+    reset_registers();
+    init_interrupt_window_handler();
+}
+
+virt_x2apic::virt_x2apic(
+    gsl::not_null<eapis::intel_x64::vcpu *> vcpu,
+    gsl::not_null<eapis::intel_x64::phys_lapic *> phys) :
+    m_vcpu{vcpu},
+    m_interrupt_window{vcpu->interrupt_window()}
+{
+    init_registers_from_phys_x2apic(phys);
+    init_interrupt_window_handler();
 }
 
 void
-virt_x2apic::reset_registers()
+virt_x2apic::init_registers_from_phys_x2apic(
+    eapis::intel_x64::phys_lapic *phys)
 {
+    phys->disable_interrupts();
+
     for (auto i = 0U; i < m_registers.size(); ++i) {
         if (lapic_register::exists_in_x2apic(i)) {
-            this->reset_register(i);
+            init_virt_from_phys_x2apic(phys, i);
         }
     }
+
+    phys->enable_interrupts();
 }
 
+void
+virt_x2apic::init_virt_from_phys_x2apic(
+    eapis::intel_x64::phys_lapic *phys,
+    lapic_register::offset_t offset)
+{
+    if (lapic_register::readable_in_x2apic(offset)) {
+        write_register(offset, phys->read_register(offset));
+        return;
+    }
+
+    reset_register(offset);
+}
+
+void
+virt_x2apic::init_interrupt_window_handler()
+{
+    m_interrupt_window->add_handler(
+        handler_delegate_t::create<virt_x2apic,
+        &virt_x2apic::handle_interrupt_window_exit>(this)
+    );
+}
+
+///----------------------------------------------------------------------------
+/// Register reads
+///----------------------------------------------------------------------------
+
 uint64_t
-virt_x2apic::read_register(uint64_t offset) const
+virt_x2apic::read_register(lapic_register::offset_t offset) const
 { return m_registers.at(offset); }
 
 uint64_t
@@ -74,19 +121,29 @@ virt_x2apic::read_tpr() const
 uint64_t
 virt_x2apic::read_icr() const
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_icr::addr);
-    return read_register(offset);
+    const auto offset0 = msr_addr_to_offset(ia32_x2apic_icr::addr);
+    const auto offset1 = msr_addr_to_offset(ia32_x2apic_icr::addr | 1U);
+
+    uint64_t icr = read_register(offset1) << 32U;
+    icr |= read_register(offset0);
+
+    return icr;
 }
 
+///----------------------------------------------------------------------------
+/// Register writes
+///----------------------------------------------------------------------------
+
 void
-virt_x2apic::write_register(uint64_t offset, uint64_t val)
-{ m_registers.at(offset) = val; }
+virt_x2apic::write_register(lapic_register::offset_t offset, uint64_t val)
+{ m_registers.at(offset) = gsl::narrow_cast<uint32_t>(val); }
 
 void
 virt_x2apic::write_eoi()
 {
     const auto offset = msr_addr_to_offset(ia32_x2apic_eoi::addr);
     write_register(offset, 0x0ULL);
+    pop_isr();
 }
 
 void
@@ -103,19 +160,184 @@ virt_x2apic::write_icr(uint64_t icr)
     write_register(offset, icr);
 }
 
-///-----------------------------------------------------------------------------
-/// Private
-///-----------------------------------------------------------------------------
+void
+virt_x2apic::write_self_ipi(uint64_t vector)
+{
+    const auto offset = msr_addr_to_offset(ia32_x2apic_self_ipi::addr);
+    write_register(offset, vector);
+}
+
+///----------------------------------------------------------------------------
+/// Interrupt injection
+///----------------------------------------------------------------------------
 
 void
-virt_x2apic::insert(uint64_t offset, uint64_t value)
-{ m_registers.at(offset) = value; }
+virt_x2apic::queue_injection(uint64_t vector)
+{
+    if (m_interrupt_window->is_open()) {
+        inject_interrupt(vector);
+        return;
+    }
+
+    queue_interrupt(vector);
+    m_interrupt_window->enable_exiting();
+}
+
+void
+virt_x2apic::queue_interrupt(uint64_t vector)
+{
+    const auto ipc = (vector & 0xE0U) >> 5U;
+    const auto bit = (vector & 0x1FU) >> 0U;
+
+    auto offset = lapic_register::msr_addr_to_offset(ia32_x2apic_irr0::addr);
+    offset |= ipc;
+    write_register(offset, set_bit(read_register(offset), bit));
+}
+
+void
+virt_x2apic::inject_interrupt(uint64_t vector)
+{
+    const auto ipc = (vector & 0xE0U) >> 5U;
+    const auto bit = (vector & 0x1FU) >> 0U;
+
+    auto irr_offset = lapic_register::msr_addr_to_offset(ia32_x2apic_irr0::addr);
+    auto isr_offset = lapic_register::msr_addr_to_offset(ia32_x2apic_isr0::addr);
+
+    irr_offset |= ipc;
+    isr_offset |= ipc;
+
+    write_register(irr_offset, clear_bit(read_register(irr_offset), bit));
+    write_register(isr_offset, set_bit(read_register(isr_offset), bit));
+
+    m_interrupt_window->inject(vector);
+}
+
+///----------------------------------------------------------------------------
+/// 256-bit register manipulation
+///
+/// Note: the current implementation uses standard C++ to manipulate
+/// 256-bit registers, represented as eight 32-bit values. Eventually
+/// this could/should be optimized with bit-manipulation instructions
+/// such as popcnt and bsr.
+///----------------------------------------------------------------------------
+
+uint64_t
+virt_x2apic::top_irr()
+{ return top_256bit(ia32_x2apic_irr7::addr); }
+
+uint64_t
+virt_x2apic::top_isr()
+{ return top_256bit(ia32_x2apic_isr7::addr); }
+
+uint64_t
+virt_x2apic::top_256bit(uint64_t last)
+{
+    auto vector = 0U;
+
+    for (auto i = 0U; i < 8U; ++i) {
+        auto addr = last - i;
+        auto offset = lapic_register::msr_addr_to_offset(addr);
+        auto reg = read_register(offset);
+
+        if (reg) {
+            for (auto b = 31; b >= 0; --b) {
+                auto masked_reg = (reg & (1UL << b));
+
+                if (masked_reg != 0U) {
+                    vector = ((7U - i) << 5U) | b;
+                    return vector;
+                }
+            }
+        }
+    }
+
+    return vector;
+}
+
+void
+virt_x2apic::pop_irr()
+{ pop_256bit(ia32_x2apic_irr7::addr); }
+
+void
+virt_x2apic::pop_isr()
+{ pop_256bit(ia32_x2apic_isr7::addr); }
+
+void
+virt_x2apic::pop_256bit(uint64_t last)
+{
+    for (auto i = 0U; i < 8U; ++i) {
+        const auto addr = last - i;
+        auto offset = lapic_register::msr_addr_to_offset(addr);
+        auto reg = read_register(offset);
+
+        if (reg) {
+            for (auto b = 31; b >= 0; --b) {
+                auto masked_reg = (reg & (1UL << b));
+                if (masked_reg != 0U) {
+                    write_register(offset, clear_bit(reg, b));
+                    return;
+                }
+            }
+        }
+    }
+}
+
+bool
+virt_x2apic::irr_is_empty()
+{
+    for (auto i = 0U; i < 8U; ++i) {
+        auto addr = ia32_x2apic_irr7::addr - i;
+        auto offset = lapic_register::msr_addr_to_offset(addr);
+        auto reg = read_register(offset);
+
+        if (reg != 0U) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+///----------------------------------------------------------------------------
+/// Exit handlers
+///----------------------------------------------------------------------------
+
+bool
+virt_x2apic::handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs)
+{
+    auto vector = 0U;
+
+    inject_interrupt(vector);
+
+    if (irr_is_empty()) {
+        m_interrupt_window->disable_exiting();
+        return true;
+    }
+
+    m_interrupt_window->enable_exiting();
+    return true;
+}
+
+///----------------------------------------------------------------------------
+/// Reset logic
+///----------------------------------------------------------------------------
+
+void
+virt_x2apic::reset_registers()
+{
+    for (auto i = 0U; i < m_registers.size(); ++i) {
+        if (lapic_register::exists_in_x2apic(i)) {
+            this->reset_register(i);
+        }
+    }
+}
 
 void
 virt_x2apic::reset_id()
 {
     const auto offset = msr_addr_to_offset(ia32_x2apic_apicid::addr);
-    insert(offset, m_vcpu->id());
+    write_register(offset, m_vcpu->id());
 }
 
 ///
@@ -128,33 +350,34 @@ virt_x2apic::reset_version()
     const auto lvt_limit = ::intel_x64::lapic::lvt::default_size - 1U;
 
     auto val = 0U;
-    val |= ::intel_x64::lapic::version::version::set(val, ::intel_x64::lapic::version::version::reset_value);
+    val |= ::intel_x64::lapic::version::version::set(val,
+        ::intel_x64::lapic::version::version::reset_value);
     val |= ::intel_x64::lapic::version::max_lvt_entry_minus_one::set(val, lvt_limit);
     val |= ::intel_x64::lapic::version::suppress_eoi_broadcast_supported::disable(val);
 
     const auto offset = msr_addr_to_offset(ia32_x2apic_version::addr);
-    insert(offset, val);
+    write_register(offset, val);
 }
 
 void
 virt_x2apic::reset_svr()
 {
     const auto offset = msr_addr_to_offset(ia32_x2apic_sivr::addr);
-    insert(offset, ::intel_x64::lapic::svr::reset_value);
+    write_register(offset, ::intel_x64::lapic::svr::reset_value);
 }
 
 void
-virt_x2apic::reset_lvt_register(uint64_t offset)
+virt_x2apic::reset_lvt_register(lapic_register::offset_t offset)
 {
-    insert(offset, ::intel_x64::lapic::lvt::reset_value);
+    write_register(offset, ::intel_x64::lapic::lvt::reset_value);
 }
 
 void
-virt_x2apic::clear_register(uint64_t offset)
-{ insert(offset, 0U); }
+virt_x2apic::clear_register(lapic_register::offset_t offset)
+{ write_register(offset, 0U); }
 
 void
-virt_x2apic::reset_register(uint64_t offset)
+virt_x2apic::reset_register(lapic_register::offset_t offset)
 {
     switch (offset) {
         case msr_addr_to_offset(ia32_x2apic_apicid::addr):
@@ -199,6 +422,7 @@ virt_x2apic::reset_register(uint64_t offset)
 
         case msr_addr_to_offset(ia32_x2apic_esr::addr):
         case msr_addr_to_offset(ia32_x2apic_icr::addr):
+        case msr_addr_to_offset(ia32_x2apic_icr::addr | 1U):
         case msr_addr_to_offset(ia32_x2apic_div_conf::addr):
         case msr_addr_to_offset(ia32_x2apic_init_count::addr):
         case msr_addr_to_offset(ia32_x2apic_cur_count::addr):

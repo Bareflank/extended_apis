@@ -20,8 +20,11 @@
 #define VIRT_X2APIC_INTEL_X64_EAPIS_H
 
 #include <array>
+#include <list>
 
-#include "lapic.h"
+#include "phys_x2apic.h"
+#include "virt_lapic.h"
+#include "lapic_register.h"
 
 namespace eapis
 {
@@ -31,7 +34,7 @@ namespace intel_x64
 ///
 /// Virtual x2APIC
 ///
-class EXPORT_EAPIS_VIC virt_x2apic : public lapic
+class EXPORT_EAPIS_VIC virt_x2apic : public virt_lapic
 {
 public:
 
@@ -41,6 +44,15 @@ public:
     /// @ensures
     ///
     virt_x2apic(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+
+    /// Constructor
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    virt_x2apic(
+        gsl::not_null<eapis::intel_x64::vcpu *> vcpu,
+        gsl::not_null<eapis::intel_x64::phys_lapic *> phys);
 
     /// Destructor
     ///
@@ -56,7 +68,7 @@ public:
     ///
     /// @param offset the register offset to read
     ///
-    uint64_t read_register(uint64_t offset) const override;
+    uint64_t read_register(lapic_register::offset_t offset) const override;
 
     /// Write Register
     ///
@@ -66,39 +78,76 @@ public:
     /// @param offset the register offset to write
     /// @param val the value to write
     ///
-    void write_register(uint64_t offset, uint64_t val) override;
+    void write_register(lapic_register::offset_t offset, uint64_t val) override;
+
+    /// Handle interrupt window exit
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    bool handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs) override;
+
+    /// Queue Interrupt
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector of the interrupt to queue
+    ///
+    void queue_injection(uint64_t vector) override;
 
     ///
     /// Register reads
     ///
-    uint64_t read_id() const;
-    uint64_t read_version() const;
-    uint64_t read_tpr() const;
-    uint64_t read_icr() const;
+    uint64_t read_id() const override;
+    uint64_t read_version() const override;
+    uint64_t read_tpr() const override;
+    uint64_t read_icr() const override;
 
     ///
     /// Register writes
     ///
-    void write_eoi();
-    void write_tpr(uint64_t tpr);
-    void write_icr(uint64_t icr);
+    void write_eoi() override;
+    void write_tpr(uint64_t tpr) override;
+    void write_icr(uint64_t icr) override;
+    void write_self_ipi(uint64_t vector) override;
 
 private:
 
     /// @cond
 
+    void queue_interrupt(uint64_t vector);
+    void inject_interrupt(uint64_t vector);
+
+    void init_virt_from_phys_x2apic(
+        eapis::intel_x64::phys_lapic *phys,
+        lapic_register::offset_t offset);
+
+    void init_registers_from_phys_x2apic(eapis::intel_x64::phys_lapic *phys);
+    void init_interrupt_window_handler();
+
     void reset_id();
     void reset_svr();
     void reset_version();
     void reset_registers();
-    void reset_register(uint64_t offset);
-    void reset_lvt_register(uint64_t offset);
+    void reset_register(lapic_register::offset_t offset);
+    void reset_lvt_register(lapic_register::offset_t offset);
+    void clear_register(lapic_register::offset_t offset);
 
-    void clear_register(uint64_t offset);
-    void insert(uint64_t offset, uint64_t value);
+    bool irr_is_empty();
+
+    void pop_irr();
+    void pop_isr();
+    void pop_256bit(uint64_t last);
+
+    uint64_t top_irr();
+    uint64_t top_isr();
+    uint64_t top_256bit(uint64_t last);
 
     eapis::intel_x64::vcpu *m_vcpu;
-    std::array<uint64_t, lapic_register::count> m_registers;
+    eapis::intel_x64::interrupt_window *m_interrupt_window;
+
+    std::array<uint32_t, lapic_register::count> m_registers;
 
     /// @endcond
 
