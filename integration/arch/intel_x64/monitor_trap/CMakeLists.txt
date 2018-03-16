@@ -1,6 +1,6 @@
 #
 # Bareflank Hypervisor
-# Copyright (C) 2018 Assured Information Security, Inc.
+# Copyright (C) 2015 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,5 +27,6 @@ init_project(
 add_vmm_executable(
     eapis_integration_intel_x64_monitor_trap_single_step_cpuid
     SOURCES single_step_cpuid.cpp
+    LIBRARIES eapis_vic
     LIBRARIES eapis_hve
 )

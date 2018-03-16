@@ -43,7 +43,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    virt_x2apic(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    virt_x2apic(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Constructor
     ///
@@ -51,7 +51,7 @@ public:
     /// @ensures
     ///
     virt_x2apic(
-        gsl::not_null<eapis::intel_x64::vcpu *> vcpu,
+        gsl::not_null<eapis::intel_x64::hve *> hve,
         gsl::not_null<eapis::intel_x64::phys_lapic *> phys);
 
     /// Destructor
@@ -103,6 +103,7 @@ public:
     uint64_t read_version() const override;
     uint64_t read_tpr() const override;
     uint64_t read_icr() const override;
+    uint64_t read_svr() const override;
 
     ///
     /// Register writes
@@ -111,6 +112,7 @@ public:
     void write_tpr(uint64_t tpr) override;
     void write_icr(uint64_t icr) override;
     void write_self_ipi(uint64_t vector) override;
+    void write_svr(uint64_t svr) override;
 
 private:
 
@@ -144,9 +146,7 @@ private:
     uint64_t top_isr();
     uint64_t top_256bit(uint64_t last);
 
-    eapis::intel_x64::vcpu *m_vcpu;
-    eapis::intel_x64::interrupt_window *m_interrupt_window;
-
+    eapis::intel_x64::hve *m_hve;
     std::array<uint32_t, lapic_register::count> m_registers;
 
     /// @endcond

@@ -16,20 +16,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef VCPU_INTEL_X64_EAPIS_H
-#define VCPU_INTEL_X64_EAPIS_H
+#ifndef VIC_INTEL_X64_EAPIS_H
+#define VIC_INTEL_X64_EAPIS_H
 
-#include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
-
-#include "../../../hve/arch/intel_x64/hve.h"
-#include "../../../vic/arch/intel_x64/vic.h"
+#include "interrupt_manager.h"
 
 namespace eapis
 {
 namespace intel_x64
 {
 
-class vcpu : public bfvmm::intel_x64::vcpu
+class vic
 {
 
 public:
@@ -39,45 +36,53 @@ public:
     /// @expects
     /// @ensures
     ///
-    vcpu(vcpuid::type id) :
-        bfvmm::intel_x64::vcpu{id},
-        m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())},
-        m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get())}
-    { }
+    vic(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~vcpu() = default;
+    ~vic() = default;
 
-    /// Get HVE (hardware virtualization extensions)
+public:
+
+    /// Get HVE Object
     ///
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the hve object stored in this vCPU
+    /// @return Returns the hve object stored in this vic
     ///
-    gsl::not_null<eapis::intel_x64::hve *> hve()
-    { return m_hve.get(); }
+    gsl::not_null<eapis::intel_x64::hve *> hve();
 
-    /// Get VIC (virtual interrupt controller)
+    /// Get Interrupt Manager Object
     ///
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the vic object stored in this vCPU
+    /// @return Returns the interrupt manager object stored in the vic
     ///
-    gsl::not_null<eapis::intel_x64::vic *> vic()
-    { return m_vic.get(); }
+    gsl::not_null<eapis::intel_x64::interrupt_manager *> interrupt_manager();
+
+    /// Add interrupt handler
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector the vector the handler handles
+    /// @param d the interrupt handler delegate
+    ///
+    void add_interrupt_handler(
+        uint64_t vector, interrupt_manager::handler_delegate_t &&d
+    );
 
 private:
 
     /// @cond
 
-    std::unique_ptr<eapis::intel_x64::hve> m_hve;
-    std::unique_ptr<eapis::intel_x64::vic> m_vic;
+    eapis::intel_x64::hve *m_hve;
+    std::unique_ptr<eapis::intel_x64::interrupt_manager> m_interrupt_manager;
 
     /// @endcond
 };

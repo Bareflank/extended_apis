@@ -16,26 +16,34 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <vcpu/arch/intel_x64/vcpu.h>
+#include <bfvmm/memory_manager/memory_manager.h>
+
+#include <vic/arch/intel_x64/vic.h>
 
 namespace eapis
 {
 namespace intel_x64
 {
 
-vcpu::vcpu(vcpuid::type id) :
-    bfvmm::intel_x64::vcpu{id},
-    m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())}
-    //m_vic{std::make_unique<vic>(exit_handler(), vmcs())}
-{ }
+vic::vic(gsl::not_null<eapis::intel_x64::hve *> hve) :
+    m_hve{hve}
+{
+    m_interrupt_manager =
+        std::make_unique<eapis::intel_x64::interrupt_manager>(m_hve);
+}
 
-gsl::not_null<hve *>
-vcpu::hve()
-{ return m_hve.get(); }
+gsl::not_null<eapis::intel_x64::hve *>
+vic::hve()
+{ return m_hve; }
 
-//gsl::not_null<vic *>
-//vcpu::vic()
-//{ return m_vic.get(); }
+gsl::not_null<eapis::intel_x64::interrupt_manager *>
+vic::interrupt_manager()
+{ return m_interrupt_manager.get(); }
+
+void
+vic::add_interrupt_handler(
+    uint64_t vector, interrupt_manager::handler_delegate_t &&d)
+{ m_interrupt_manager->add_interrupt_handler(vector, std::move(d)); }
 
 }
 }
