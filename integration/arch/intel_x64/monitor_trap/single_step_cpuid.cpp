@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfvmm/vcpu/vcpu_factory.h>
-#include <eapis/hve/arch/intel_x64/vcpu.h>
+#include <eapis/vcpu/arch/intel_x64/vcpu.h>
 
 using namespace eapis::intel_x64;
 
@@ -40,12 +40,12 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->add_cpuid_handler(
+        hve()->add_cpuid_handler(
             42, 0,
             cpuid::handler_delegate_t::create<vcpu, &vcpu::cpuid_handler>(this)
         );
 
-        this->add_monitor_trap_handler(
+        hve()->add_monitor_trap_handler(
             monitor_trap::handler_delegate_t::create<vcpu, &vcpu::monitor_trap_handler>(this)
         );
     }
@@ -70,7 +70,7 @@ public:
         info.rcx = 42;
         info.rdx = 42;
 
-        this->enable_monitor_trap_flag();
+        hve()->enable_monitor_trap_flag();
         return false;
     }
 

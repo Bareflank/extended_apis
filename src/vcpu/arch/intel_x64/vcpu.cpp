@@ -1,6 +1,5 @@
 //
 // Bareflank Extended APIs
-//
 // Copyright (C) 2018 Assured Information Security, Inc.
 //
 // This library is free software; you can redistribute it and/or
@@ -17,17 +16,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfvmm/vcpu/vcpu_factory.h>
-#include <eapis/vcpu/arch/intel_x64/vcpu.h>
+#include <vcpu/arch/intel_x64/vcpu.h>
 
-namespace bfvmm
+namespace eapis
+{
+namespace intel_x64
 {
 
-std::unique_ptr<vcpu>
-vcpu_factory::make_vcpu(vcpuid::type vcpuid, bfobject *obj)
-{
-    bfignored(obj);
-    return std::make_unique<eapis::intel_x64::vcpu>(vcpuid);
+vcpu::vcpu(vcpuid::type id) :
+    bfvmm::intel_x64::vcpu{id},
+    m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())}
+    //m_vic{std::make_unique<vic>(exit_handler(), vmcs())}
+{ }
+
+gsl::not_null<hve *>
+vcpu::hve()
+{ return m_hve.get(); }
+
+//gsl::not_null<vic *>
+//vcpu::vic()
+//{ return m_vic.get(); }
+
 }
-
 }

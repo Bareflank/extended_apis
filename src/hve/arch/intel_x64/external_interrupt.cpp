@@ -17,18 +17,18 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/vcpu.h>
+#include <hve/arch/intel_x64/hve.h>
 
 namespace eapis
 {
 namespace intel_x64
 {
 
-external_interrupt::external_interrupt(gsl::not_null<eapis::intel_x64::vcpu *> vcpu)
+external_interrupt::external_interrupt(gsl::not_null<eapis::intel_x64::hve *> hve)
 {
     using namespace vmcs_n;
 
-    vcpu->exit_handler()->add_handler(
+    hve->exit_handler()->add_handler(
         exit_reason::basic_exit_reason::external_interrupt,
         ::handler_delegate_t::create<external_interrupt, &external_interrupt::handle>(this)
     );
