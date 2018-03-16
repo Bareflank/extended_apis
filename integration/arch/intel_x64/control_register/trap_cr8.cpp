@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfvmm/vcpu/vcpu_factory.h>
-#include <eapis/hve/arch/intel_x64/vcpu.h>
+#include <eapis/vcpu/arch/intel_x64/vcpu.h>
 
 using namespace eapis::intel_x64;
 
@@ -42,15 +42,15 @@ public:
     {
         m_tpr_shadow = ::intel_x64::cr8::get();
 
-        this->add_rdcr8_handler(
+        hve()->add_rdcr8_handler(
             control_register::handler_delegate_t::create<vcpu, &vcpu::test_rdcr8_handler>(this)
         );
 
-        this->add_wrcr8_handler(
+        hve()->add_wrcr8_handler(
             control_register::handler_delegate_t::create<vcpu, &vcpu::test_wrcr8_handler>(this)
         );
 
-        control_register()->enable_log();
+        hve()->control_register()->enable_log();
     }
 
     /// Destructor

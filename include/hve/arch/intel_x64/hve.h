@@ -16,10 +16,9 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef VCPU_INTEL_X64_EAPIS_H
-#define VCPU_INTEL_X64_EAPIS_H
+#ifndef HVE_INTEL_X64_EAPIS_H
+#define HVE_INTEL_X64_EAPIS_H
 
-#include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
 #include <bfvmm/memory_manager/memory_manager.h>
 
 #include "control_register.h"
@@ -37,26 +36,47 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu : public bfvmm::intel_x64::vcpu
+class hve
 {
 
 public:
 
-    /// Default Constructor
+    /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
-    vcpu(vcpuid::type id);
+    hve(
+        gsl::not_null<exit_handler_t *> exit_handler,
+        gsl::not_null<vmcs_t *> vmcs
+    );
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~vcpu() = default;
+    ~hve() = default;
 
 public:
+
+    /// Get Exit Handler Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the exit handler object stored in this hve
+    ///
+    gsl::not_null<exit_handler_t *> exit_handler();
+
+    /// Get VMCS Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the vmcs object stored in this hve
+    ///
+    gsl::not_null<vmcs_t *> vmcs();
 
     //--------------------------------------------------------------------------
     // Control Register
@@ -67,7 +87,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the CR object stored in the vCPU if CR trapping is
+    /// @return Returns the CR object stored in the hve if CR trapping is
     ///     enabled, otherwise an exception is thrown
     ///
     gsl::not_null<control_register *> control_register();
@@ -139,7 +159,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the CPUID object stored in the vCPU if CPUID trapping is
+    /// @return Returns the CPUID object stored in the hve if CPUID trapping is
     ///     enabled, otherwise an exception is thrown
     ///
     gsl::not_null<cpuid *> cpuid();
@@ -161,7 +181,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the external interrupt object stored in the vCPU if
+    /// @return Returns the external interrupt object stored in the hve if
     ///     external-interrupt exiting is enabled, otherwise an exception is
     ///     thrown
     ///
@@ -184,7 +204,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the IO Instruction object stored in the vCPU if IO
+    /// @return Returns the IO Instruction object stored in the hve if IO
     ///     Instruction trapping is enabled, otherwise an exception is thrown
     ///
     gsl::not_null<io_instruction *> io_instruction();
@@ -208,7 +228,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the Monitor Trap object stored in the vCPU if Monitor
+    /// @return Returns the Monitor Trap object stored in the hve if Monitor
     ///     Trap is enabled, otherwise an exception is thrown
     ///
     gsl::not_null<monitor_trap *> monitor_trap();
@@ -236,7 +256,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the Move DR object stored in the vCPU if Move DR
+    /// @return Returns the Move DR object stored in the hve if Move DR
     ///     trapping is enabled, otherwise an exception is thrown
     ///
     gsl::not_null<mov_dr *> mov_dr();
@@ -257,7 +277,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the Read MSR object stored in the vCPU if Read MSR
+    /// @return Returns the Read MSR object stored in the hve if Read MSR
     ///     trapping is enabled, otherwise an exception is thrown
     ///
     gsl::not_null<rdmsr *> rdmsr();
@@ -286,7 +306,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the VPID object stored in the vCPU if VPID trapping is
+    /// @return Returns the VPID object stored in the hve if VPID trapping is
     ///     enabled, otherwise an exception is thrown
     ///
     gsl::not_null<vpid *> vpid();
@@ -307,7 +327,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the Write MSR object stored in the vCPU if Write MSR
+    /// @return Returns the Write MSR object stored in the hve if Write MSR
     ///     trapping is enabled, otherwise an exception is thrown
     ///
     gsl::not_null<wrmsr *> wrmsr();
@@ -377,6 +397,9 @@ private:
     std::unique_ptr<eapis::intel_x64::rdmsr> m_rdmsr;
     std::unique_ptr<eapis::intel_x64::vpid> m_vpid;
     std::unique_ptr<eapis::intel_x64::wrmsr> m_wrmsr;
+
+    exit_handler_t *m_exit_handler;
+    vmcs_t *m_vmcs;
 };
 
 }

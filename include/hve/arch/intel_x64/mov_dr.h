@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class hve;
 
 class EXPORT_EAPIS_HVE mov_dr : public base
 {
@@ -50,7 +50,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    mov_dr(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    mov_dr(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Destructor
     ///

@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfvmm/vcpu/vcpu_factory.h>
-#include <eapis/hve/arch/intel_x64/vcpu.h>
+#include <eapis/vcpu/arch/intel_x64/vcpu.h>
 
 using namespace eapis::intel_x64;
 
@@ -49,11 +49,11 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->add_mov_dr_handler(
+        hve()->add_mov_dr_handler(
             mov_dr::handler_delegate_t::create<test_handler>()
         );
 
-        mov_dr()->enable_log();
+        hve()->mov_dr()->enable_log();
     }
 
     /// Destructor
