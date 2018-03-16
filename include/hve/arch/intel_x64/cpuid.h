@@ -38,7 +38,7 @@ struct pair_hash {
     }
 };
 
-class vcpu;
+class hve;
 
 class EXPORT_EAPIS_HVE cpuid : public base
 {
@@ -64,7 +64,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    cpuid(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    cpuid(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Destructor
     ///

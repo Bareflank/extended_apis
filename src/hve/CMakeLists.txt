@@ -25,9 +25,9 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/monitor_trap.cpp
         arch/intel_x64/mov_dr.cpp
         arch/intel_x64/rdmsr.cpp
-        arch/intel_x64/vcpu.cpp
         arch/intel_x64/vpid.cpp
         arch/intel_x64/wrmsr.cpp
+        arch/intel_x64/hve.cpp
     )
 elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
     message(WARNING "Unimplemented")

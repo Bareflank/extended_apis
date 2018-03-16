@@ -1,9 +1,7 @@
 //
 // Bareflank Extended APIs
 //
-// Copyright (C) 2015 Assured Information Security, Inc.
-// Author: Rian Quinn        <quinnr@ainfosec.com>
-// Author: Brendan Kerrigan  <kerriganb@ainfosec.com>
+// Copyright (C) 2018 Assured Information Security, Inc.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,7 +18,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfvmm/vcpu/vcpu_factory.h>
-#include <eapis/hve/arch/intel_x64/vcpu.h>
+#include <eapis/vcpu/arch/intel_x64/vcpu.h>
 
 namespace bfvmm
 {
