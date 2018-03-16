@@ -26,6 +26,7 @@ init_project(
 
 add_vmm_executable(
     eapis_integration_intel_x64_vpid_enable_vpid
-    SOURCES enable_vpid.cpp ../../../../src/vcpu/arch/intel_x64/vcpu.cpp
+    SOURCES enable_vpid.cpp
+    LIBRARIES eapis_vic
     LIBRARIES eapis_hve
 )

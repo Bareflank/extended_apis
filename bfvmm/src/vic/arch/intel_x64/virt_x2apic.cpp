@@ -18,7 +18,7 @@
 
 #include <intrinsics.h>
 
-#include <hve/arch/intel_x64/vcpu.h>
+#include <hve/arch/intel_x64/hve.h>
 #include <vic/arch/intel_x64/lapic_register.h>
 #include <vic/arch/intel_x64/virt_x2apic.h>
 
@@ -34,19 +34,17 @@ using namespace lapic_register;
 /// Initialization
 ///----------------------------------------------------------------------------
 
-virt_x2apic::virt_x2apic(gsl::not_null<eapis::intel_x64::vcpu *> vcpu) :
-    m_vcpu{vcpu},
-    m_interrupt_window{vcpu->interrupt_window()}
+virt_x2apic::virt_x2apic(gsl::not_null<eapis::intel_x64::hve *> hve) :
+    m_hve{hve}
 {
     reset_registers();
     init_interrupt_window_handler();
 }
 
 virt_x2apic::virt_x2apic(
-    gsl::not_null<eapis::intel_x64::vcpu *> vcpu,
+    gsl::not_null<eapis::intel_x64::hve *> hve,
     gsl::not_null<eapis::intel_x64::phys_lapic *> phys) :
-    m_vcpu{vcpu},
-    m_interrupt_window{vcpu->interrupt_window()}
+    m_hve{hve}
 {
     init_registers_from_phys_x2apic(phys);
     init_interrupt_window_handler();
@@ -83,7 +81,7 @@ virt_x2apic::init_virt_from_phys_x2apic(
 void
 virt_x2apic::init_interrupt_window_handler()
 {
-    m_interrupt_window->add_handler(
+    m_hve->add_interrupt_window_handler(
         handler_delegate_t::create<virt_x2apic,
         &virt_x2apic::handle_interrupt_window_exit>(this)
     );
@@ -130,6 +128,13 @@ virt_x2apic::read_icr() const
     return icr;
 }
 
+uint64_t
+virt_x2apic::read_svr() const
+{
+    const auto offset = msr_addr_to_offset(ia32_x2apic_sivr::addr);
+    return read_register(offset);
+}
+
 ///----------------------------------------------------------------------------
 /// Register writes
 ///----------------------------------------------------------------------------
@@ -167,6 +172,13 @@ virt_x2apic::write_self_ipi(uint64_t vector)
     write_register(offset, vector);
 }
 
+void
+virt_x2apic::write_svr(uint64_t svr)
+{
+    const auto offset = msr_addr_to_offset(ia32_x2apic_sivr::addr);
+    write_register(offset, svr);
+}
+
 ///----------------------------------------------------------------------------
 /// Interrupt injection
 ///----------------------------------------------------------------------------
@@ -174,13 +186,13 @@ virt_x2apic::write_self_ipi(uint64_t vector)
 void
 virt_x2apic::queue_injection(uint64_t vector)
 {
-    if (m_interrupt_window->is_open()) {
+    if (m_hve->interrupt_window()->is_open()) {
         inject_interrupt(vector);
         return;
     }
 
     queue_interrupt(vector);
-    m_interrupt_window->enable_exiting();
+    m_hve->interrupt_window()->enable_exiting();
 }
 
 void
@@ -209,7 +221,7 @@ virt_x2apic::inject_interrupt(uint64_t vector)
     write_register(irr_offset, clear_bit(read_register(irr_offset), bit));
     write_register(isr_offset, set_bit(read_register(isr_offset), bit));
 
-    m_interrupt_window->inject(vector);
+    m_hve->interrupt_window()->inject(vector);
 }
 
 ///----------------------------------------------------------------------------
@@ -306,16 +318,17 @@ virt_x2apic::irr_is_empty()
 bool
 virt_x2apic::handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs)
 {
-    auto vector = 0U;
+    auto vector = top_irr();
+    pop_irr();
 
     inject_interrupt(vector);
 
     if (irr_is_empty()) {
-        m_interrupt_window->disable_exiting();
+        m_hve->interrupt_window()->disable_exiting();
         return true;
     }
 
-    m_interrupt_window->enable_exiting();
+    m_hve->interrupt_window()->enable_exiting();
     return true;
 }
 
@@ -336,8 +349,10 @@ virt_x2apic::reset_registers()
 void
 virt_x2apic::reset_id()
 {
+    //TODO: fixme
+    static auto virt_x2apic_id = 0U;
     const auto offset = msr_addr_to_offset(ia32_x2apic_apicid::addr);
-    write_register(offset, m_vcpu->id());
+    write_register(offset, virt_x2apic_id++);
 }
 
 ///

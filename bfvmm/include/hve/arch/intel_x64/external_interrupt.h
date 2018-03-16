@@ -94,6 +94,18 @@ public:
     ///
     void enable_exiting();
 
+    /// Disable exiting
+    ///
+    /// Example:
+    /// @code
+    /// this->disable_exiting();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void disable_exiting();
+
 public:
 
     /// @cond

@@ -92,6 +92,7 @@ public:
     virtual uint64_t read_version() const = 0;
     virtual uint64_t read_tpr() const = 0;
     virtual uint64_t read_icr() const = 0;
+    virtual uint64_t read_svr() const = 0;
 
     ///
     /// Register writes
@@ -100,6 +101,7 @@ public:
     virtual void write_tpr(uint64_t tpr) = 0;
     virtual void write_icr(uint64_t icr) = 0;
     virtual void write_self_ipi(uint64_t vector) = 0;
+    virtual void write_svr(uint64_t svr) = 0;
 
 public:
 

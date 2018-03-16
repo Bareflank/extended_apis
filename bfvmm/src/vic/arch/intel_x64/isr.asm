@@ -59,9 +59,18 @@ section .text
     push r13
     push r14
     push r15
+
+    ;
+    ; make the irq_manager available from the IDT
+    ;
+    mov r15, [gs:0x0088]
+    push r15
+
 %endmacro
 
 %macro POPALL 0
+    pop r15
+    mov [gs:0x0088], r15
     pop r15
     pop r14
     pop r13

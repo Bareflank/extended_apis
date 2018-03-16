@@ -22,6 +22,7 @@
 #include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
 
 #include "../../../hve/arch/intel_x64/hve.h"
+#include "../../../vic/arch/intel_x64/vic.h"
 
 namespace eapis
 {
@@ -38,7 +39,11 @@ public:
     /// @expects
     /// @ensures
     ///
-    vcpu(vcpuid::type id);
+    vcpu(vcpuid::type id) :
+        bfvmm::intel_x64::vcpu{id},
+        m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())},
+        m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get())}
+    { }
 
     /// Destructor
     ///
@@ -54,13 +59,25 @@ public:
     ///
     /// @return Returns the hve object stored in this vCPU
     ///
-    gsl::not_null<eapis::intel_x64::hve *> hve();
+    gsl::not_null<eapis::intel_x64::hve *> hve()
+    { return m_hve.get(); }
+
+    /// Get VIC (virtual interrupt controller)
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the vic object stored in this vCPU
+    ///
+    gsl::not_null<eapis::intel_x64::vic *> vic()
+    { return m_vic.get(); }
 
 private:
 
     /// @cond
 
     std::unique_ptr<eapis::intel_x64::hve> m_hve;
+    std::unique_ptr<eapis::intel_x64::vic> m_vic;
 
     /// @endcond
 };

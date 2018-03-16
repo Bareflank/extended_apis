@@ -16,21 +16,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <vcpu/arch/intel_x64/vcpu.h>
+#ifndef EAPIS_VIC_BASE_INTEL_X64_EAPIS_H
+#define EAPIS_VIC_BASE_INTEL_X64_EAPIS_H
 
-namespace eapis
-{
-namespace intel_x64
-{
+#include "../../../hve/arch/intel_x64/base.h"
 
-vcpu::vcpu(vcpuid::type id) :
-    bfvmm::intel_x64::vcpu{id},
-    m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())}
-{ }
+#ifndef VIC_LOG_LEVELS
+#define VIC_LOG_FATAL 0U
+#define VIC_LOG_ERROR 1U
+#define VIC_LOG_ALERT 2U
+#define VIC_LOG_DEBUG 3U
+#define VIC_LOG_LEVELS
+#endif
 
-gsl::not_null<hve *>
-vcpu::hve()
-{ return m_hve.get(); }
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
 
-}
-}
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_VIC
+#ifdef SHARED_EAPIS_VIC
+#define EXPORT_EAPIS_VIC EXPORT_SYM
+#else
+#define EXPORT_EAPIS_VIC IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_VIC
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+#endif

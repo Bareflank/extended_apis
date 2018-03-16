@@ -23,6 +23,11 @@ namespace eapis
 namespace intel_x64
 {
 
+namespace lapic_register
+{
+    std::array<attr_t, count> attributes;
+}
+
 void
 init_nonexistent(uint64_t offset) noexcept
 {

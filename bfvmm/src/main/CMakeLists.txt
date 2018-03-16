@@ -27,7 +27,6 @@ init_project(
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
         arch/intel_x64/vcpu_factory.cpp
-        ../vcpu/arch/intel_x64/vcpu.cpp
     )
 elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
     message(WARNING "Unimplemented")
@@ -38,5 +37,6 @@ endif()
 add_vmm_executable(
     eapis_vmm
     SOURCES ${SOURCES}
+    LIBRARIES eapis_vic
     LIBRARIES eapis_hve
 )
