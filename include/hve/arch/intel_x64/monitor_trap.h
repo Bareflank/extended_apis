@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class hve;
 
 class EXPORT_EAPIS_HVE monitor_trap : public base
 {
@@ -48,7 +48,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    monitor_trap(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    monitor_trap(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Destructor
     ///

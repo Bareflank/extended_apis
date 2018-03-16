@@ -16,33 +16,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfvmm/vcpu/vcpu_factory.h>
-#include <eapis/vcpu/arch/intel_x64/vcpu.h>
+#ifndef VCPU_INTEL_X64_EAPIS_H
+#define VCPU_INTEL_X64_EAPIS_H
 
-using namespace eapis::intel_x64;
+#include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
 
-// -----------------------------------------------------------------------------
-// vCPU
-// -----------------------------------------------------------------------------
+#include "../../../hve/arch/intel_x64/hve.h"
 
-namespace test
+namespace eapis
+{
+namespace intel_x64
 {
 
-class vcpu : public eapis::intel_x64::vcpu
+class vcpu : public bfvmm::intel_x64::vcpu
 {
+
 public:
 
-    /// Default Constructor
+    /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
     vcpu(vcpuid::type id) :
-        eapis::intel_x64::vcpu{id}
-    {
-        hve()->enable_vpid();
-        bfdebug_nhex(0, "vpid", hve()->vpid()->id());
-    }
+        bfvmm::intel_x64::vcpu{id},
+        m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())}
+    { }
 
     /// Destructor
     ///
@@ -50,22 +49,27 @@ public:
     /// @ensures
     ///
     ~vcpu() = default;
+
+    /// Get HVE (hardware virtualization extensions)
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the hve object stored in this vCPU
+    ///
+    gsl::not_null<eapis::intel_x64::hve *> hve()
+    { return m_hve.get(); }
+
+private:
+
+    /// @cond
+
+    std::unique_ptr<eapis::intel_x64::hve> m_hve;
+
+    /// @endcond
 };
 
 }
-
-// -----------------------------------------------------------------------------
-// vCPU Factory
-// -----------------------------------------------------------------------------
-
-namespace bfvmm
-{
-
-std::unique_ptr<vcpu>
-vcpu_factory::make_vcpu(vcpuid::type vcpuid, bfobject *obj)
-{
-    bfignored(obj);
-    return std::make_unique<test::vcpu>(vcpuid);
 }
 
-}
+#endif
