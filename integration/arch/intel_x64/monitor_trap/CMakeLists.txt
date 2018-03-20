@@ -20,10 +20,13 @@ cmake_minimum_required(VERSION 3.6)
 project(eapis_main C CXX)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project()
+init_project(
+    INCLUDES ../../../../include
+)
 
 add_vmm_executable(
     eapis_integration_intel_x64_monitor_trap_single_step_cpuid
     SOURCES single_step_cpuid.cpp
+    LIBRARIES eapis_vic
     LIBRARIES eapis_hve
 )

@@ -16,72 +16,83 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
 #include <bfvmm/memory_manager/memory_manager.h>
 
-#include <hve/arch/intel_x64/vcpu.h>
+#include <hve/arch/intel_x64/hve.h>
 
 namespace eapis
 {
 namespace intel_x64
 {
 
-vcpu::vcpu(vcpuid::type id) :
-    bfvmm::intel_x64::vcpu{id}
+hve::hve(
+    gsl::not_null<exit_handler_t *> exit_handler,
+    gsl::not_null<vmcs_t *> vmcs
+) :
+    m_exit_handler{exit_handler},
+    m_vmcs{vmcs}
 { }
+
+gsl::not_null<exit_handler_t *>
+hve::exit_handler()
+{ return m_exit_handler; }
+
+gsl::not_null<vmcs_t *>
+hve::vmcs()
+{ return m_vmcs; }
 
 //--------------------------------------------------------------------------
 // Control Register
 //--------------------------------------------------------------------------
 
-gsl::not_null<control_register *> vcpu::control_register()
+gsl::not_null<control_register *> hve::control_register()
 { return m_control_register.get(); }
 
-void vcpu::enable_wrcr0_exiting(
+void hve::enable_wrcr0_exiting(
     vmcs_n::value_type mask, vmcs_n::value_type shadow)
 {
     check_crall();
     m_control_register->enable_wrcr0_exiting(mask, shadow);
 }
 
-void vcpu::enable_wrcr4_exiting(
+void hve::enable_wrcr4_exiting(
     vmcs_n::value_type mask, vmcs_n::value_type shadow)
 {
     check_crall();
     m_control_register->enable_wrcr4_exiting(mask, shadow);
 }
 
-void vcpu::add_wrcr0_handler(control_register::handler_delegate_t &&d)
+void hve::add_wrcr0_handler(control_register::handler_delegate_t &&d)
 {
     check_crall();
     m_control_register->add_wrcr0_handler(std::move(d));
 }
 
-void vcpu::add_rdcr3_handler(control_register::handler_delegate_t &&d)
+void hve::add_rdcr3_handler(control_register::handler_delegate_t &&d)
 {
     check_rdcr3();
     m_control_register->add_rdcr3_handler(std::move(d));
 }
 
-void vcpu::add_wrcr3_handler(control_register::handler_delegate_t &&d)
+void hve::add_wrcr3_handler(control_register::handler_delegate_t &&d)
 {
     check_wrcr3();
     m_control_register->add_wrcr3_handler(std::move(d));
 }
 
-void vcpu::add_wrcr4_handler(control_register::handler_delegate_t &&d)
+void hve::add_wrcr4_handler(control_register::handler_delegate_t &&d)
 {
     check_crall();
     m_control_register->add_wrcr4_handler(std::move(d));
 }
 
-void vcpu::add_rdcr8_handler(control_register::handler_delegate_t &&d)
+void hve::add_rdcr8_handler(control_register::handler_delegate_t &&d)
 {
     check_rdcr8();
     m_control_register->add_rdcr8_handler(std::move(d));
 }
 
-void vcpu::add_wrcr8_handler(control_register::handler_delegate_t &&d)
+void hve::add_wrcr8_handler(control_register::handler_delegate_t &&d)
 {
     check_wrcr8();
     m_control_register->add_wrcr8_handler(std::move(d));
@@ -91,10 +102,10 @@ void vcpu::add_wrcr8_handler(control_register::handler_delegate_t &&d)
 // CPUID
 //--------------------------------------------------------------------------
 
-gsl::not_null<cpuid *> vcpu::cpuid()
+gsl::not_null<cpuid *> hve::cpuid()
 { return m_cpuid.get(); }
 
-void vcpu::add_cpuid_handler(
+void hve::add_cpuid_handler(
     cpuid::leaf_t leaf, cpuid::subleaf_t subleaf, cpuid::handler_delegate_t &&d)
 {
     if (!m_cpuid) {
@@ -108,10 +119,10 @@ void vcpu::add_cpuid_handler(
 // External Interrupt
 //--------------------------------------------------------------------------
 
-gsl::not_null<external_interrupt *> vcpu::external_interrupt()
+gsl::not_null<external_interrupt *> hve::external_interrupt()
 { return m_external_interrupt.get(); }
 
-void vcpu::add_external_interrupt_handler(
+void hve::add_external_interrupt_handler(
     vmcs_n::value_type vector, external_interrupt::handler_delegate_t &&d)
 {
     if (!m_external_interrupt) {
@@ -123,13 +134,30 @@ void vcpu::add_external_interrupt_handler(
 }
 
 //--------------------------------------------------------------------------
+// Interrupt Window
+//--------------------------------------------------------------------------
+
+gsl::not_null<interrupt_window *> hve::interrupt_window()
+{ return m_interrupt_window.get(); }
+
+void hve::add_interrupt_window_handler(interrupt_window::handler_delegate_t &&d)
+{
+    if (!m_interrupt_window) {
+        m_interrupt_window =
+            std::make_unique<eapis::intel_x64::interrupt_window>(this);
+    }
+
+    m_interrupt_window->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
 // IO Instruction
 //--------------------------------------------------------------------------
 
-gsl::not_null<io_instruction *> vcpu::io_instruction()
+gsl::not_null<io_instruction *> hve::io_instruction()
 { return m_io_instruction.get(); }
 
-void vcpu::add_io_instruction_handler(
+void hve::add_io_instruction_handler(
     vmcs_n::value_type port,
     io_instruction::handler_delegate_t &&in_d,
     io_instruction::handler_delegate_t &&out_d)
@@ -147,16 +175,16 @@ void vcpu::add_io_instruction_handler(
 // Monitor Trap
 //--------------------------------------------------------------------------
 
-gsl::not_null<monitor_trap *> vcpu::monitor_trap()
+gsl::not_null<monitor_trap *> hve::monitor_trap()
 { return m_monitor_trap.get(); }
 
-void vcpu::add_monitor_trap_handler(monitor_trap::handler_delegate_t &&d)
+void hve::add_monitor_trap_handler(monitor_trap::handler_delegate_t &&d)
 {
     check_monitor_trap();
     m_monitor_trap->add_handler(std::move(d));
 }
 
-void vcpu::enable_monitor_trap_flag()
+void hve::enable_monitor_trap_flag()
 {
     check_monitor_trap();
     m_monitor_trap->enable();
@@ -166,10 +194,10 @@ void vcpu::enable_monitor_trap_flag()
 // Move DR
 //--------------------------------------------------------------------------
 
-gsl::not_null<mov_dr *> vcpu::mov_dr()
+gsl::not_null<mov_dr *> hve::mov_dr()
 { return m_mov_dr.get(); }
 
-void vcpu::add_mov_dr_handler(mov_dr::handler_delegate_t &&d)
+void hve::add_mov_dr_handler(mov_dr::handler_delegate_t &&d)
 {
     if (!m_mov_dr) {
         m_mov_dr = std::make_unique<eapis::intel_x64::mov_dr>(this);
@@ -182,13 +210,13 @@ void vcpu::add_mov_dr_handler(mov_dr::handler_delegate_t &&d)
 // Read MSR
 //--------------------------------------------------------------------------
 
-gsl::not_null<rdmsr *> vcpu::rdmsr()
+gsl::not_null<rdmsr *> hve::rdmsr()
 { return m_rdmsr.get(); }
 
-void vcpu::pass_through_all_rdmsr_accesses()
+void hve::pass_through_all_rdmsr_accesses()
 { check_rdmsr(); }
 
-void vcpu::add_rdmsr_handler(
+void hve::add_rdmsr_handler(
     vmcs_n::value_type msr, rdmsr::handler_delegate_t &&d)
 {
     check_rdmsr();
@@ -199,10 +227,10 @@ void vcpu::add_rdmsr_handler(
 // VPID
 //--------------------------------------------------------------------------
 
-gsl::not_null<vpid *> vcpu::vpid()
+gsl::not_null<vpid *> hve::vpid()
 { return m_vpid.get(); }
 
-void vcpu::enable_vpid()
+void hve::enable_vpid()
 {
     if (!m_vpid) {
         m_vpid = std::make_unique<eapis::intel_x64::vpid>();
@@ -213,13 +241,13 @@ void vcpu::enable_vpid()
 // Write MSR
 //--------------------------------------------------------------------------
 
-gsl::not_null<wrmsr *> vcpu::wrmsr()
+gsl::not_null<wrmsr *> hve::wrmsr()
 { return m_wrmsr.get(); }
 
-void vcpu::pass_through_all_wrmsr_accesses()
+void hve::pass_through_all_wrmsr_accesses()
 { check_wrmsr(); }
 
-void vcpu::add_wrmsr_handler(
+void hve::add_wrmsr_handler(
     vmcs_n::value_type msr, wrmsr::handler_delegate_t &&d)
 {
     check_wrmsr();
@@ -230,14 +258,14 @@ void vcpu::add_wrmsr_handler(
 // Checks
 //--------------------------------------------------------------------------
 
-void vcpu::check_crall()
+void hve::check_crall()
 {
     if (!m_control_register) {
         m_control_register = std::make_unique<eapis::intel_x64::control_register>(this);
     }
 }
 
-void vcpu::check_rdcr3()
+void hve::check_rdcr3()
 {
     check_crall();
 
@@ -247,7 +275,7 @@ void vcpu::check_rdcr3()
     }
 }
 
-void vcpu::check_wrcr3()
+void hve::check_wrcr3()
 {
     check_crall();
 
@@ -257,7 +285,7 @@ void vcpu::check_wrcr3()
     }
 }
 
-void vcpu::check_rdcr8()
+void hve::check_rdcr8()
 {
     check_crall();
 
@@ -267,7 +295,7 @@ void vcpu::check_rdcr8()
     }
 }
 
-void vcpu::check_wrcr8()
+void hve::check_wrcr8()
 {
     check_crall();
 
@@ -277,7 +305,7 @@ void vcpu::check_wrcr8()
     }
 }
 
-void vcpu::check_io_bitmaps()
+void hve::check_io_bitmaps()
 {
     using namespace vmcs_n;
 
@@ -291,14 +319,14 @@ void vcpu::check_io_bitmaps()
     }
 }
 
-void vcpu::check_monitor_trap()
+void hve::check_monitor_trap()
 {
     if (!m_monitor_trap) {
         m_monitor_trap = std::make_unique<eapis::intel_x64::monitor_trap>(this);
     }
 }
 
-void vcpu::check_msr_bitmap()
+void hve::check_msr_bitmap()
 {
     using namespace vmcs_n;
 
@@ -310,7 +338,7 @@ void vcpu::check_msr_bitmap()
     }
 }
 
-void vcpu::check_rdmsr()
+void hve::check_rdmsr()
 {
     check_msr_bitmap();
 
@@ -319,7 +347,7 @@ void vcpu::check_rdmsr()
     }
 }
 
-void vcpu::check_wrmsr()
+void hve::check_wrmsr()
 {
     check_msr_bitmap();
 
@@ -328,10 +356,10 @@ void vcpu::check_wrmsr()
     }
 }
 
-gsl::span<uint8_t> vcpu::msr_bitmap()
+gsl::span<uint8_t> hve::msr_bitmap()
 { return gsl::make_span(m_msr_bitmap.get(), ::x64::page_size); }
 
-gsl::span<uint8_t> vcpu::io_bitmaps()
+gsl::span<uint8_t> hve::io_bitmaps()
 { return gsl::make_span(m_io_bitmaps.get(), ::x64::page_size << 1U); }
 
 }

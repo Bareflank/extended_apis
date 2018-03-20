@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class hve;
 
 class EXPORT_EAPIS_HVE rdmsr : public base
 {
@@ -51,7 +51,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    rdmsr(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    rdmsr(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Destructor
     ///

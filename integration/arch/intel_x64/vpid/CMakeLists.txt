@@ -20,10 +20,13 @@ cmake_minimum_required(VERSION 3.6)
 project(eapis_main C CXX)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project()
+init_project(
+    INCLUDES ../../../../include
+)
 
 add_vmm_executable(
     eapis_integration_intel_x64_vpid_enable_vpid
     SOURCES enable_vpid.cpp
+    LIBRARIES eapis_vic
     LIBRARIES eapis_hve
 )
