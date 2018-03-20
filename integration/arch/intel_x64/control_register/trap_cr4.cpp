@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfvmm/vcpu/vcpu_factory.h>
-#include <eapis/hve/arch/intel_x64/vcpu.h>
+#include <eapis/vcpu/arch/intel_x64/vcpu.h>
 
 using namespace eapis::intel_x64;
 
@@ -56,15 +56,15 @@ public:
     vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_wrcr4_exiting(
+        hve()->enable_wrcr4_exiting(
             0xFFFFFFFFFFFFFFFF, ::intel_x64::vmcs::guest_cr4::get()
         );
 
-        this->add_wrcr4_handler(
+        hve()->add_wrcr4_handler(
             control_register::handler_delegate_t::create<test_handler>()
         );
 
-        control_register()->enable_log();
+        hve()->control_register()->enable_log();
     }
 
     /// Destructor

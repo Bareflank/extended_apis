@@ -16,8 +16,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef EXTERNAL_INTERRUPT_INTEL_X64_EAPIS_H
-#define EXTERNAL_INTERRUPT_INTEL_X64_EAPIS_H
+#ifndef INTERRUPT_WINDOW_INTEL_X64_EAPIS_H
+#define INTERRUPT_WINDOW_INTEL_X64_EAPIS_H
 
 #include "base.h"
 
@@ -32,30 +32,25 @@ namespace intel_x64
 
 class hve;
 
-class EXPORT_EAPIS_HVE external_interrupt : public base
+class EXPORT_EAPIS_HVE interrupt_window : public base
 {
 public:
 
-    struct info_t {
-        uint64_t vector;        // In
-    };
-
-    using handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
+    using handler_delegate_t = delegate<bool(gsl::not_null<vmcs_t *>)>;
 
     /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
-    external_interrupt(gsl::not_null<eapis::intel_x64::hve *> hve);
+    interrupt_window(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~external_interrupt() final;
+    ~interrupt_window() = default;
 
 public:
 
@@ -67,8 +62,43 @@ public:
     /// @param vector the vector to listen to
     /// @param d the handler to call when an exit occurs
     ///
-    void add_handler(
-        vmcs_n::value_type vector, handler_delegate_t &&d);
+    void add_handler(handler_delegate_t &&d);
+
+    /// Enable exiting
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void enable_exiting();
+
+    /// Disable exiting
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void disable_exiting();
+
+    /// Is open
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    ///
+    bool is_open();
+
+    /// Inject
+    ///
+    /// Inject an external interrupt at the given vector on the upcoming
+    /// VM-entry
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector the vector to inject into the VM
+    ///
+    void inject(uint64_t vector);
+
+public:
 
     /// Dump Log
     ///
@@ -82,8 +112,6 @@ public:
     ///
     void dump_log() final;
 
-public:
-
     /// @cond
 
     bool handle(gsl::not_null<vmcs_t *> vmcs);
@@ -94,22 +122,19 @@ private:
 
     /// @cond
 
-    void enable_exiting();
+    std::list<handler_delegate_t> m_handlers{};
 
     /// @endcond
-
-    std::array<std::list<handler_delegate_t>, 256> m_handlers;
-    std::array<uint64_t, 256> m_log;
 
 public:
 
     /// @cond
 
-    external_interrupt(external_interrupt &&) = default;
-    external_interrupt &operator=(external_interrupt &&) = default;
+    interrupt_window(interrupt_window &&) = default;
+    interrupt_window &operator=(interrupt_window &&) = default;
 
-    external_interrupt(const external_interrupt &) = delete;
-    external_interrupt &operator=(const external_interrupt &) = delete;
+    interrupt_window(const interrupt_window &) = delete;
+    interrupt_window &operator=(const interrupt_window &) = delete;
 
     /// @endcond
 };
