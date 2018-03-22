@@ -58,7 +58,7 @@ phys_x2apic::read_version() const
 
 uint64_t
 phys_x2apic::read_tpr() const
-{ return ::intel_x64::msrs::ia32_x2apic_tpr::get(); }
+{ return ::intel_x64::cr8::get() << 4U; }
 
 uint64_t
 phys_x2apic::read_svr() const
@@ -74,7 +74,7 @@ phys_x2apic::write_eoi()
 
 void
 phys_x2apic::write_tpr(uint64_t tpr)
-{ ::intel_x64::msrs::ia32_x2apic_tpr::set(tpr); }
+{ ::intel_x64::cr8::set(tpr >> 4U); }
 
 void
 phys_x2apic::write_svr(uint64_t svr)
