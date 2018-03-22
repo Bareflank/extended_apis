@@ -38,10 +38,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    vcpu(vcpuid::type id) :
-        bfvmm::intel_x64::vcpu{id},
-        m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())}
-    { }
+    vcpu(vcpuid::type id);
 
     /// Destructor
     ///
@@ -57,8 +54,7 @@ public:
     ///
     /// @return Returns the hve object stored in this vCPU
     ///
-    gsl::not_null<eapis::intel_x64::hve *> hve()
-    { return m_hve.get(); }
+    gsl::not_null<eapis::intel_x64::hve *> hve();
 
 private:
 

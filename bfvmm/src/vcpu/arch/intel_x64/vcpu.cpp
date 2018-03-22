@@ -26,16 +26,11 @@ namespace intel_x64
 vcpu::vcpu(vcpuid::type id) :
     bfvmm::intel_x64::vcpu{id},
     m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())}
-    //m_vic{std::make_unique<vic>(exit_handler(), vmcs())}
 { }
 
 gsl::not_null<hve *>
 vcpu::hve()
 { return m_hve.get(); }
-
-//gsl::not_null<vic *>
-//vcpu::vic()
-//{ return m_vic.get(); }
 
 }
 }
