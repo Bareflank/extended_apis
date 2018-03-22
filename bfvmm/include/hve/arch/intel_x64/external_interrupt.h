@@ -82,6 +82,30 @@ public:
     ///
     void dump_log() final;
 
+    /// Enable exiting
+    ///
+    /// Example:
+    /// @code
+    /// this->enable_exiting();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void enable_exiting();
+
+    /// Disable exiting
+    ///
+    /// Example:
+    /// @code
+    /// this->disable_exiting();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void disable_exiting();
+
 public:
 
     /// @cond
@@ -93,8 +117,6 @@ public:
 private:
 
     /// @cond
-
-    void enable_exiting();
 
     /// @endcond
 

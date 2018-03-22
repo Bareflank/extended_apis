@@ -26,6 +26,7 @@ init_project(
 
 add_vmm_executable(
     eapis_integration_intel_x64_drs_trap_dr7
-    SOURCES trap_dr7.cpp ../../../../src/vcpu/arch/intel_x64/vcpu.cpp
+    SOURCES trap_dr7.cpp
+    LIBRARIES eapis_vic
     LIBRARIES eapis_hve
 )

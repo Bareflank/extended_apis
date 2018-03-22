@@ -53,6 +53,13 @@ external_interrupt::enable_exiting()
     vmcs_n::vm_exit_controls::acknowledge_interrupt_on_exit::enable();
 }
 
+void
+external_interrupt::disable_exiting()
+{
+    vmcs_n::pin_based_vm_execution_controls::external_interrupt_exiting::disable();
+    vmcs_n::vm_exit_controls::acknowledge_interrupt_on_exit::disable();
+}
+
 // -----------------------------------------------------------------------------
 // Debug
 // -----------------------------------------------------------------------------
@@ -96,7 +103,7 @@ external_interrupt::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    throw std::runtime_error("Unhandled interrupt vector:"
+    throw std::runtime_error("Unhandled interrupt vector: "
         + std::to_string(info.vector));
 }
 

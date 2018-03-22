@@ -18,21 +18,16 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <cstdlib>
-#include <intrinsics.h>
-
-#include <bfdebug.h>
-#include <bfexports.h>
-#include <bftypes.h>
-#include <bfthreadcontext.h>
 
 #include <vic/arch/intel_x64/isr.h>
+#include <vic/arch/intel_x64/vic.h>
 
 extern "C" void unlock_write(void);
 
 static auto
-vector_to_str(uint64_t vector) noexcept
+vector_to_str(uint64_t vec) noexcept
 {
-    switch (vector) {
+    switch (vec) {
         case 0x00: return "fault: divide by 0";
         case 0x01: return "fault/trap: debug exception";
         case 0x02: return "interrupt: nmi";
@@ -57,12 +52,14 @@ vector_to_str(uint64_t vector) noexcept
     }
 }
 
-extern "C" EXPORT_SYM void default_isr(
-    uint64_t vector,
-    uint64_t ec,
-    bool ec_valid,
-    uint64_t *regs) noexcept
+extern "C" EXPORT_SYM void
+default_isr(uint64_t vec, uint64_t ec, bool ec_valid, uint64_t *reg) noexcept
 {
+    if (vec >= 0x20U) {
+        auto vic = reinterpret_cast<eapis::intel_x64::vic *>(*reg);
+        vic->handle_interrupt(vec);
+    } else {
+
     // NOTE:
     //
     // If the 'write' function throws a hardware exception, this function will
@@ -72,70 +69,65 @@ extern "C" EXPORT_SYM void default_isr(
     // needed. For now, this case is unlikely, so it is ignored.
     //
 
-    bfdebug_transaction(0, [&](std::string * msg) {
-        bferror_lnbr(0, msg);
-        bferror_lnbr(0, msg);
-        bferror_lnbr(0, msg);
-        bferror_brk1(0, msg);
-        bferror_info(0, "VMM Panic!!!", msg);
-        bferror_brk1(0, msg);
+        bfdebug_transaction(0, [&](std::string * msg) {
+            bferror_lnbr(0, msg);
+            bferror_lnbr(0, msg);
+            bferror_lnbr(0, msg);
+            bferror_brk1(0, msg);
+            bferror_info(0, "VMM Panic!!!", msg);
+            bferror_brk1(0, msg);
 
-        if (vector == 0x0E && ::intel_x64::cr2::get() == 0) {
-            bferror_info(0, "fault: null dereference", msg);
-        }
-        else {
-            bferror_info(0, vector_to_str(vector), msg);
-        }
+            if (vec == 0x0E && ::intel_x64::cr2::get() == 0) {
+                bferror_info(0, "fault: null dereference", msg);
+            }
+            else {
+                bferror_info(0, vector_to_str(vec), msg);
+            }
 
-        bferror_lnbr(0, msg);
+            bferror_lnbr(0, msg);
 
-        if (ec_valid) {
-            bferror_subnhex(0, "error code", ec, msg);
-        }
+            if (ec_valid) {
+                bferror_subnhex(0, "error code", ec, msg);
+            }
 
-        auto view = gsl::span<uint64_t>(regs, 37);
+            auto view = gsl::span<uint64_t>(reg, 37);
 
-        bferror_subnhex(0, "ss    ", view[36], msg);
-        bferror_subnhex(0, "rsp   ", view[35], msg);
-        bferror_subnhex(0, "rflags", view[34], msg);
-        bferror_subnhex(0, "cs    ", view[33], msg);
-        bferror_subnhex(0, "rip   ", view[32], msg);
-        bferror_subnhex(0, "rax   ", view[14], msg);
-        bferror_subnhex(0, "rbx   ", view[13], msg);
-        bferror_subnhex(0, "rcx   ", view[12], msg);
-        bferror_subnhex(0, "rdx   ", view[11], msg);
-        bferror_subnhex(0, "rbp   ", view[10], msg);
-        bferror_subnhex(0, "rsi   ", view[9], msg);
-        bferror_subnhex(0, "rdi   ", view[8], msg);
-        bferror_subnhex(0, "r8    ", view[7], msg);
-        bferror_subnhex(0, "r9    ", view[6], msg);
-        bferror_subnhex(0, "r10   ", view[5], msg);
-        bferror_subnhex(0, "r11   ", view[4], msg);
-        bferror_subnhex(0, "r12   ", view[3], msg);
-        bferror_subnhex(0, "r13   ", view[2], msg);
-        bferror_subnhex(0, "r14   ", view[1], msg);
-        bferror_subnhex(0, "r15   ", view[0], msg);
+            bferror_subnhex(0, "ss    ", view[36], msg);
+            bferror_subnhex(0, "rsp   ", view[35], msg);
+            bferror_subnhex(0, "rflags", view[34], msg);
+            bferror_subnhex(0, "cs    ", view[33], msg);
+            bferror_subnhex(0, "rip   ", view[32], msg);
+            bferror_subnhex(0, "rax   ", view[14], msg);
+            bferror_subnhex(0, "rbx   ", view[13], msg);
+            bferror_subnhex(0, "rcx   ", view[12], msg);
+            bferror_subnhex(0, "rdx   ", view[11], msg);
+            bferror_subnhex(0, "rbp   ", view[10], msg);
+            bferror_subnhex(0, "rsi   ", view[9], msg);
+            bferror_subnhex(0, "rdi   ", view[8], msg);
+            bferror_subnhex(0, "r8    ", view[7], msg);
+            bferror_subnhex(0, "r9    ", view[6], msg);
+            bferror_subnhex(0, "r10   ", view[5], msg);
+            bferror_subnhex(0, "r11   ", view[4], msg);
+            bferror_subnhex(0, "r12   ", view[3], msg);
+            bferror_subnhex(0, "r13   ", view[2], msg);
+            bferror_subnhex(0, "r14   ", view[1], msg);
+            bferror_subnhex(0, "r15   ", view[0], msg);
 
-        bferror_subnhex(0, "cr0   ", ::intel_x64::cr0::get(), msg);
-        bferror_subnhex(0, "cr2   ", ::intel_x64::cr2::get(), msg);
-        bferror_subnhex(0, "cr3   ", ::intel_x64::cr3::get(), msg);
-        bferror_subnhex(0, "cr4   ", ::intel_x64::cr4::get(), msg);
-    });
+            bferror_subnhex(0, "cr0   ", ::intel_x64::cr0::get(), msg);
+            bferror_subnhex(0, "cr2   ", ::intel_x64::cr2::get(), msg);
+            bferror_subnhex(0, "cr3   ", ::intel_x64::cr3::get(), msg);
+            bferror_subnhex(0, "cr4   ", ::intel_x64::cr4::get(), msg);
+        });
 
-    ::x64::pm::halt();
+        ::x64::pm::halt();
+    }
 }
-
-namespace eapis
-{
-namespace intel_x64
-{
-namespace isr
-{
 
 // -----------------------------------------------------------------------------
 // Populate the IDT entries
 // -----------------------------------------------------------------------------
-static void set_default_isrs(
+
+void set_default_isrs(
     bfvmm::x64::idt *idt,
     bfvmm::x64::idt::selector_type selector)
 {
@@ -396,18 +388,3 @@ static void set_default_isrs(
     idt->set(254, _isr254, selector);
     idt->set(255, _isr255, selector);
 }
-
-void init_vmm_idt(gsl::not_null<exit_hdlr_t *> hdlr)
-{
-    const auto selector = 0x8;
-    set_default_isrs(hdlr->host_idt(), selector);
-
-    auto ist1 = std::make_unique<gsl::byte[]>(STACK_SIZE * 2);
-    auto tss = hdlr->host_tss();
-
-    tss->ist1 = setup_stack(ist1.get());
-}
-
-} // namespace isr
-} // namespace intel_x64
-} // namespace eapis
