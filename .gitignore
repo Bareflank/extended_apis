@@ -1,0 +1,10 @@
+build/
+doc
+doxygen_warnings.txt
+.astyle_results.txt
+.clang_tidy_results.txt
+.vscode/
+.DS_Store
+._.DS_Store
+tags
+*.swp
