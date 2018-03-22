@@ -405,6 +405,7 @@ vic::handle_wrcr8(
     bfignored(vmcs);
 
     m_virt_lapic->write_tpr(info.val << 4U);
+    m_phys_lapic->write_tpr(info.val << 4U);
 
     info.ignore_write = false;
     info.ignore_advance = false;
