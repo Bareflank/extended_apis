@@ -79,9 +79,9 @@ if(ENABLE_BUILD_VMM)
     )
 endif()
 
-# if(ENABLE_BUILD_TEST)
-#     test_extension(
-#         eapis
-#         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
-#     )
-# endif()
+if(ENABLE_BUILD_TEST)
+    test_extension(
+        eapis
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
+    )
+endif()
