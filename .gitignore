@@ -8,3 +8,17 @@ doxygen_warnings.txt
 ._.DS_Store
 tags
 *.swp
+
+bfdriver/src/linux/.bftest.ko.cmd
+bfdriver/src/linux/.bftest.mod.o.cmd
+bfdriver/src/linux/.bftest.o.cmd
+bfdriver/src/linux/.cache.mk
+bfdriver/src/linux/.entry.o.cmd
+bfdriver/src/linux/.tmp_versions/
+bfdriver/src/linux/Module.symvers
+bfdriver/src/linux/bftest.ko
+bfdriver/src/linux/bftest.mod.c
+bfdriver/src/linux/bftest.mod.o
+bfdriver/src/linux/bftest.o
+bfdriver/src/linux/entry.o
+bfdriver/src/linux/modules.order
