@@ -16,6 +16,17 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+# ------------------------------------------------------------------------------
+# Includes
+# ------------------------------------------------------------------------------
+
+include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/macros.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/targets.cmake)
+
+# ------------------------------------------------------------------------------
+# Extensions
+# ------------------------------------------------------------------------------
+
 if(ENABLE_BUILD_VMM)
     vmm_extension(
         eapis
@@ -28,60 +39,15 @@ if(ENABLE_BUILD_VMM)
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src/main
     )
 
-# MOVE ME
+    if(ENABLE_BUILD_INTEGRATION)
+        add_integration(control_register)
+        add_integration(cpuid)
+        add_integration(io_instruction)
+        add_integration(monitor_trap)
+        add_integration(mov_dr)
+        add_integration(rdmsr)
+        add_integration(vpid)
+        add_integration(wrmsr)
+    endif()
 
-    vmm_extension(
-        eapis_integration_intel_x64_control_register
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/control_register/
-    )
-
-    vmm_extension(
-        eapis_integration_intel_x64_cpuid
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/cpuid/
-    )
-
-    vmm_extension(
-        eapis_integration_intel_x64_io_instruction
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/io_instruction/
-    )
-
-    vmm_extension(
-        eapis_integration_intel_x64_monitor_trap
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/monitor_trap/
-    )
-
-    vmm_extension(
-        eapis_integration_intel_x64_mov_dr
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/mov_dr/
-    )
-
-    vmm_extension(
-        eapis_integration_intel_x64_rdmsr
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/rdmsr/
-    )
-
-    vmm_extension(
-        eapis_integration_intel_x64_vpid
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/vpid/
-    )
-
-    vmm_extension(
-        eapis_integration_intel_x64_wrmsr
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/wrmsr/
-    )
 endif()
-
-# if(ENABLE_BUILD_TEST)
-#     test_extension(
-#         eapis
-#         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/tests
-#     )
-# endif()
