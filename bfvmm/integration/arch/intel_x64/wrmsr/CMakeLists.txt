@@ -25,7 +25,7 @@ init_project(
 )
 
 add_vmm_executable(
-    eapis_integration_intel_x64_wrmsr_trap_wrmsr_vmm
+    eapis_integration_intel_x64_wrmsr_trap
     SOURCES trap_wrmsr.cpp
     LIBRARIES eapis_hve
 )

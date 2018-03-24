@@ -19,6 +19,7 @@
 #include <intrinsics.h>
 
 #include <hve/arch/intel_x64/hve.h>
+#include <hve/arch/intel_x64/vic.h>
 #include <hve/arch/intel_x64/lapic_register.h>
 #include <hve/arch/intel_x64/virt_x2apic.h>
 
@@ -222,6 +223,16 @@ virt_x2apic::inject_interrupt(uint64_t vector)
     this->write_register(isr_offset, set_bit(this->read_register(isr_offset), bit));
 
     m_hve->interrupt_window()->inject(vector);
+}
+
+void
+virt_x2apic::inject_spurious(uint64_t viv)
+{
+    if (m_hve->interrupt_window()->is_open()) {
+        m_hve->interrupt_window()->inject(viv);
+    }
+
+    bfdebug_info(VIC_LOG_ALERT, "Inject spurious denied: interrupt window closed");
 }
 
 ///----------------------------------------------------------------------------

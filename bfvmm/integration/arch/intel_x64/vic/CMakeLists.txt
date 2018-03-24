@@ -25,7 +25,7 @@ init_project(
 )
 
 add_vmm_executable(
-    eapis_integration_intel_x64_rdmsr_trap
-    SOURCES trap_rdmsr.cpp
+    eapis_integration_intel_x64_vic_injection
+    SOURCES test_injection.cpp
     LIBRARIES eapis_hve
 )

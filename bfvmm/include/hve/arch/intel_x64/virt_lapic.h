@@ -85,6 +85,15 @@ public:
     ///
     virtual void queue_injection(uint64_t vector) = 0;
 
+    /// Inject spurious interrupt
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector the spurious vector inject
+    ///
+    virtual void inject_spurious(uint64_t vector) = 0;
+
     ///
     /// Register reads
     ///

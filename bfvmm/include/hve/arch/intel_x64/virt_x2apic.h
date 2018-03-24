@@ -96,6 +96,15 @@ public:
     ///
     void queue_injection(uint64_t vector) override;
 
+    /// Inject spurious interrupt
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector the spurious vector inject
+    ///
+    void inject_spurious(uint64_t vector) override;
+
     ///
     /// Register reads
     ///

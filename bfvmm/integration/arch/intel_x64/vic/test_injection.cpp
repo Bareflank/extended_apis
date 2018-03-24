@@ -19,12 +19,6 @@
 #include <bfvmm/vcpu/vcpu_factory.h>
 #include <eapis/vcpu/arch/intel_x64/vcpu.h>
 
-using namespace eapis::intel_x64;
-
-// -----------------------------------------------------------------------------
-// vCPU
-// -----------------------------------------------------------------------------
-
 namespace test
 {
 
@@ -32,25 +26,20 @@ class vcpu : public eapis::intel_x64::vcpu
 {
 public:
 
-    /// Default Constructor
+    /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
-    vcpu(vcpuid::type id) :
-        eapis::intel_x64::vcpu{id}
+    /// @param hve the address of the hve for this vic
+    ///
+    vcpu(vcpuid::type id) : eapis::intel_x64::vcpu{id}
     {
-        m_tpr_shadow = ::intel_x64::cr8::get();
+        const auto phys_svr = vic()->m_phys_lapic->read_svr();
+        const auto piv = ::intel_x64::lapic::svr::vector::get(phys_svr);
+        const auto viv = vic()->phys_to_virt(piv);
 
-        hve()->add_rdcr8_handler(
-            control_register::handler_delegate_t::create<vcpu, &vcpu::test_rdcr8_handler>(this)
-        );
-
-        hve()->add_wrcr8_handler(
-            control_register::handler_delegate_t::create<vcpu, &vcpu::test_wrcr8_handler>(this)
-        );
-
-        hve()->control_register()->enable_log();
+        vic()->m_virt_lapic->inject_spurious(viv);
     }
 
     /// Destructor
@@ -59,40 +48,6 @@ public:
     /// @ensures
     ///
     ~vcpu() = default;
-
-    /// Read CR8
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    bool
-    test_rdcr8_handler(
-        gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info)
-    {
-        bfignored(vmcs);
-
-        info.val = m_tpr_shadow;
-        return false;
-    }
-
-    /// Write CR8
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    bool
-    test_wrcr8_handler(
-        gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info)
-    {
-        bfignored(vmcs);
-
-        m_tpr_shadow = info.val;
-        return false;
-    }
-
-private:
-
-    uint64_t m_tpr_shadow;
 };
 
 }

@@ -466,8 +466,8 @@ vic::handle_spurious_interrupt(
 {
     bfignored(vmcs);
 
-    bfdebug_nhex(0, "Spurious interrupt handled", info.vector);
-    m_virt_lapic->queue_injection(info.vector);
+    bfalert_nhex(VIC_LOG_ALERT, "Spurious interrupt handled", info.vector);
+    m_virt_lapic->inject_spurious(phys_to_virt(info.vector));
 
     return true;
 }
