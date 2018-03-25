@@ -32,7 +32,7 @@ namespace intel_x64
 /// mode. It is marked final because it is intended to interact
 /// directly with x2apic hardware.
 ///
-class EXPORT_EAPIS_VIC phys_x2apic final : public phys_lapic
+class EXPORT_EAPIS_HVE phys_x2apic final : public phys_lapic
 {
 public:
 
@@ -48,7 +48,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    virtual ~phys_x2apic() = default;
+    ~phys_x2apic() override = default;
 
     /// Enable interrupts
     ///

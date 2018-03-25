@@ -16,7 +16,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <vic/arch/intel_x64/lapic_register.h>
+#include <hve/arch/intel_x64/lapic_register.h>
 
 namespace eapis
 {

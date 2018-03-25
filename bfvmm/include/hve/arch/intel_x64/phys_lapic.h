@@ -16,23 +16,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef VIRT_LAPIC_INTEL_X64_EAPIS_H
-#define VIRT_LAPIC_INTEL_X64_EAPIS_H
+#ifndef PHYS_LAPIC_INTEL_X64_EAPIS_H
+#define PHYS_LAPIC_INTEL_X64_EAPIS_H
 
-#include <array>
-#include <list>
-
-#include "lapic_register.h"
+#include "base.h"
 
 namespace eapis
 {
 namespace intel_x64
 {
 
-///
-/// Virtual LAPIC
-///
-class EXPORT_EAPIS_VIC virt_lapic
+class EXPORT_EAPIS_HVE phys_lapic
 {
 public:
 
@@ -41,49 +35,51 @@ public:
     /// @expects
     /// @ensures
     ///
-    virt_lapic() = default;
+    phys_lapic() = default;
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    virtual ~virt_lapic() = default;
+    virtual ~phys_lapic() = default;
+
+    /// Enable interrupts
+    ///
+    /// Enable physical interrupts on this cpu
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    virtual void enable_interrupts() = 0;
+
+    /// Disable interrupts
+    ///
+    /// Disable physical interrupts on this cpu
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    virtual void disable_interrupts() = 0;
 
     /// Read Register
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param offset the register offset to read
+    /// @param offset the canonical offset to read
     ///
-    virtual uint64_t read_register(lapic_register::offset_t offset) const = 0;
+    virtual uint64_t read_register(uint64_t offset) const = 0;
 
     /// Write Register
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param offset the register offset to write
+    /// @param offset the canonical offset to write
     /// @param val the value to write
     ///
-    virtual void write_register(lapic_register::offset_t offset, uint64_t val) = 0;
-
-    /// Handle interrupt window exit
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    virtual bool handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs) = 0;
-
-    /// Queue Interrupt
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param vector of the interrupt to queue
-    ///
-    virtual void queue_injection(uint64_t vector) = 0;
+    virtual void write_register(uint64_t offset, uint64_t val) = 0;
 
     ///
     /// Register reads
@@ -91,27 +87,25 @@ public:
     virtual uint64_t read_id() const = 0;
     virtual uint64_t read_version() const = 0;
     virtual uint64_t read_tpr() const = 0;
-    virtual uint64_t read_icr() const = 0;
     virtual uint64_t read_svr() const = 0;
+    virtual uint64_t read_icr() const = 0;
 
     ///
     /// Register writes
     ///
     virtual void write_eoi() = 0;
     virtual void write_tpr(uint64_t tpr) = 0;
+    virtual void write_svr(uint64_t svr) = 0;
     virtual void write_icr(uint64_t icr) = 0;
     virtual void write_self_ipi(uint64_t vector) = 0;
-    virtual void write_svr(uint64_t svr) = 0;
-
-public:
 
     /// @cond
 
-    virt_lapic(virt_lapic &&) = default;
-    virt_lapic &operator=(virt_lapic &&) = default;
+    phys_lapic(phys_lapic &&) = default;
+    phys_lapic &operator=(phys_lapic &&) = default;
 
-    virt_lapic(const virt_lapic &) = delete;
-    virt_lapic &operator=(const virt_lapic &) = delete;
+    phys_lapic(const phys_lapic &) = delete;
+    phys_lapic &operator=(const phys_lapic &) = delete;
 
     /// @endcond
 };

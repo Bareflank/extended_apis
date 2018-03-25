@@ -19,8 +19,8 @@
 
 #include <cstdlib>
 
-#include <vic/arch/intel_x64/isr.h>
-#include <vic/arch/intel_x64/vic.h>
+#include <hve/arch/intel_x64/isr.h>
+#include <hve/arch/intel_x64/vic.h>
 
 extern "C" void unlock_write(void);
 

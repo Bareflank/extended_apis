@@ -22,7 +22,7 @@
 #include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
 
 #include "../../../hve/arch/intel_x64/hve.h"
-#include "../../../vic/arch/intel_x64/vic.h"
+#include "../../../hve/arch/intel_x64/vic.h"
 
 namespace eapis
 {

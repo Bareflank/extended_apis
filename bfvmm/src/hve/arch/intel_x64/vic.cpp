@@ -18,8 +18,8 @@
 
 #include <bfthreadcontext.h>
 
-#include <vic/arch/intel_x64/isr.h>
-#include <vic/arch/intel_x64/vic.h>
+#include <hve/arch/intel_x64/isr.h>
+#include <hve/arch/intel_x64/vic.h>
 
 namespace eapis
 {
@@ -31,20 +31,18 @@ vic::vic(
     m_hve{hve},
     m_virt_apic_base{0}
 {
-    init_phys_idt();
-    init_phys_lapic();
-    init_virt_lapic();
-    init_save_state();
-    init_interrupt_map();
+    this->init_phys_idt();
+    this->init_phys_lapic();
+    this->init_virt_lapic();
+    this->init_save_state();
+    this->init_interrupt_map();
 
-    add_exit_handlers();
+    this->add_exit_handlers();
     m_phys_lapic->disable_interrupts();
 }
 
 vic::~vic()
-{
-    ::intel_x64::cr8::set(0xFU);
-}
+{ ::intel_x64::cr8::set(0xFU); }
 
 uint64_t
 vic::phys_to_virt(uint64_t piv)
@@ -106,7 +104,7 @@ vic::init_phys_lapic()
     }
 
     if (::intel_x64::lapic::x2apic_supported()) {
-        init_phys_x2apic();
+        this->init_phys_x2apic();
         return;
     }
 
@@ -171,10 +169,10 @@ vic::init_interrupt_map()
 void
 vic::add_exit_handlers()
 {
-    add_cr8_handlers();
-    add_x2apic_handlers();
-    add_apic_base_handlers();
-    add_external_interrupt_handlers();
+    this->add_cr8_handlers();
+    this->add_x2apic_handlers();
+    this->add_apic_base_handlers();
+    this->add_external_interrupt_handlers();
 }
 
 void
@@ -196,11 +194,11 @@ vic::add_x2apic_handlers()
 {
     for (auto i = 0U; i < lapic_register::attributes.size(); ++i) {
         if (lapic_register::readable_in_x2apic(i)) {
-            add_x2apic_read_handler(i);
+            this->add_x2apic_read_handler(i);
         }
 
         if (lapic_register::writable_in_x2apic(i)) {
-            add_x2apic_write_handler(i);
+            this->add_x2apic_write_handler(i);
         }
     }
 }
@@ -458,7 +456,7 @@ vic::handle_interrupt_from_exit(
 {
     bfignored(vmcs);
 
-    handle_interrupt(info.vector);
+    this->handle_interrupt(info.vector);
     return true;
 }
 
@@ -478,7 +476,7 @@ void
 vic::handle_interrupt(uint64_t piv)
 {
     m_phys_lapic->write_eoi();
-    m_virt_lapic->queue_injection(phys_to_virt(piv));
+    m_virt_lapic->queue_injection(this->phys_to_virt(piv));
 }
 
 void

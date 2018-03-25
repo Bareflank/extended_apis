@@ -37,6 +37,5 @@ endif()
 add_vmm_executable(
     eapis_vmm
     SOURCES ${SOURCES}
-    LIBRARIES eapis_vic
     LIBRARIES eapis_hve
 )

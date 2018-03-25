@@ -20,67 +20,17 @@
 #ifndef ISR_INTEL_X64_EAPIS_H
 #define ISR_INTEL_X64_EAPIS_H
 
-#include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
-
-// -----------------------------------------------------------------------------
-// Exports
-// -----------------------------------------------------------------------------
-
-#include <bfexports.h>
-
-#ifndef STATIC_EAPIS_VIC
-#ifdef SHARED_EAPIS_VIC
-#define EXPORT_EAPIS_VIC EXPORT_SYM
-#else
-#define EXPORT_EAPIS_VIC IMPORT_SYM
-#endif
-#else
-#define EXPORT_EAPIS_VIC
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#endif
-
-// -----------------------------------------------------------------------------
-// Default interrupt service routine
-//
-// This function is the default handler that each of the _isr functions
-// below call. Used for basic exception/interrupt support in the vmm.
-// -----------------------------------------------------------------------------
+#include "base.h"
 
 /// @cond
 
 extern "C" EXPORT_SYM void
 default_isr(
-    uint64_t vector,
-    uint64_t ec,
-    bool ec_valid,
-    uint64_t *regs
-) noexcept;
+    uint64_t vector, uint64_t ec, bool ec_valid, uint64_t *regs) noexcept;
 
-/// @endcond
-
-namespace eapis
-{
-namespace intel_x64
-{
-namespace isr
-{
-
-using exit_hdlr_t = bfvmm::intel_x64::exit_handler;
-void init_vmm_idt(gsl::not_null<exit_hdlr_t *> hdlr);
-
-
-// -----------------------------------------------------------------------------
-// Interrupt Service Routines
-//
-// The following ISRs are used to populate the IDT. These ISRs are defined
-// in src/vic/arch/intel_x64.isr.asm, and call the default ISR.
-// -----------------------------------------------------------------------------
-
-/// @cond
+extern "C" void
+set_default_isrs(
+    bfvmm::x64::idt *idt, bfvmm::x64::idt::selector_type selector);
 
 extern "C" void _isr0(void) noexcept;
 extern "C" void _isr1(void) noexcept;
@@ -340,13 +290,5 @@ extern "C" void _isr254(void) noexcept;
 extern "C" void _isr255(void) noexcept;
 
 /// @endcond
-
-} // namepsace isr
-} // namespace intel_x64
-} // namespace eapis
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 #endif

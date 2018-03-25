@@ -34,7 +34,7 @@ namespace intel_x64
 ///
 /// Virtual x2APIC
 ///
-class EXPORT_EAPIS_VIC virt_x2apic : public virt_lapic
+class EXPORT_EAPIS_HVE virt_x2apic final : public virt_lapic
 {
 public:
 
@@ -59,7 +59,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    virtual ~virt_x2apic() = default;
+    ~virt_x2apic() override = default;
 
     /// Read Register
     ///
