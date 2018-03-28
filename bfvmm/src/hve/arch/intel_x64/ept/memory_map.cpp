@@ -273,6 +273,7 @@ memory_map::map_pdpte_to_page(gpa_t gpa, hpa_t hpa)
 
         epte::read_access::enable(pml4e);
         epte::write_access::enable(pml4e);
+        epte::execute_access::enable(pml4e);
         epte::set_hpa(pml4e, pdpt_hpa);
     }
 
@@ -296,6 +297,7 @@ memory_map::map_pde_to_page(gpa_t gpa, hpa_t hpa)
 
         epte::read_access::enable(pml4e);
         epte::write_access::enable(pml4e);
+        epte::execute_access::enable(pml4e);
         epte::set_hpa(pml4e, pdpt_hpa);
     }
 
@@ -328,6 +330,7 @@ memory_map::map_pte_to_page(gpa_t gpa, hpa_t hpa)
 
         epte::read_access::enable(pml4e);
         epte::write_access::enable(pml4e);
+        epte::execute_access::enable(pml4e);
         epte::set_hpa(pml4e, pdpt_hpa);
     }
 
