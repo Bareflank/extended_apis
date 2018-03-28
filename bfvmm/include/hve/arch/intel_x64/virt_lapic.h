@@ -32,7 +32,7 @@ namespace intel_x64
 ///
 /// Virtual LAPIC
 ///
-class EXPORT_EAPIS_VIC virt_lapic
+class EXPORT_EAPIS_HVE virt_lapic
 {
 public:
 
@@ -84,6 +84,15 @@ public:
     /// @param vector of the interrupt to queue
     ///
     virtual void queue_injection(uint64_t vector) = 0;
+
+    /// Inject spurious interrupt
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector the spurious vector inject
+    ///
+    virtual void inject_spurious(uint64_t vector) = 0;
 
     ///
     /// Register reads

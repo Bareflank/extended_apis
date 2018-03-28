@@ -25,8 +25,7 @@ init_project(
 )
 
 add_vmm_executable(
-    eapis_integration_intel_x64_cpuid_trap_cpuid
+    eapis_integration_intel_x64_cpuid_trap
     SOURCES trap_cpuid.cpp
-    LIBRARIES eapis_vic
     LIBRARIES eapis_hve
 )

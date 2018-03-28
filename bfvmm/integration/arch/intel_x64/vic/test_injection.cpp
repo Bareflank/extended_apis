@@ -16,37 +16,54 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef EAPIS_VIC_BASE_INTEL_X64_EAPIS_H
-#define EAPIS_VIC_BASE_INTEL_X64_EAPIS_H
+#include <bfvmm/vcpu/vcpu_factory.h>
+#include <eapis/vcpu/arch/intel_x64/vcpu.h>
 
-#include "../../../hve/arch/intel_x64/base.h"
+namespace test
+{
 
-#ifndef VIC_LOG_LEVELS
-#define VIC_LOG_FATAL 0U
-#define VIC_LOG_ERROR 1U
-#define VIC_LOG_ALERT 2U
-#define VIC_LOG_DEBUG 3U
-#define VIC_LOG_LEVELS
-#endif
+class vcpu : public eapis::intel_x64::vcpu
+{
+public:
+
+    /// Constructor
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param hve the address of the hve for this vic
+    ///
+    vcpu(vcpuid::type id) : eapis::intel_x64::vcpu{id}
+    {
+        const auto phys_svr = vic()->m_phys_lapic->read_svr();
+        const auto piv = ::intel_x64::lapic::svr::vector::get(phys_svr);
+        const auto viv = vic()->phys_to_virt(piv);
+
+        vic()->m_virt_lapic->inject_spurious(viv);
+    }
+
+    /// Destructor
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    ~vcpu() = default;
+};
+
+}
 
 // -----------------------------------------------------------------------------
-// Exports
+// vCPU Factory
 // -----------------------------------------------------------------------------
 
-#include <bfexports.h>
+namespace bfvmm
+{
 
-#ifndef STATIC_EAPIS_VIC
-#ifdef SHARED_EAPIS_VIC
-#define EXPORT_EAPIS_VIC EXPORT_SYM
-#else
-#define EXPORT_EAPIS_VIC IMPORT_SYM
-#endif
-#else
-#define EXPORT_EAPIS_VIC
-#endif
+std::unique_ptr<vcpu>
+vcpu_factory::make_vcpu(vcpuid::type vcpuid, bfobject *obj)
+{
+    bfignored(obj);
+    return std::make_unique<test::vcpu>(vcpuid);
+}
 
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-#endif
+}

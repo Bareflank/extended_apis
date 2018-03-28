@@ -72,7 +72,7 @@ public:
         bfignored(vmcs);
 
         info.val = m_tpr_shadow;
-        return true;
+        return false;
     }
 
     /// Write CR8
@@ -87,7 +87,7 @@ public:
         bfignored(vmcs);
 
         m_tpr_shadow = info.val;
-        return true;
+        return false;
     }
 
 private:

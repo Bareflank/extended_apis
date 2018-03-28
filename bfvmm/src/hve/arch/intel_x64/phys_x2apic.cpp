@@ -18,8 +18,8 @@
 
 #include <intrinsics.h>
 
-#include <vic/arch/intel_x64/lapic_register.h>
-#include <vic/arch/intel_x64/phys_x2apic.h>
+#include <hve/arch/intel_x64/lapic_register.h>
+#include <hve/arch/intel_x64/phys_x2apic.h>
 
 namespace eapis
 {

@@ -19,10 +19,23 @@
 #ifndef VIC_INTEL_X64_EAPIS_H
 #define VIC_INTEL_X64_EAPIS_H
 
-#include "../../../hve/arch/intel_x64/hve.h"
+#include "hve.h"
 #include "lapic_register.h"
 #include "phys_x2apic.h"
 #include "virt_x2apic.h"
+
+#ifndef VIC_LOG_LEVELS
+#define VIC_LOG_FATAL 0U
+#define VIC_LOG_ERROR 1U
+#define VIC_LOG_ALERT 2U
+#define VIC_LOG_DEBUG 3U
+#define VIC_LOG_LEVELS
+#endif
+
+namespace test
+{
+    class vcpu;
+}
 
 namespace eapis
 {
@@ -32,7 +45,7 @@ namespace intel_x64
 ///
 /// Virtual interrupt controller (VIC)
 ///
-class EXPORT_EAPIS_VIC vic
+class EXPORT_EAPIS_HVE vic
 {
 public:
 
@@ -282,6 +295,8 @@ private:
     std::array<std::list<handler_delegate_t>, 256> m_handlers;
     std::array<uint64_t, 256> m_interrupt_map;
     uint64_t m_virt_apic_base;
+
+    friend class test::vcpu;
 
     /// @endcond
 

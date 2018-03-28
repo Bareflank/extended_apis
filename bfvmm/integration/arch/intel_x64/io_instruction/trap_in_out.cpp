@@ -82,16 +82,6 @@ public:
         ::x64::portio::insd(0xCFC, data);
         bfdebug_nhex(0, "PCI Configuration Space (addr)", ::x64::portio::ind(0xCF8));
         bfdebug_nhex(0, "PCI Configuration Space (data)", data[0]);
-
-        ::x64::portio::outd(0xCF8, 0x80000000);
-        ::x64::portio::insdrep(0xCFC, data, 5);
-        bfdebug_nhex(0, "PCI Configuration Space (addr)", ::x64::portio::ind(0xCF8));
-        bfdebug_nhex(0, "PCI Configuration Space (data 0)", data[0]);
-        bfdebug_nhex(0, "PCI Configuration Space (data 1)", data[1]);
-        bfdebug_nhex(0, "PCI Configuration Space (data 2)", data[2]);
-        bfdebug_nhex(0, "PCI Configuration Space (data 3)", data[3]);
-        bfdebug_nhex(0, "PCI Configuration Space (data 4)", data[4]);
-        bfdebug_nhex(0, "PCI Configuration Space (data 5)", data[5]);
     }
 };
 

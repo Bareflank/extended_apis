@@ -25,7 +25,7 @@ init_project(
 )
 
 add_vmm_executable(
-    eapis_integration_intel_x64_monitor_trap_single_step_cpuid
-    SOURCES single_step_cpuid.cpp
+    eapis_integration_intel_x64_vic_injection
+    SOURCES test_injection.cpp
     LIBRARIES eapis_hve
 )

@@ -96,7 +96,7 @@ mov_dr::handle(gsl::not_null<vmcs_t *> vmcs)
     for (const auto &d : m_handlers) {
         if (d(vmcs, info)) {
 
-            if(!info.ignore_write) {
+            if (!info.ignore_write) {
                 vmcs_n::guest_dr7::set(info.val & 0x00000000FFFFFFFF);
             }
 
@@ -108,8 +108,7 @@ mov_dr::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    throw std::runtime_error(
-        "mov_dr::unhandled");
+    throw std::runtime_error("mov_dr::unhandled");
 }
 
 }

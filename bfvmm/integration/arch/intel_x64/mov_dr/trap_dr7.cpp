@@ -28,7 +28,7 @@ using namespace eapis::intel_x64;
 bool
 test_handler(
     gsl::not_null<vmcs_t *> vmcs, mov_dr::info_t &info)
-{ bfignored(vmcs); bfignored(info); return false; }
+{ bfignored(vmcs); bfignored(info); return true; }
 
 // -----------------------------------------------------------------------------
 // vCPU

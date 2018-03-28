@@ -67,6 +67,12 @@ if(ENABLE_BUILD_VMM)
     )
 
     vmm_extension(
+        eapis_integration_intel_x64_vic
+        DEPENDS eapis
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/vic/
+    )
+
+    vmm_extension(
         eapis_integration_intel_x64_vpid
         DEPENDS eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/vpid/
