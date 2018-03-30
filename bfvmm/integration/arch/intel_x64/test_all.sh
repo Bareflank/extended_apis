@@ -346,8 +346,14 @@ echo_milestone "Preparing test vmms\n"
 echo_task "building test vmms\n"
 
 pushd $build_dir
-cmake $hyp_src -DCONFIG=$config
-make -j$(nproc)
+if [[ -e build.ninja ]];
+then
+    echo -ne "$bold_red"
+    echo -e "ERROR: Only Unix Makefiles supported$reset"
+    exit 1
+fi
+
+bash -c "cmake "$hyp_src" -DCONFIG="$config" && make -j$(nproc)"
 popd
 
 echo_task "cleaning bfdriver\n"

@@ -178,14 +178,13 @@ vic::add_exit_handlers()
 void
 vic::add_cr8_handlers()
 {
-    m_hve->add_rdcr8_handler(
-        control_register::handler_delegate_t::create<
-        vic, &vic::handle_rdcr8>(this)
-    );
+    m_hve->add_rdcr8_handler(control_register::handler_delegate_t::create<vic,
+                             &vic::handle_rdcr8>(this)
+                            );
 
     m_hve->add_wrcr8_handler(
-        control_register::handler_delegate_t::create<
-        vic, &vic::handle_wrcr8>(this)
+        control_register::handler_delegate_t::create<vic,
+        &vic::handle_wrcr8>(this)
     );
 }
 
@@ -207,9 +206,9 @@ void
 vic::add_x2apic_read_handler(uint64_t offset)
 {
     m_hve->add_rdmsr_handler(lapic_register::offset_to_msr_addr(offset),
-        rdmsr::handler_delegate_t::create<vic,
-        &vic::handle_x2apic_read>(this)
-    );
+                             rdmsr::handler_delegate_t::create<vic,
+                             &vic::handle_x2apic_read>(this)
+                            );
 }
 
 void
@@ -221,30 +220,30 @@ vic::add_x2apic_write_handler(uint64_t offset)
     switch (addr) {
         case ia32_x2apic_eoi::addr:
             m_hve->add_wrmsr_handler(addr,
-                wrmsr::handler_delegate_t::create<vic,
-                &vic::handle_x2apic_eoi_write>(this)
-            );
+                                     wrmsr::handler_delegate_t::create<vic,
+                                     &vic::handle_x2apic_eoi_write>(this)
+                                    );
             break;
 
         case ia32_x2apic_icr::addr:
             m_hve->add_wrmsr_handler(addr,
-                wrmsr::handler_delegate_t::create<vic,
-                &vic::handle_x2apic_icr_write>(this)
-            );
+                                     wrmsr::handler_delegate_t::create<vic,
+                                     &vic::handle_x2apic_icr_write>(this)
+                                    );
             break;
 
         case ia32_x2apic_self_ipi::addr:
             m_hve->add_wrmsr_handler(addr,
-                wrmsr::handler_delegate_t::create<vic,
-                &vic::handle_x2apic_self_ipi_write>(this)
-            );
+                                     wrmsr::handler_delegate_t::create<vic,
+                                     &vic::handle_x2apic_self_ipi_write>(this)
+                                    );
             break;
 
         default:
             m_hve->add_wrmsr_handler(addr,
-                wrmsr::handler_delegate_t::create<vic,
-                &vic::handle_x2apic_write>(this)
-            );
+                                     wrmsr::handler_delegate_t::create<vic,
+                                     &vic::handle_x2apic_write>(this)
+                                    );
             break;
     }
 }
@@ -272,7 +271,7 @@ vic::add_external_interrupt_handlers()
         bferror_info(VIC_LOG_ERROR, "vic: Uninitialized virt_lapic");
         bferror_subtext(VIC_LOG_ERROR, "NULL in", "add_external_interrupt_handler");
         throw std::runtime_error("Initialize virt_lapic before adding "
-            + "external interrupt handlers"_s);
+                                 + "external interrupt handlers"_s);
     }
 
     const auto svr = m_virt_lapic->read_svr();
@@ -280,20 +279,21 @@ vic::add_external_interrupt_handlers()
 
     for (auto vector = 32U; vector < 256U; ++vector) {
         m_hve->add_external_interrupt_handler(vector,
-            external_interrupt::handler_delegate_t::create<vic,
-            &vic::handle_external_interrupt_exit>(this)
-        );
+                                              external_interrupt::handler_delegate_t::create<vic,
+                                              &vic::handle_external_interrupt_exit>(this)
+                                             );
 
         if (vector == svr_vector) {
             add_interrupt_handler(vector,
-                handler_delegate_t::create<vic,
-                &vic::handle_spurious_interrupt>(this)
-            );
-        } else {
+                                  handler_delegate_t::create<vic,
+                                  &vic::handle_spurious_interrupt>(this)
+                                 );
+        }
+        else {
             add_interrupt_handler(vector,
-                handler_delegate_t::create<vic,
-                &vic::handle_interrupt_from_exit>(this)
-            );
+                                  handler_delegate_t::create<vic,
+                                  &vic::handle_interrupt_from_exit>(this)
+                                 );
         }
     }
 

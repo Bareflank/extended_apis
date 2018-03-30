@@ -58,16 +58,17 @@ default_isr(uint64_t vec, uint64_t ec, bool ec_valid, uint64_t *reg) noexcept
     if (vec >= 0x20U) {
         auto vic = reinterpret_cast<eapis::intel_x64::vic *>(*reg);
         vic->handle_interrupt(vec);
-    } else {
+    }
+    else {
 
-    // NOTE:
-    //
-    // If the 'write' function throws a hardware exception, this function will
-    // deadlock because it doesn't unlock the write mutex. If we end up with
-    // stability issues with the debugging logic, we should modify the code
-    // to detect when the same core attempts to get the lock, and unlock as
-    // needed. For now, this case is unlikely, so it is ignored.
-    //
+        // NOTE:
+        //
+        // If the 'write' function throws a hardware exception, this function will
+        // deadlock because it doesn't unlock the write mutex. If we end up with
+        // stability issues with the debugging logic, we should modify the code
+        // to detect when the same core attempts to get the lock, and unlock as
+        // needed. For now, this case is unlikely, so it is ignored.
+        //
 
         bfdebug_transaction(0, [&](std::string * msg) {
             bferror_lnbr(0, msg);

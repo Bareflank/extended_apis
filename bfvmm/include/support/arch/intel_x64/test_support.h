@@ -16,7 +16,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#ifndef TEST_SUPPORT_EAPIS_H
+#define TEST_SUPPORT_EAPIS_H
+
+#include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
+#include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
 #include <bfvmm/support/arch/intel_x64/test_support.h>
+#include <hve/arch/intel_x64/hve.h>
+
+::intel_x64::vmcs::value_type g_vcpuid{0U};
+
+std::unique_ptr<uint32_t[]> g_vmcs_region;
+std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs;
+std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr;
+
+
+auto
+setup_hve(MockRepository &mocks)
+{
+    setup_msrs();
+    setup_mm(mocks);
+    setup_pt(mocks);
+
+    g_vmcs = std::make_unique<bfvmm::intel_x64::vmcs>(g_vcpuid);
+    g_ehlr = std::make_unique<bfvmm::intel_x64::exit_handler>(g_vmcs.get());
+
+    return std::make_unique<eapis::intel_x64::hve>(g_ehlr.get(), g_vmcs.get());
+}
 
 extern "C" void _isr0(void) noexcept { }
 extern "C" void _isr1(void) noexcept { }
@@ -274,3 +300,5 @@ extern "C" void _isr252(void) noexcept { }
 extern "C" void _isr253(void) noexcept { }
 extern "C" void _isr254(void) noexcept { }
 extern "C" void _isr255(void) noexcept { }
+
+#endif

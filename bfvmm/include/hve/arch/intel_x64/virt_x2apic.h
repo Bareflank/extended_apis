@@ -123,7 +123,9 @@ public:
     void write_self_ipi(uint64_t vector) override;
     void write_svr(uint64_t svr) override;
 
+#ifndef ENABLE_BUILD_TEST
 private:
+#endif
 
     /// @cond
 
@@ -136,8 +138,8 @@ private:
 
     void init_registers_from_phys_x2apic(eapis::intel_x64::phys_lapic *phys);
     void init_interrupt_window_handler();
+    void init_id();
 
-    void reset_id();
     void reset_svr();
     void reset_version();
     void reset_registers();
@@ -146,6 +148,8 @@ private:
     void clear_register(lapic_register::offset_t offset);
 
     bool irr_is_empty();
+    bool isr_is_empty();
+    bool is_empty_256bit(uint64_t last);
 
     void pop_irr();
     void pop_isr();

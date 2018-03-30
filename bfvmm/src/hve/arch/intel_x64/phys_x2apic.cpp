@@ -37,14 +37,20 @@ phys_x2apic::disable_interrupts()
 uint64_t
 phys_x2apic::read_register(lapic_register::offset_t offset) const
 {
-    const auto addr = lapic_register::offset_to_msr_addr(offset);
+    const auto addr = gsl::narrow_cast<::intel_x64::msrs::field_type>(
+                          lapic_register::offset_to_msr_addr(offset)
+                      );
+
     return ::intel_x64::msrs::get(addr);
 }
 
 void
 phys_x2apic::write_register(lapic_register::offset_t offset, uint64_t val)
 {
-    const auto addr = lapic_register::offset_to_msr_addr(offset);
+    const auto addr = gsl::narrow_cast<::intel_x64::msrs::field_type>(
+                          lapic_register::offset_to_msr_addr(offset)
+                      );
+
     return ::intel_x64::msrs::set(addr, val);
 }
 

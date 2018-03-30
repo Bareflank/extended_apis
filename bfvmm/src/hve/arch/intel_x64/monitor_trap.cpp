@@ -69,7 +69,7 @@ monitor_trap::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-    if(!info.ignore_clear) {
+    if (!info.ignore_clear) {
         primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
     }
 

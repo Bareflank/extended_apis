@@ -122,7 +122,7 @@ private:
 
     /// @cond
 
-    std::list<handler_delegate_t> m_handlers{};
+    std::list<handler_delegate_t> m_handlers;
 
     /// @endcond
 

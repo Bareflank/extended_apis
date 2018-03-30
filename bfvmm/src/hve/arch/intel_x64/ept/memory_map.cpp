@@ -84,13 +84,13 @@ memory_map::gpa_to_epte(gpa_t gpa)
     auto &pml4e = this->gpa_to_pml4e(gpa);
     if (!epte::is_present(pml4e)) {
         throw std::runtime_error("gpa_to_epte: failed to resolve gpa->epte, "
-            "gpa is not mapped at the 512GB level");
+                                 "gpa is not mapped at the 512GB level");
     }
 
     auto &pdpte = this->gpa_to_pdpte(gpa, pml4e);
     if (!epte::is_present(pdpte)) {
         throw std::runtime_error("gpa_to_epte: failed to resolve gpa->epte, "
-            "gpa is not mapped at the 1GB level");
+                                 "gpa is not mapped at the 1GB level");
     }
     if (epte::is_leaf_entry(pdpte)) {
         return pdpte;
@@ -99,7 +99,7 @@ memory_map::gpa_to_epte(gpa_t gpa)
     auto &pde = this->gpa_to_pde(gpa, pdpte);
     if (!epte::is_present(pde)) {
         throw std::runtime_error("gpa_to_epte: failed to resolve gpa->epte, "
-            "gpa is not mapped at the 2MB level");
+                                 "gpa is not mapped at the 2MB level");
     }
     if (epte::is_leaf_entry(pde)) {
         return pde;
@@ -108,7 +108,7 @@ memory_map::gpa_to_epte(gpa_t gpa)
     auto &pte = this->gpa_to_pte(gpa, pde);
     if (!epte::is_present(pte)) {
         throw std::runtime_error("gpa_to_epte: failed to resolve gpa->epte, "
-            "gpa is not mapped at the 4KB level");
+                                 "gpa is not mapped at the 4KB level");
     }
     if (epte::is_leaf_entry(pte)) {
         return pte;
@@ -123,13 +123,13 @@ memory_map::gpa_to_hpa(gpa_t gpa)
     auto &pml4e = this->gpa_to_pml4e(gpa);
     if (!epte::is_present(pml4e)) {
         throw std::runtime_error("gpa_to_hpa: failed to resolve gpa->epte, gpa "
-            "is not mapped at the 512GB level");
+                                 "is not mapped at the 512GB level");
     }
 
     auto &pdpte = this->gpa_to_pdpte(gpa, pml4e);
     if (!epte::is_present(pdpte)) {
         throw std::runtime_error("gpa_to_hpa: failed to resolve gpa->epte, gpa "
-            "is not mapped at the 1GB level");
+                                 "is not mapped at the 1GB level");
     }
     if (epte::is_leaf_entry(pdpte)) {
         return pdpte::page_address::get_effective_address(pdpte, gpa);
@@ -138,7 +138,7 @@ memory_map::gpa_to_hpa(gpa_t gpa)
     auto &pde = this->gpa_to_pde(gpa, pdpte);
     if (!epte::is_present(pde)) {
         throw std::runtime_error("gpa_to_hpa: failed to resolve gpa->epte, gpa "
-            "is not mapped at the 2MB level");
+                                 "is not mapped at the 2MB level");
     }
     if (epte::is_leaf_entry(pde)) {
         return pde::page_address::get_effective_address(pde, gpa);
@@ -147,7 +147,7 @@ memory_map::gpa_to_hpa(gpa_t gpa)
     auto &pte = this->gpa_to_pte(gpa, pde);
     if (!epte::is_present(pte)) {
         throw std::runtime_error("gpa_to_hpa: failed to resolve gpa->epte, gpa "
-            "is not mapped at the 4KB level");
+                                 "is not mapped at the 4KB level");
     }
     if (epte::is_leaf_entry(pte)) {
         return pte::page_address::get_effective_address(pte, gpa);
@@ -279,7 +279,7 @@ memory_map::map_pdpte_to_page(gpa_t gpa, hpa_t hpa)
     auto &pdpte = this->gpa_to_pdpte(gpa, pml4e);
     if (epte::is_present(pdpte)) {
         throw std::runtime_error("map_pdpte_to_page: failed to map gpa, gpa is "
-            "already mapped at the 1GB level");
+                                 "already mapped at the 1GB level");
     }
 
     this->map_entry_to_page_frame(pdpte, hpa);
@@ -302,7 +302,7 @@ memory_map::map_pde_to_page(gpa_t gpa, hpa_t hpa)
     auto &pdpte = this->gpa_to_pdpte(gpa, pml4e);
     if (epte::entry_type::is_enabled(pdpte)) {
         throw std::runtime_error("map_pde_to_page: failed to map gpa, gpa is "
-            "already mapped at the 1GB level");
+                                 "already mapped at the 1GB level");
     }
     if (!epte::is_present(pdpte)) {
         this->allocate_page_table(pdpte);
@@ -311,7 +311,7 @@ memory_map::map_pde_to_page(gpa_t gpa, hpa_t hpa)
     auto &pde = this->gpa_to_pde(gpa, pdpte);
     if (epte::is_present(pde)) {
         throw std::runtime_error("map_pde_to_page: failed to map gpa, gpa is "
-            "already mapped at the 2MB level");
+                                 "already mapped at the 2MB level");
     }
 
     this->map_entry_to_page_frame(pde, hpa);
@@ -334,7 +334,7 @@ memory_map::map_pte_to_page(gpa_t gpa, hpa_t hpa)
     auto &pdpte = this->gpa_to_pdpte(gpa, pml4e);
     if (epte::entry_type::is_enabled(pdpte)) {
         throw std::runtime_error("map_pte_to_page: failed to map gpa, gpa is "
-            "already mapped at the 1GB level");
+                                 "already mapped at the 1GB level");
     }
     if (!epte::is_present(pdpte)) {
         this->allocate_page_table(pdpte);
@@ -343,7 +343,7 @@ memory_map::map_pte_to_page(gpa_t gpa, hpa_t hpa)
     auto &pde = this->gpa_to_pde(gpa, pdpte);
     if (epte::entry_type::is_enabled(pde)) {
         throw std::runtime_error("map_pte_to_page: failed to map gpa, gpa is "
-            "already mapped at the 2MB level");
+                                 "already mapped at the 2MB level");
     }
     if (!epte::is_present(pde)) {
         this->allocate_page_table(pde);
@@ -352,7 +352,7 @@ memory_map::map_pte_to_page(gpa_t gpa, hpa_t hpa)
     auto &pte = this->gpa_to_pte(gpa, pde);
     if (epte::is_present(pte)) {
         throw std::runtime_error("map_pte_to_page: failed to map gpa, gpa is "
-            "already mapped at the 4KB level");
+                                 "already mapped at the 4KB level");
     }
 
     this->map_entry_to_page_frame(pte, hpa);
