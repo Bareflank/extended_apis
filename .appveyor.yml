@@ -40,9 +40,10 @@ build_script:
   #
   # Visual Studio (MSBuild / Static Libraries)
   #
+  - git clone -b test-support https://github.com/connojd/hypervisor.git hypervisor
   - mkdir hypervisor\build
   - cd hypervisor\build
-  - cmake -G "Visual Studio 15 2017 Win64" -DEXTENSIONS="C:/projects/extended-apis/CMakeLists.txt" -DENABLE_BUILD_VMM=OFF -DENABLE_BUILD_USERSPACE=OFF -DENABLE_BUILD_TEST=ON ..
+  - cmake -G "Visual Studio 15 2017 Win64" -DEXTENSION=..\.. -DENABLE_BUILD_VMM=OFF -DENABLE_BUILD_USERSPACE=OFF -DENABLE_BUILD_TEST=ON ..
   - msbuild /m:3 hypervisor.sln
   - cmake --build . --target eapis_x86_64-test-pe
   - cd ..
@@ -51,7 +52,6 @@ build_script:
   # Cygwin (Shared Libraries)
   #
   - set PATH=%BFPATH%;%APPVEYOR_BUILD_FOLDER%/hypervisor/build_cygwin/bfprefix/bin
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; mkdir hypervisor/build_cygwin"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; cmake -DEXTENSIONS="../../CMakeLists.txt" -DENABLE_BUILD_TEST=ON .."'
+  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; ls; mkdir hypervisor/build_cygwin"'
+  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; cmake -DEXTENSION=../..  .."'
   - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make -j3"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make unittest"'

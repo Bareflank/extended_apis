@@ -35,7 +35,7 @@ TEST_CASE("memory_map::memory_map")
     auto mem_map = new ept::memory_map();
 
     CHECK(mem_map);
-    CHECK(mem_map->m_pml4_hva != 0);
+    CHECK(mem_map->m_pml4_hva != 0ULL);
 }
 
 TEST_CASE("memory_map::~memory_map")
@@ -51,11 +51,11 @@ TEST_CASE("memory_map::map")
     MockRepository mocks;
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
-    uintptr_t gpa{0};
-    uintptr_t hpa{0};
-    uint64_t size{0};
-    epte_t entry{0};
-    epte_t expected_entry{0};
+    uintptr_t gpa{0ULL};
+    uintptr_t hpa{0ULL};
+    uint64_t size{0ULL};
+    epte_t entry{0ULL};
+    epte_t expected_entry{0ULL};
     epte::entry_type::enable(expected_entry);
     epte::read_access::enable(expected_entry);
     epte::write_access::enable(expected_entry);
@@ -68,35 +68,35 @@ TEST_CASE("memory_map::map")
     entry = mem_map->map(gpa, hpa, size);
     CHECK(entry == expected_entry);
     CHECK_THROWS(mem_map->map(gpa, hpa, size));
-    CHECK_THROWS(mem_map->map(gpa + 0x3fffffff, hpa, size));
+    CHECK_THROWS(mem_map->map(gpa + 0x3fffffffULL, hpa, size));
 
-    gpa += 0x10000000000;
+    gpa += 0x10000000000ULL;
     hpa = mock_2m_hpa;
     size = ept::pde::page_size_bytes;
     epte::set_hpa(expected_entry, hpa);
     entry = mem_map->map(gpa, hpa, size);
     CHECK(entry == expected_entry);
     CHECK_THROWS(mem_map->map(gpa, hpa, size));
-    CHECK_THROWS(mem_map->map(gpa + 0x1fffff, hpa, size));
+    CHECK_THROWS(mem_map->map(gpa + 0x1fffffULL, hpa, size));
 
-    gpa += 0x10000000000;
+    gpa += 0x10000000000ULL;
     hpa = mock_4k_hpa;
     size = ept::pte::page_size_bytes;
     epte::set_hpa(expected_entry, hpa);
     entry = mem_map->map(gpa, hpa, size);
     CHECK(entry == expected_entry);
     CHECK_THROWS(mem_map->map(gpa, hpa, size));
-    CHECK_THROWS(mem_map->map(gpa + 0xfff, hpa, size));
+    CHECK_THROWS(mem_map->map(gpa + 0xfffULL, hpa, size));
 
-    gpa += 0x10000000000;
+    gpa += 0x10000000000ULL;
     hpa = mock_4k_hpa;
-    size = ept::pte::page_size_bytes - 1;
+    size = ept::pte::page_size_bytes - 1ULL;
     CHECK_THROWS(mem_map->map(gpa, hpa, size));
-    size = ept::pte::page_size_bytes + 1;
+    size = ept::pte::page_size_bytes + 1ULL;
     CHECK_THROWS(mem_map->map(gpa, hpa, size));
-    size = 0;
+    size = 0ULL;
     CHECK_THROWS(mem_map->map(gpa, hpa, size));
-    size = 0xffffffffffffffff;
+    size = 0xffffffffffffffffULL;
     CHECK_THROWS(mem_map->map(gpa, hpa, size));
 }
 
@@ -105,17 +105,17 @@ TEST_CASE("memory_map::unmap")
     MockRepository mocks;
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
-    uintptr_t gpa{0};
-    uintptr_t hpa{0};
-    uint64_t size{0};
-    epte_t entry{0};
+    uintptr_t gpa{0ULL};
+    uintptr_t hpa{0ULL};
+    uint64_t size{0ULL};
+    epte_t entry{0ULL};
 
     gpa = g_mapped_gpa;
     hpa = mock_1g_hpa;
     g_mock_mem[reinterpret_cast<void *>(gpa)] = hpa;
     size = ept::pdpte::page_size_bytes;
     entry = mem_map->map(gpa, hpa, size);
-    CHECK(entry != 0);
+    CHECK(entry != 0ULL);
 
     mem_map->unmap(gpa);
     CHECK_THROWS(mem_map->gpa_to_epte(gpa));
@@ -130,7 +130,7 @@ TEST_CASE("memory_map::gpa_to_epte")
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
     mem_map->m_pml4_hpa = mock_pml4_hpa;
-    epte_t result{0};
+    epte_t result{0ULL};
 
     allocate_mock_empty_pml4(*mem_map);
     CHECK_THROWS(mem_map->gpa_to_epte(g_mapped_gpa));
@@ -174,7 +174,7 @@ TEST_CASE("memory_map::allocate_page_table")
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
 
-    epte_t entry{0};
+    epte_t entry{0ULL};
     mem_map->allocate_page_table(entry);
     CHECK(epte::read_access::is_enabled(entry));
     CHECK(epte::write_access::is_enabled(entry));
@@ -188,7 +188,7 @@ TEST_CASE("memory_map::free_page_table")
     MockRepository mocks;
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
-    epte_t entry{0};
+    epte_t entry{0ULL};
     mem_map->allocate_page_table(entry);
     CHECK(epte::hpa(entry));
     epte::read_access::enable(entry);
@@ -197,7 +197,7 @@ TEST_CASE("memory_map::free_page_table")
     epte::suppress_ve::enable(entry);
 
     mem_map->free_page_table(entry);
-    CHECK(entry == 0);
+    CHECK(entry == 0ULL);
 }
 
 TEST_CASE("memory_map::map_entry_to_page_frame")
@@ -205,16 +205,16 @@ TEST_CASE("memory_map::map_entry_to_page_frame")
     MockRepository mocks;
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
-    uintptr_t test_hpa = 0x0000000ABCDEF0000;
+    uintptr_t test_hpa = 0x0000000ABCDEF0000ULL;
 
-    epte_t expected_entry{0};
+    epte_t expected_entry{0ULL};
     epte::set_hpa(expected_entry, test_hpa);
     epte::read_access::enable(expected_entry);
     epte::write_access::enable(expected_entry);
     epte::memory_type::set(expected_entry, epte::memory_type::wb);
     epte::entry_type::enable(expected_entry);
 
-    epte_t entry{0};
+    epte_t entry{0ULL};
     mem_map->map_entry_to_page_frame(entry, test_hpa);
     CHECK(entry == expected_entry);
 }
@@ -224,12 +224,12 @@ TEST_CASE("memory_map::gpa_to_pml4e")
     MockRepository mocks;
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
-    epte_t pml4e{0};
+    epte_t pml4e{0ULL};
     mem_map->m_pml4_hpa = mock_pml4_hpa;
 
     allocate_mock_empty_pml4(*mem_map);
     pml4e = mem_map->gpa_to_pml4e(g_mapped_gpa);
-    CHECK(pml4e == 0);
+    CHECK(pml4e == 0ULL);
     free_mock_tables();
 
     allocate_mock_4k_page(*mem_map);
@@ -246,8 +246,8 @@ TEST_CASE("memory_map::gpa_to_pdpte")
     MockRepository mocks;
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
-    epte_t pml4e{0};
-    epte_t pdpte{0};
+    epte_t pml4e{0ULL};
+    epte_t pdpte{0ULL};
     mem_map->m_pml4_hpa = mock_pml4_hpa;
 
     allocate_mock_empty_pml4(*mem_map);
@@ -280,9 +280,9 @@ TEST_CASE("memory_map::gpa_to_pde")
     MockRepository mocks;
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
-    epte_t pml4e{0};
-    epte_t pdpte{0};
-    epte_t pde{0};
+    epte_t pml4e{0ULL};
+    epte_t pdpte{0ULL};
+    epte_t pde{0ULL};
     mem_map->m_pml4_hpa = mock_pml4_hpa;
 
     allocate_mock_2m_page(*mem_map);
@@ -312,10 +312,10 @@ TEST_CASE("memory_map::gpa_to_pte")
     MockRepository mocks;
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
-    epte_t pml4e{0};
-    epte_t pdpte{0};
-    epte_t pde{0};
-    epte_t pte{0};
+    epte_t pml4e{0ULL};
+    epte_t pdpte{0ULL};
+    epte_t pde{0ULL};
+    epte_t pte{0ULL};
     mem_map->m_pml4_hpa = mock_pml4_hpa;
 
     allocate_mock_4k_page(*mem_map);
@@ -339,13 +339,13 @@ TEST_CASE("memory_map::gpa_to_pte")
 //     mem_map->m_pml4_hpa = mock_pml4_hpa;
 //
 //     allocate_mock_empty_pml4(*mem_map);
-//     mem_map->map(0xabcd0000, 0xabcd0000, pte::page_size_bytes);
-//     CHECK(mem_map->hpa_to_gpa(0xabcd0000) == 0xabcd0000);
+//     mem_map->map(0xabcd0000ULL, 0xabcd0000ULL, pte::page_size_bytes);
+//     CHECK(mem_map->hpa_to_gpa(0xabcd0000ULL) == 0xabcd0000ULL);
 //     free_mock_tables();
 //
 //     allocate_mock_4k_page(*mem_map);
-//     mem_map->map(0, 0xabcd0000, pte::page_size_bytes);
-//     CHECK(mem_map->hpa_to_gpa(0) == 0xabcd0000);
+//     mem_map->map(0ULL, 0xabcd0000ULL, pte::page_size_bytes);
+//     CHECK(mem_map->hpa_to_gpa(0ULL) == 0xabcd0000ULL);
 //     free_mock_tables();
 // }
 
@@ -355,7 +355,7 @@ TEST_CASE("memory_map::map_pdpte_to_page")
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
     mem_map->m_pml4_hpa = mock_pml4_hpa;
-    epte_t result{0};
+    epte_t result{0ULL};
 
     allocate_mock_empty_pml4(*mem_map);
     result = mem_map->map_pdpte_to_page(g_unmapped_gpa, mock_page_hpa);
@@ -407,7 +407,7 @@ TEST_CASE("memory_map::map_pde_to_page")
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
     mem_map->m_pml4_hpa = mock_pml4_hpa;
-    epte_t result{0};
+    epte_t result{0ULL};
 
     allocate_mock_empty_pml4(*mem_map);
     result = mem_map->map_pde_to_page(g_unmapped_gpa, mock_page_hpa);
@@ -459,7 +459,7 @@ TEST_CASE("memory_map::map_pte_to_page")
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
     mem_map->m_pml4_hpa = mock_pml4_hpa;
-    epte_t result{0};
+    epte_t result{0ULL};
 
     allocate_mock_empty_pml4(*mem_map);
     result = mem_map->map_pte_to_page(g_unmapped_gpa, mock_page_hpa);
@@ -510,14 +510,14 @@ TEST_CASE("memory_map::to_mdl")
     MockRepository mocks;
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
-    mem_map->map(0xf00d0000, 0, ept::pte::page_size_bytes);
+    mem_map->map(0xf00d0000ULL, 0ULL, ept::pte::page_size_bytes);
 
     auto result = mem_map->to_mdl();
-    CHECK(result.size() == 4);
+    CHECK(result.size() == 4ULL);
 
-    mem_map->map(0xbeef00000, 0, ept::pte::page_size_bytes);
+    mem_map->map(0xbeef00000ULL, 0ULL, ept::pte::page_size_bytes);
     result = mem_map->to_mdl();
-    CHECK(result.size() == 6);
+    CHECK(result.size() == 6ULL);
     free_mock_tables();
 }
 

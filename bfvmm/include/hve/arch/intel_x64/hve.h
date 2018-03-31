@@ -37,6 +37,12 @@ namespace eapis
 namespace intel_x64
 {
 
+/// HVE
+///
+/// Provides a wrapper interface around specific exit handlers,
+/// as well as virtual interrupt controller (vic) functionality.
+/// Users may configure the guest's exit reasons using the HVE interface.
+///
 class hve
 {
 
@@ -46,6 +52,9 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param exit_handler a pointer to the bfvmm::intel_x64::exit_handler
+    /// @param vmcs a pointer to the bfvmm::intel_x64::vmcs
     ///
     hve(
         gsl::not_null<exit_handler_t *> exit_handler,
@@ -98,6 +107,9 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param mask the cr0 guest/host mask to set in the vmcs
+    /// @param shadow the cr0 read shadow to set in the vmcs
+    ///
     void enable_wrcr0_exiting(
         vmcs_n::value_type mask, vmcs_n::value_type shadow);
 
@@ -105,6 +117,9 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param mask the cr4 guest/host mask to set in the vmcs
+    /// @param shadow the cr4 read shadow to set in the vmcs
     ///
     void enable_wrcr4_exiting(
         vmcs_n::value_type mask, vmcs_n::value_type shadow);
@@ -114,12 +129,16 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when a mov-to-cr0 exit occurs
+    ///
     void add_wrcr0_handler(control_register::handler_delegate_t &&d);
 
     /// Add Read CR3 Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when a mov-from-cr3 exit occurs
     ///
     void add_rdcr3_handler(control_register::handler_delegate_t &&d);
 
@@ -128,12 +147,16 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when a mov-to-cr3 exit occurs
+    ///
     void add_wrcr3_handler(control_register::handler_delegate_t &&d);
 
     /// Add Write CR4 Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when a mov-to-cr4 exit occurs
     ///
     void add_wrcr4_handler(control_register::handler_delegate_t &&d);
 
@@ -142,12 +165,16 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when a mov-from-cr8 exit occurs
+    ///
     void add_rdcr8_handler(control_register::handler_delegate_t &&d);
 
     /// Add Write CR8 Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when a mov-to-cr8 exit occurs
     ///
     void add_wrcr8_handler(control_register::handler_delegate_t &&d);
 
@@ -169,6 +196,11 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param leaf the leaf to call d on
+    /// @param subleaf the subleaf to call d on
+    /// @param d the delegate to call when the guest executes CPUID at the given
+    ///        leaf and subleaf
     ///
     void add_cpuid_handler(
         cpuid::leaf_t leaf, cpuid::subleaf_t subleaf, cpuid::handler_delegate_t &&d);
@@ -193,6 +225,9 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param v the vector to listen to
+    /// @param d the delegate to call when an exit occurs with vector v
+    ///
     void add_external_interrupt_handler(
         vmcs_n::value_type v, external_interrupt::handler_delegate_t &&d);
 
@@ -214,6 +249,8 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when an interrupt-window exit occurs
+    ///
     void add_interrupt_window_handler(interrupt_window::handler_delegate_t &&d);
 
     //--------------------------------------------------------------------------
@@ -230,10 +267,15 @@ public:
     ///
     gsl::not_null<eapis::intel_x64::io_instruction *> io_instruction();
 
-    /// Add CPUID Handler
+    /// Add IO Instruction Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param port the port to call
+    /// @param in_d the delegate to call when the reads in from the given port
+    /// @param out_d the delegate to call when the guest writes out to the
+    ///        given port.
     ///
     void add_io_instruction_handler(
         vmcs_n::value_type port,
@@ -259,6 +301,8 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when a monitor-trap flag exit occurs
+    ///
     void add_monitor_trap_handler(monitor_trap::handler_delegate_t &&d);
 
     /// Enable Monitor Trap Flag
@@ -269,10 +313,10 @@ public:
     void enable_monitor_trap_flag();
 
     //--------------------------------------------------------------------------
-    // Move DR
+    // MOV DR
     //--------------------------------------------------------------------------
 
-    /// Get Move DR Object
+    /// Get MOV DR Object
     ///
     /// @expects
     /// @ensures
@@ -286,6 +330,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when a mov-dr exit occurs
     ///
     void add_mov_dr_handler(mov_dr::handler_delegate_t &&d);
 
@@ -314,6 +360,9 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param msr the address at which to call the given handler
+    /// @param d the delegate to call when a rdmsr exit occurs
     ///
     void add_rdmsr_handler(
         vmcs_n::value_type msr, rdmsr::handler_delegate_t &&d);
@@ -364,6 +413,9 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param msr the address at which to call the given handler
+    /// @param d the delegate to call when a wrmsr exit occurs
     ///
     void add_wrmsr_handler(
         vmcs_n::value_type msr, wrmsr::handler_delegate_t &&d);

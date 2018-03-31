@@ -26,6 +26,11 @@ namespace eapis
 namespace intel_x64
 {
 
+/// Physical Local APIC
+///
+/// Provides an interface for reading and writing a physical local apic.
+/// The interface is abstracted over both xAPIC and x2APIC.
+///
 class EXPORT_EAPIS_HVE phys_lapic
 {
 public:
@@ -68,6 +73,7 @@ public:
     /// @ensures
     ///
     /// @param offset the canonical offset to read
+    /// @return the value of the register at the provided offset
     ///
     virtual uint64_t read_register(uint64_t offset) const = 0;
 
@@ -81,22 +87,92 @@ public:
     ///
     virtual void write_register(uint64_t offset, uint64_t val) = 0;
 
+    /// Read ID
     ///
-    /// Register reads
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the ID register
     ///
     virtual uint64_t read_id() const = 0;
+
+    /// Read version
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the version register
+    ///
     virtual uint64_t read_version() const = 0;
+
+    /// Read TPR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the TPR
+    ///
     virtual uint64_t read_tpr() const = 0;
+
+    /// Read SVR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the SVR
+    ///
     virtual uint64_t read_svr() const = 0;
+
+    /// Read ICR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the ICR
+    ///
     virtual uint64_t read_icr() const = 0;
 
+    /// Write EOI
     ///
-    /// Register writes
+    /// @expects
+    /// @ensures
     ///
     virtual void write_eoi() = 0;
+
+    /// Write TPR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param tpr the value of the tpr to write
+    ///
     virtual void write_tpr(uint64_t tpr) = 0;
+
+    /// Write SVR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param svr the value of the SVR to write
+    ///
     virtual void write_svr(uint64_t svr) = 0;
+
+    /// Write ICR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param icr the value of the ICR to write
+    ///
     virtual void write_icr(uint64_t icr) = 0;
+
+    /// Write self-IPI
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector the vector of the self-IPI to send
+    ///
     virtual void write_self_ipi(uint64_t vector) = 0;
 
     /// @cond

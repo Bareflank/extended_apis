@@ -37,9 +37,9 @@ TEST_CASE("ept::eptp")
     auto mm = setup_mock_ept_memory_manager(mocks);
     auto mem_map = new ept::memory_map();
 
-    uint64_t expected{0};
+    uint64_t expected{0ULL};
     expected = eptp::memory_type::set(expected, eptp::memory_type::write_back);
-    expected = eptp::page_walk_length_minus_one::set(expected, 3);
+    expected = eptp::page_walk_length_minus_one::set(expected, 3ULL);
     expected = eptp::phys_addr::set(expected, mem_map->m_pml4_hpa);
 
     uint64_t eptp_val = ept::eptp(*mem_map);
@@ -53,7 +53,7 @@ TEST_CASE("ept::map_1g")
     auto mem_map = new ept::memory_map();
     uintptr_t gpa = g_unmapped_gpa;
     uintptr_t hpa = mock_1g_hpa;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::map_1g(*mem_map, gpa, hpa);
     CHECK_THROWS(ept::map_1g(*mem_map, gpa, hpa));
@@ -69,7 +69,7 @@ TEST_CASE("ept::map_1g with attributes")
     uintptr_t gpa = g_unmapped_gpa;
     uintptr_t hpa = mock_1g_hpa;
     ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::map_1g(*mem_map, gpa, hpa, mtype);
     CHECK_THROWS(ept::map_1g(*mem_map, gpa, hpa, mtype));
@@ -84,7 +84,7 @@ TEST_CASE("ept::identity_map_1g")
     auto mem_map = new ept::memory_map();
     uintptr_t gpa = g_unmapped_gpa;
     ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::identity_map_1g(*mem_map, gpa);
     CHECK_THROWS(ept::identity_map_1g(*mem_map, gpa));
@@ -99,7 +99,7 @@ TEST_CASE("ept::identity_map_1g with attributes")
     auto mem_map = new ept::memory_map();
     uintptr_t gpa = g_unmapped_gpa;
     ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::identity_map_1g(*mem_map, gpa, mtype);
     CHECK_THROWS(ept::identity_map_1g(*mem_map, gpa));
@@ -114,7 +114,7 @@ TEST_CASE("ept::map_2m")
     auto mem_map = new ept::memory_map();
     uintptr_t gpa = g_unmapped_gpa;
     uintptr_t hpa = mock_2m_hpa;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::map_2m(*mem_map, gpa, hpa);
     CHECK_THROWS(ept::map_2m(*mem_map, gpa, hpa));
@@ -130,7 +130,7 @@ TEST_CASE("ept::map_2m with attributes")
     uintptr_t gpa = g_unmapped_gpa;
     uintptr_t hpa = mock_2m_hpa;
     ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::map_2m(*mem_map, gpa, hpa, mtype);
     CHECK_THROWS(ept::map_2m(*mem_map, gpa, hpa, mtype));
@@ -145,7 +145,7 @@ TEST_CASE("ept::identity_map_2m")
     auto mem_map = new ept::memory_map();
     uintptr_t gpa = g_unmapped_gpa;
     ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::identity_map_2m(*mem_map, gpa);
     CHECK_THROWS(ept::identity_map_2m(*mem_map, gpa));
@@ -160,7 +160,7 @@ TEST_CASE("ept::identity_map_2m with attributes")
     auto mem_map = new ept::memory_map();
     uintptr_t gpa = g_unmapped_gpa;
     ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::identity_map_2m(*mem_map, gpa, mtype);
     CHECK_THROWS(ept::identity_map_2m(*mem_map, gpa));
@@ -175,7 +175,7 @@ TEST_CASE("ept::map_4k")
     auto mem_map = new ept::memory_map();
     uintptr_t gpa = g_unmapped_gpa;
     uintptr_t hpa = mock_4k_hpa;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::map_4k(*mem_map, gpa, hpa);
     CHECK_THROWS(ept::map_4k(*mem_map, gpa, hpa));
@@ -191,7 +191,7 @@ TEST_CASE("ept::map_4k with attributes")
     uintptr_t gpa = g_unmapped_gpa;
     uintptr_t hpa = mock_4k_hpa;
     ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::map_4k(*mem_map, gpa, hpa, mtype);
     CHECK_THROWS(ept::map_4k(*mem_map, gpa, hpa, mtype));
@@ -206,7 +206,7 @@ TEST_CASE("ept::identity_map_4k")
     auto mem_map = new ept::memory_map();
     uintptr_t gpa = g_unmapped_gpa;
     ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::identity_map_4k(*mem_map, gpa);
     CHECK_THROWS(ept::identity_map_4k(*mem_map, gpa));
@@ -221,7 +221,7 @@ TEST_CASE("ept::identity_map_4k with attributes")
     auto mem_map = new ept::memory_map();
     uintptr_t gpa = g_unmapped_gpa;
     ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0};
+    epte_t result_entry{0ULL};
 
     ept::identity_map_4k(*mem_map, gpa, mtype);
     CHECK_THROWS(ept::identity_map_4k(*mem_map, gpa));

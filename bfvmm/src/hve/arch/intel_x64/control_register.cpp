@@ -470,7 +470,7 @@ control_register::handle_wrcr8(gsl::not_null<vmcs_t *> vmcs)
     };
 
     if (!ndebug && m_log_enabled) {
-        add_record(m_cr0_log, {
+        add_record(m_cr8_log, {
             info.val, info.shadow
         });
     }

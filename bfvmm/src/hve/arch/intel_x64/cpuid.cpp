@@ -118,10 +118,10 @@ cpuid::handle(gsl::not_null<vmcs_t *> vmcs)
             if (d(vmcs, info)) {
 
                 if (!info.ignore_write) {
-                    vmcs->save_state()->rax = set_bits(vmcs->save_state()->rax, 0x00000000FFFFFFFF, info.rax);
-                    vmcs->save_state()->rbx = set_bits(vmcs->save_state()->rbx, 0x00000000FFFFFFFF, info.rbx);
-                    vmcs->save_state()->rcx = set_bits(vmcs->save_state()->rcx, 0x00000000FFFFFFFF, info.rcx);
-                    vmcs->save_state()->rdx = set_bits(vmcs->save_state()->rdx, 0x00000000FFFFFFFF, info.rdx);
+                    vmcs->save_state()->rax = set_bits(vmcs->save_state()->rax, 0x00000000FFFFFFFFULL, info.rax);
+                    vmcs->save_state()->rbx = set_bits(vmcs->save_state()->rbx, 0x00000000FFFFFFFFULL, info.rbx);
+                    vmcs->save_state()->rcx = set_bits(vmcs->save_state()->rcx, 0x00000000FFFFFFFFULL, info.rcx);
+                    vmcs->save_state()->rdx = set_bits(vmcs->save_state()->rdx, 0x00000000FFFFFFFFULL, info.rdx);
                 }
 
                 if (!info.ignore_advance) {

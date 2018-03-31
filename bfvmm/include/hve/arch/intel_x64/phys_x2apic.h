@@ -75,6 +75,7 @@ public:
     /// @ensures
     ///
     /// @param offset the canonical offset to read
+    /// @return the value of the register at offset
     ///
     uint64_t read_register(uint64_t offset) const override;
 
@@ -87,6 +88,8 @@ public:
     /// @param val the value to write
     ///
     void write_register(uint64_t offset, uint64_t val) override;
+
+    /// @cond
 
     ///
     /// Register reads
@@ -105,8 +108,6 @@ public:
     void write_svr(uint64_t svr) override;
     void write_icr(uint64_t icr) override;
     void write_self_ipi(uint64_t vector) override;
-
-    /// @cond
 
     phys_x2apic(phys_x2apic &&) = default;
     phys_x2apic &operator=(phys_x2apic &&) = default;

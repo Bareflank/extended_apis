@@ -32,17 +32,85 @@ namespace intel_x64
 
 class hve;
 
+/// Control Register
+///
+/// Provides an interface for enabling/disabling exiting on control register
+/// access. Users may supply handlers and specify shadow values (for CR0 and
+/// CR4).
+///
 class EXPORT_EAPIS_HVE control_register : public base
 {
 public:
 
+    ///
+    /// Info
+    ///
+    /// This struct is created by control_register::handle before being
+    /// passed to each registered handler.
+    ///
     struct info_t {
-        uint64_t val;           // In / Out
-        uint64_t shadow;        // Out
-        bool ignore_write;      // Out
-        bool ignore_advance;    // Out
+
+        /// Value (in/out)
+        ///
+        /// This class's handlers initialize this field as follows:
+        //
+        /// - handle_wrcr0: base::emulate_rdgpr
+        /// - handle_wrcr3: base::emulate_rdgpr
+        /// - handle_wrcr4: base::emulate_rdgpr
+        /// - handle_wrcr8: base::emulate_rdgpr
+        ///
+        /// - handle_rdcr3: vmcs_n::guest_cr3
+        /// - handle_rdcr8: 0
+        ///
+        /// If needed, registered handlers can override the default value
+        /// by modifying this field before returning.
+        ///
+        uint64_t val;
+
+        /// Shadow (out)
+        ///
+        /// This class's handlers initialize this field as follows:
+        ///
+        /// - handle_wrcr0: vmcs_n::cr0_read_shadow
+        /// - handle_wrcr3: 0
+        /// - handle_wrcr4: vmcs_n::cr4_read_shadow
+        /// - handle_wrcr8: 0
+        ///
+        /// - handle_rdcr3: 0
+        /// - handle_rdcr8: 0
+        ///
+        /// If needed, registered handlers can override the default value
+        /// by modifying this field before returning.
+        ///
+        uint64_t shadow;
+
+        /// Ignore write (out)
+        ///
+        /// If true, do not update the guest's register state with the value
+        /// from the default base::emulation_wrgpr. Set this to true if your
+        /// handler returns true and has already update the guest register
+        /// state.
+        ///
+        /// default: false
+        ///
+        bool ignore_write;
+
+        /// Ignore advance (out)
+        ///
+        /// If true, do not advance the guest's instruction pointer.
+        /// Set this to true if your handler returns true and has already
+        /// advanced the guest's instruction pointer.
+        ///
+        /// default: false
+        ///
+        bool ignore_advance;
     };
 
+    /// Handler delegate type
+    ///
+    /// The type of delegate clients must use when registering
+    /// handlers
+    ///
     using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
@@ -50,6 +118,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object for this control register handler
     ///
     control_register(gsl::not_null<eapis::intel_x64::hve *> hve);
 
@@ -128,6 +198,9 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param mask the value of the cr0 guest/host mask to set in the vmcs
+    /// @param shadow the value of the cr0 read shadow to set in the vmcs
+    ///
     void enable_wrcr0_exiting(
         vmcs_n::value_type mask, vmcs_n::value_type shadow);
 
@@ -164,6 +237,9 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param mask the value of the cr4 guest/host mask to set in the vmcs
+    /// @param shadow the value of the cr4 read shadow to set in the vmcs
     ///
     void enable_wrcr4_exiting(
         vmcs_n::value_type mask, vmcs_n::value_type shadow);

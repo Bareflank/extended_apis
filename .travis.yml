@@ -24,6 +24,7 @@ before_script:
   #
   # Build Folder
   #
+  - git clone -b test-support https://github.com/connojd/hypervisor.git hypervisor
   - mkdir build
   - cd build
 
@@ -120,7 +121,7 @@ matrix:
     env:
       - TEST="Format"
     script:
-      - cmake -DCONFIG=../scripts/cmake/config/travis_format.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_format.cmake -DEXTENSION=.. ../hypervisor
       - make astyle_x86_64-userspace-elf
       - make format-all
       - |
@@ -149,7 +150,7 @@ matrix:
     env:
       - TEST="Clang Tidy"
     script:
-      - cmake -DCONFIG=../scripts/cmake/config/travis_tidy.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_tidy.cmake -DEXTENSION=.. -DENABLE_BUILD_TEST=ON ../hypervisor
       - make -j3
       - make tidy
 
@@ -170,7 +171,7 @@ matrix:
     env:
       - TEST="Codecov"
     script:
-      - cmake -DCONFIG=../scripts/cmake/config/travis_codecov.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_codecov.cmake -DEXTENSION=.. -DENABLE_BUILD_TEST=ON ../hypervisor
       - make -j3 eapis_x86_64-test-elf
       - make test
       - rm -Rf depends
@@ -195,7 +196,7 @@ matrix:
     env:
       - TEST="Google Address Sanitizer"
     script:
-      - cmake -DCONFIG=../scripts/cmake/config/travis_asan.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_asan.cmake -DEXTENSION=.. -DENABLE_BUILD_TEST=ON ../hypervisor
       - make -j3
       - make test
 
@@ -216,7 +217,7 @@ matrix:
     env:
       - TEST="Google Undefined Sanitizer"
     script:
-      - cmake -DCONFIG=../scripts/cmake/config/travis_usan.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_usan.cmake -DEXTENSION=.. -DENABLE_BUILD_TEST=ON ../hypervisor
       - make -j3
       - make test
 
@@ -238,7 +239,7 @@ matrix:
       - TEST="Clang 3.8 (Static Libraries)"
     script:
       - export CLANG_BIN=clang-3.8
-      - cmake -DCONFIG=../scripts/cmake/config/travis_static.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_static.cmake -DEXTENSION=.. ../hypervisor
       - make -j3
 
   #
@@ -259,7 +260,7 @@ matrix:
       - TEST="Clang 3.9 (Static Libraries)"
     script:
       - export CLANG_BIN=clang-3.9
-      - cmake -DCONFIG=../scripts/cmake/config/travis_static.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_static.cmake -DEXTENSION=.. ../hypervisor
       - make -j3
 
   #
@@ -280,7 +281,7 @@ matrix:
       - TEST="Clang 4.0 (Static Libraries)"
     script:
       - export CLANG_BIN=clang-4.0
-      - cmake -DCONFIG=../scripts/cmake/config/travis_static.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_static.cmake -DEXTENSION=.. ../hypervisor
       - make -j3
 
   #
@@ -301,7 +302,7 @@ matrix:
       - TEST="Clang 5.0 (Static Libraries)"
     script:
       - export CLANG_BIN=clang-5.0
-      - cmake -DCONFIG=../scripts/cmake/config/travis_static.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_static.cmake -DEXTENSION=.. ../hypervisor
       - make -j3
 
   #
@@ -322,7 +323,7 @@ matrix:
       - TEST="Clang 6.0 (Static Libraries)"
     script:
       - export CLANG_BIN=clang-6.0
-      - cmake -DCONFIG=../scripts/cmake/config/travis_static.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_static.cmake -DEXTENSION=.. ../hypervisor
       - make -j3
 
   #
@@ -343,7 +344,7 @@ matrix:
       - TEST="Clang 3.8 (Shared Libraries)"
     script:
       - export CLANG_BIN=clang-3.8
-      - cmake -DCONFIG=../scripts/cmake/config/travis_shared.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_shared.cmake -DEXTENSION=.. ../hypervisor
       - make -j3
 
   #
@@ -364,7 +365,7 @@ matrix:
       - TEST="Clang 3.9 (Shared Libraries)"
     script:
       - export CLANG_BIN=clang-3.9
-      - cmake -DCONFIG=../scripts/cmake/config/travis_shared.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_shared.cmake -DEXTENSION=.. ../hypervisor
       - make -j3
 
   #
@@ -385,5 +386,5 @@ matrix:
       - TEST="Clang 4.0 (Shared Libraries)"
     script:
       - export CLANG_BIN=clang-4.0
-      - cmake -DCONFIG=../scripts/cmake/config/travis_shared.cmake ../hypervisor
+      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_shared.cmake -DEXTENSION=.. ../hypervisor
       - make -j3

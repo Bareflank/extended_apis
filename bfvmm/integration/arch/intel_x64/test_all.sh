@@ -353,7 +353,7 @@ then
     exit 1
 fi
 
-bash -c "cmake "$hyp_src" -DCONFIG="$config" && make -j$(nproc)"
+bash -c "cmake $hyp_src -DCONFIG=$config && make -j$(nproc)"
 popd
 
 echo_task "cleaning bfdriver\n"

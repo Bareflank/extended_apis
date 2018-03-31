@@ -32,17 +32,62 @@ namespace intel_x64
 
 class hve;
 
+/// WRMSR
+///
+/// Provides an interface for registering handlers for wrmsr exits
+/// Handlers can be registered a specific MSR address.
+///
 class EXPORT_EAPIS_HVE wrmsr : public base
 {
 public:
 
+    ///
+    /// Info
+    ///
+    /// This struct is created by wrmsr::handle before being
+    /// passed to each registered handler.
+    ///
     struct info_t {
-        uint64_t msr;           // In
-        uint64_t val;           // In / Out
-        bool ignore_write;      // Out
-        bool ignore_advance;    // Out
+
+        /// MSR (in)
+        ///
+        /// The address of the msr the guest tried to write to.
+        ///
+        /// default: vmcs->save_state()->rcx
+        ///
+        uint64_t msr;
+
+        /// Value (in/out)
+        ///
+        /// The value the guest tried to write
+        ///
+        /// default: (vmcs->save_state()->rax & 0xFFFFFFFF << 0)  |
+        ///          (vmcs->save_state()->rdx & 0xFFFFFFFF << 32) |
+        ///
+        uint64_t val;
+
+        /// Ignore write (out)
+        ///
+        /// If true, do not update the guest's register state with the default value
+        /// of info.val.
+        ///
+        /// default: false
+        ///
+        bool ignore_write;
+
+        /// Ignore advance (out)
+        ///
+        /// If true, do not advance the guest's instruction pointer (i.e. because
+        /// your handler (that returns true) already did).
+        ///
+        bool ignore_advance;
     };
 
+    /// Handler delegate type
+    ///
+    /// The type of delegate clients must use when registering
+    /// handlers
+    ///
     using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
@@ -50,6 +95,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve pointer for this wrmsr handler
     ///
     wrmsr(gsl::not_null<eapis::intel_x64::hve *> hve);
 
