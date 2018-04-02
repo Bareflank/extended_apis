@@ -40,7 +40,7 @@ mov_dr::mov_dr(gsl::not_null<eapis::intel_x64::hve *> hve) :
 
 mov_dr::~mov_dr()
 {
-    if(!ndebug && m_log_enabled) {
+    if (!ndebug && m_log_enabled) {
         dump_log();
     }
 }
@@ -65,7 +65,7 @@ mov_dr::dump_log()
         bfdebug_info(0, "dr7 log", msg);
         bfdebug_brk2(0, msg);
 
-        for(const auto &record : m_log) {
+        for (const auto &record : m_log) {
             bfdebug_info(0, "record", msg);
             bfdebug_subnhex(0, "val", record.val, msg);
         }

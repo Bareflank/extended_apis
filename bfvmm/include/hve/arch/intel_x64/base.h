@@ -74,6 +74,12 @@ namespace eapis
 namespace intel_x64
 {
 
+/// Base
+///
+/// Provides an interface for shared features of handlers for the various
+/// exit reasons. New exit reasons may be handled by extending this class
+/// with the relevant exit-reason-specific code.
+///
 class EXPORT_EAPIS_HVE base
 {
 
@@ -156,8 +162,25 @@ public:
 
 protected:
 
-    uintptr_t emulate_rdgpr(
-        gsl::not_null<vmcs_t *> vmcs)
+    /// Emulate read of general-purpose register
+    ///
+    /// Reads from the register specified by the general_purpose_register
+    /// field of the exit qualification (i.e. the register the guest read
+    /// from).
+    ///
+    /// @note the qualification used below is control_register_access. It
+    ///       is used for _every_ exit qualification that has a
+    ///       general_purpose_register (gpr) field. This is OK because the
+    ///       encoding is the same for each exit_qualification with a gpr
+    ///       subfield.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vmcs The vmcs containing the guest register state
+    /// @return the value written by the guest to the given gpr
+    ///
+    uintptr_t emulate_rdgpr(gsl::not_null<vmcs_t *> vmcs)
     {
         using namespace vmcs_n::exit_qualification::control_register_access;
 
@@ -216,8 +239,25 @@ protected:
         }
     }
 
-    void emulate_wrgpr(
-        gsl::not_null<vmcs_t *> vmcs, uintptr_t val)
+    /// Emulate write of general-purpose register
+    ///
+    /// Write the given value into the register specified by the
+    /// general_purpose_register field of the exit qualification
+    /// (i.e. the register the guest attempted to write to).
+    ///
+    /// @note the qualification used below is control_register_access. It
+    ///       is used for _every_ exit qualification that has a
+    ///       general_purpose_register (gpr) field. This is OK because the
+    ///       encoding is the same for each exit_qualification with a gpr
+    ///       subfield.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vmcs the vmcs containing the guest register state
+    /// @param val the to write to the guest register
+    ///
+    void emulate_wrgpr(gsl::not_null<vmcs_t *> vmcs, uintptr_t val)
     {
         using namespace vmcs_n::exit_qualification::control_register_access;
 
@@ -293,6 +333,11 @@ protected:
 
 protected:
 
+    /// Log enabled
+    ///
+    /// If true, *each* class derived from base will log exit-reason-specific
+    /// information on exit (provided also that NDEBUG == 0).
+    //
     bool m_log_enabled{false};
 
 public:

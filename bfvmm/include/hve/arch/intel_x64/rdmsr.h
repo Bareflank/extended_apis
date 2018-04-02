@@ -32,17 +32,61 @@ namespace intel_x64
 
 class hve;
 
+/// RDMSR
+///
+/// Provides an interface for registering handlers for rdmsr exits
+/// Handlers can be registered a specific MSR address.
+///
 class EXPORT_EAPIS_HVE rdmsr : public base
 {
 public:
 
+    ///
+    /// Info
+    ///
+    /// This struct is created by rdmsr::handle before being
+    /// passed to each registered handler.
+    ///
     struct info_t {
-        uint64_t msr;           // In
-        uint64_t val;           // In / Out
-        bool ignore_write;      // Out
-        bool ignore_advance;    // Out
+
+        /// MSR (in)
+        ///
+        /// The address of the msr the guest tried to read from.
+        ///
+        /// default: vmcs->save_state()->rcx
+        ///
+        uint64_t msr;
+
+        /// Value (in/out)
+        ///
+        /// The value of from the read to update guest state with.
+        ///
+        /// default: exit_handler::emulate_rdmsr(vmcs->save_state()->rcx)
+        ///
+        uint64_t val;
+
+        /// Ignore write (out)
+        ///
+        /// If true, do not update the guest's register state with the default value
+        /// of info.val.
+        ///
+        /// default: false
+        ///
+        bool ignore_write;
+
+        /// Ignore advance (out)
+        ///
+        /// If true, do not advance the guest's instruction pointer (i.e. because
+        /// your handler (that returns true) already did).
+        ///
+        bool ignore_advance;
     };
 
+    /// Handler delegate type
+    ///
+    /// The type of delegate clients must use when registering
+    /// handlers
+    ///
     using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
@@ -50,6 +94,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object for this rdmsr handler
     ///
     rdmsr(gsl::not_null<eapis::intel_x64::hve *> hve);
 

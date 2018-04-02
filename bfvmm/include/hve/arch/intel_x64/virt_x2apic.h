@@ -43,12 +43,17 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param hve the hve object of thei virt_x2apic
+    ///
     virt_x2apic(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Constructor
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object of thei virt_x2apic
+    /// @param phys the phys_x2apic object of the physical core
     ///
     virt_x2apic(
         gsl::not_null<eapis::intel_x64::hve *> hve,
@@ -67,6 +72,7 @@ public:
     /// @ensures
     ///
     /// @param offset the register offset to read
+    /// @return the value of the 32-bit register given by offset
     ///
     uint64_t read_register(lapic_register::offset_t offset) const override;
 
@@ -84,6 +90,9 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this exit
+    /// @return true iff the exit is handled
     ///
     bool handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs) override;
 
@@ -105,6 +114,8 @@ public:
     ///
     void inject_spurious(uint64_t vector) override;
 
+    /// @cond
+
     ///
     /// Register reads
     ///
@@ -123,7 +134,11 @@ public:
     void write_self_ipi(uint64_t vector) override;
     void write_svr(uint64_t svr) override;
 
+    /// @endcond
+
+#ifndef ENABLE_BUILD_TEST
 private:
+#endif
 
     /// @cond
 
@@ -136,8 +151,8 @@ private:
 
     void init_registers_from_phys_x2apic(eapis::intel_x64::phys_lapic *phys);
     void init_interrupt_window_handler();
+    void init_id();
 
-    void reset_id();
     void reset_svr();
     void reset_version();
     void reset_registers();
@@ -146,6 +161,8 @@ private:
     void clear_register(lapic_register::offset_t offset);
 
     bool irr_is_empty();
+    bool isr_is_empty();
+    bool is_empty_256bit(uint64_t last);
 
     void pop_irr();
     void pop_isr();

@@ -32,16 +32,27 @@ namespace intel_x64
 
 class hve;
 
+/// Interrupt window
+///
+/// Provides an interface for registering handlers of the interrupt-window exit.
+///
 class EXPORT_EAPIS_HVE interrupt_window : public base
 {
 public:
 
+    /// Handler delegate type
+    ///
+    /// The type of delegate clients must use when registering
+    /// handlers
+    ///
     using handler_delegate_t = delegate<bool(gsl::not_null<vmcs_t *>)>;
 
     /// Constructor
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object for this interrupt window handler
     ///
     interrupt_window(gsl::not_null<eapis::intel_x64::hve *> hve);
 
@@ -59,7 +70,6 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vector the vector to listen to
     /// @param d the handler to call when an exit occurs
     ///
     void add_handler(handler_delegate_t &&d);
@@ -83,6 +93,7 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @return true iff the external interrupt window is open
     ///
     bool is_open();
 
@@ -94,7 +105,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vector the vector to inject into the VM
+    /// @param vector the vector to inject into the guest
     ///
     void inject(uint64_t vector);
 
@@ -122,7 +133,7 @@ private:
 
     /// @cond
 
-    std::list<handler_delegate_t> m_handlers{};
+    std::list<handler_delegate_t> m_handlers;
 
     /// @endcond
 

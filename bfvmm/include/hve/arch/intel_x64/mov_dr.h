@@ -32,16 +32,57 @@ namespace intel_x64
 
 class hve;
 
+/// MOV DR
+///
+/// Provides an interface for registering handlers for mov-dr exits.
+///
 class EXPORT_EAPIS_HVE mov_dr : public base
 {
 public:
 
+    ///
+    /// Info
+    ///
+    /// This struct is created by control_register::handle before being
+    /// passed to each registered handler.
+    ///
     struct info_t {
-        uint64_t val;           // In / Out
-        bool ignore_write;      // Out
-        bool ignore_advance;    // Out
+
+        /// Value (in/out)
+        ///
+        /// For in, the value written by the guest.
+        /// default: base::emulate_rdgpr
+        ///
+        /// For out, the value written to vmcs_n::guest_dr7
+        /// default: (base::emulate_rdgpr & 0xFFFFFFFF)
+        ///
+        uint64_t val;
+
+        /// Ignore write (out)
+        ///
+        /// If true, do not update the guest's register state with the value
+        /// from the default.
+        ///
+        /// default: false
+        ///
+        bool ignore_write;
+
+        /// Ignore advance (out)
+        ///
+        /// If true, do not advance the guest's instruction pointer.
+        /// Set this to true if your handler returns true and has already
+        /// advanced the guest's instruction pointer.
+        ///
+        /// default: false
+        ///
+        bool ignore_advance;
     };
 
+    /// Handler delegate type
+    ///
+    /// The type of delegate clients must use when registering
+    /// handlers
+    ///
     using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
@@ -49,6 +90,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object for this mov-dr handler
     ///
     mov_dr(gsl::not_null<eapis::intel_x64::hve *> hve);
 

@@ -30,6 +30,10 @@ namespace eapis
 namespace intel_x64
 {
 
+/// VPID
+///
+/// Provides an interface for enabling VPID
+///
 class EXPORT_EAPIS_HVE vpid
 {
 public:
@@ -38,8 +42,6 @@ public:
     ///
     /// @expects
     /// @ensures
-    ///
-    /// @param id the vpid to use
     ///
     vpid();
 

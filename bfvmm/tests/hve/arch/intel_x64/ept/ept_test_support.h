@@ -20,8 +20,10 @@
 #include <catch/catch.hpp>
 #include <hippomocks.h>
 
-#include "hve/arch/intel_x64/ept.h"
 #include <bfvmm/memory_manager/memory_manager.h>
+
+#include <hve/arch/intel_x64/ept.h>
+#include <support/arch/intel_x64/test_support.h>
 
 namespace eapis
 {
@@ -57,7 +59,7 @@ std::map<void *, uintptr_t> g_mock_mem;
 static volatile uintptr_t g_next_phys_addr = 0x00000000F00D0000;
 
 uintptr_t
-mock_virtptr_to_physint(void * gva)
+mock_virtptr_to_physint(void *gva)
 {
     if (g_mock_mem.count(gva)) {
         return g_mock_mem.at(gva);
@@ -69,7 +71,7 @@ mock_virtptr_to_physint(void * gva)
 }
 
 void *
-mock_virtptr_to_physptr(void * gva)
+mock_virtptr_to_physptr(void *gva)
 {
     return reinterpret_cast<void *>(mock_virtptr_to_physint(gva));
 }
@@ -89,10 +91,10 @@ mock_virtint_to_physptr(uintptr_t gva)
 void *
 mock_physint_to_virtptr(uintptr_t gpa)
 {
-    for (auto const& x : g_mock_mem) {
+    for (auto const &x : g_mock_mem) {
         if (x.second == gpa) {
-            return x.first
-        };
+            return x.first;
+        }
     }
     std::stringstream msg;
     msg << "invalid test guest physical address: " << std::hex << "0x" << gpa;
@@ -100,7 +102,7 @@ mock_physint_to_virtptr(uintptr_t gpa)
 }
 
 void *
-mock_physptr_to_virtptr(void * gpa)
+mock_physptr_to_virtptr(void *gpa)
 {
     return mock_physint_to_virtptr(reinterpret_cast<uintptr_t>(gpa));
 }
@@ -112,7 +114,7 @@ mock_physint_to_virtint(uintptr_t gpa)
 }
 
 uintptr_t
-mock_physptr_to_virtint(void * gpa)
+mock_physptr_to_virtint(void *gpa)
 {
     return reinterpret_cast<uintptr_t>(mock_physptr_to_virtptr(gpa));
 }
@@ -135,27 +137,27 @@ setup_mock_ept_memory_manager(MockRepository &mocks)
 }
 
 void
-allocate_mock_empty_pml4(ept::memory_map & map)
+allocate_mock_empty_pml4(ept::memory_map &map)
 {
-    void * pml4 = operator new(ept::page_table::size_bytes);
+    void *pml4 = operator new (ept::page_table::size_bytes);
     map.m_pml4_hva = reinterpret_cast<uintptr_t>(pml4);
     memset(pml4, 0, ept::page_table::size_bytes);
     g_mock_mem[pml4] = mock_pml4_hpa;
 }
 
 void
-allocate_mock_1g_page(ept::memory_map & map)
+allocate_mock_1g_page(ept::memory_map &map)
 {
-    void * pml4 = operator new(ept::page_table::size_bytes);
-    void * pdpt = operator new(ept::page_table::size_bytes);
-    void * page = operator new(ept::pte::page_size_bytes);
+    void *pml4 = operator new (ept::page_table::size_bytes);
+    void *pdpt = operator new (ept::page_table::size_bytes);
+    void *page = operator new (ept::pte::page_size_bytes);
     memset(pml4, 0xFF, ept::page_table::size_bytes);
     memset(pdpt, 0xFF, ept::page_table::size_bytes);
     memset(page, 0xFF, ept::pte::page_size_bytes);
 
     // Setup mock page tables with one empty entry and one 1G page frame
     map.m_pml4_hva = reinterpret_cast<uintptr_t>(pml4);
-    epte_t * pml4e = static_cast<epte_t *>(pml4);
+    epte_t *pml4e = static_cast<epte_t *>(pml4);
     epte::clear(*pml4e);
     pml4e += (ept::page_table::num_entries - 1);
     epte::clear(*pml4e);
@@ -163,7 +165,7 @@ allocate_mock_1g_page(ept::memory_map & map)
     epte::write_access::enable(*pml4e);
     epte::set_hpa(*pml4e, mock_pdpt_hpa & epte::phys_addr_bits::mask);
 
-    epte_t * pdpte = static_cast<epte_t *>(pdpt);
+    epte_t *pdpte = static_cast<epte_t *>(pdpt);
     epte::clear(*pdpte);
     pdpte += (ept::page_table::num_entries - 1);
     epte::clear(*pdpte);
@@ -180,12 +182,12 @@ allocate_mock_1g_page(ept::memory_map & map)
 }
 
 void
-allocate_mock_2m_page(ept::memory_map & map)
+allocate_mock_2m_page(ept::memory_map &map)
 {
-    void * pml4 = operator new(ept::page_table::size_bytes);
-    void * pdpt = operator new(ept::page_table::size_bytes);
-    void * pd = operator new(ept::page_table::size_bytes);
-    void * page = operator new(ept::pte::page_size_bytes);
+    void *pml4 = operator new (ept::page_table::size_bytes);
+    void *pdpt = operator new (ept::page_table::size_bytes);
+    void *pd = operator new (ept::page_table::size_bytes);
+    void *page = operator new (ept::pte::page_size_bytes);
     memset(pml4, 0xFF, ept::page_table::size_bytes);
     memset(pdpt, 0xFF, ept::page_table::size_bytes);
     memset(pd, 0xFF, ept::page_table::size_bytes);
@@ -193,7 +195,7 @@ allocate_mock_2m_page(ept::memory_map & map)
 
     // Setup mock page tables with one empty entry and one 2MB page frame
     map.m_pml4_hva = reinterpret_cast<uintptr_t>(pml4);
-    epte_t * pml4e = static_cast<epte_t *>(pml4);
+    epte_t *pml4e = static_cast<epte_t *>(pml4);
     epte::clear(*pml4e);
     pml4e += (ept::page_table::num_entries - 1);
     epte::clear(*pml4e);
@@ -201,7 +203,7 @@ allocate_mock_2m_page(ept::memory_map & map)
     epte::write_access::enable(*pml4e);
     epte::set_hpa(*pml4e, mock_pdpt_hpa & epte::phys_addr_bits::mask);
 
-    epte_t * pdpte = static_cast<epte_t *>(pdpt);
+    epte_t *pdpte = static_cast<epte_t *>(pdpt);
     epte::clear(*pdpte);
     pdpte += (ept::page_table::num_entries - 1);
     epte::clear(*pdpte);
@@ -209,7 +211,7 @@ allocate_mock_2m_page(ept::memory_map & map)
     epte::write_access::enable(*pdpte);
     epte::set_hpa(*pdpte, mock_pd_hpa & epte::phys_addr_bits::mask);
 
-    epte_t * pde = static_cast<epte_t *>(pd);
+    epte_t *pde = static_cast<epte_t *>(pd);
     epte::clear(*pde);
     pde += (ept::page_table::num_entries - 1);
     epte::clear(*pde);
@@ -227,13 +229,13 @@ allocate_mock_2m_page(ept::memory_map & map)
 }
 
 void
-allocate_mock_4k_page(ept::memory_map & map)
+allocate_mock_4k_page(ept::memory_map &map)
 {
-    void * pml4 = operator new(ept::page_table::size_bytes);
-    void * pdpt = operator new(ept::page_table::size_bytes);
-    void * pd = operator new(ept::page_table::size_bytes);
-    void * pt = operator new(ept::page_table::size_bytes);
-    void * page = operator new(ept::pte::page_size_bytes);
+    void *pml4 = operator new (ept::page_table::size_bytes);
+    void *pdpt = operator new (ept::page_table::size_bytes);
+    void *pd = operator new (ept::page_table::size_bytes);
+    void *pt = operator new (ept::page_table::size_bytes);
+    void *page = operator new (ept::pte::page_size_bytes);
     memset(pml4, 0xFF, ept::page_table::size_bytes);
     memset(pdpt, 0xFF, ept::page_table::size_bytes);
     memset(pd, 0xFF, ept::page_table::size_bytes);
@@ -242,7 +244,7 @@ allocate_mock_4k_page(ept::memory_map & map)
 
     // Setup mock page tables with one empty entry and one 4KB page frame
     map.m_pml4_hva = reinterpret_cast<uintptr_t>(pml4);
-    epte_t * pml4e = static_cast<epte_t *>(pml4);
+    epte_t *pml4e = static_cast<epte_t *>(pml4);
     epte::clear(*pml4e);
     pml4e += (ept::page_table::num_entries - 1);
     epte::clear(*pml4e);
@@ -250,7 +252,7 @@ allocate_mock_4k_page(ept::memory_map & map)
     epte::write_access::enable(*pml4e);
     epte::set_hpa(*pml4e, mock_pdpt_hpa & epte::phys_addr_bits::mask);
 
-    epte_t * pdpte = static_cast<epte_t *>(pdpt);
+    epte_t *pdpte = static_cast<epte_t *>(pdpt);
     epte::clear(*pdpte);
     pdpte += (ept::page_table::num_entries - 1);
     epte::clear(*pdpte);
@@ -258,7 +260,7 @@ allocate_mock_4k_page(ept::memory_map & map)
     epte::write_access::enable(*pdpte);
     epte::set_hpa(*pdpte, mock_pd_hpa & epte::phys_addr_bits::mask);
 
-    epte_t * pde = static_cast<epte_t *>(pd);
+    epte_t *pde = static_cast<epte_t *>(pd);
     epte::clear(*pde);
     pde += (ept::page_table::num_entries - 1);
     epte::clear(*pde);
@@ -266,7 +268,7 @@ allocate_mock_4k_page(ept::memory_map & map)
     epte::write_access::enable(*pde);
     epte::set_hpa(*pde, mock_pt_hpa & epte::phys_addr_bits::mask);
 
-    epte_t * pte = static_cast<epte_t *>(pt);
+    epte_t *pte = static_cast<epte_t *>(pt);
     epte::clear(*pte);
     pte += (ept::page_table::num_entries - 1);
     epte::clear(*pte);
@@ -287,8 +289,8 @@ allocate_mock_4k_page(ept::memory_map & map)
 void
 free_mock_tables()
 {
-    for (auto const& item : g_mock_mem) {
-        operator delete(item.first);
+    for (auto const &item : g_mock_mem) {
+        operator delete (item.first);
     }
     g_mock_mem.clear();
     g_next_phys_addr = 0xF00D0000;

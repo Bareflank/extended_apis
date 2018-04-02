@@ -91,7 +91,7 @@ interrupt_window::inject(uint64_t vector)
 {
     using namespace vmcs_n::vm_entry_interruption_information;
 
-    auto info = 0U;
+    auto info = 0ULL;
     info = vector::set(info, vector);
     info = interruption_type::set(info, interruption_type::external_interrupt);
     info = valid_bit::enable(info);

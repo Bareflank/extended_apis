@@ -32,14 +32,37 @@ namespace intel_x64
 
 class hve;
 
+/// Monitor Trap
+///
+/// Provides an interface for registering handlers for monitor-trap flag
+/// exits.
+///
 class EXPORT_EAPIS_HVE monitor_trap : public base
 {
 public:
 
+    /// Info
+    ///
+    /// This struct is created by monitor_trap::handle before being
+    /// passed to each registered handler.
+    ///
     struct info_t {
-        bool ignore_clear;      // Out
+
+        /// Ignore clear
+        ///
+        /// If true, do not disable the monitor trap flag after your
+        /// registered handler returns true.
+        ///
+        /// default: false
+        ///
+        bool ignore_clear;
     };
 
+    /// Handler delegate type
+    ///
+    /// The type of delegate clients must use when registering
+    /// handlers
+    ///
     using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
@@ -47,6 +70,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object for this monitor trap handler
     ///
     monitor_trap(gsl::not_null<eapis::intel_x64::hve *> hve);
 

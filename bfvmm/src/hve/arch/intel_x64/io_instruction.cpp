@@ -126,21 +126,21 @@ io_instruction::handle(gsl::not_null<vmcs_t *> vmcs)
 
     auto reps = 1ULL;
     if (io_instruction::rep_prefixed::is_enabled(eq)) {
-        reps = vmcs->save_state()->rcx & 0x00000000FFFFFFFF;
+        reps = vmcs->save_state()->rcx & 0x00000000FFFFFFFFULL;
     }
 
     struct info_t info = {
-        0,
+        0ULL,
         io_instruction::size_of_access::get(eq),
-        0,
-        0,
+        0ULL,
+        0ULL,
         false,
         false
     };
 
-    switch(io_instruction::operand_encoding::get(eq)) {
+    switch (io_instruction::operand_encoding::get(eq)) {
         case io_instruction::operand_encoding::dx:
-            info.port_number = vmcs->save_state()->rdx & 0x000000000000FFFF;
+            info.port_number = vmcs->save_state()->rdx & 0x000000000000FFFFULL;
             break;
 
         default:
@@ -153,7 +153,7 @@ io_instruction::handle(gsl::not_null<vmcs_t *> vmcs)
     }
 
     for (auto i = 0ULL; i < reps; i++) {
-        switch(io_instruction::direction_of_access::get(eq)) {
+        switch (io_instruction::direction_of_access::get(eq)) {
             case io_instruction::direction_of_access::in:
                 handle_in(vmcs, info);
                 break;
@@ -163,7 +163,7 @@ io_instruction::handle(gsl::not_null<vmcs_t *> vmcs)
                 break;
         }
 
-        info.address += info.size_of_access + 1;
+        info.address += info.size_of_access + 1ULL;
     }
 
     return true;
@@ -256,7 +256,7 @@ io_instruction::emulate_in(info_t &info)
 {
     namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
 
-    switch(info.size_of_access) {
+    switch (info.size_of_access) {
         case io_instruction::size_of_access::one_byte:
             info.val = ::x64::portio::inb(gsl::narrow_cast<uint16_t>(info.port_number));
             break;
@@ -276,7 +276,7 @@ io_instruction::emulate_out(info_t &info)
 {
     namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
 
-    switch(info.size_of_access) {
+    switch (info.size_of_access) {
         case io_instruction::size_of_access::one_byte:
             ::x64::portio::outb(
                 gsl::narrow_cast<uint16_t>(info.port_number),
@@ -306,51 +306,51 @@ io_instruction::load_operand(
 {
     namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
 
-    if (info.address != 0) {
-        switch(info.size_of_access) {
+    if (info.address != 0ULL) {
+        switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte: {
                 auto map = bfvmm::x64::make_unique_map<uint8_t>(
-                    info.address, vmcs_n::guest_cr3::get(),
-                    info.size_of_access, vmcs_n::guest_ia32_pat::get()
-                );
+                               info.address, vmcs_n::guest_cr3::get(),
+                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                           );
 
-                info.val = map.get()[0] & 0x00000000000000FF;
+                info.val = map.get()[0] & 0x00000000000000FFULL;
                 break;
             }
 
             case io_instruction::size_of_access::two_byte: {
                 auto map = bfvmm::x64::make_unique_map<uint16_t>(
-                    info.address, vmcs_n::guest_cr3::get(),
-                    info.size_of_access, vmcs_n::guest_ia32_pat::get()
-                );
+                               info.address, vmcs_n::guest_cr3::get(),
+                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                           );
 
-                info.val = map.get()[0] & 0x000000000000FFFF;
+                info.val = map.get()[0] & 0x000000000000FFFFULL;
                 break;
             }
 
             default: {
                 auto map = bfvmm::x64::make_unique_map<uint32_t>(
-                    info.address, vmcs_n::guest_cr3::get(),
-                    info.size_of_access, vmcs_n::guest_ia32_pat::get()
-                );
+                               info.address, vmcs_n::guest_cr3::get(),
+                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                           );
 
-                info.val = map.get()[0] & 0x00000000FFFFFFFF;
+                info.val = map.get()[0] & 0x00000000FFFFFFFFULL;
                 break;
             }
         }
     }
     else {
-        switch(info.size_of_access) {
+        switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte:
-                info.val = vmcs->save_state()->rax & 0x00000000000000FF;
+                info.val = vmcs->save_state()->rax & 0x00000000000000FFULL;
                 break;
 
             case io_instruction::size_of_access::two_byte:
-                info.val = vmcs->save_state()->rax & 0x000000000000FFFF;
+                info.val = vmcs->save_state()->rax & 0x000000000000FFFFULL;
                 break;
 
             default:
-                info.val = vmcs->save_state()->rax & 0x00000000FFFFFFFF;
+                info.val = vmcs->save_state()->rax & 0x00000000FFFFFFFFULL;
                 break;
         }
     }
@@ -362,13 +362,13 @@ io_instruction::store_operand(
 {
     namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
 
-    if (info.address != 0) {
-        switch(info.size_of_access) {
+    if (info.address != 0ULL) {
+        switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte: {
                 auto map = bfvmm::x64::make_unique_map<uint8_t>(
-                    info.address, vmcs_n::guest_cr3::get(),
-                    info.size_of_access, vmcs_n::guest_ia32_pat::get()
-                );
+                               info.address, vmcs_n::guest_cr3::get(),
+                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                           );
 
                 map.get()[0] = gsl::narrow_cast<uint8_t>(info.val);
                 break;
@@ -376,9 +376,9 @@ io_instruction::store_operand(
 
             case io_instruction::size_of_access::two_byte: {
                 auto map = bfvmm::x64::make_unique_map<uint16_t>(
-                    info.address, vmcs_n::guest_cr3::get(),
-                    info.size_of_access, vmcs_n::guest_ia32_pat::get()
-                );
+                               info.address, vmcs_n::guest_cr3::get(),
+                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                           );
 
                 map.get()[0] = gsl::narrow_cast<uint16_t>(info.val);
                 break;
@@ -386,9 +386,9 @@ io_instruction::store_operand(
 
             default: {
                 auto map = bfvmm::x64::make_unique_map<uint32_t>(
-                    info.address, vmcs_n::guest_cr3::get(),
-                    info.size_of_access, vmcs_n::guest_ia32_pat::get()
-                );
+                               info.address, vmcs_n::guest_cr3::get(),
+                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                           );
 
                 map.get()[0] = gsl::narrow_cast<uint32_t>(info.val);
                 break;
@@ -396,20 +396,20 @@ io_instruction::store_operand(
         }
     }
     else {
-        switch(info.size_of_access) {
+        switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte:
                 vmcs->save_state()->rax = set_bits(
-                    vmcs->save_state()->rax, 0x00000000000000FF, info.val);
+                                              vmcs->save_state()->rax, 0x00000000000000FFULL, info.val);
                 break;
 
             case io_instruction::size_of_access::two_byte:
                 vmcs->save_state()->rax = set_bits(
-                    vmcs->save_state()->rax, 0x000000000000FFFF, info.val);
+                                              vmcs->save_state()->rax, 0x000000000000FFFFULL, info.val);
                 break;
 
             default:
                 vmcs->save_state()->rax = set_bits(
-                    vmcs->save_state()->rax, 0x00000000FFFFFFFF, info.val);
+                                              vmcs->save_state()->rax, 0x00000000FFFFFFFFULL, info.val);
                 break;
         }
     }

@@ -37,6 +37,12 @@ namespace eapis
 namespace intel_x64
 {
 
+/// HVE
+///
+/// Provides a wrapper interface around specific exit handlers,
+/// as well as virtual interrupt controller (vic) functionality.
+/// Users may configure the guest's exit reasons using the HVE interface.
+///
 class hve
 {
 
@@ -46,6 +52,9 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param exit_handler a pointer to the bfvmm::intel_x64::exit_handler
+    /// @param vmcs a pointer to the bfvmm::intel_x64::vmcs
     ///
     hve(
         gsl::not_null<exit_handler_t *> exit_handler,
@@ -91,12 +100,15 @@ public:
     /// @return Returns the CR object stored in the hve if CR trapping is
     ///     enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<control_register *> control_register();
+    gsl::not_null<eapis::intel_x64::control_register *> control_register();
 
     /// Enable Write CR0 Exiting
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param mask the cr0 guest/host mask to set in the vmcs
+    /// @param shadow the cr0 read shadow to set in the vmcs
     ///
     void enable_wrcr0_exiting(
         vmcs_n::value_type mask, vmcs_n::value_type shadow);
@@ -106,6 +118,9 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param mask the cr4 guest/host mask to set in the vmcs
+    /// @param shadow the cr4 read shadow to set in the vmcs
+    ///
     void enable_wrcr4_exiting(
         vmcs_n::value_type mask, vmcs_n::value_type shadow);
 
@@ -114,12 +129,16 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when a mov-to-cr0 exit occurs
+    ///
     void add_wrcr0_handler(control_register::handler_delegate_t &&d);
 
     /// Add Read CR3 Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when a mov-from-cr3 exit occurs
     ///
     void add_rdcr3_handler(control_register::handler_delegate_t &&d);
 
@@ -128,12 +147,16 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when a mov-to-cr3 exit occurs
+    ///
     void add_wrcr3_handler(control_register::handler_delegate_t &&d);
 
     /// Add Write CR4 Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when a mov-to-cr4 exit occurs
     ///
     void add_wrcr4_handler(control_register::handler_delegate_t &&d);
 
@@ -142,12 +165,16 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when a mov-from-cr8 exit occurs
+    ///
     void add_rdcr8_handler(control_register::handler_delegate_t &&d);
 
     /// Add Write CR8 Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when a mov-to-cr8 exit occurs
     ///
     void add_wrcr8_handler(control_register::handler_delegate_t &&d);
 
@@ -163,12 +190,17 @@ public:
     /// @return Returns the CPUID object stored in the hve if CPUID trapping is
     ///     enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<cpuid *> cpuid();
+    gsl::not_null<eapis::intel_x64::cpuid *> cpuid();
 
     /// Add CPUID Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param leaf the leaf to call d on
+    /// @param subleaf the subleaf to call d on
+    /// @param d the delegate to call when the guest executes CPUID at the given
+    ///        leaf and subleaf
     ///
     void add_cpuid_handler(
         cpuid::leaf_t leaf, cpuid::subleaf_t subleaf, cpuid::handler_delegate_t &&d);
@@ -186,12 +218,15 @@ public:
     ///     external-interrupt exiting is enabled, otherwise an exception is
     ///     thrown
     ///
-    gsl::not_null<external_interrupt *> external_interrupt();
+    gsl::not_null<eapis::intel_x64::external_interrupt *> external_interrupt();
 
     /// Add External Interrupt Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param v the vector to listen to
+    /// @param d the delegate to call when an exit occurs with vector v
     ///
     void add_external_interrupt_handler(
         vmcs_n::value_type v, external_interrupt::handler_delegate_t &&d);
@@ -207,12 +242,14 @@ public:
     ///
     /// @return Returns the interrupt window object stored in the hve if
     ///
-    gsl::not_null<interrupt_window *> interrupt_window();
+    gsl::not_null<eapis::intel_x64::interrupt_window *> interrupt_window();
 
     /// Add Interrupt Window Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when an interrupt-window exit occurs
     ///
     void add_interrupt_window_handler(interrupt_window::handler_delegate_t &&d);
 
@@ -228,12 +265,17 @@ public:
     /// @return Returns the IO Instruction object stored in the hve if IO
     ///     Instruction trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<io_instruction *> io_instruction();
+    gsl::not_null<eapis::intel_x64::io_instruction *> io_instruction();
 
-    /// Add CPUID Handler
+    /// Add IO Instruction Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param port the port to call
+    /// @param in_d the delegate to call when the reads in from the given port
+    /// @param out_d the delegate to call when the guest writes out to the
+    ///        given port.
     ///
     void add_io_instruction_handler(
         vmcs_n::value_type port,
@@ -252,12 +294,14 @@ public:
     /// @return Returns the Monitor Trap object stored in the hve if Monitor
     ///     Trap is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<monitor_trap *> monitor_trap();
+    gsl::not_null<eapis::intel_x64::monitor_trap *> monitor_trap();
 
     /// Add Monitor Trap Flag Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when a monitor-trap flag exit occurs
     ///
     void add_monitor_trap_handler(monitor_trap::handler_delegate_t &&d);
 
@@ -269,10 +313,10 @@ public:
     void enable_monitor_trap_flag();
 
     //--------------------------------------------------------------------------
-    // Move DR
+    // MOV DR
     //--------------------------------------------------------------------------
 
-    /// Get Move DR Object
+    /// Get MOV DR Object
     ///
     /// @expects
     /// @ensures
@@ -280,12 +324,14 @@ public:
     /// @return Returns the Move DR object stored in the hve if Move DR
     ///     trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<mov_dr *> mov_dr();
+    gsl::not_null<eapis::intel_x64::mov_dr *> mov_dr();
 
     /// Add Move DR Handler
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when a mov-dr exit occurs
     ///
     void add_mov_dr_handler(mov_dr::handler_delegate_t &&d);
 
@@ -301,7 +347,7 @@ public:
     /// @return Returns the Read MSR object stored in the hve if Read MSR
     ///     trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<rdmsr *> rdmsr();
+    gsl::not_null<eapis::intel_x64::rdmsr *> rdmsr();
 
     /// Pass Through All Read MSR Accesses
     ///
@@ -314,6 +360,9 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param msr the address at which to call the given handler
+    /// @param d the delegate to call when a rdmsr exit occurs
     ///
     void add_rdmsr_handler(
         vmcs_n::value_type msr, rdmsr::handler_delegate_t &&d);
@@ -330,7 +379,7 @@ public:
     /// @return Returns the VPID object stored in the hve if VPID trapping is
     ///     enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<vpid *> vpid();
+    gsl::not_null<eapis::intel_x64::vpid *> vpid();
 
     /// Enable VPID
     ///
@@ -351,7 +400,7 @@ public:
     /// @return Returns the Write MSR object stored in the hve if Write MSR
     ///     trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<wrmsr *> wrmsr();
+    gsl::not_null<eapis::intel_x64::wrmsr *> wrmsr();
 
     /// Pass Through All Write MSR Accesses
     ///
@@ -364,6 +413,9 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param msr the address at which to call the given handler
+    /// @param d the delegate to call when a wrmsr exit occurs
     ///
     void add_wrmsr_handler(
         vmcs_n::value_type msr, wrmsr::handler_delegate_t &&d);
