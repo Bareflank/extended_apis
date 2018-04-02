@@ -16,10 +16,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef EPT_VIOLATION_INTEL_X64_H
-#define EPT_VIOLATION_INTEL_X64_H
+#ifndef EPT_MISCONFIGURATION_INTEL_X64_H
+#define EPT_MISCONFIGURATION_INTEL_X64_H
 
-#include "../base.h"
+#include "base.h"
 
 // -----------------------------------------------------------------------------
 // Definitions
@@ -29,12 +29,10 @@ namespace eapis
 {
 namespace intel_x64
 {
-namespace ept
-{
 
 class hve;
 
-class EXPORT_EAPIS_HVE violation : public base
+class EXPORT_EAPIS_HVE ept_misconfiguration : public base
 {
 public:
 
@@ -52,43 +50,25 @@ public:
     /// @expects
     /// @ensures
     ///
-    violation(gsl::not_null<eapis::intel_x64::hve *> hve);
+    ept_misconfiguration(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~violation() final;
+    ~ept_misconfiguration() final;
 
 public:
 
-    /// Add Read EPT Violation Handler
+    /// Add EPT Misconfiguration Handler
     ///
     /// @expects
     /// @ensures
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_read_handler(handler_delegate_t &&d);
-
-    /// Add Write EPT Violation Handler
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param d the handler to call when an exit occurs
-    ///
-    void add_write_handler(handler_delegate_t &&d);
-
-    /// Add Execute EPT Violation Handler
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param d the handler to call when an exit occurs
-    ///
-    void add_execute_handler(handler_delegate_t &&d);
+    void add_handler(handler_delegate_t &&d);
 
     /// Dump Log
     ///
@@ -104,23 +84,13 @@ public:
 
 private:
 
-    /// @cond
-
     bool handle(gsl::not_null<vmcs_t *> vmcs);
-
-    bool handle_read(gsl::not_null<vmcs_t *> vmcs, info_t &info);
-    bool handle_write(gsl::not_null<vmcs_t *> vmcs, info_t &info);
-    bool handle_execute(gsl::not_null<vmcs_t *> vmcs, info_t &info);
-
-    /// @endcond
 
 private:
 
     gsl::not_null<exit_handler_t *> m_exit_handler;
 
-    std::list<handler_delegate_t> m_read_handlers;
-    std::list<handler_delegate_t> m_write_handlers;
-    std::list<handler_delegate_t> m_execute_handlers;
+    std::list<handler_delegate_t> m_handlers;
 
 private:
 
@@ -129,24 +99,22 @@ private:
         uint64_t gpa;
     };
 
-    std::list<record_t> m_read_log;
-    std::list<record_t> m_write_log;
-    std::list<record_t> m_execute_log;
+    std::list<record_t> m_log;
 
 public:
 
     /// @cond
 
-    violation(violation &&) = default;
-    violation &operator=(violation &&) = default;
+    ept_misconfiguration(ept_misconfiguration &&) = default;
+    ept_misconfiguration &operator=(ept_misconfiguration &&) = default;
 
-    violation(const violation &) = delete;
-    violation &operator=(const violation &) = delete;
+    ept_misconfiguration(const ept_misconfiguration &) = delete;
+    ept_misconfiguration &operator=(const ept_misconfiguration &) = delete;
 
     /// @endcond
+
 };
 
-}
 }
 }
 

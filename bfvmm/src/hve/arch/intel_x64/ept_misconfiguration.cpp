@@ -23,15 +23,13 @@ namespace eapis
 {
 namespace intel_x64
 {
-namespace ept
-{
 
 static bool
 default_handler(
-    gsl::not_null<vmcs_t *> vmcs, misconfiguration::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, ept_misconfiguration::info_t &info)
 { bfignored(vmcs); bfignored(info); return true; }
 
-misconfiguration::misconfiguration(
+ept_misconfiguration::ept_misconfiguration(
     gsl::not_null<eapis::intel_x64::hve *> hve
 ) :
     m_exit_handler{hve->exit_handler()}
@@ -40,13 +38,13 @@ misconfiguration::misconfiguration(
 
     m_exit_handler->add_handler(
         exit_reason::basic_exit_reason::ept_misconfiguration,
-        ::handler_delegate_t::create<misconfiguration, &misconfiguration::handle>(this)
+        ::handler_delegate_t::create<ept_misconfiguration, &ept_misconfiguration::handle>(this)
     );
 
     this->add_handler(handler_delegate_t::create<default_handler>());
 }
 
-misconfiguration::~misconfiguration()
+ept_misconfiguration::~ept_misconfiguration()
 {
     if (!ndebug && m_log_enabled) {
         dump_log();
@@ -54,16 +52,16 @@ misconfiguration::~misconfiguration()
 }
 
 void
-misconfiguration::add_handler(handler_delegate_t &&d)
+ept_misconfiguration::add_handler(handler_delegate_t &&d)
 { m_handlers.push_front(std::move(d)); }
 
 void
-misconfiguration::dump_log()
+ept_misconfiguration::dump_log()
 {
     if (!m_log.empty()) {
         bfdebug_transaction(0, [&](std::string * msg) {
             bfdebug_lnbr(0, msg);
-            bfdebug_info(0, "ept misconfiguration log", msg);
+            bfdebug_info(0, "ept_misconfiguration log", msg);
             bfdebug_brk2(0, msg);
 
             for (const auto &record : m_log) {
@@ -77,7 +75,7 @@ misconfiguration::dump_log()
 }
 
 bool
-misconfiguration::handle(gsl::not_null<vmcs_t *> vmcs)
+ept_misconfiguration::handle(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
         vmcs_n::guest_linear_address::get(),
@@ -101,9 +99,8 @@ misconfiguration::handle(gsl::not_null<vmcs_t *> vmcs)
     }
 
     throw std::runtime_error(
-        "ept::misconfiguration::handle: unhandled ept misconfiguration");
+        "ept_misconfiguration::handle: unhandled ept misconfiguration");
 }
 
-}
 }
 }

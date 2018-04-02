@@ -23,15 +23,13 @@ namespace eapis
 {
 namespace intel_x64
 {
-namespace ept
-{
 
 static bool
 default_handler(
-    gsl::not_null<vmcs_t *> vmcs, violation::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &info)
 { bfignored(vmcs); bfignored(info); return true; }
 
-violation::violation(
+ept_violation::ept_violation(
     gsl::not_null<eapis::intel_x64::hve *> hve
 ) :
     m_exit_handler{hve->exit_handler()}
@@ -40,7 +38,7 @@ violation::violation(
 
     m_exit_handler->add_handler(
         exit_reason::basic_exit_reason::ept_violation,
-        ::handler_delegate_t::create<violation, &violation::handle>(this)
+        ::handler_delegate_t::create<ept_violation, &ept_violation::handle>(this)
     );
 
     this->add_read_handler(handler_delegate_t::create<default_handler>());
@@ -48,7 +46,7 @@ violation::violation(
     this->add_execute_handler(handler_delegate_t::create<default_handler>());
 }
 
-violation::~violation()
+ept_violation::~ept_violation()
 {
     if (!ndebug && m_log_enabled) {
         dump_log();
@@ -56,19 +54,19 @@ violation::~violation()
 }
 
 void
-violation::add_read_handler(handler_delegate_t &&d)
+ept_violation::add_read_handler(handler_delegate_t &&d)
 { m_read_handlers.push_front(std::move(d)); }
 
 void
-violation::add_write_handler(handler_delegate_t &&d)
+ept_violation::add_write_handler(handler_delegate_t &&d)
 { m_write_handlers.push_front(std::move(d)); }
 
 void
-violation::add_execute_handler(handler_delegate_t &&d)
+ept_violation::add_execute_handler(handler_delegate_t &&d)
 { m_execute_handlers.push_front(std::move(d)); }
 
 void
-violation::dump_log()
+ept_violation::dump_log()
 {
     if (!m_read_log.empty()) {
         bfdebug_transaction(0, [&](std::string * msg) {
@@ -117,33 +115,46 @@ violation::dump_log()
 }
 
 bool
-violation::handle(gsl::not_null<vmcs_t *> vmcs)
+ept_violation::handle(gsl::not_null<vmcs_t *> vmcs)
 {
-    namespace ept_violation = vmcs_n::exit_qualification::ept_violation;
+    using namespace vmcs_n::exit_qualification::ept_violation;
+    auto qual = get();
 
     struct info_t info = {
         vmcs_n::guest_linear_address::get(),
         vmcs_n::guest_physical_address::get(),
+        qual,
         false
     };
 
-    if (ept_violation::data_read::is_enabled()) {
+    if (data_read::is_enabled(qual)) {
         return handle_read(vmcs, info);
     }
 
-    if (ept_violation::data_write::is_enabled()) {
+    if (data_write::is_enabled(qual)) {
         return handle_write(vmcs, info);
     }
 
-    if (ept_violation::instruction_fetch::is_enabled()) {
+    if (instruction_fetch::is_enabled(qual)) {
         return handle_execute(vmcs, info);
     }
 
-    throw std::runtime_error("ept::violation::handle: unhandled ept violation");
+    bfdebug_transaction(0, [&](std::string * msg) {
+        bfdebug_lnbr(0, msg);
+        bfdebug_info(0, "ept_violation::handle: unhandled ept violation", msg);
+        bfdebug_brk2(0, msg);
+
+        bfdebug_subnhex(0, "guest virtual address", info.gva, msg);
+        bfdebug_subnhex(0, "guest physical address", info.gpa, msg);
+        bfdebug_subnhex(0, "exit qualification", info.exit_qualification, msg);
+
+        bfdebug_lnbr(0, msg);
+    });
+    throw std::runtime_error("ept_violation::handle: unhandled ept violation");
 }
 
 bool
-violation::handle_read(gsl::not_null<vmcs_t *> vmcs, info_t &info)
+ept_violation::handle_read(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 {
     if (!ndebug && m_log_enabled) {
         add_record(m_read_log, {info.gva, info.gpa});
@@ -161,11 +172,11 @@ violation::handle_read(gsl::not_null<vmcs_t *> vmcs, info_t &info)
     }
 
     throw std::runtime_error(
-        "ept::violation: unhandled ept read violation");
+        "ept_violation: unhandled ept read violation");
 }
 
 bool
-violation::handle_write(gsl::not_null<vmcs_t *> vmcs, info_t &info)
+ept_violation::handle_write(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 {
     if (!ndebug && m_log_enabled) {
         add_record(m_write_log, {info.gva, info.gpa});
@@ -183,11 +194,11 @@ violation::handle_write(gsl::not_null<vmcs_t *> vmcs, info_t &info)
     }
 
     throw std::runtime_error(
-        "ept::violation: unhandled ept write violation");
+        "ept_violation: unhandled ept write violation");
 }
 
 bool
-violation::handle_execute(gsl::not_null<vmcs_t *> vmcs, info_t &info)
+ept_violation::handle_execute(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 {
     if (!ndebug && m_log_enabled) {
         add_record(m_execute_log, {info.gva, info.gpa});
@@ -204,9 +215,8 @@ violation::handle_execute(gsl::not_null<vmcs_t *> vmcs, info_t &info)
         }
     }
 
-    throw std::runtime_error("ept::violation: unhandled ept execute violation");
+    throw std::runtime_error("ept_violation: unhandled ept execute violation");
 }
 
-}
 }
 }
