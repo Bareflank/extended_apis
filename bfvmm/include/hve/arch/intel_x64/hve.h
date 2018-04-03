@@ -91,7 +91,7 @@ public:
     /// @return Returns the CR object stored in the hve if CR trapping is
     ///     enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<control_register *> control_register();
+    gsl::not_null<eapis::intel_x64::control_register *> control_register();
 
     /// Enable Write CR0 Exiting
     ///
@@ -163,7 +163,7 @@ public:
     /// @return Returns the CPUID object stored in the hve if CPUID trapping is
     ///     enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<cpuid *> cpuid();
+    gsl::not_null<eapis::intel_x64::cpuid *> cpuid();
 
     /// Add CPUID Handler
     ///
@@ -186,7 +186,7 @@ public:
     ///     external-interrupt exiting is enabled, otherwise an exception is
     ///     thrown
     ///
-    gsl::not_null<external_interrupt *> external_interrupt();
+    gsl::not_null<eapis::intel_x64::external_interrupt *> external_interrupt();
 
     /// Add External Interrupt Handler
     ///
@@ -207,7 +207,7 @@ public:
     ///
     /// @return Returns the interrupt window object stored in the hve if
     ///
-    gsl::not_null<interrupt_window *> interrupt_window();
+    gsl::not_null<eapis::intel_x64::interrupt_window *> interrupt_window();
 
     /// Add Interrupt Window Handler
     ///
@@ -228,7 +228,7 @@ public:
     /// @return Returns the IO Instruction object stored in the hve if IO
     ///     Instruction trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<io_instruction *> io_instruction();
+    gsl::not_null<eapis::intel_x64::io_instruction *> io_instruction();
 
     /// Add CPUID Handler
     ///
@@ -252,7 +252,7 @@ public:
     /// @return Returns the Monitor Trap object stored in the hve if Monitor
     ///     Trap is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<monitor_trap *> monitor_trap();
+    gsl::not_null<eapis::intel_x64::monitor_trap *> monitor_trap();
 
     /// Add Monitor Trap Flag Handler
     ///
@@ -280,7 +280,7 @@ public:
     /// @return Returns the Move DR object stored in the hve if Move DR
     ///     trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<mov_dr *> mov_dr();
+    gsl::not_null<eapis::intel_x64::mov_dr *> mov_dr();
 
     /// Add Move DR Handler
     ///
@@ -301,7 +301,7 @@ public:
     /// @return Returns the Read MSR object stored in the hve if Read MSR
     ///     trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<rdmsr *> rdmsr();
+    gsl::not_null<eapis::intel_x64::rdmsr *> rdmsr();
 
     /// Pass Through All Read MSR Accesses
     ///
@@ -330,7 +330,7 @@ public:
     /// @return Returns the VPID object stored in the hve if VPID trapping is
     ///     enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<vpid *> vpid();
+    gsl::not_null<eapis::intel_x64::vpid *> vpid();
 
     /// Enable VPID
     ///
@@ -351,7 +351,7 @@ public:
     /// @return Returns the Write MSR object stored in the hve if Write MSR
     ///     trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<wrmsr *> wrmsr();
+    gsl::not_null<eapis::intel_x64::wrmsr *> wrmsr();
 
     /// Pass Through All Write MSR Accesses
     ///
