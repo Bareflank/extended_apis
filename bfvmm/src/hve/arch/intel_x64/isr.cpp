@@ -24,7 +24,7 @@
 
 extern "C" void unlock_write(void);
 
-const char*
+const char *
 vector_to_str(uint64_t vec) noexcept
 {
     switch (vec) {

@@ -38,7 +38,7 @@ std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};
 std::list<std::function<void(void)>> window_closers = {
     [](){ ::x64::rflags::interrupt_enable_flag::disable(); },
     [](){ vmcs_n::guest_interruptibility_state::blocking_by_sti::enable(); },
-    [](){ vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::enable(); }
+    []() { vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::enable(); }
 };
 
 static auto
@@ -49,14 +49,14 @@ setup_external_interrupt_exit(uint64_t vector)
 
     auto val = g_vmcs_fields[vmcs_n::exit_reason::addr];
     val = set_bits(
-        val, reason::mask, (reason::external_interrupt << reason::from)
-    );
+              val, reason::mask, (reason::external_interrupt << reason::from)
+          );
     g_vmcs_fields[vmcs_n::exit_reason::addr] = val;
 
     auto vec = g_vmcs_fields[info::addr];
     vec = set_bits(
-        vec, info::vector::mask, (vector << info::vector::from)
-    );
+              vec, info::vector::mask, (vector << info::vector::from)
+          );
     g_vmcs_fields[info::addr] = vec;
 }
 
@@ -329,9 +329,9 @@ TEST_CASE("vic: add_interrupt_handler")
     auto vic = setup_vic(hve.get());
 
     CHECK_THROWS(vic.add_interrupt_handler(
-        0xDEADBEEFU,
-        vic::handler_delegate_t::create<handle_external_interrupt_stub>())
-    );
+                     0xDEADBEEFU,
+                     vic::handler_delegate_t::create<handle_external_interrupt_stub>())
+                );
 }
 
 TEST_CASE("vic: handle_interrupt_from_exit - window closed")

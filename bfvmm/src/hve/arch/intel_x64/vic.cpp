@@ -277,15 +277,15 @@ vic::add_external_interrupt_handlers()
 
         if (vector == svr_vector) {
             this->add_interrupt_handler(vector,
-                                  handler_delegate_t::create<vic,
-                                  &vic::handle_spurious_interrupt>(this)
-                                 );
+                                        handler_delegate_t::create<vic,
+                                        &vic::handle_spurious_interrupt>(this)
+                                       );
         }
         else {
             this->add_interrupt_handler(vector,
-                                  handler_delegate_t::create<vic,
-                                  &vic::handle_interrupt_from_exit>(this)
-                                 );
+                                        handler_delegate_t::create<vic,
+                                        &vic::handle_interrupt_from_exit>(this)
+                                       );
         }
     }
 
