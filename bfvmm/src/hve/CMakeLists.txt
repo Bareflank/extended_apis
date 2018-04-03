@@ -39,6 +39,7 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/hve.cpp
         arch/intel_x64/ept/helpers.cpp
         arch/intel_x64/ept/memory_map.cpp
+        arch/x64/pci_register.cpp
     )
 
     if (NOT WIN32 AND NOT ENABLE_MOCKING)
@@ -50,8 +51,12 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
 elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
     message(WARNING "Unimplemented")
 else()
-    message(FATAL_ERROR "Unsupported archiecture")
+    message(FATAL_ERROR "Unsupported architecture")
 endif()
+
+list(APPEND SOURCES
+    phys_pci.cpp
+)
 
 add_shared_library(
     eapis_hve

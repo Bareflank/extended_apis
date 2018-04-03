@@ -83,6 +83,12 @@ if(ENABLE_BUILD_VMM)
         DEPENDS eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/wrmsr/
     )
+
+    vmm_extension(
+        eapis_integration_intel_x64_phys_pci
+        DEPENDS eapis
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/phys_pci/
+    )
 endif()
 
 if(ENABLE_BUILD_TEST)
