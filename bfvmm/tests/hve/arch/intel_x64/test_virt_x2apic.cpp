@@ -39,28 +39,6 @@ namespace proc_ctls2 = vmcs_n::secondary_processor_based_vm_execution_controls;
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};
 
-static auto
-open_interrupt_window()
-{
-    vmcs_n::guest_rflags::interrupt_enable_flag::enable();
-    vmcs_n::guest_interruptibility_state::blocking_by_sti::disable();
-    vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::disable();
-}
-
-static auto
-close_interrupt_window()
-{ vmcs_n::guest_rflags::interrupt_enable_flag::disable(); }
-
-static auto
-check_vmentry_interrupt_info(uint64_t next)
-{
-    namespace info_n = vmcs_n::vm_entry_interruption_information;
-
-    CHECK(info_n::vector::get() == next);
-    CHECK(info_n::valid_bit::is_enabled());
-    CHECK(info_n::interruption_type::get() == info_n::interruption_type::external_interrupt);
-}
-
 TEST_CASE("virt_x2apic::virt_x2apic(hve)")
 {
     MockRepository mocks;

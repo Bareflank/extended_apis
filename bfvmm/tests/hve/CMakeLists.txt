@@ -32,15 +32,15 @@ do_test(test_page_table_entry
     ${ARGN}
 )
 
-do_test(test_memory_map
-    SOURCES arch/intel_x64/ept/test_memory_map.cpp
-    ${ARGN}
-)
-
-do_test(test_ept_helpers
-    SOURCES arch/intel_x64/ept/test_helpers.cpp
-    ${ARGN}
-)
+# do_test(test_memory_map
+#     SOURCES arch/intel_x64/ept/test_memory_map.cpp
+#     ${ARGN}
+# )
+#
+# do_test(test_ept_helpers
+#     SOURCES arch/intel_x64/ept/test_helpers.cpp
+#     ${ARGN}
+# )
 
 do_test(test_vpid
     SOURCES arch/intel_x64/test_vpid.cpp
@@ -54,5 +54,10 @@ do_test(test_virt_x2apic
 
 do_test(test_lapic_register
     SOURCES arch/intel_x64/test_lapic_register.cpp
+    ${ARGN}
+)
+
+do_test(test_vic
+    SOURCES arch/intel_x64/test_vic.cpp
     ${ARGN}
 )

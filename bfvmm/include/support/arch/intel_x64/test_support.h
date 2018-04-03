@@ -44,6 +44,28 @@ setup_hve(MockRepository &mocks)
     return std::make_unique<eapis::intel_x64::hve>(g_ehlr.get(), g_vmcs.get());
 }
 
+inline auto
+open_interrupt_window()
+{
+    vmcs_n::guest_rflags::interrupt_enable_flag::enable();
+    vmcs_n::guest_interruptibility_state::blocking_by_sti::disable();
+    vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::disable();
+}
+
+inline auto
+close_interrupt_window()
+{ vmcs_n::guest_rflags::interrupt_enable_flag::disable(); }
+
+inline auto
+check_vmentry_interrupt_info(uint64_t next)
+{
+    namespace info_n = vmcs_n::vm_entry_interruption_information;
+
+    CHECK(info_n::vector::get() == next);
+    CHECK(info_n::valid_bit::is_enabled());
+    CHECK(info_n::interruption_type::get() == info_n::interruption_type::external_interrupt);
+}
+
 extern "C" void _isr0(void) noexcept { }
 extern "C" void _isr1(void) noexcept { }
 extern "C" void _isr2(void) noexcept { }

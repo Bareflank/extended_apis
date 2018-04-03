@@ -83,23 +83,23 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param piv the physical interrupt vector
-    /// @return the virtual vector corresponding to piv
+    /// @param phys the physical interrupt vector
+    /// @return the virtual vector corresponding to phys
     ///
-    uint64_t phys_to_virt(uint64_t piv);
+    uint64_t phys_to_virt(uint64_t phys);
 
     /// Virtual vector to physical vector
     ///
-    /// Return the physical interrupt vector the provided virtual
-    /// vector maps to
+    /// Return the _highest_priority_ physical interrupt vector the provided
+    /// virtual vector maps to.
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param viv the physical interrupt vector
-    /// @return the physical vector corresponding to viv
+    /// @param virt the virtual interrupt vector
+    /// @return the highest-priority physical vector corresponding to virt
     ///
-    uint64_t virt_to_phys(uint64_t viv);
+    uint64_t virt_to_phys(uint64_t virt);
 
     ///
     /// Map
@@ -110,23 +110,23 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param viv the virtual interrupt vector
-    /// @param piv the physical interrupt vector
+    /// @param phys the physical interrupt vector
+    /// @param virt the virtual interrupt vector
     ///
-    void map(uint64_t viv, uint64_t piv);
+    void map(uint64_t phys, uint64_t virt);
 
     ///
     /// Unmap
     ///
     /// Disassociate the virtual interrupt vector with
-    /// its physical interrupt vector
+    /// its highest-priority physical interrupt vector
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param viv the virtual interrupt vector to unmap
+    /// @param virt the virtual interrupt vector to unmap
     ///
-    void unmap(uint64_t viv);
+    void unmap(uint64_t virt);
 
     ///
     /// Send physical IPI
