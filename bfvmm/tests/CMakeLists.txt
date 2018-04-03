@@ -1,6 +1,6 @@
 #
 # Bareflank Hypervisor
-# Copyright (C) 2015 Assured Information Security, Inc.
+# Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,8 @@ include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
     INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../include
 )
+
+add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
 
 # -----------------------------------------------------------------------------
 # Install
