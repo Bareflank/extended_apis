@@ -23,6 +23,15 @@
 #include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
 #include <bfvmm/support/arch/intel_x64/test_support.h>
 #include <hve/arch/intel_x64/hve.h>
+#include <hve/arch/intel_x64/vic.h>
+
+namespace msrs_n = ::intel_x64::msrs;
+namespace lapic_n = ::intel_x64::lapic;
+namespace cpuid_n = ::intel_x64::cpuid;
+namespace pin_ctls = vmcs_n::pin_based_vm_execution_controls;
+namespace exit_ctls = vmcs_n::vm_exit_controls;
+namespace proc_ctls1 = vmcs_n::primary_processor_based_vm_execution_controls;
+namespace proc_ctls2 = vmcs_n::secondary_processor_based_vm_execution_controls;
 
 ::intel_x64::vmcs::value_type g_vcpuid{0U};
 
@@ -30,8 +39,7 @@ std::unique_ptr<uint32_t[]> g_vmcs_region;
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs;
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr;
 
-
-auto
+inline auto
 setup_hve(MockRepository &mocks)
 {
     setup_msrs();
@@ -42,6 +50,56 @@ setup_hve(MockRepository &mocks)
     g_ehlr = std::make_unique<bfvmm::intel_x64::exit_handler>(g_vmcs.get());
 
     return std::make_unique<eapis::intel_x64::hve>(g_ehlr.get(), g_vmcs.get());
+}
+
+inline auto
+disable_lapic()
+{
+    namespace info = cpuid_n::feature_information;
+
+    uint32_t val = g_edx_cpuid[info::addr];
+    val = gsl::narrow_cast<uint32_t>(clear_bit(val, info::edx::apic::from));
+    g_edx_cpuid[info::addr] = val;
+}
+
+inline auto
+enable_lapic()
+{
+    namespace info = cpuid_n::feature_information;
+
+    uint32_t val = g_edx_cpuid[info::addr];
+    val = gsl::narrow_cast<uint32_t>(set_bit(val, info::edx::apic::from));
+    g_edx_cpuid[info::addr] = val;
+}
+
+inline auto
+disable_x2apic()
+{
+    namespace info = cpuid_n::feature_information;
+
+    uint32_t val = g_ecx_cpuid[info::addr];
+    val = gsl::narrow_cast<uint32_t>(clear_bit(val, info::ecx::x2apic::from));
+    g_ecx_cpuid[info::addr] = val;
+}
+
+inline auto
+enable_x2apic()
+{
+    namespace info = cpuid_n::feature_information;
+
+    uint32_t val = g_ecx_cpuid[info::addr];
+    val = gsl::narrow_cast<uint32_t>(set_bit(val, info::ecx::x2apic::from));
+    g_ecx_cpuid[info::addr] = val;
+}
+
+inline auto
+setup_vic(gsl::not_null<eapis::intel_x64::hve *> hve)
+{
+    enable_lapic();
+    enable_x2apic();
+    msrs_n::ia32_apic_base::state::enable_x2apic();
+
+    return eapis::intel_x64::vic(hve);
 }
 
 inline auto

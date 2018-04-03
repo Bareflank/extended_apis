@@ -32,14 +32,6 @@ namespace eapis
 namespace intel_x64
 {
 
-namespace msrs_n = ::intel_x64::msrs;
-namespace lapic_n = ::intel_x64::lapic;
-namespace cpuid_n = ::intel_x64::cpuid;
-namespace pin_ctls = vmcs_n::pin_based_vm_execution_controls;
-namespace exit_ctls = vmcs_n::vm_exit_controls;
-namespace proc_ctls1 = vmcs_n::primary_processor_based_vm_execution_controls;
-namespace proc_ctls2 = vmcs_n::secondary_processor_based_vm_execution_controls;
-
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};
 
@@ -48,56 +40,6 @@ std::list<std::function<void(void)>> window_closers = {
     [](){ vmcs_n::guest_interruptibility_state::blocking_by_sti::enable(); },
     [](){ vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::enable(); }
 };
-
-static auto
-disable_lapic()
-{
-    namespace info = cpuid_n::feature_information;
-
-    uint32_t val = g_edx_cpuid[info::addr];
-    val = gsl::narrow_cast<uint32_t>(clear_bit(val, info::edx::apic::from));
-    g_edx_cpuid[info::addr] = val;
-}
-
-static auto
-enable_lapic()
-{
-    namespace info = cpuid_n::feature_information;
-
-    uint32_t val = g_edx_cpuid[info::addr];
-    val = gsl::narrow_cast<uint32_t>(set_bit(val, info::edx::apic::from));
-    g_edx_cpuid[info::addr] = val;
-}
-
-
-static auto
-disable_x2apic()
-{
-    namespace info = cpuid_n::feature_information;
-
-    uint32_t val = g_ecx_cpuid[info::addr];
-    val = gsl::narrow_cast<uint32_t>(clear_bit(val, info::ecx::x2apic::from));
-    g_ecx_cpuid[info::addr] = val;
-}
-
-static auto
-enable_x2apic()
-{
-    namespace info = cpuid_n::feature_information;
-
-    uint32_t val = g_ecx_cpuid[info::addr];
-    val = gsl::narrow_cast<uint32_t>(set_bit(val, info::ecx::x2apic::from));
-    g_ecx_cpuid[info::addr] = val;
-}
-
-static auto
-setup_vic(gsl::not_null<eapis::intel_x64::hve *> hve)
-{
-    enable_lapic();
-    enable_x2apic();
-    msrs_n::ia32_apic_base::state::enable_x2apic();
-    return eapis::intel_x64::vic(hve);
-}
 
 static auto
 setup_external_interrupt_exit(uint64_t vector)

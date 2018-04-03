@@ -24,7 +24,7 @@
 
 extern "C" void unlock_write(void);
 
-static auto
+const char*
 vector_to_str(uint64_t vec) noexcept
 {
     switch (vec) {
@@ -91,28 +91,29 @@ default_isr(uint64_t vec, uint64_t ec, bool ec_valid, uint64_t *reg) noexcept
                 bferror_subnhex(0, "error code", ec, msg);
             }
 
-            auto view = gsl::span<uint64_t>(reg, 37);
+            auto view = gsl::span<uint64_t>(reg, 38);
 
-            bferror_subnhex(0, "ss    ", view[36], msg);
-            bferror_subnhex(0, "rsp   ", view[35], msg);
-            bferror_subnhex(0, "rflags", view[34], msg);
-            bferror_subnhex(0, "cs    ", view[33], msg);
-            bferror_subnhex(0, "rip   ", view[32], msg);
-            bferror_subnhex(0, "rax   ", view[14], msg);
-            bferror_subnhex(0, "rbx   ", view[13], msg);
-            bferror_subnhex(0, "rcx   ", view[12], msg);
-            bferror_subnhex(0, "rdx   ", view[11], msg);
-            bferror_subnhex(0, "rbp   ", view[10], msg);
-            bferror_subnhex(0, "rsi   ", view[9], msg);
-            bferror_subnhex(0, "rdi   ", view[8], msg);
-            bferror_subnhex(0, "r8    ", view[7], msg);
-            bferror_subnhex(0, "r9    ", view[6], msg);
-            bferror_subnhex(0, "r10   ", view[5], msg);
-            bferror_subnhex(0, "r11   ", view[4], msg);
-            bferror_subnhex(0, "r12   ", view[3], msg);
-            bferror_subnhex(0, "r13   ", view[2], msg);
-            bferror_subnhex(0, "r14   ", view[1], msg);
-            bferror_subnhex(0, "r15   ", view[0], msg);
+            bferror_subnhex(0, "ss    ", view[37], msg);
+            bferror_subnhex(0, "rsp   ", view[36], msg);
+            bferror_subnhex(0, "rflags", view[35], msg);
+            bferror_subnhex(0, "cs    ", view[34], msg);
+            bferror_subnhex(0, "rip   ", view[33], msg);
+            bferror_subnhex(0, "rax   ", view[15], msg);
+            bferror_subnhex(0, "rbx   ", view[14], msg);
+            bferror_subnhex(0, "rcx   ", view[13], msg);
+            bferror_subnhex(0, "rdx   ", view[12], msg);
+            bferror_subnhex(0, "rbp   ", view[11], msg);
+            bferror_subnhex(0, "rsi   ", view[10], msg);
+            bferror_subnhex(0, "rdi   ", view[9], msg);
+            bferror_subnhex(0, "r8    ", view[8], msg);
+            bferror_subnhex(0, "r9    ", view[7], msg);
+            bferror_subnhex(0, "r10   ", view[6], msg);
+            bferror_subnhex(0, "r11   ", view[5], msg);
+            bferror_subnhex(0, "r12   ", view[4], msg);
+            bferror_subnhex(0, "r13   ", view[3], msg);
+            bferror_subnhex(0, "r14   ", view[2], msg);
+            bferror_subnhex(0, "r15   ", view[1], msg);
+            bferror_subnhex(0, "vic   ", view[0], msg);
 
             bferror_subnhex(0, "cr0   ", ::intel_x64::cr0::get(), msg);
             bferror_subnhex(0, "cr2   ", ::intel_x64::cr2::get(), msg);

@@ -61,3 +61,8 @@ do_test(test_vic
     SOURCES arch/intel_x64/test_vic.cpp
     ${ARGN}
 )
+
+do_test(test_isr
+    SOURCES arch/intel_x64/test_isr.cpp
+    ${ARGN}
+)
