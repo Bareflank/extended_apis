@@ -25,13 +25,13 @@ namespace intel_x64
 
 namespace lapic_register
 {
-    std::array<attr_t, count> attributes;
+std::array<attr_t, count> attributes;
 }
 
 void
 init_nonexistent(uint64_t offset) noexcept
 {
-    auto attr = 0U;
+    lapic_register::attr_t attr = 0ULL;
 
     attr = lapic_register::xapic_readable::disable(attr);
     attr = lapic_register::xapic_writable::disable(attr);
@@ -45,7 +45,7 @@ init_nonexistent(uint64_t offset) noexcept
 void
 init_xapic_read_write(uint64_t offset) noexcept
 {
-    auto attr = lapic_register::attributes.at(offset);
+    lapic_register::attr_t attr = lapic_register::attributes.at(offset);
 
     attr = lapic_register::x2apic_readable::disable(attr);
     attr = lapic_register::x2apic_writable::disable(attr);
@@ -59,7 +59,7 @@ init_xapic_read_write(uint64_t offset) noexcept
 void
 init_x2apic_write_only(uint64_t offset) noexcept
 {
-    auto attr = lapic_register::attributes.at(offset);
+    lapic_register::attr_t attr = lapic_register::attributes.at(offset);
 
     attr = lapic_register::x2apic_readable::disable(attr);
     attr = lapic_register::x2apic_writable::enable(attr);
@@ -73,7 +73,7 @@ init_x2apic_write_only(uint64_t offset) noexcept
 void
 init_both_write_only(uint64_t offset) noexcept
 {
-    auto attr = lapic_register::attributes.at(offset);
+    lapic_register::attr_t attr = lapic_register::attributes.at(offset);
 
     attr = lapic_register::x2apic_readable::disable(attr);
     attr = lapic_register::x2apic_writable::enable(attr);
@@ -87,7 +87,7 @@ init_both_write_only(uint64_t offset) noexcept
 void
 init_both_read_only(uint64_t offset) noexcept
 {
-    auto attr = lapic_register::attributes.at(offset);
+    lapic_register::attr_t attr = lapic_register::attributes.at(offset);
 
     attr = lapic_register::x2apic_readable::enable(attr);
     attr = lapic_register::x2apic_writable::disable(attr);
@@ -101,7 +101,7 @@ init_both_read_only(uint64_t offset) noexcept
 void
 init_both_read_write(uint64_t offset) noexcept
 {
-    auto attr = lapic_register::attributes.at(offset);
+    lapic_register::attr_t attr = lapic_register::attributes.at(offset);
 
     attr = lapic_register::x2apic_readable::enable(attr);
     attr = lapic_register::x2apic_writable::enable(attr);
@@ -112,14 +112,17 @@ init_both_read_write(uint64_t offset) noexcept
     lapic_register::attributes.at(offset) = attr;
 }
 
+namespace lapic_register
+{
+
 void
-init_lapic_register_attributes() noexcept
+init_attributes() noexcept
 {
     using namespace ::intel_x64::msrs;
     using namespace eapis::intel_x64::lapic_register;
 
-    const auto dfr_addr = ::intel_x64::lapic::xapic_default_base | 0x0E0U;
-    const auto icr_high = ::intel_x64::lapic::xapic_default_base | 0x310U;
+    const auto dfr_addr = ::intel_x64::lapic::xapic_default_base | 0x0E0ULL;
+    const auto icr_high = ::intel_x64::lapic::xapic_default_base | 0x310ULL;
 
     for (auto i = 0U; i < lapic_register::count; i++) {
         switch (i) {
@@ -194,6 +197,8 @@ init_lapic_register_attributes() noexcept
                 break;
         }
     }
+
+}
 }
 
 }

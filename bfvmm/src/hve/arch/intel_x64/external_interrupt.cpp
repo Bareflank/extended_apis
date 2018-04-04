@@ -104,7 +104,7 @@ external_interrupt::handle(gsl::not_null<vmcs_t *> vmcs)
     }
 
     throw std::runtime_error("Unhandled interrupt vector: "
-        + std::to_string(info.vector));
+                             + std::to_string(info.vector));
 }
 
 }

@@ -32,19 +32,89 @@ namespace intel_x64
 
 class hve;
 
+/// IO instruction
+///
+/// Provides an interface for handling port I/O exits base on the port number
+///
 class EXPORT_EAPIS_HVE io_instruction : public base
 {
 public:
 
+    ///
+    /// Info
+    ///
+    /// This struct is created by io_instruction::handle before being
+    /// passed to each registered handler. Note that default values are
+    /// given for each field below (these are the values contained in the
+    /// info struct that is passed to each handler).
+    ///
     struct info_t {
-        uint64_t port_number;           // In
-        uint64_t size_of_access;        // In
-        uint64_t address;               // In
-        uint64_t val;                   // In / Out
-        bool ignore_write;              // Out
-        bool ignore_advance;            // Out
+
+        /// Port number
+        ///
+        /// The port number accessed by the guest.
+        ///
+        /// default: (rdx & 0xFFFF) if operand encoding == dx
+        /// default: vmcs_n::exit_qualification::io_instruction::port_number if
+        ///          operand encoding != dx
+        ///
+        uint64_t port_number;
+
+        /// Size of access
+        ///
+        /// The size of the accessed operand.
+        ///
+        /// default: vmcs_n::exit_qualification::io_instruction::size_of_access
+        ///
+        uint64_t size_of_access;
+
+        /// Address
+        ///
+        /// For accesses via string instructions, the guest linear address.
+        ///
+        /// default: vmcs_n::guest_linear_address
+        ///
+        uint64_t address;
+
+        /// Value
+        ///
+        /// The value from the port
+        ///
+        /// default: inb(info.port_number) if 'in' access
+        /// default: the value from guest memory at info.address if 'out' access
+        ///
+        uint64_t val;
+
+        /// Ignore write (out)
+        ///
+        /// - For 'in' accesses, do not update the guest's memory at info.address with
+        ///   info.val if this field is true. Set this to true if your handler
+        ///   returns true and has already updated the guest's memory.
+        ///
+        /// - For 'out' accesses, do not write info.val to the port info.port_number
+        ///   if this field is true. Set this to true if your handler
+        ///   returns true and has written to the guest's port
+        ///
+        /// default: false
+        ///
+        bool ignore_write;
+
+        /// Ignore advance (out)
+        ///
+        /// If true, do not advance the guest's instruction pointer.
+        /// Set this to true if your handler returns true and has already
+        /// advanced the guest's instruction pointer.
+        ///
+        /// default: false
+        ///
+        bool ignore_advance;
     };
 
+    /// Handler delegate type
+    ///
+    /// The type of delegate clients must use when registering
+    /// handlers
+    ///
     using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
@@ -52,6 +122,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object for this io instruction handler
     ///
     io_instruction(gsl::not_null<eapis::intel_x64::hve *> hve);
 

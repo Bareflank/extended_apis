@@ -29,6 +29,12 @@ namespace eapis
 namespace intel_x64
 {
 
+/// vcpu
+///
+/// Manages the lifetime of the exit handlers created upon construction.
+/// This class serves as the root from which all other resources may be
+/// accesses, e.g. the vmcs and exit_handler.
+///
 class vcpu : public bfvmm::intel_x64::vcpu
 {
 
@@ -38,6 +44,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param id the id of this vcpu
     ///
     vcpu(vcpuid::type id) :
         bfvmm::intel_x64::vcpu{id},

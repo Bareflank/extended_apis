@@ -19,6 +19,37 @@ parsers:
       method: no
       macro: no
 
+ignore:
+  - "bfvmm/include/hve/arch/intel_x64/control_register.h"
+  - "bfvmm/include/hve/arch/intel_x64/cpuid.h"
+  - "bfvmm/include/hve/arch/intel_x64/ept.h"
+  - "bfvmm/include/hve/arch/intel_x64/ept/**"
+  - "bfvmm/include/hve/arch/intel_x64/external_interrupt.h"
+  - "bfvmm/include/hve/arch/intel_x64/hve.h"
+  - "bfvmm/include/hve/arch/intel_x64/interrupt_window.h"
+  - "bfvmm/include/hve/arch/intel_x64/io_instruction.h"
+  - "bfvmm/include/hve/arch/intel_x64/monitor_trap.h"
+  - "bfvmm/include/hve/arch/intel_x64/mov_dr.h"
+  - "bfvmm/include/hve/arch/intel_x64/rdmsr.h"
+  - "bfvmm/include/hve/arch/intel_x64/vpid.h"
+  - "bfvmm/include/hve/arch/intel_x64/wrmsr.h"
+  - "bfvmm/include/support/arch/intel_x64/test_support.h"
+  - "bfvmm/include/vcpu/arch/intel_x64/vcpu.h"
+  - "bfvmm/src/hve/arch/intel_x64/control_register.cpp"
+  - "bfvmm/src/hve/arch/intel_x64/cpuid.cpp"
+  - "bfvmm/src/hve/arch/intel_x64/ept/**"
+  - "bfvmm/src/hve/arch/intel_x64/external_interrupt.cpp"
+  - "bfvmm/src/hve/arch/intel_x64/hve.cpp"
+  - "bfvmm/src/hve/arch/intel_x64/interrupt_window.cpp"
+  - "bfvmm/src/hve/arch/intel_x64/io_instruction.cpp"
+  - "bfvmm/src/hve/arch/intel_x64/isr.asm"
+  - "bfvmm/src/hve/arch/intel_x64/monitor_trap.cpp"
+  - "bfvmm/src/hve/arch/intel_x64/mov_dr.cpp"
+  - "bfvmm/src/hve/arch/intel_x64/rdmsr.cpp"
+  - "bfvmm/src/hve/arch/intel_x64/vpid.cpp"
+  - "bfvmm/src/hve/arch/intel_x64/wrmsr.cpp"
+  - "bfvmm/src/main/arch/intel_x64/vcpu_factory.cpp"
+
 comment:
   layout: "header, diff, files"
   behavior: default

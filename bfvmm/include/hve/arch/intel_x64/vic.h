@@ -42,19 +42,28 @@ namespace eapis
 namespace intel_x64
 {
 
-///
 /// Virtual interrupt controller (VIC)
+///
+/// Provides an interface for managing physical and
+/// virtual interrupts.
 ///
 class EXPORT_EAPIS_HVE vic
 {
 public:
 
+    /// Handler delegate type
+    ///
+    /// The delegate type clients must use when registering
+    /// handlers for external-interrupt exits
+    ///
     using handler_delegate_t = external_interrupt::handler_delegate_t;
 
     /// Default Constructor
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object for this vic.
     ///
     vic(gsl::not_null<eapis::intel_x64::hve *> hve);
 
@@ -74,21 +83,23 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param piv the physical interrupt vector
+    /// @param phys the physical interrupt vector
+    /// @return the virtual vector corresponding to phys
     ///
-    uint64_t phys_to_virt(uint64_t piv);
+    uint64_t phys_to_virt(uint64_t phys);
 
     /// Virtual vector to physical vector
     ///
-    /// Return the physical interrupt vector the provided virtual
-    /// vector maps to
+    /// Return the _highest_priority_ physical interrupt vector the provided
+    /// virtual vector maps to.
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param viv the physical interrupt vector
+    /// @param virt the virtual interrupt vector
+    /// @return the highest-priority physical vector corresponding to virt
     ///
-    uint64_t virt_to_phys(uint64_t viv);
+    uint64_t virt_to_phys(uint64_t virt);
 
     ///
     /// Map
@@ -99,28 +110,28 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param viv the virtual interrupt vector
-    /// @param piv the physical interrupt vector
+    /// @param phys the physical interrupt vector
+    /// @param virt the virtual interrupt vector
     ///
-    void map(uint64_t viv, uint64_t piv);
+    void map(uint64_t phys, uint64_t virt);
 
     ///
     /// Unmap
     ///
     /// Disassociate the virtual interrupt vector with
-    /// its physical interrupt vector
+    /// its highest-priority physical interrupt vector
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param viv the virtual interrupt vector to unmap
+    /// @param virt the virtual interrupt vector to unmap
     ///
-    void unmap(uint64_t viv);
+    void unmap(uint64_t virt);
 
     ///
     /// Send physical IPI
     ///
-    /// Send an IPI to this pcpu
+    /// Send an IPI to this physical cpu
     ///
     /// @expects
     /// @ensures
@@ -132,7 +143,12 @@ public:
     ///
     /// Send virtual IPI
     ///
-    /// Inject the provided IPI to this vcpu
+    /// Queue the provided IPI for injection to this virtual cpu
+    ///
+    /// @note the interrupt specified by icr is subject to the
+    ///       prioritization algorithm of the virtual lapic. This means
+    ///       that it will not necessarily be injected on the *upcoming*
+    ///       vmentry.
     ///
     /// @expects
     /// @ensures
@@ -147,17 +163,20 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vector the vector the handler handles
-    /// @param d the handler delegate
+    /// @param vector the interrupt vector the handler handles
+    /// @param d the delegate when an interrupt at the given vector occurs
     ///
-    void add_interrupt_handler(
-        uint64_t vector, handler_delegate_t &&d
-    );
+    void add_interrupt_handler(uint64_t vector, handler_delegate_t &&d);
 
     /// Handle interrupt
     ///
+    /// This may be invoked from an interrupt arriving via vmexit
+    /// or via the physical IDT.
+    ///
     /// @expects
     /// @ensures
+    ///
+    /// @param vector the interrupt vector to handle
     ///
     void handle_interrupt(uint64_t vector);
 
@@ -166,13 +185,23 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
     bool handle_external_interrupt_exit(
         gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info);
 
     /// Handle interrupt from exit
     ///
+    /// This may only be called to handle an interrupt originating via vmexit
+    ///
     /// @expects
     /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
     ///
     bool handle_interrupt_from_exit(
         gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info);
@@ -184,8 +213,11 @@ public:
     /// @expects
     /// @ensures
     ///
-    bool handle_x2apic_read(
-        gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info);
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
+    bool handle_x2apic_read(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info);
 
     /// Handle x2apic write exit
     ///
@@ -193,9 +225,12 @@ public:
     ///
     /// @expects
     /// @ensures
+    //
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
     ///
-    bool handle_x2apic_write(
-        gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
+    bool handle_x2apic_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
     /// Handle x2apic EOI write
     ///
@@ -203,6 +238,10 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
     ///
     bool handle_x2apic_eoi_write(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
@@ -214,6 +253,10 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
     bool handle_x2apic_icr_write(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
@@ -223,6 +266,10 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
     ///
     bool handle_x2apic_self_ipi_write(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
@@ -234,6 +281,10 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
     bool handle_rdcr8(
         gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info);
 
@@ -244,6 +295,10 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
     bool handle_wrcr8(
         gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info);
 
@@ -251,6 +306,10 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
     ///
     bool handle_rdmsr_apic_base(
         gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info);
@@ -260,12 +319,14 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
     bool handle_wrmsr_apic_base(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
 private:
-
-    /// @cond
 
     void add_exit_handlers();
     void add_cr8_handlers();
@@ -297,8 +358,6 @@ private:
     uint64_t m_virt_apic_base;
 
     friend class test::vcpu;
-
-    /// @endcond
 
 public:
 

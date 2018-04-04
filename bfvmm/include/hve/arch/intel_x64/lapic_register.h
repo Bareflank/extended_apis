@@ -35,11 +35,11 @@ namespace intel_x64
 /// with the set of valid operations in xAPIC and x2APIC mode. Each
 /// canonical offset may be derived from an MSR address:
 ///
-///     canonical offset = (msr_addr & ~::intel_x64::lapic::x2apic_base)
+///     canonical offset = (msr_addr & ~0x800)
 ///
 /// or from a memory address:
 ///
-///     canonical offset = (mem_addr & (::x64::page_size - 1)) >> 4
+///     canonical offset = (mem_addr & (0x1000 - 1)) >> 4
 ///
 /// Note that this mapping is _not_ invertible, meaning that in
 /// general you cannot always reconstruct a valid x2APIC (MSR) or
@@ -49,26 +49,81 @@ namespace intel_x64
 ///
 namespace lapic_register
 {
-    using attr_t = uint8_t;
+    /// Lapic register attribute type
+    using attr_t = uint64_t;
+
+    /// Lapic register canonical offset type
     using offset_t = uint64_t;
 
+    /// Total number of (x2)apic registers
     constexpr const auto count = (::intel_x64::lapic::x2apic_last -
         ::intel_x64::lapic::x2apic_base) + 1U;
 
+    /// Array lapic register attributes
     extern std::array<attr_t, count> attributes;
 
+    /// Mem addr to offset
+    ///
+    /// Convert an integer interpreted as equal to (xapic_base | mmio_offset)
+    /// to a canonical offset.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param mem_addr the address to convert to a canonical offset
+    /// @return may or may not be a valid offset. Always check
+    ///         before using to access the apic
+    ///
     constexpr inline auto mem_addr_to_offset(uint64_t mem_addr)
     { return (mem_addr & (::x64::page_size - 1U)) >> 4U; }
 
+    /// Msr addr to offset
+    ///
+    /// Convert an integer interpreted as equal to (x2apic_base | msr_offset)
+    /// to a canonical offset.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param msr_addr the address to convert to a canonical offset
+    /// @return may or may not be a valid offset. Always check
+    ///         before using to access the apic
+    ///
     constexpr inline auto msr_addr_to_offset(uint64_t msr_addr)
     { return (msr_addr & ~::intel_x64::lapic::x2apic_base); }
 
+    /// Offset to memory address
+    ///
+    /// Convert an offset to the corresponding xAPIC MMIO address
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param offset the offset to convert
+    /// @param base the base MMIO address of the xAPIC. Equals
+    ///        0xFEE00000 by default
+    /// @return may or may not be a valid xAPIC register address. Check
+    ///         before using to access the apic
+    ///
     constexpr inline auto offset_to_mem_addr(
         offset_t offset, uintptr_t base = ::intel_x64::lapic::xapic_default_base)
     { return base | (offset << 4U); }
 
+    /// Offset to msr address
+    ///
+    /// Convert an offset to the corresponding x2APIC MSR address
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param offset the offset to convert
+    /// @return may or may not be a valid x2APIC register address. Check
+    ///         before using to access the apic
+    ///
     constexpr inline auto offset_to_msr_addr(offset_t offset)
     { return ::intel_x64::lapic::x2apic_base | offset; }
+
+    /// @cond
 
     namespace xapic_readable
     {
@@ -76,20 +131,20 @@ namespace lapic_register
         constexpr const auto from = 3U;
         constexpr const auto name = "xapic_readable";
 
-        constexpr inline auto is_enabled(uint64_t reg) noexcept
-        { return is_bit_set(reg, from); }
+        constexpr inline auto is_enabled(attr_t attr) noexcept
+        { return is_bit_set(attr, from); }
 
-        constexpr inline auto is_disabled(uint64_t reg) noexcept
-        { return is_bit_cleared(reg, from); }
+        constexpr inline auto is_disabled(attr_t attr) noexcept
+        { return is_bit_cleared(attr, from); }
 
-        constexpr inline auto enable(uint64_t reg) noexcept
-        { return set_bit(reg, from); }
+        constexpr inline auto enable(attr_t attr) noexcept
+        { return set_bit(attr, from); }
 
-        constexpr inline auto disable(uint64_t reg) noexcept
-        { return clear_bit(reg, from); }
+        constexpr inline auto disable(attr_t attr) noexcept
+        { return clear_bit(attr, from); }
 
-        inline void dump(int level, uint64_t reg, std::string *msg = nullptr)
-        { bfdebug_subbool(level, name, is_enabled(reg), msg); }
+        inline void dump(int level, attr_t attr, std::string *msg = nullptr)
+        { bfdebug_subbool(level, name, is_enabled(attr), msg); }
     }
 
     namespace xapic_writable
@@ -98,20 +153,20 @@ namespace lapic_register
         constexpr const auto from = 2U;
         constexpr const auto name = "xapic_writable";
 
-        constexpr inline auto is_enabled(uint64_t reg) noexcept
-        { return is_bit_set(reg, from); }
+        constexpr inline auto is_enabled(attr_t attr) noexcept
+        { return is_bit_set(attr, from); }
 
-        constexpr inline auto is_disabled(uint64_t reg) noexcept
-        { return is_bit_cleared(reg, from); }
+        constexpr inline auto is_disabled(attr_t attr) noexcept
+        { return is_bit_cleared(attr, from); }
 
-        constexpr inline auto enable(uint64_t reg) noexcept
-        { return set_bit(reg, from); }
+        constexpr inline auto enable(attr_t attr) noexcept
+        { return set_bit(attr, from); }
 
-        constexpr inline auto disable(uint64_t reg) noexcept
-        { return clear_bit(reg, from); }
+        constexpr inline auto disable(attr_t attr) noexcept
+        { return clear_bit(attr, from); }
 
-        inline void dump(int level, uint64_t reg, std::string *msg = nullptr)
-        { bfdebug_subbool(level, name, is_enabled(reg), msg); }
+        inline void dump(int level, attr_t attr, std::string *msg = nullptr)
+        { bfdebug_subbool(level, name, is_enabled(attr), msg); }
     }
 
     namespace x2apic_readable
@@ -120,20 +175,20 @@ namespace lapic_register
         constexpr const auto from = 1U;
         constexpr const auto name = "x2apic_readable";
 
-        constexpr inline auto is_enabled(uint64_t reg) noexcept
-        { return is_bit_set(reg, from); }
+        constexpr inline auto is_enabled(attr_t attr) noexcept
+        { return is_bit_set(attr, from); }
 
-        constexpr inline auto is_disabled(uint64_t reg) noexcept
-        { return is_bit_cleared(reg, from); }
+        constexpr inline auto is_disabled(attr_t attr) noexcept
+        { return is_bit_cleared(attr, from); }
 
-        constexpr inline auto enable(uint64_t reg) noexcept
-        { return set_bit(reg, from); }
+        constexpr inline auto enable(attr_t attr) noexcept
+        { return set_bit(attr, from); }
 
-        constexpr inline auto disable(uint64_t reg) noexcept
-        { return clear_bit(reg, from); }
+        constexpr inline auto disable(attr_t attr) noexcept
+        { return clear_bit(attr, from); }
 
-        inline void dump(int level, uint64_t reg, std::string *msg = nullptr)
-        { bfdebug_subbool(level, name, is_enabled(reg), msg); }
+        inline void dump(int level, attr_t attr, std::string *msg = nullptr)
+        { bfdebug_subbool(level, name, is_enabled(attr), msg); }
     }
 
     namespace x2apic_writable
@@ -142,41 +197,65 @@ namespace lapic_register
         constexpr const auto from = 0U;
         constexpr const auto name = "x2apic_writable";
 
-        constexpr inline auto is_enabled(uint64_t reg) noexcept
-        { return is_bit_set(reg, from); }
+        constexpr inline auto is_enabled(attr_t attr) noexcept
+        { return is_bit_set(attr, from); }
 
-        constexpr inline auto is_disabled(uint64_t reg) noexcept
-        { return is_bit_cleared(reg, from); }
+        constexpr inline auto is_disabled(attr_t attr) noexcept
+        { return is_bit_cleared(attr, from); }
 
-        constexpr inline auto enable(uint64_t reg) noexcept
-        { return set_bit(reg, from); }
+        constexpr inline auto enable(attr_t attr) noexcept
+        { return set_bit(attr, from); }
 
-        constexpr inline auto disable(uint64_t reg) noexcept
-        { return clear_bit(reg, from); }
+        constexpr inline auto disable(attr_t attr) noexcept
+        { return clear_bit(attr, from); }
 
-        inline void dump(int level, uint64_t reg, std::string *msg = nullptr)
-        { bfdebug_subbool(level, name, is_enabled(reg), msg); }
+        inline void dump(int level, attr_t attr, std::string *msg = nullptr)
+        { bfdebug_subbool(level, name, is_enabled(attr), msg); }
     }
 
     inline auto exists_in_x2apic(offset_t offset)
     {
-        const auto reg = attributes.at(offset);
+        const auto attr = attributes.at(offset);
 
-        return lapic_register::x2apic_readable::is_enabled(reg) ||
-               lapic_register::x2apic_writable::is_enabled(reg);
+        return lapic_register::x2apic_readable::is_enabled(attr) ||
+               lapic_register::x2apic_writable::is_enabled(attr);
     }
 
     inline auto readable_in_x2apic(offset_t offset)
     {
-        const auto reg = attributes.at(offset);
-        return lapic_register::x2apic_readable::is_enabled(reg);
+        const auto attr = attributes.at(offset);
+        return lapic_register::x2apic_readable::is_enabled(attr);
     }
 
     inline auto writable_in_x2apic(offset_t offset)
     {
-        const auto reg = attributes.at(offset);
-        return lapic_register::x2apic_writable::is_enabled(reg);
+        const auto attr = attributes.at(offset);
+        return lapic_register::x2apic_writable::is_enabled(attr);
     }
+
+    inline auto exists_in_xapic(offset_t offset)
+    {
+        const auto attr = attributes.at(offset);
+
+        return lapic_register::xapic_readable::is_enabled(attr) ||
+               lapic_register::xapic_writable::is_enabled(attr);
+    }
+
+    inline auto readable_in_xapic(offset_t offset)
+    {
+        const auto attr = attributes.at(offset);
+        return lapic_register::xapic_readable::is_enabled(attr);
+    }
+
+    inline auto writable_in_xapic(offset_t offset)
+    {
+        const auto attr = attributes.at(offset);
+        return lapic_register::xapic_writable::is_enabled(attr);
+    }
+
+    extern void init_attributes() noexcept;
+
+    /// @endcond
 }
 }
 }

@@ -16,21 +16,18 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-cmake_minimum_required(VERSION 3.6)
-project(eapis_test C CXX)
-
-include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project(
-    INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../include
+list(APPEND ARGN
+    DEPENDS eapis_hve
+    DEPENDS bfvmm_hve
+    DEPENDS bfvmm_memory_manager
+    DEFINES STATIC_EAPIS_HVE
+    DEFINES STATIC_HVE
+    DEFINES STATIC_MEMORY_MANAGER
+    DEFINES STATIC_INTRINSICS
+    DEFINES STATIC_DEBUG
 )
 
-add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
-
-add_subdirectory(hve)
-add_subdirectory(support)
-
-# -----------------------------------------------------------------------------
-# Install
-# -----------------------------------------------------------------------------
-
-install(DIRECTORY ../include/ DESTINATION include/eapis)
+do_test(test_support
+    SOURCES arch/intel_x64/test_support.cpp
+    ${ARGN}
+)

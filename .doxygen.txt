@@ -22,7 +22,7 @@ PROJECT_BRIEF          = ""
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = include
+INPUT                  = bfvmm/include
 
 #---------------------------------------------------------------------------
 # Shared

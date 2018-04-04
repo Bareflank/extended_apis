@@ -30,7 +30,20 @@ namespace eapis
 namespace intel_x64
 {
 
+/// Pair hash
+///
+/// Provides a hash function for std::pair
+///
 struct pair_hash {
+
+    /// Call operator
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param p the pair to hash
+    /// @return the hash of p
+    ///
     template <typename T1, typename T2>
     std::size_t operator () (const std::pair<T1,T2> &p) const {
         return ((std::hash<T1>{}(p.first) & 0x00000000FFFFFFFF) > 0) |
@@ -40,22 +53,80 @@ struct pair_hash {
 
 class hve;
 
+/// CPUID
+///
+/// Provides an interface for registering handlers for cpuid exits
+/// at a given (leaf, subleaf).
+///
 class EXPORT_EAPIS_HVE cpuid : public base
 {
 public:
 
+    /// Leaf type
+    ///
+    ///
     using leaf_t = uint64_t;
+
+    /// Subleaf type
+    ///
+    ///
     using subleaf_t = uint64_t;
 
+    /// Info
+    ///
+    /// This struct is created by cpuid::handle before being
+    /// passed to each registered handler.
+    ///
     struct info_t {
-        uint64_t rax;           // In / Out
-        uint64_t rbx;           // In / Out
-        uint64_t rcx;           // In / Out
-        uint64_t rdx;           // In / Out
-        bool ignore_write;      // Out
-        bool ignore_advance;    // Out
+
+        /// RAX (in/out)
+        ///
+        /// On in, specifies leaf
+        ///
+        uint64_t rax;
+
+        /// RBX (in/out)
+        ///
+        ///
+        uint64_t rbx;
+
+        /// RCX (in/out)
+        ///
+        /// On in, specifies subleaf
+        ///
+        uint64_t rcx;
+
+        /// RDX (in/out)
+        ///
+        ///
+        uint64_t rdx;
+
+        /// Ignore write (out)
+        ///
+        /// If true, do not update the guest's register state with the four
+        /// register values above. Set this to true if you do not want the guest
+        /// rax, rbx, rcx, or rdx to be written to after your handler completes.
+        ///
+        /// default: false
+        ///
+        bool ignore_write;
+
+        /// Ignore advance (out)
+        ///
+        /// If true, do not advance the guest's instruction pointer.
+        /// Set this to true if your handler returns true and has already
+        /// advanced the guest's instruction pointer.
+        ///
+        /// default: false
+        ///
+        bool ignore_advance;
     };
 
+    /// Handler delegate type
+    ///
+    /// The type of delegate clients must use when registering
+    /// handlers
+    ///
     using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
@@ -63,6 +134,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object for this cpuid handler
     ///
     cpuid(gsl::not_null<eapis::intel_x64::hve *> hve);
 
@@ -77,9 +150,16 @@ public:
 
     /// Add CPUID Handler
     ///
+    /// @note the handler is called only for the (leaf, subleaf)
+    ///       pairs passed into this function. If you need to handle
+    ///       accesses to leaf not at subleaf, you will need to make
+    ///       additional calls with the appropriate subleaves
+    ///
     /// @expects
     /// @ensures
     ///
+    /// @param leaf the cpuid leaf to call d
+    /// @param subleaf the cpuid subleaf to call d
     /// @param d the handler to call when an exit occurs
     ///
     void add_handler(

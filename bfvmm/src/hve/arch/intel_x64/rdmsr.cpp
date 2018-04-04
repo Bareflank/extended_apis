@@ -123,18 +123,18 @@ bool
 rdmsr::handle(gsl::not_null<vmcs_t *> vmcs)
 {
 
-// TODO: IMPORTANT!!!
-//
-// We need to create a list of MSRs that are implemented and GP when the
-// MSR is not implemented. We also need to test to make sure the the hardware
-// is enforcing the privilege level of this instruction while the hypervisor
-// is loaded.
-//
-// To fire a GP, we need to add a Bareflank specific exception that can be
-// thrown. The base hypervisor can then trap on this type of exception and
-// have delegates that can be registered to handle the exeption type, which in
-// this case would be the interrupt code that would then inject a GP.
-//
+    // TODO: IMPORTANT!!!
+    //
+    // We need to create a list of MSRs that are implemented and GP when the
+    // MSR is not implemented. We also need to test to make sure the the hardware
+    // is enforcing the privilege level of this instruction while the hypervisor
+    // is loaded.
+    //
+    // To fire a GP, we need to add a Bareflank specific exception that can be
+    // thrown. The base hypervisor can then trap on this type of exception and
+    // have delegates that can be registered to handle the exeption type, which in
+    // this case would be the interrupt code that would then inject a GP.
+    //
 
     const auto &hdlrs =
         m_handlers.find(

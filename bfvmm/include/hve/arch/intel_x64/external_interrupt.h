@@ -32,14 +32,37 @@ namespace intel_x64
 
 class hve;
 
+/// External interrupt
+///
+/// Provides an interface for registering handlers for external-interrupt
+/// exits.
+///
 class EXPORT_EAPIS_HVE external_interrupt : public base
 {
 public:
 
+    ///
+    /// Info
+    ///
+    /// This struct is created by external_interrupt::handle before being
+    /// passed to each registered handler.
+    ///
     struct info_t {
-        uint64_t vector;        // In
+
+        /// Vector (in)
+        ///
+        /// The vector that caused the exit
+        ///
+        /// default: vmcs_n::vm_exit_interruption_information::vector
+        ///
+        uint64_t vector;
     };
 
+    /// Handler delegate type
+    ///
+    /// The type of delegate clients must use when registering
+    /// handlers
+    ///
     using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
@@ -47,6 +70,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object for this external-interrupt handler
     ///
     external_interrupt(gsl::not_null<eapis::intel_x64::hve *> hve);
 
@@ -115,10 +140,6 @@ public:
     /// @endcond
 
 private:
-
-    /// @cond
-
-    /// @endcond
 
     std::array<std::list<handler_delegate_t>, 256> m_handlers;
     std::array<uint64_t, 256> m_log;

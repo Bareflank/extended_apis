@@ -29,8 +29,10 @@ namespace eapis
 namespace intel_x64
 {
 
-///
 /// Virtual LAPIC
+///
+/// Provides an interface to a virtual local APIC, which
+/// is abstracted over both xAPIC and x2APIC functionality.
 ///
 class EXPORT_EAPIS_HVE virt_lapic
 {
@@ -56,6 +58,7 @@ public:
     /// @ensures
     ///
     /// @param offset the register offset to read
+    /// @return the value of the register
     ///
     virtual uint64_t read_register(lapic_register::offset_t offset) const = 0;
 
@@ -67,12 +70,16 @@ public:
     /// @param offset the register offset to write
     /// @param val the value to write
     ///
-    virtual void write_register(lapic_register::offset_t offset, uint64_t val) = 0;
+    virtual void write_register(
+        lapic_register::offset_t offset, uint64_t val) = 0;
 
     /// Handle interrupt window exit
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this exit
+    /// @return true iff the exit is handled
     ///
     virtual bool handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs) = 0;
 
@@ -94,22 +101,92 @@ public:
     ///
     virtual void inject_spurious(uint64_t vector) = 0;
 
+    /// Read ID
     ///
-    /// Register reads
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the ID register
     ///
     virtual uint64_t read_id() const = 0;
+
+    /// Read version
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the version register
+    ///
     virtual uint64_t read_version() const = 0;
+
+    /// Read TPR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the TPR
+    ///
     virtual uint64_t read_tpr() const = 0;
-    virtual uint64_t read_icr() const = 0;
+
+    /// Read SVR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the SVR
+    ///
     virtual uint64_t read_svr() const = 0;
 
+    /// Read ICR
     ///
-    /// Register writes
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the ICR
+    ///
+    virtual uint64_t read_icr() const = 0;
+
+    /// Write EOI
+    ///
+    /// @expects
+    /// @ensures
     ///
     virtual void write_eoi() = 0;
+
+    /// Write TPR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param tpr the value of the tpr to write
+    ///
     virtual void write_tpr(uint64_t tpr) = 0;
+
+    /// Write ICR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param icr the value of the ICR to write
+    ///
     virtual void write_icr(uint64_t icr) = 0;
+
+    /// Write self-IPI
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector the vector of the self-IPI to send
+    ///
     virtual void write_self_ipi(uint64_t vector) = 0;
+
+    /// Write SVR
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param svr the value of the SVR to write
+    ///
     virtual void write_svr(uint64_t svr) = 0;
 
 public:

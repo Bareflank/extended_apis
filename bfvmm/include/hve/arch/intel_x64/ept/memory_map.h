@@ -55,6 +55,10 @@ namespace intel_x64
 namespace ept
 {
 
+/// EPT Memory Map
+///
+/// Provides an interface for manipulating extended page tables
+///
 class EXPORT_EAPIS_HVE memory_map
 {
 
