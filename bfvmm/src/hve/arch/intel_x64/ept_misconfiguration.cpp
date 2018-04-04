@@ -24,11 +24,6 @@ namespace eapis
 namespace intel_x64
 {
 
-static bool
-default_handler(
-    gsl::not_null<vmcs_t *> vmcs, ept_misconfiguration::info_t &info)
-{ bfignored(vmcs); bfignored(info); return true; }
-
 ept_misconfiguration::ept_misconfiguration(
     gsl::not_null<eapis::intel_x64::hve *> hve
 ) :
@@ -40,8 +35,6 @@ ept_misconfiguration::ept_misconfiguration(
         exit_reason::basic_exit_reason::ept_misconfiguration,
         ::handler_delegate_t::create<ept_misconfiguration, &ept_misconfiguration::handle>(this)
     );
-
-    this->add_handler(handler_delegate_t::create<default_handler>());
 }
 
 ept_misconfiguration::~ept_misconfiguration()

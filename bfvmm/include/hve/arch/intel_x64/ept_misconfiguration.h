@@ -89,7 +89,6 @@ private:
 private:
 
     gsl::not_null<exit_handler_t *> m_exit_handler;
-
     std::list<handler_delegate_t> m_handlers;
 
 private:
@@ -112,7 +111,6 @@ public:
     ept_misconfiguration &operator=(const ept_misconfiguration &) = delete;
 
     /// @endcond
-
 };
 
 }

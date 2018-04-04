@@ -128,9 +128,7 @@ private:
         uint64_t gpa;
     };
 
-    std::list<record_t> m_read_log;
-    std::list<record_t> m_write_log;
-    std::list<record_t> m_execute_log;
+    std::list<record_t> m_log;
 
 public:
 

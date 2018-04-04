@@ -24,11 +24,6 @@ namespace eapis
 namespace intel_x64
 {
 
-static bool
-default_handler(
-    gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &info)
-{ bfignored(vmcs); bfignored(info); return true; }
-
 ept_violation::ept_violation(
     gsl::not_null<eapis::intel_x64::hve *> hve
 ) :
@@ -40,10 +35,6 @@ ept_violation::ept_violation(
         exit_reason::basic_exit_reason::ept_violation,
         ::handler_delegate_t::create<ept_violation, &ept_violation::handle>(this)
     );
-
-    this->add_read_handler(handler_delegate_t::create<default_handler>());
-    this->add_write_handler(handler_delegate_t::create<default_handler>());
-    this->add_execute_handler(handler_delegate_t::create<default_handler>());
 }
 
 ept_violation::~ept_violation()
@@ -68,43 +59,13 @@ ept_violation::add_execute_handler(handler_delegate_t &&d)
 void
 ept_violation::dump_log()
 {
-    if (!m_read_log.empty()) {
+    if (!m_log.empty()) {
         bfdebug_transaction(0, [&](std::string * msg) {
             bfdebug_lnbr(0, msg);
-            bfdebug_info(0, "ept read violation log", msg);
+            bfdebug_info(0, "ept violation log", msg);
             bfdebug_brk2(0, msg);
 
-            for (const auto &record : m_read_log) {
-                bfdebug_subnhex(0, "guest virtual address", record.gva, msg);
-                bfdebug_subnhex(0, "guest physical address", record.gpa, msg);
-            }
-
-            bfdebug_lnbr(0, msg);
-        });
-    }
-
-    if (!m_write_log.empty()) {
-        bfdebug_transaction(0, [&](std::string * msg) {
-            bfdebug_lnbr(0, msg);
-            bfdebug_info(0, "ept write violation log", msg);
-            bfdebug_brk2(0, msg);
-
-            for (const auto &record : m_write_log) {
-                bfdebug_subnhex(0, "guest virtual address", record.gva, msg);
-                bfdebug_subnhex(0, "guest physical address", record.gpa, msg);
-            }
-
-            bfdebug_lnbr(0, msg);
-        });
-    }
-
-    if (!m_execute_log.empty()) {
-        bfdebug_transaction(0, [&](std::string * msg) {
-            bfdebug_lnbr(0, msg);
-            bfdebug_info(0, "ept execute violation log", msg);
-            bfdebug_brk2(0, msg);
-
-            for (const auto &record : m_execute_log) {
+            for (const auto &record : m_log) {
                 bfdebug_subnhex(0, "guest virtual address", record.gva, msg);
                 bfdebug_subnhex(0, "guest physical address", record.gpa, msg);
             }
@@ -117,25 +78,28 @@ ept_violation::dump_log()
 bool
 ept_violation::handle(gsl::not_null<vmcs_t *> vmcs)
 {
-    using namespace vmcs_n::exit_qualification::ept_violation;
-    auto qual = get();
+    using namespace vmcs_n;
+    auto qual = exit_qualification::ept_violation::get();
+    auto read_access = exit_qualification::ept_violation::data_read::is_enabled(qual);
+    auto write_access = exit_qualification::ept_violation::data_write::is_enabled(qual);
+    auto execute_access = exit_qualification::ept_violation::instruction_fetch::is_enabled(qual);
 
     struct info_t info = {
-        vmcs_n::guest_linear_address::get(),
-        vmcs_n::guest_physical_address::get(),
+        guest_linear_address::get(),
+        guest_physical_address::get(),
         qual,
         false
     };
 
-    if (data_read::is_enabled(qual)) {
+    if (read_access) {
         return handle_read(vmcs, info);
     }
 
-    if (data_write::is_enabled(qual)) {
+    if (write_access) {
         return handle_write(vmcs, info);
     }
 
-    if (instruction_fetch::is_enabled(qual)) {
+    if (execute_access) {
         return handle_execute(vmcs, info);
     }
 
@@ -147,9 +111,13 @@ ept_violation::handle(gsl::not_null<vmcs_t *> vmcs)
         bfdebug_subnhex(0, "guest virtual address", info.gva, msg);
         bfdebug_subnhex(0, "guest physical address", info.gpa, msg);
         bfdebug_subnhex(0, "exit qualification", info.exit_qualification, msg);
+        bfdebug_subbool(0, "read access", read_access, msg);
+        bfdebug_subbool(0, "write access", write_access, msg);
+        bfdebug_subbool(0, "execute access", execute_access, msg);
 
         bfdebug_lnbr(0, msg);
     });
+
     throw std::runtime_error("ept_violation::handle: unhandled ept violation");
 }
 
@@ -157,7 +125,7 @@ bool
 ept_violation::handle_read(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 {
     if (!ndebug && m_log_enabled) {
-        add_record(m_read_log, {info.gva, info.gpa});
+        add_record(m_log, {info.gva, info.gpa});
     }
 
     for (const auto &d : m_read_handlers) {
@@ -179,7 +147,7 @@ bool
 ept_violation::handle_write(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 {
     if (!ndebug && m_log_enabled) {
-        add_record(m_write_log, {info.gva, info.gpa});
+        add_record(m_log, {info.gva, info.gpa});
     }
 
     for (const auto &d : m_write_handlers) {
@@ -201,7 +169,7 @@ bool
 ept_violation::handle_execute(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 {
     if (!ndebug && m_log_enabled) {
-        add_record(m_execute_log, {info.gva, info.gpa});
+        add_record(m_log, {info.gva, info.gpa});
     }
 
     for (const auto &d : m_execute_handlers) {
