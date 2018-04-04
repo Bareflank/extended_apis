@@ -20,6 +20,8 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
         arch/intel_x64/control_register.cpp
         arch/intel_x64/cpuid.cpp
+        arch/intel_x64/ept_misconfiguration.cpp
+        arch/intel_x64/ept_violation.cpp
         arch/intel_x64/external_interrupt.cpp
         arch/intel_x64/hve.cpp
         arch/intel_x64/interrupt_window.cpp

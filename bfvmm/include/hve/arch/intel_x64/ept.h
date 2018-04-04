@@ -24,5 +24,7 @@
 #include "ept/intrinsics.h"
 #include "ept/memory_map.h"
 #include "ept/helpers.h"
+#include "ept_violation.h"
+#include "ept_misconfiguration.h"
 
 #endif

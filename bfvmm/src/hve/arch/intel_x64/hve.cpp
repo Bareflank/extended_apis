@@ -255,6 +255,60 @@ void hve::add_wrmsr_handler(
 }
 
 //--------------------------------------------------------------------------
+// EPT Misconfiguration
+//--------------------------------------------------------------------------
+
+gsl::not_null<ept_misconfiguration *> hve::ept_misconfiguration()
+{ return m_ept_misconfiguration.get(); }
+
+void hve::add_ept_misconfiguration_handler(
+    ept_misconfiguration::handler_delegate_t &&d)
+{
+    if (!m_ept_misconfiguration) {
+        m_ept_misconfiguration = std::make_unique<eapis::intel_x64::ept_misconfiguration>(this);
+    }
+
+    m_ept_misconfiguration->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// EPT Violation
+//--------------------------------------------------------------------------
+
+gsl::not_null<ept_violation *> hve::ept_violation()
+{ return m_ept_violation.get(); }
+
+void hve::add_ept_read_violation_handler(
+    ept_violation::handler_delegate_t &&d)
+{
+    if (!m_ept_violation) {
+        m_ept_violation = std::make_unique<eapis::intel_x64::ept_violation>(this);
+    }
+
+    m_ept_violation->add_read_handler(std::move(d));
+}
+
+void hve::add_ept_write_violation_handler(
+    ept_violation::handler_delegate_t &&d)
+{
+    if (!m_ept_violation) {
+        m_ept_violation = std::make_unique<eapis::intel_x64::ept_violation>(this);
+    }
+
+    m_ept_violation->add_write_handler(std::move(d));
+}
+
+void hve::add_ept_execute_violation_handler(
+    ept_violation::handler_delegate_t &&d)
+{
+    if (!m_ept_violation) {
+        m_ept_violation = std::make_unique<eapis::intel_x64::ept_violation>(this);
+    }
+
+    m_ept_violation->add_execute_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
 // Checks
 //--------------------------------------------------------------------------
 
