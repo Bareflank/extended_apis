@@ -258,7 +258,7 @@ void hve::add_wrmsr_handler(
 // EPT Misconfiguration
 //--------------------------------------------------------------------------
 
-gsl::not_null<ept_misconfiguration *> hve::ept_misconfiguration()
+gsl::not_null<ept_misconfiguration *> hve::get_ept_misconfiguration()
 { return m_ept_misconfiguration.get(); }
 
 void hve::add_ept_misconfiguration_handler(
@@ -275,7 +275,7 @@ void hve::add_ept_misconfiguration_handler(
 // EPT Violation
 //--------------------------------------------------------------------------
 
-gsl::not_null<ept_violation *> hve::ept_violation()
+gsl::not_null<ept_violation *> hve::get_ept_violation()
 { return m_ept_violation.get(); }
 
 void hve::add_ept_read_violation_handler(
