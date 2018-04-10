@@ -458,6 +458,8 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when an exit occurs
+    ///
     void add_ept_misconfiguration_handler(
             ept_misconfiguration::handler_delegate_t &&d);
 
@@ -480,6 +482,8 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when an exit occurs
+    ///
     void add_ept_read_violation_handler(
             ept_violation::handler_delegate_t &&d);
 
@@ -488,6 +492,8 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param d the delegate to call when an exit occurs
+    ///
     void add_ept_write_violation_handler(
             ept_violation::handler_delegate_t &&d);
 
@@ -495,6 +501,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param d the delegate to call when an exit occurs
     ///
     void add_ept_execute_violation_handler(
             ept_violation::handler_delegate_t &&d);
