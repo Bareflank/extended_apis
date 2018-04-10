@@ -36,10 +36,49 @@ fail_mark="$bold_red$fail_mark$reset"
 
 cpu_count=$(nproc)
 
-if [[ $# -ne 3 ]];
+option_fall_through=0
+option_keep_dumps=0
+option_help=0
+
+while [[ $# -gt 0 ]]
+do
+    case "$1" in
+        --fall-through)
+            option_fall_through=1
+            shift
+            ;;
+        --keep-dumps)
+            option_keep_dumps=1
+            shift
+            ;;
+        --help|-h)
+            option_help=1
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        --*|-*)
+            echo "unrecognized option: $1"
+            exit 1
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+
+if [[ $# -ne 3 ]] || [[ $option_help -ne 0 ]];
 then
-    echo "usage: $(basename $0) <build-dir> <hypervisor-src> <eapis-debug-config>"
-    exit 1
+    echo "usage: $(basename $0) [options] <build-dir> <hypervisor-src> <eapis-debug-config>"
+    echo
+    echo "options:"
+    echo "  --help | -h     Display this text"
+    echo "  --fall-through  Continue running tests if one fails"
+    echo "  --keep-dumps    Keep serial dumps from all tests"
+    exit $(( ! option_help ))
 fi
 
 build_dir=$1
@@ -76,6 +115,14 @@ echo_fail()
     then
         echo ""
         echo -ne "  $bold_red-> reason: $reason$reset"
+    fi
+}
+
+die_or_fall_through()
+{
+    if [[ $option_fall_through -eq 0 ]]
+    then
+        exit 1
     fi
 }
 
@@ -117,7 +164,7 @@ check_monitor_trap()
     then
         echo_fail "observed $mtr_count monitor traps; expected $cpu_count"
         echo ""
-        exit 1
+        die_or_fall_through; return 0
     fi
 
     return 0
@@ -131,7 +178,7 @@ check_vpid()
     then
         echo_fail "observed $vpid_count vpids; expected $cpu_count"
         echo ""
-        exit 1
+        die_or_fall_through; return 0
     fi
 
     return 0
@@ -145,7 +192,7 @@ check_vic()
     then
         echo_fail "observed $spurious_count spurious interrupts; expected $cpu_count"
         echo ""
-        exit 1
+        die_or_fall_through; return 0
     fi
 
     return 0
@@ -165,7 +212,7 @@ check_msr()
         else
             echo_fail "observed $record_count records; expected at least one"
             echo ""
-            exit 1
+            die_or_fall_through; return 0
         fi
     fi
 
@@ -174,7 +221,7 @@ check_msr()
     echo_fail "observed $msr_count msrs; expected $record_count"
     echo_fail "observed $val_count vals; expected $record_count"
     echo ""
-    exit 1
+    die_or_fall_through; return 0
 }
 
 check_dr()
@@ -190,7 +237,7 @@ check_dr()
         else
             echo_fail "observed $record_count records; expected at least one"
             echo ""
-            exit 1
+            die_or_fall_through; return 0
         fi
     fi
 
@@ -199,7 +246,7 @@ check_dr()
     echo_fail "observed $val_count vals; expected $record_count"
     echo ""
 
-    exit 1
+    die_or_fall_through; return 0
 }
 
 check_cr()
@@ -216,7 +263,7 @@ check_cr()
         else
             echo_fail "observed $record_count records; expected at least one"
             echo ""
-            exit 1
+            die_or_fall_through; return 0
         fi
     fi
 
@@ -226,7 +273,7 @@ check_cr()
     echo_fail "observed $val_count vals; expected $record_count"
     echo ""
 
-    exit 1
+    die_or_fall_through; return 0
 }
 
 check_cpuid()
@@ -257,7 +304,7 @@ check_cpuid()
     echo_fail "observed $rdx_count rdx; expected $cpu_count"
     echo ""
 
-    exit 1
+    die_or_fall_through; return 0
 }
 
 check_io()
@@ -285,7 +332,7 @@ check_io()
     echo_fail "observed $val_count val; expected $record_count"
     echo ""
 
-    exit 1
+    die_or_fall_through; return 0
 }
 
 check_test()
@@ -380,7 +427,12 @@ do
     check_test $vmm
     check_test_all
 
-    rm -f serial.out
+    if [[ $option_keep_dumps -eq 0 ]]
+    then
+        rm -f serial.out
+    else
+        mv -f serial.out "serial_$(parse_test_name $vmm).out"
+    fi
 
     echo_pass
     echo ""
