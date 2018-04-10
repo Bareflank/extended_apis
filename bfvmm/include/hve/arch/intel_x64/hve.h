@@ -451,7 +451,7 @@ public:
     /// @return Returns the EPT misconfiguration object stored in the hve if EPT
     ///     trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<ept_misconfiguration *> ept_misconfiguration();
+    gsl::not_null<eapis::intel_x64::ept_misconfiguration *> ept_misconfiguration();
 
     /// Add EPT Misconfiguration Handler
     ///
@@ -473,7 +473,7 @@ public:
     /// @return Returns the EPT violation object stored in the hve if EPT
     ///     trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::not_null<ept_violation *> ept_violation();
+    gsl::not_null<eapis::intel_x64::ept_violation *> ept_violation();
 
     /// Add EPT read violation handler
     ///
