@@ -168,6 +168,7 @@ private:
     struct record_t {
         uint64_t gva;
         uint64_t gpa;
+        uint64_t exit_qualification;
     };
 
     std::list<record_t> m_log;

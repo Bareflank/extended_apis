@@ -307,6 +307,46 @@ check_cpuid()
     die_or_fall_through; return 0
 }
 
+check_ept()
+{
+    local record_count=$(grep ": record" serial.out | wc -l)
+    local ept_misconfiguration_count=$(grep ": record" serial.out | wc -l)
+    local ept_read_violation_count=$(grep ": data read record" serial.out | wc -l)
+    local ept_write_violation_count=$(grep ": data write record" serial.out | wc -l)
+    local ept_execute_violation_count=$(grep ": instruction fetch record" serial.out | wc -l)
+
+    if [[ $ept_misconfiguration_count -ne $cpu_count ]];
+    then
+        echo_fail "observed $ept_misconfiguration_count ept misconfigurations; expected $cpu_count"
+        echo ""
+        die_or_fall_through; return 0
+    fi
+
+    if [[ $ept_read_violation_count -ne $cpu_count ]];
+    then
+        echo_fail "observed $ept_read_violation_count ept read violations; expected $cpu_count"
+        echo ""
+        die_or_fall_through; return 0
+    fi
+
+    if [[ $ept_write_violation_count -ne $cpu_count ]];
+    then
+        echo_fail "observed $ept_write_violation_count ept write violations; expected $cpu_count"
+        echo ""
+        die_or_fall_through; return 0
+    fi
+
+    if [[ $ept_execute_violation_count -ne $cpu_count ]];
+    then
+        echo_fail "observed $ept_execute_violation_count ept execute violations; expected $cpu_count"
+        echo ""
+        die_or_fall_through; return 0
+    fi
+
+
+    return 0
+}
+
 check_io()
 {
     local record_count=$(grep ": record" serial.out | wc -l)
@@ -343,6 +383,7 @@ check_test()
         *_x64_drs*) check_dr;;
         *_x64_cpuid*) check_cpuid;;
         *_x64_control_register*) check_cr;;
+        *_x64_ept*) check_ept;;
         *_x64_io_instruction*) check_io;;
         *_x64_monitor_trap*) check_monitor_trap;;
         *_x64_*msr*) check_msr;;
