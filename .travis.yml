@@ -174,9 +174,6 @@ matrix:
       - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_codecov.cmake -DEXTENSION=.. -DENABLE_BUILD_TEST=ON ../hypervisor
       - make -j3 eapis_x86_64-test-elf
       - make test
-      - rm -Rf depends
-      - rm -Rf depends
-      - cd ../../
       - bash <(curl -s https://codecov.io/bash)
 
   #
