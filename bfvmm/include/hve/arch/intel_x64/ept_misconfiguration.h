@@ -32,16 +32,51 @@ namespace intel_x64
 
 class hve;
 
+/// EPT Misconfiguration
+///
+/// Provides an interface for registering handlers for EPT misconfiguration
+/// exits.
+///
 class EXPORT_EAPIS_HVE ept_misconfiguration : public base
 {
 public:
 
+    ///
+    /// Info
+    ///
+    /// This struct is created by ept_misconfiguration::handle before being
+    /// passed to each registered handler.
+    ///
     struct info_t {
-        uint64_t gva;                   // In
-        uint64_t gpa;                   // In
-        bool ignore_advance;            // Out
+
+        /// GVA (in)
+        ///
+        /// The guest virtual (linear) address that caused the exit
+        ///
+        uint64_t gva;
+
+        /// GPA (in)
+        ///
+        /// The guest physical address that caused the exit
+        ///
+        uint64_t gpa;
+
+        /// Ignore advance (out)
+        ///
+        /// If true, do not advance the guest's instruction pointer.
+        /// Set this to true if your handler returns true and has already
+        /// advanced the guest's instruction pointer.
+        ///
+        /// default: false
+        ///
+        bool ignore_advance;
     };
 
+    /// Handler delegate type
+    ///
+    /// The type of delegate clients must use when registering
+    /// handlers
+    ///
     using handler_delegate_t =
         delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
@@ -49,6 +84,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param hve the hve object for this EPT misconfiguration handler
     ///
     ept_misconfiguration(gsl::not_null<eapis::intel_x64::hve *> hve);
 
