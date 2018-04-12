@@ -16,8 +16,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef PHYS_X2APIC_INTEL_X64_EAPIS_H
-#define PHYS_X2APIC_INTEL_X64_EAPIS_H
+#ifndef PHYS_XAPIC_INTEL_X64_EAPIS_H
+#define PHYS_XAPIC_INTEL_X64_EAPIS_H
 
 #include "phys_lapic.h"
 
@@ -26,13 +26,13 @@ namespace eapis
 namespace intel_x64
 {
 
-/// Physical x2APIC
+/// Physical xAPIC
 ///
-/// This class implements the lapic interface for x2apic
+/// This class implements the lapic interface for xapic
 /// mode. It is marked final because it is intended to interact
-/// directly with x2apic hardware.
+/// directly with xapic hardware.
 ///
-class EXPORT_EAPIS_HVE phys_x2apic final : public phys_lapic
+class EXPORT_EAPIS_HVE phys_xapic final : public phys_lapic
 {
 public:
 
@@ -41,14 +41,14 @@ public:
     /// @expects
     /// @ensures
     ///
-    phys_x2apic() = default;
+    phys_xapic(uintptr_t base);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~phys_x2apic() override = default;
+    ~phys_xapic() override = default;
 
     /// Enable interrupts
     ///
@@ -108,11 +108,14 @@ public:
     void write_icr(uint64_t icr) override;
     void write_self_ipi(uint64_t vector) override;
 
-    phys_x2apic(phys_x2apic &&) = default;
-    phys_x2apic &operator=(phys_x2apic &&) = default;
+    phys_xapic(phys_xapic &&) = default;
+    phys_xapic &operator=(phys_xapic &&) = default;
 
-    phys_x2apic(const phys_x2apic &) = delete;
-    phys_x2apic &operator=(const phys_x2apic &) = delete;
+    phys_xapic(const phys_xapic &) = delete;
+    phys_xapic &operator=(const phys_xapic &) = delete;
+
+private:
+    uintptr_t m_base;
 
     /// @endcond
 };
