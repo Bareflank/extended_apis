@@ -25,7 +25,7 @@ namespace intel_x64
 
 namespace lapic_register
 {
-std::array<attr_t, count> attributes;
+    std::array<attr_t, count> attributes;
 }
 
 void
@@ -112,8 +112,30 @@ init_both_read_write(uint64_t offset) noexcept
     lapic_register::attributes.at(offset) = attr;
 }
 
+
+void
+init_unstable(uint64_t offset) noexcept
+{
+    lapic_register::attr_t attr = lapic_register::attributes.at(offset);
+
+    attr = lapic_register::x2apic_unstable::enable(attr);
+    attr = lapic_register::xapic_unstable::enable(attr);
+
+    lapic_register::attributes.at(offset) = attr;
+}
+
 namespace lapic_register
 {
+
+/// Note the isr, irr, and tmr are marked as unstable. This
+/// means that even though they are readable, we can't be sure that
+/// the value read from a physical piece won't change before we
+/// enter into the guest.
+///
+/// Unstable registers will be initialized to 0 in the virt_lapic
+/// initializers that read from the physical lapics. There are alot of
+/// decisions made based on the values of the isr and irr, so starting from
+/// known values will be better for debugging.
 
 void
 init_attributes() noexcept
@@ -124,7 +146,9 @@ init_attributes() noexcept
     const auto dfr_addr = ::intel_x64::lapic::xapic_default_base | 0x0E0ULL;
     const auto icr_high = ::intel_x64::lapic::xapic_default_base | 0x310ULL;
 
-    for (auto i = 0U; i < lapic_register::count; i++) {
+    for (auto i = 0ULL; i < lapic_register::count; i++) {
+        attributes.at(i) = 0ULL;
+
         switch (i) {
             case mem_addr_to_offset(dfr_addr):
             case mem_addr_to_offset(icr_high):
@@ -169,6 +193,7 @@ init_attributes() noexcept
             case msr_addr_to_offset(ia32_x2apic_irr5::addr):
             case msr_addr_to_offset(ia32_x2apic_irr6::addr):
             case msr_addr_to_offset(ia32_x2apic_irr7::addr):
+                init_unstable(i);
 
             case msr_addr_to_offset(ia32_x2apic_cur_count::addr):
                 init_both_read_only(i);
@@ -197,9 +222,8 @@ init_attributes() noexcept
                 break;
         }
     }
-
-}
 }
 
+}
 }
 }

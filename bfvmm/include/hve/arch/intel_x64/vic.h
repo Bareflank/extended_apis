@@ -22,7 +22,7 @@
 #include "hve.h"
 #include "lapic_register.h"
 #include "phys_x2apic.h"
-#include "virt_x2apic.h"
+#include "virt_lapic.h"
 
 #ifndef VIC_LOG_LEVELS
 #define VIC_LOG_FATAL 0U
