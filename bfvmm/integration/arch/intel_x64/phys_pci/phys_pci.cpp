@@ -56,11 +56,14 @@ public:
         if (id() == 0) {
             for (auto &device : devices) {
                 bfdebug_brk31(0);
-                bfdebug_nhex(0, "Bus", device.bus());
-                bfdebug_nhex(0, "Device", device.device());
-                bfdebug_nhex(0, "Function", device.func());
-                bfdebug_nhex(0, "Vendor ID", device.vendor_id());
-                bfdebug_nhex(0, "Device ID", device.device_id());
+                bfdebug_nhex(0, "Vendor/device", device.vendor_id() << 16 | device.device_id());
+                for (uint8_t i = 0; i < 6; ++i) {
+                    pci::bar bar(device, i);
+                    if (bar.type() != pci::bar::bar_invalid) {
+                        bfdebug_nhex(0, "BAR", bar.base_address());
+                        bfdebug_nhex(0, "Region length", bar.region_length());
+                    }
+                }
             }
         }
     }
