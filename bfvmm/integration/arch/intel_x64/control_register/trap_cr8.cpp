@@ -37,7 +37,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    vcpu(vcpuid::type id) :
+    explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
         m_tpr_shadow = ::intel_x64::cr8::get();

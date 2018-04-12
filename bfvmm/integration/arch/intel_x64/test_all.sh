@@ -1,4 +1,6 @@
-#!/bin/bash -e
+#!/bin/bash
+
+set -e
 
 reset="\e[0m"
 bold="\e[1m"

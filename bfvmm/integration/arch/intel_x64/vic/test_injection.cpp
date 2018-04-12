@@ -33,7 +33,7 @@ public:
     ///
     /// @param hve the address of the hve for this vic
     ///
-    vcpu(vcpuid::type id) : eapis::intel_x64::vcpu{id}
+    explicit vcpu(vcpuid::type id) : eapis::intel_x64::vcpu{id}
     {
         const auto phys_svr = vic()->m_phys_lapic->read_svr();
         const auto piv = ::intel_x64::lapic::svr::vector::get(phys_svr);
