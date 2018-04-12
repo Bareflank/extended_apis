@@ -51,7 +51,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    vcpu(vcpuid::type id) :
+    explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
         hve()->enable_wrcr0_exiting(
