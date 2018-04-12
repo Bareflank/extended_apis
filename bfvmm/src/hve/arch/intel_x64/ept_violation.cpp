@@ -66,6 +66,19 @@ ept_violation::dump_log()
             bfdebug_brk2(0, msg);
 
             for (const auto &record : m_log) {
+
+                if (vmcs_n::exit_qualification::ept_violation::data_read::is_enabled(record.exit_qualification)) {
+                    bfdebug_info(0, "data read record", msg);
+                }
+
+                if (vmcs_n::exit_qualification::ept_violation::data_write::is_enabled(record.exit_qualification)) {
+                    bfdebug_info(0, "data write record", msg);
+                }
+
+                if (vmcs_n::exit_qualification::ept_violation::instruction_fetch::is_enabled(record.exit_qualification)) {
+                    bfdebug_info(0, "instruction fetch record", msg);
+                }
+
                 bfdebug_subnhex(0, "guest virtual address", record.gva, msg);
                 bfdebug_subnhex(0, "guest physical address", record.gpa, msg);
             }
@@ -125,7 +138,7 @@ bool
 ept_violation::handle_read(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 {
     if (!ndebug && m_log_enabled) {
-        add_record(m_log, {info.gva, info.gpa});
+        add_record(m_log, {info.gva, info.gpa, info.exit_qualification});
     }
 
     for (const auto &d : m_read_handlers) {
@@ -147,7 +160,7 @@ bool
 ept_violation::handle_write(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 {
     if (!ndebug && m_log_enabled) {
-        add_record(m_log, {info.gva, info.gpa});
+        add_record(m_log, {info.gva, info.gpa, info.exit_qualification});
     }
 
     for (const auto &d : m_write_handlers) {
@@ -169,7 +182,7 @@ bool
 ept_violation::handle_execute(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 {
     if (!ndebug && m_log_enabled) {
-        add_record(m_log, {info.gva, info.gpa});
+        add_record(m_log, {info.gva, info.gpa, info.exit_qualification});
     }
 
     for (const auto &d : m_execute_handlers) {

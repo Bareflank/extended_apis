@@ -54,10 +54,11 @@ ept_misconfiguration::dump_log()
     if (!m_log.empty()) {
         bfdebug_transaction(0, [&](std::string * msg) {
             bfdebug_lnbr(0, msg);
-            bfdebug_info(0, "ept_misconfiguration log", msg);
+            bfdebug_info(0, "ept misconfiguration log", msg);
             bfdebug_brk2(0, msg);
 
             for (const auto &record : m_log) {
+                bfdebug_info(0, "record", msg);
                 bfdebug_subnhex(0, "guest virtual address", record.gva, msg);
                 bfdebug_subnhex(0, "guest physical address", record.gpa, msg);
             }
