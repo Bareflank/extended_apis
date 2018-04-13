@@ -37,6 +37,17 @@ namespace test
     class vcpu;
 }
 
+template<
+    typename N,
+    typename = std::enable_if_t<std::is_integral<N>::value ||
+                                std::is_pointer<N>::value>
+> void
+throw_vic_fatal(const char *msg, N nhex)
+{
+    bferror_nhex(VIC_LOG_FATAL, msg, nhex);
+    throw std::runtime_error(msg + std::to_string(nhex));
+}
+
 namespace eapis
 {
 namespace intel_x64
@@ -350,6 +361,7 @@ private:
     eapis::intel_x64::hve *m_hve;
 
     std::unique_ptr<gsl::byte[]> m_ist1;
+    std::unique_ptr<uint32_t[]> m_virt_lapic_pg;
     std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
     std::unique_ptr<eapis::intel_x64::phys_lapic> m_phys_lapic;
 

@@ -38,14 +38,24 @@ class EXPORT_EAPIS_HVE virt_lapic
 {
 public:
 
+    /// Register count
+    ///
+    /// The number of 32-bit registers used by each virt_lapic
+    ///
+    static constexpr auto s_reg_count = ept::page_size_4k >> 2U;
+
     /// Default Constructor
     ///
     /// @expects
     /// @ensures
     ///
     /// @param hve the hve object of the virt_lapic
+    /// @param register_page the base address of this' registers
     ///
-    virt_lapic(gsl::not_null<eapis::intel_x64::hve *> hve);
+    virt_lapic(
+        gsl::not_null<eapis::intel_x64::hve *> hve,
+        gsl::not_null<uint32_t *> register_page
+    );
 
     /// Constructor from physical local APIC
     ///
@@ -53,11 +63,14 @@ public:
     /// @ensures
     ///
     /// @param hve the hve object of the virt_lapic
-    /// @param phys the phys_lapic object of the physical core
+    /// @param register_page the base address of this' registers
+    /// @param phys the phys_lapic object for this physical core
     ///
     virt_lapic(
         gsl::not_null<eapis::intel_x64::hve *> hve,
-        eapis::intel_x64::phys_lapic * phys);
+        gsl::not_null<uint32_t *> register_page,
+        eapis::intel_x64::phys_lapic *phys
+    );
 
     /// Destructor
     ///
@@ -174,7 +187,7 @@ private:
     uint64_t top_256bit(uint64_t last);
 
     eapis::intel_x64::hve *m_hve;
-    std::array<uint32_t, lapic_register::count> m_registers;
+    uint32_t *m_reg;
 
     /// @endcond
 
@@ -190,6 +203,7 @@ public:
 
     /// @endcond
 };
+
 
 }
 }

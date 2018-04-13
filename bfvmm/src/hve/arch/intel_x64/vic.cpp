@@ -142,8 +142,10 @@ vic::init_virt_lapic()
 
     m_virt_apic_base = ia32_apic_base::get();
     m_virt_apic_base = ia32_apic_base::state::enable_x2apic(m_virt_apic_base);
-
-    m_virt_lapic = std::make_unique<virt_lapic>(m_hve, m_phys_lapic.get());
+    m_virt_lapic_pg = std::make_unique<uint32_t[]>(virt_lapic::s_reg_count);
+    m_virt_lapic = std::make_unique<virt_lapic>(
+        m_hve, m_virt_lapic_pg.get(), m_phys_lapic.get()
+    );
 }
 
 void

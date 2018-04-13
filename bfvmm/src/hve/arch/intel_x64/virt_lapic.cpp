@@ -37,8 +37,12 @@ using namespace lapic_register;
 /// Initialization
 ///----------------------------------------------------------------------------
 
-virt_lapic::virt_lapic(gsl::not_null<eapis::intel_x64::hve *> hve) :
-    m_hve{hve}
+virt_lapic::virt_lapic(
+    gsl::not_null<eapis::intel_x64::hve *> hve,
+    gsl::not_null<uint32_t *> register_page
+) :
+    m_hve{hve},
+    m_reg{register_page}
 {
     lapic_register::init_attributes();
 
@@ -49,8 +53,11 @@ virt_lapic::virt_lapic(gsl::not_null<eapis::intel_x64::hve *> hve) :
 
 virt_lapic::virt_lapic(
     gsl::not_null<eapis::intel_x64::hve *> hve,
-    eapis::intel_x64::phys_lapic *phys) :
-    m_hve{hve}
+    gsl::not_null<uint32_t *> register_page,
+    eapis::intel_x64::phys_lapic *phys
+) :
+    m_hve{hve},
+    m_reg{register_page}
 {
     lapic_register::init_attributes();
 
@@ -80,13 +87,13 @@ virt_lapic::init_id()
 }
 
 /// When the init is from the physical lapic, we read from every
-/// readable register, including unstable ones (e.g ISR, IRR, LVT timer)
-///
+/// readable register, excluding unstable ones (e.g ISR and IRR). Those
+/// excluded are set to 0.
 void
 virt_lapic::init_registers_from_phys_xapic(
     eapis::intel_x64::phys_xapic *phys)
 {
-    for (auto i = 0U; i < m_registers.size(); ++i) {
+    for (auto i = 0U; i < s_reg_count; ++i) {
 
         if (lapic_register::exists_in_xapic(i)) {
             if (lapic_register::readable_in_xapic(i)) {
@@ -108,7 +115,7 @@ void
 virt_lapic::init_registers_from_phys_x2apic(
     eapis::intel_x64::phys_x2apic *phys)
 {
-    for (auto i = 0U; i < m_registers.size(); ++i) {
+    for (auto i = 0U; i < s_reg_count; ++i) {
 
         if (lapic_register::exists_in_x2apic(i)) {
             if (lapic_register::readable_in_x2apic(i)) {
@@ -141,7 +148,13 @@ virt_lapic::init_interrupt_window_handler()
 
 uint64_t
 virt_lapic::read_register(lapic_register::offset_t offset) const
-{ return m_registers.at(offset); }
+{
+    if (offset >= s_reg_count) {
+        throw_vic_fatal("virt_lapic::read_register: invalid offset: ", offset);
+    }
+
+    return m_reg[offset];
+}
 
 uint64_t
 virt_lapic::read_id() const
@@ -189,13 +202,19 @@ virt_lapic::read_svr() const
 
 void
 virt_lapic::write_register(lapic_register::offset_t offset, uint64_t val)
-{ m_registers.at(offset) = gsl::narrow_cast<uint32_t>(val); }
+{
+    if (offset >= s_reg_count) {
+        throw_vic_fatal("virt_lapic::write_register: invalid offset: ", offset);
+    }
+
+    m_reg[offset] = gsl::narrow_cast<uint32_t>(val);
+}
 
 void
 virt_lapic::write_eoi()
 {
     const auto offset = msr_addr_to_offset(ia32_x2apic_eoi::addr);
-    this->write_register(offset, 0x0ULL);
+    this->write_register(offset, 0U);
     this->pop_isr();
 }
 
@@ -409,7 +428,7 @@ virt_lapic::handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs)
 void
 virt_lapic::reset_registers()
 {
-    for (auto i = 0U; i < m_registers.size(); ++i) {
+    for (auto i = 0U; i < s_reg_count; ++i) {
         this->reset_register(i);
     }
 }
