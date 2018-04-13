@@ -196,7 +196,7 @@ public:
     ///
     /// @return contents of the specified base address register, or 0xFFFFFFFF for invalid indices
     ///
-    inline uint32_t bar(uint8_t n) const
+    inline uint32_t bar(unsigned int n) const
     {
         if (n < 6) {
             return read_register_u32(0x10 + 4 * n);
@@ -238,7 +238,7 @@ public:
     /// @param n index of the desired base address register
     /// @param value value to write
     ///
-    inline void set_bar(uint8_t n, uint32_t value)
+    inline void set_bar(unsigned int n, uint32_t value)
     {
         if (n < 6) {
             write_register(0x10 + 4 * n, value);
@@ -344,6 +344,90 @@ protected:
     func_type m_func;
 
 };
+
+///
+/// @brief Class providing detailed access to base address registers
+///
+class EXPORT_HVE bar
+{
+public:
+
+    /// @brief Type of address contained in this BAR
+    enum bar_type {
+        /// BAR containing a 32-bit address into physical memory
+        bar_memory_32bit,
+
+        /// BAR containing a 64-bit address into physical memory. This type
+        /// also consumes the next BAR.
+        bar_memory_64bit,
+
+        /// BAR containing a 32-bit address into IO space
+        bar_io,
+
+        /// Invalid BAR. BARs can be invalid for two reasons: either they
+        /// are consumed as the high half of a 64-bit BAR, or the specified
+        /// BAR index does not exist in this device's header type.
+        bar_invalid,
+    };
+
+    /// Instantiate a BAR from a PCI device and a BAR index.
+    ///
+    /// @param device existing PCI device
+    /// @param index BAR index. Valid indices are always less than 6; not all
+    ///         BAR indices will be valid for a given device so the user must
+    ///         check type().
+    bar(phys_pci device, unsigned int index)
+        : m_device(device),
+            m_index(index)
+    {
+        m_type = compute_type();
+    }
+
+    virtual ~bar() = default;
+
+    /// Get the type of this BAR
+    /// @return BAR type
+    inline enum bar_type type() const { return m_type; }
+
+    /// Get the base address of this BAR
+    /// @return BAR physical base address
+    uintptr_t base_address() const;
+
+    /// @brief Get the length of this BAR's memory region.
+    /// This is not const because it must write to the BAR to query.
+    /// @return memory/IO region length in bytes
+    uintptr_t region_length();
+
+    /// @brief Get whether this region is prefetchable.
+    /// Always returns false for IO BARs.
+    /// @return true iff prefetchable
+    bool prefetchable() const;
+
+    /// @brief Set the base address of this BAR
+    /// @param address BAR base address. Must be aligned as required for this BAR's type
+    void set_base_address(uintptr_t address);
+
+private:
+
+    /// Device containing this BAR
+    phys_pci m_device;
+
+    /// Index of BAR
+    unsigned int m_index;
+
+    /// Type of BAR. Stored because it is needed frequently and somewhat expensive to compute
+    enum bar_type m_type;
+
+    /// Compute the BAR type.
+    enum bar_type compute_type() const;
+
+    /// Compute the memory region length for 64-bit only
+    uintptr_t region_length_64();
+
+    /// Return the bitmask of address bits for this BAR type
+    uint32_t mask() const;
+};
+
 
 }
 }

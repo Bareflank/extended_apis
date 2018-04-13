@@ -19,7 +19,7 @@
 
 #include <intrinsics.h>
 
-// To test enumeration, we need a more complicated implementation of _ind and _outd
+// We need a more complicated implementation of _ind and _outd
 // that implement PCI configuration space in a second map.
 #define _ind _simple_ind
 #define _outd _simple_outd
@@ -32,7 +32,11 @@
 #define PORTIO_CONFIG_ADDRESS 0xCF8
 #define PORTIO_CONFIG_DATA    0xCFC
 
+#define BAR_TEST_REGION_LENGTH  0x8000u
+
 std::map<uint32_t, uint32_t> g_pci_config_space;
+
+static uint32_t intercept_bar_write(uint32_t addr, uint32_t value);
 
 extern "C" uint32_t
 _ind(uint16_t port) noexcept
@@ -51,14 +55,53 @@ _ind(uint16_t port) noexcept
     }
 }
 
+/// Modified test _outd with the following additional features:
+///
+/// - If writing to 0xCFC (PCI config data), redirect to a second map representing
+///   PCI config space.
+/// - If the PCI config space address represents a BAR, pass on to
+///   intercept_bar_write() to allow the region length query to be tested.
 extern "C" void
 _outd(uint16_t port, uint32_t value) noexcept
 {
     if (port == PORTIO_CONFIG_DATA) {
-        g_pci_config_space[g_ports[PORTIO_CONFIG_ADDRESS]] = value;
+        uint32_t addr = g_ports[PORTIO_CONFIG_ADDRESS];
+        bool maybe_bar = (addr & 0xfc) >= 0x10 && (addr & 0xfc) <= 0x24;
+
+        uint32_t header_type_field = (addr & ~0xFCu) | 0x0Cu;
+        uint32_t header_type = (g_pci_config_space[header_type_field] & 0x007F0000u) >> 16;
+
+        g_pci_config_space[addr] = value;
+
+        if (maybe_bar) {
+            uint32_t bar_index = ((addr & 0xfc) - 0x10) / 4;
+
+            if ((header_type == 0 && bar_index <= 5) ||
+                (header_type == 1 && bar_index <= 1)) {
+
+                g_pci_config_space[addr] = intercept_bar_write(addr, value);
+            }
+        }
     }
 
     g_ports[port] = value;
+}
+
+static uint32_t
+intercept_bar_write(uint32_t addr, uint32_t value)
+{
+    if (value == 0xFFFFFFFF) {
+        if (addr & 0x4) {
+            // Odd BAR, assume second half of 64-bit
+            return 0xFFFFFFFF;
+        }
+        else {
+            return ~(BAR_TEST_REGION_LENGTH - 1);
+        }
+    }
+    else {
+        return value;
+    }
 }
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
@@ -106,6 +149,13 @@ TEST_CASE("phys_pci test support")
 
     CHECK_NOTHROW(_outd(PORTIO_CONFIG_ADDRESS, 0xABAD1DEA));
     CHECK(_ind(PORTIO_CONFIG_DATA) == 0xFFFFFFFF);
+
+    // Set up a very simple header and check that BAR writes are intercepted
+    CHECK_NOTHROW(_outd(PORTIO_CONFIG_ADDRESS, 0x0000000C));
+    CHECK_NOTHROW(_outd(PORTIO_CONFIG_DATA,    0x00000000));
+    CHECK_NOTHROW(_outd(PORTIO_CONFIG_ADDRESS, 0x00000010));
+    CHECK_NOTHROW(_outd(PORTIO_CONFIG_DATA,    0xFFFFFFFF));
+    CHECK(_ind(PORTIO_CONFIG_DATA) != 0xFFFFFFFF);
 
     for (uint32_t reg = 0; reg <= 0x3C; reg += 4) {
         CHECK(g_pci_config_space[0x80011300 | reg] == 0xaabbccdd);
@@ -520,6 +570,125 @@ TEST_CASE("enumeration")
 
     CHECK_NOTHROW(phys_pci::enumerate(devices));
     CHECK(devices.size() == sizeof(g_descriptors) / sizeof(g_descriptors[0]));
+}
+
+TEST_CASE("BARs, header type 0")
+{
+    auto ___ = cleanup();
+
+    // Generate a device with some interesting BARs
+    // Note: for intercept_bar_write() to work properly, only even-numbered BARs
+    // should be queried for length.
+    write_register(1, 2, 3, 0x00, 0x12345678);  // vendor, device
+    write_register(1, 2, 3, 0x08, 0x00000000);  // class
+    write_register(1, 2, 3, 0x0C, 0x00000000);  // header type
+    write_register(1, 2, 3, 0x10, 0x12345679);  // IO BAR, addr = 0x12345678
+    write_register(1, 2, 3, 0x14, 0x12345670);  // 32-bit BAR, addr = 0x12345670, non-prefetch
+    write_register(1, 2, 3, 0x18, 0x9ABCDEFC);  // 64-bit BAR, addr = 0x123456789ABCDEF0, prefetch
+    write_register(1, 2, 3, 0x1C, 0x12345678);  // 64-bit BAR continuation
+    write_register(1, 2, 3, 0x20, 0x12345672);  // invalid memory BAR
+    write_register(1, 2, 3, 0x24, 0x9ABCDEFC);  // 64-bit BAR with truncated second half (invalid)
+
+    phys_pci dev(1, 2, 3);
+    bar bar0(dev, 0);
+    bar bar1(dev, 1);
+    bar bar2(dev, 2);
+    bar bar3(dev, 3);
+    bar bar4(dev, 4);
+    bar bar5(dev, 5);
+    bar bar6(dev, 6);
+
+    CHECK(bar0.type() == bar::bar_io);
+    CHECK(bar1.type() == bar::bar_memory_32bit);
+    CHECK(bar2.type() == bar::bar_memory_64bit);
+    CHECK(bar3.type() == bar::bar_invalid);         // continuation of above
+    CHECK(bar4.type() == bar::bar_invalid);         // invalid type
+    CHECK(bar5.type() == bar::bar_invalid);         // truncated 64-bit
+    CHECK(bar6.type() == bar::bar_invalid);         // bad index
+
+    CHECK(bar0.base_address() == 0x12345678);
+    CHECK(bar1.base_address() == 0x12345670);
+    CHECK(bar2.base_address() == 0x123456789ABCDEF0);
+
+    CHECK(bar0.region_length() == BAR_TEST_REGION_LENGTH);
+    CHECK(bar2.region_length() == BAR_TEST_REGION_LENGTH);
+    CHECK(bar4.region_length() == 0);
+
+    // Make sure region length checks set things back how they found them
+    CHECK(bar0.base_address() == 0x12345678);
+    CHECK(bar1.base_address() == 0x12345670);
+    CHECK(bar2.base_address() == 0x123456789ABCDEF0);
+
+    CHECK(bar0.prefetchable() == false);
+    CHECK(bar1.prefetchable() == false);
+    CHECK(bar2.prefetchable() == true);
+    CHECK(bar3.prefetchable() == false);
+
+    CHECK_NOTHROW(bar0.set_base_address(0x42424200));
+    CHECK_NOTHROW(bar1.set_base_address(0x24242400));
+    CHECK_NOTHROW(bar2.set_base_address(0xaaaaaaaa55555500));
+
+    CHECK(bar0.base_address() == 0x42424200);
+    CHECK(bar1.base_address() == 0x24242400);
+    CHECK(bar2.base_address() == 0xaaaaaaaa55555500);
+    CHECK(bar1.prefetchable() == false);
+    CHECK(bar2.prefetchable() == true);
+}
+
+TEST_CASE("BARs, header type 1")
+{
+    auto ___ = cleanup();
+
+    // Generate a device with some interesting BARs
+    // Note: for intercept_bar_write() to work properly, only even-numbered BARs
+    // should be queried for length.
+    write_register(1, 2, 3, 0x00, 0x12345678);  // vendor, device
+    write_register(1, 2, 3, 0x08, 0x00000000);  // class
+    write_register(1, 2, 3, 0x0C, 0x00010000);  // header type
+    write_register(1, 2, 3, 0x10, 0x12345679);  // IO BAR, addr = 0x12345678
+    write_register(1, 2, 3, 0x14, 0x12345670);  // 32-bit BAR, addr = 0x12345670, non-prefetch
+
+    // Fake a valid BAR in space that's not actually for BARs to make sure
+    // the index is picked up as invalid first
+    write_register(1, 2, 3, 0x18, 0x12345679);  // IO BAR, addr = 0x12345678
+
+    phys_pci dev(1, 2, 3);
+    bar bar0(dev, 0);
+    bar bar1(dev, 1);
+    bar bar2(dev, 2);
+
+    CHECK(bar0.type() == bar::bar_io);
+    CHECK(bar1.type() == bar::bar_memory_32bit);
+    CHECK(bar2.type() == bar::bar_invalid);
+
+    CHECK(bar0.base_address() == 0x12345678);
+    CHECK(bar1.base_address() == 0x12345670);
+
+    CHECK(bar0.region_length() == BAR_TEST_REGION_LENGTH);
+
+    CHECK(bar0.base_address() == 0x12345678);
+    CHECK(bar1.base_address() == 0x12345670);
+}
+
+TEST_CASE("BARs, header type 2")
+{
+    auto ___ = cleanup();
+
+    // Generate a device with some interesting BARs
+    // Note: for intercept_bar_write() to work properly, only even-numbered BARs
+    // should be queried for length.
+    write_register(1, 2, 3, 0x00, 0x12345678);  // vendor, device
+    write_register(1, 2, 3, 0x08, 0x00000000);  // class
+    write_register(1, 2, 3, 0x0C, 0x00020000);  // header type
+
+    // Fake a valid BAR in space that's not actually for BARs to make sure
+    // the index is picked up as invalid first
+    write_register(1, 2, 3, 0x10, 0x12345679);  // IO BAR, addr = 0x12345678
+
+    phys_pci dev(1, 2, 3);
+    bar bar0(dev, 0);
+
+    CHECK(bar0.type() == bar::bar_invalid);
 }
 
 }
