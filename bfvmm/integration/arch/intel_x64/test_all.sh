@@ -186,6 +186,11 @@ check_vpid()
     return 0
 }
 
+check_phys_pci()
+{
+    return 0
+}
+
 check_vic()
 {
     local spurious_count=$(dmesg | grep -i "spurious" | wc -l)
@@ -391,6 +396,7 @@ check_test()
         *_x64_*msr*) check_msr;;
         *_x64_vic*) check_vic;;
         *_x64_vpid*) check_vpid;;
+        *_x64_phys_pci*) check_phys_pci;;
         *)
             echo ""
             echo -ne "$bold_yellow"

@@ -66,3 +66,13 @@ do_test(test_isr
     SOURCES arch/intel_x64/test_isr.cpp
     ${ARGN}
 )
+
+do_test(test_phys_pci
+    SOURCES test_phys_pci.cpp
+    ${ARGN}
+)
+
+do_test(test_pci_register
+    SOURCES arch/x64/test_pci_register.cpp
+    ${ARGN}
+)
