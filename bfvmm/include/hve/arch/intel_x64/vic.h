@@ -19,8 +19,11 @@
 #ifndef VIC_INTEL_X64_EAPIS_H
 #define VIC_INTEL_X64_EAPIS_H
 
+#include <bfvmm/memory_manager/arch/x64/map_ptr.h>
+
 #include "hve.h"
 #include "lapic_register.h"
+#include "phys_xapic.h"
 #include "phys_x2apic.h"
 #include "virt_lapic.h"
 
@@ -37,21 +40,45 @@ namespace test
     class vcpu;
 }
 
+namespace eapis
+{
+namespace intel_x64
+{
+
+namespace ept
+{
+    class memory_map;
+}
+
+///-----------------------------------------------------------------------------
+/// Namespace aliases
+///-----------------------------------------------------------------------------
+
+namespace apic_base = ::intel_x64::msrs::ia32_apic_base;
+namespace proc_ctl1 = vmcs_n::primary_processor_based_vm_execution_controls;
+namespace proc_ctl2 = vmcs_n::secondary_processor_based_vm_execution_controls;
+
+///-----------------------------------------------------------------------------
+/// Debug helpers
+///-----------------------------------------------------------------------------
+
 template<
     typename N,
     typename = std::enable_if_t<std::is_integral<N>::value ||
-                                std::is_pointer<N>::value>
-> void
+                                std::is_pointer<N>::value>>
+inline void
 throw_vic_fatal(const char *msg, N nhex)
 {
     bferror_nhex(VIC_LOG_FATAL, msg, nhex);
     throw std::runtime_error(msg + std::to_string(nhex));
 }
 
-namespace eapis
+inline void
+throw_vic_fatal(const char *msg)
 {
-namespace intel_x64
-{
+    bferror_info(VIC_LOG_FATAL, msg);
+    throw std::runtime_error(msg);
+}
 
 /// Virtual interrupt controller (VIC)
 ///
@@ -285,6 +312,18 @@ public:
     bool handle_x2apic_self_ipi_write(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
+    /// Handle xAPIC write exit
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
+    bool handle_ept_write(
+        gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &info);
+
     /// Handle cr8 read exit
     ///
     /// Handle guest attempts to read cr8
@@ -337,19 +376,34 @@ public:
     bool handle_wrmsr_apic_base(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
+    /// Handle EPT write monitor trap
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
+    bool handle_ept_write_mtf(
+        gsl::not_null<vmcs_t *> vmcs, monitor_trap::info_t &info);
+
 private:
 
     void add_exit_handlers();
     void add_cr8_handlers();
+    void add_lapic_handlers();
     void add_apic_base_handlers();
     void add_external_interrupt_handlers();
-
+    void add_xapic_handlers();
     void add_x2apic_handlers();
     void add_x2apic_read_handler(lapic_register::offset_t offset);
     void add_x2apic_write_handler(lapic_register::offset_t offset);
 
     void init_phys_idt();
+    void init_apic_base();
     void init_phys_lapic();
+    void init_phys_xapic();
     void init_phys_x2apic();
     void init_virt_lapic();
     void init_save_state();
@@ -358,16 +412,22 @@ private:
     bool handle_spurious_interrupt(
         gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info);
 
+
     eapis::intel_x64::hve *m_hve;
 
     std::unique_ptr<gsl::byte[]> m_ist1;
     std::unique_ptr<uint32_t[]> m_virt_lapic_pg;
     std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
     std::unique_ptr<eapis::intel_x64::phys_lapic> m_phys_lapic;
+    std::unique_ptr<eapis::intel_x64::ept::memory_map> m_ept_mm;
 
-    std::array<std::list<handler_delegate_t>, 256> m_handlers;
-    std::array<uint64_t, 256> m_interrupt_map;
+    std::array<uint64_t, 256U> m_interrupt_map;
+    std::array<std::list<handler_delegate_t>, 256U> m_handlers;
+
+    bfvmm::x64::unique_map_ptr<uint8_t> m_xapic_ump;
     uint64_t m_virt_apic_base;
+    lapic_register::offset_t m_ept_write_offset;
+    bool m_ept_write_mtf;
 
     friend class test::vcpu;
 

@@ -30,8 +30,8 @@ namespace eapis
 namespace intel_x64
 {
 
-phys_xapic::phys_xapic(uintptr_t base) :
-    m_base{base}
+phys_xapic::phys_xapic(uint8_t *base) :
+    m_base{reinterpret_cast<uintptr_t>(base)}
 { }
 
 void

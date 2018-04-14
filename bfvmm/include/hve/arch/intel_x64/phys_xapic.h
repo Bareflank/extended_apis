@@ -41,7 +41,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    phys_xapic(uintptr_t base);
+    phys_xapic(uint8_t *base);
 
     /// Destructor
     ///

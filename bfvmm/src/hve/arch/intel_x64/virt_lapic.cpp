@@ -39,13 +39,14 @@ using namespace lapic_register;
 
 virt_lapic::virt_lapic(
     gsl::not_null<eapis::intel_x64::hve *> hve,
-    gsl::not_null<uint32_t *> register_page
+    gsl::not_null<uint32_t *> register_page,
+    access_t access
 ) :
     m_hve{hve},
-    m_reg{register_page}
+    m_reg{register_page},
+    m_access_type{access}
 {
     lapic_register::init_attributes();
-
     this->init_id();
     this->init_interrupt_window_handler();
     this->reset_registers();
@@ -60,26 +61,31 @@ virt_lapic::virt_lapic(
     m_reg{register_page}
 {
     lapic_register::init_attributes();
-
     this->init_id();
     this->init_interrupt_window_handler();
 
     auto x2apic = dynamic_cast<phys_x2apic *>(phys);
     if (x2apic != nullptr) {
         this->init_registers_from_phys_x2apic(x2apic);
+        m_access_type = access_t::msr;
         return;
     }
 
     auto xapic = dynamic_cast<phys_xapic *>(phys);
     if (xapic != nullptr) {
         this->init_registers_from_phys_xapic(xapic);
+        m_access_type = access_t::mmio;
         return;
     }
 
     throw std::runtime_error("virt_lapic: invalid phys_lapic");
 }
 
-void
+virt_lapic::access_t
+virt_lapic::access_type() const
+{ return m_access_type; }
+
+inline void
 virt_lapic::init_id()
 {
     const auto offset = msr_addr_to_offset(ia32_x2apic_apicid::addr);

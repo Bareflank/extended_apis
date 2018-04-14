@@ -44,6 +44,14 @@ public:
     ///
     static constexpr auto s_reg_count = ept::page_size_4k >> 2U;
 
+    /// Access type
+    ///
+    /// The interface used by the guest to talk to the virt_lapic
+    ///
+    enum class access_t : uint64_t {
+        msr, mmio
+    };
+
     /// Default Constructor
     ///
     /// @expects
@@ -51,10 +59,12 @@ public:
     ///
     /// @param hve the hve object of the virt_lapic
     /// @param register_page the base address of this' registers
+    /// @param access the access_t for this virt_lapic
     ///
     virt_lapic(
         gsl::not_null<eapis::intel_x64::hve *> hve,
-        gsl::not_null<uint32_t *> register_page
+        gsl::not_null<uint32_t *> register_page,
+        access_t access
     );
 
     /// Constructor from physical local APIC
@@ -78,6 +88,15 @@ public:
     /// @ensures
     ///
     ~virt_lapic() = default;
+
+    /// Access Type
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the access type for this virtual apic
+    ///
+    access_t access_type() const;
 
     /// Read Register
     ///
@@ -188,6 +207,7 @@ private:
 
     eapis::intel_x64::hve *m_hve;
     uint32_t *m_reg;
+    access_t m_access_type;
 
     /// @endcond
 
