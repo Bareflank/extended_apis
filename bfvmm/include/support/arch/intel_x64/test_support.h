@@ -22,8 +22,8 @@
 #include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
 #include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
 #include <bfvmm/support/arch/intel_x64/test_support.h>
-#include <hve/arch/intel_x64/hve.h>
-#include <hve/arch/intel_x64/vic.h>
+#include "../../../hve/arch/intel_x64/hve.h"
+#include "../../../hve/arch/intel_x64/vic.h"
 
 namespace msrs_n = ::intel_x64::msrs;
 namespace lapic_n = ::intel_x64::lapic;
