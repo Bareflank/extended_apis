@@ -24,18 +24,18 @@
 
 namespace eptp = intel_x64::vmcs::ept_pointer;
 
-namespace eapis
+namespace test_ept
 {
-namespace intel_x64
-{
-namespace ept
-{
+
+extern "C" uint64_t unsafe_write_cstr(const char *cstr, size_t len)
+{ bfignored(cstr); bfignored(len); return 0; }
+
 
 TEST_CASE("ept::eptp")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
 
     uint64_t expected{0ULL};
     expected = eptp::memory_type::set(expected, eptp::memory_type::write_back);
@@ -49,188 +49,186 @@ TEST_CASE("ept::eptp")
 TEST_CASE("ept::map_1g")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    uintptr_t hpa = mock_1g_hpa;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    uintptr_t hpa = test_ept::mock_1g_hpa;
+    ept::epte_t result_entry{0ULL};
 
     ept::map_1g(*mem_map, gpa, hpa);
     CHECK_THROWS(ept::map_1g(*mem_map, gpa, hpa));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == hpa);
+    CHECK(ept::epte::hpa(result_entry) == hpa);
 }
 
 TEST_CASE("ept::map_1g with attributes")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    uintptr_t hpa = mock_1g_hpa;
-    ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    uintptr_t hpa = test_ept::mock_1g_hpa;
+    ept::memory_attr_t mtype = ept::epte::memory_attr::wb_rw;
+    ept::epte_t result_entry{0ULL};
 
     ept::map_1g(*mem_map, gpa, hpa, mtype);
     CHECK_THROWS(ept::map_1g(*mem_map, gpa, hpa, mtype));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == hpa);
+    CHECK(ept::epte::hpa(result_entry) == hpa);
 }
 
 TEST_CASE("ept::identity_map_1g")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    ept::memory_attr_t mtype = ept::epte::memory_attr::wb_rw;
+    ept::epte_t result_entry{0ULL};
 
     ept::identity_map_1g(*mem_map, gpa);
     CHECK_THROWS(ept::identity_map_1g(*mem_map, gpa));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == gpa);
+    CHECK(ept::epte::hpa(result_entry) == gpa);
 }
 
 TEST_CASE("ept::identity_map_1g with attributes")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    ept::memory_attr_t mtype = ept::epte::memory_attr::wb_rw;
+    ept::epte_t result_entry{0ULL};
 
     ept::identity_map_1g(*mem_map, gpa, mtype);
     CHECK_THROWS(ept::identity_map_1g(*mem_map, gpa));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == gpa);
+    CHECK(ept::epte::hpa(result_entry) == gpa);
 }
 
 TEST_CASE("ept::map_2m")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    uintptr_t hpa = mock_2m_hpa;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    uintptr_t hpa = test_ept::mock_2m_hpa;
+    ept::epte_t result_entry{0ULL};
 
     ept::map_2m(*mem_map, gpa, hpa);
     CHECK_THROWS(ept::map_2m(*mem_map, gpa, hpa));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == hpa);
+    CHECK(ept::epte::hpa(result_entry) == hpa);
 }
 
 TEST_CASE("ept::map_2m with attributes")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    uintptr_t hpa = mock_2m_hpa;
-    ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    uintptr_t hpa = test_ept::mock_2m_hpa;
+    ept::memory_attr_t mtype = ept::epte::memory_attr::wb_rw;
+    ept::epte_t result_entry{0ULL};
 
     ept::map_2m(*mem_map, gpa, hpa, mtype);
     CHECK_THROWS(ept::map_2m(*mem_map, gpa, hpa, mtype));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == hpa);
+    CHECK(ept::epte::hpa(result_entry) == hpa);
 }
 
 TEST_CASE("ept::identity_map_2m")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    ept::memory_attr_t mtype = ept::epte::memory_attr::wb_rw;
+    ept::epte_t result_entry{0ULL};
 
     ept::identity_map_2m(*mem_map, gpa);
     CHECK_THROWS(ept::identity_map_2m(*mem_map, gpa));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == gpa);
+    CHECK(ept::epte::hpa(result_entry) == gpa);
 }
 
 TEST_CASE("ept::identity_map_2m with attributes")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    ept::memory_attr_t mtype = ept::epte::memory_attr::wb_rw;
+    ept::epte_t result_entry{0ULL};
 
     ept::identity_map_2m(*mem_map, gpa, mtype);
     CHECK_THROWS(ept::identity_map_2m(*mem_map, gpa));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == gpa);
+    CHECK(ept::epte::hpa(result_entry) == gpa);
 }
 
 TEST_CASE("ept::map_4k")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    uintptr_t hpa = mock_4k_hpa;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    uintptr_t hpa = test_ept::mock_4k_hpa;
+    ept::epte_t result_entry{0ULL};
 
     ept::map_4k(*mem_map, gpa, hpa);
     CHECK_THROWS(ept::map_4k(*mem_map, gpa, hpa));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == hpa);
+    CHECK(ept::epte::hpa(result_entry) == hpa);
 }
 
 TEST_CASE("ept::map_4k with attributes")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    uintptr_t hpa = mock_4k_hpa;
-    ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    uintptr_t hpa = test_ept::mock_4k_hpa;
+    ept::memory_attr_t mtype = ept::epte::memory_attr::wb_rw;
+    ept::epte_t result_entry{0ULL};
 
     ept::map_4k(*mem_map, gpa, hpa, mtype);
     CHECK_THROWS(ept::map_4k(*mem_map, gpa, hpa, mtype));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == hpa);
+    CHECK(ept::epte::hpa(result_entry) == hpa);
 }
 
 TEST_CASE("ept::identity_map_4k")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    ept::memory_attr_t mtype = ept::epte::memory_attr::wb_rw;
+    ept::epte_t result_entry{0ULL};
 
     ept::identity_map_4k(*mem_map, gpa);
     CHECK_THROWS(ept::identity_map_4k(*mem_map, gpa));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == gpa);
+    CHECK(ept::epte::hpa(result_entry) == gpa);
 }
 
 TEST_CASE("ept::identity_map_4k with attributes")
 {
     MockRepository mocks;
-    auto mm = setup_mock_ept_memory_manager(mocks);
-    auto mem_map = new ept::memory_map();
-    uintptr_t gpa = g_unmapped_gpa;
-    ept::memory_attr_t mtype = epte::memory_attr::wb_rw;
-    epte_t result_entry{0ULL};
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    ept::memory_attr_t mtype = ept::epte::memory_attr::wb_rw;
+    ept::epte_t result_entry{0ULL};
 
     ept::identity_map_4k(*mem_map, gpa, mtype);
     CHECK_THROWS(ept::identity_map_4k(*mem_map, gpa));
     result_entry = mem_map->gpa_to_epte(gpa);
-    CHECK(epte::hpa(result_entry) == gpa);
+    CHECK(ept::epte::hpa(result_entry) == gpa);
 }
 
-}
-}
 }
 
 #endif

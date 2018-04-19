@@ -24,7 +24,7 @@ before_script:
   #
   # Build Folder
   #
-  - git clone -b test-support https://github.com/connojd/hypervisor.git hypervisor
+  - git clone https://github.com/bareflank/hypervisor.git hypervisor
   - mkdir build
   - cd build
 
