@@ -56,6 +56,7 @@ endif()
 
 list(APPEND SOURCES
     phys_pci.cpp
+    pci_device_allocator.cpp
 )
 
 add_shared_library(

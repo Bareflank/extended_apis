@@ -19,91 +19,7 @@
 
 #include <intrinsics.h>
 
-// We need a more complicated implementation of _ind and _outd
-// that implement PCI configuration space in a second map.
-#define _ind _simple_ind
-#define _outd _simple_outd
-#include <support/arch/intel_x64/test_support.h>
-#undef _ind
-#undef _outd
-
-#include <hve/phys_pci.h>
-
-#define PORTIO_CONFIG_ADDRESS 0xCF8
-#define PORTIO_CONFIG_DATA    0xCFC
-
-#define BAR_TEST_REGION_LENGTH  0x8000u
-
-std::map<uint32_t, uint32_t> g_pci_config_space;
-
-static uint32_t intercept_bar_write(uint32_t addr, uint32_t value);
-
-extern "C" uint32_t
-_ind(uint16_t port) noexcept
-{
-    if (port == PORTIO_CONFIG_DATA) {
-        auto it = g_pci_config_space.find(g_ports[PORTIO_CONFIG_ADDRESS]);
-        if (it == g_pci_config_space.end()) {
-            return 0xFFFFFFFF;
-        }
-        else {
-            return it->second;
-        }
-    }
-    else {
-        return g_ports[port];
-    }
-}
-
-/// Modified test _outd with the following additional features:
-///
-/// - If writing to 0xCFC (PCI config data), redirect to a second map representing
-///   PCI config space.
-/// - If the PCI config space address represents a BAR, pass on to
-///   intercept_bar_write() to allow the region length query to be tested.
-extern "C" void
-_outd(uint16_t port, uint32_t value) noexcept
-{
-    if (port == PORTIO_CONFIG_DATA) {
-        uint32_t addr = g_ports[PORTIO_CONFIG_ADDRESS];
-        bool maybe_bar = (addr & 0xfc) >= 0x10 && (addr & 0xfc) <= 0x24;
-
-        uint32_t header_type_field = (addr & ~0xFCu) | 0x0Cu;
-        uint32_t header_type = (g_pci_config_space[header_type_field] & 0x007F0000u) >> 16;
-
-        g_pci_config_space[addr] = value;
-
-        if (maybe_bar) {
-            uint32_t bar_index = ((addr & 0xfc) - 0x10) / 4;
-
-            if ((header_type == 0 && bar_index <= 5) ||
-                (header_type == 1 && bar_index <= 1)) {
-
-                g_pci_config_space[addr] = intercept_bar_write(addr, value);
-            }
-        }
-    }
-
-    g_ports[port] = value;
-}
-
-static uint32_t
-intercept_bar_write(uint32_t addr, uint32_t value)
-{
-    if (value == 0xFFFFFFFF) {
-        if (addr & 0x4) {
-            // Odd BAR, assume second half of 64-bit
-            return 0xFFFFFFFF;
-        }
-        else {
-            uint32_t old_value = g_pci_config_space[addr];
-            return (~(BAR_TEST_REGION_LENGTH - 1u) & 0xFFFFFFFE) | (old_value & 0x1);
-        }
-    }
-    else {
-        return value;
-    }
-}
+#include "arch/x64/pci_test_support.h"
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
@@ -111,63 +27,6 @@ namespace eapis
 {
 namespace pci
 {
-
-static uint32_t
-reg_from_full_addr(uint32_t full_addr)
-{
-    return full_addr & 0xff;
-}
-
-
-static void
-init_all_config_space()
-{
-    for (uint32_t reg = 0; reg <= 0x3C; reg += 4) {
-        uint32_t addr = 0x80011300 | reg;
-        g_pci_config_space[addr] = 0xaabbccdd;
-    }
-
-    g_ports[PORTIO_CONFIG_DATA] = 0xaabbccdd;
-}
-
-static auto
-cleanup()
-{
-    return gsl::finally([&] {
-        g_ports.clear();
-        g_pci_config_space.clear();
-    });
-}
-
-TEST_CASE("phys_pci test support")
-{
-    CHECK(reg_from_full_addr(0xaabbccdd) == 0xdd);
-    CHECK_NOTHROW(init_all_config_space());
-    CHECK(g_ports[PORTIO_CONFIG_DATA] == 0xaabbccdd);
-
-    CHECK_NOTHROW(_outd(1, 2));
-    CHECK(_ind(1) == 2);
-
-    CHECK_NOTHROW(_outd(PORTIO_CONFIG_ADDRESS, 0xABAD1DEA));
-    CHECK(_ind(PORTIO_CONFIG_DATA) == 0xFFFFFFFF);
-
-    // Set up a very simple header and check that BAR writes are intercepted
-    CHECK_NOTHROW(_outd(PORTIO_CONFIG_ADDRESS, 0x0000000C));
-    CHECK_NOTHROW(_outd(PORTIO_CONFIG_DATA,    0x00000000));
-    CHECK_NOTHROW(_outd(PORTIO_CONFIG_ADDRESS, 0x00000010));
-    CHECK_NOTHROW(_outd(PORTIO_CONFIG_DATA,    0xFFFFFFFF));
-    CHECK(_ind(PORTIO_CONFIG_DATA) != 0xFFFFFFFF);
-
-    for (uint32_t reg = 0; reg <= 0x3C; reg += 4) {
-        CHECK(g_pci_config_space[0x80011300 | reg] == 0xaabbccdd);
-    }
-
-    {
-        auto ___ = cleanup();
-    }
-
-    CHECK(g_pci_config_space[0x80011300] == 0);
-}
 
 TEST_CASE("phys_pci::bus,device,func")
 {
@@ -182,29 +41,29 @@ TEST_CASE("phys_pci::read/write/rmw(reg[, value])")
     auto ___ = cleanup();
 
     phys_pci dev(1, 2, 3);
-    g_pci_config_space[0x80011304] = 0xaabbccdd;
+    g_pci_config_space[DEVICE_1_2_3 | 4] = 0xaabbccdd;
 
     CHECK(dev.read_register_u8(4) == 0xdd);
-    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == 0x80011304);
+    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == (DEVICE_1_2_3 | 4));
 
     CHECK(dev.read_register_u16(4) == 0xccdd);
-    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == 0x80011304);
+    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == (DEVICE_1_2_3 | 4));
 
     CHECK(dev.read_register_u32(4) == 0xaabbccdd);
-    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == 0x80011304);
+    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == (DEVICE_1_2_3 | 4));
 
     CHECK_NOTHROW(dev.write_register(4, 0xffffffff));
-    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == 0x80011304);
+    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == (DEVICE_1_2_3 | 4));
     CHECK(g_ports[PORTIO_CONFIG_DATA] == 0xffffffff);
 
-    g_pci_config_space[0x80011304] = 0xaabbccdd;
+    g_pci_config_space[DEVICE_1_2_3 | 4] = 0xaabbccdd;
     CHECK_NOTHROW(dev.rmw_register_u8(4, 0xff));
-    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == 0x80011304);
+    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == (DEVICE_1_2_3 | 4));
     CHECK(g_ports[PORTIO_CONFIG_DATA] == 0xaabbccff);
 
-    g_pci_config_space[0x80011304] = 0xaabbccdd;
+    g_pci_config_space[DEVICE_1_2_3 | 4] = 0xaabbccdd;
     CHECK_NOTHROW(dev.rmw_register_u16(4, 0xffff));
-    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == 0x80011304);
+    CHECK(g_ports[PORTIO_CONFIG_ADDRESS] == (DEVICE_1_2_3 | 4));
     CHECK(g_ports[PORTIO_CONFIG_DATA] == 0xaabbffff);
 }
 
@@ -295,6 +154,12 @@ TEST_CASE("phys_pci named register reads")
 
     CHECK(dev.bar(5) == 0xaabbccdd);
     CHECK(reg_from_full_addr(g_ports[PORTIO_CONFIG_ADDRESS]) == 0x24);
+
+    dev.rmw_register_u8(0x0E, 0x01);
+    CHECK(dev.secondary_bus() == 0xcc);
+    CHECK(reg_from_full_addr(g_ports[PORTIO_CONFIG_ADDRESS]) == 0x18);
+    dev.rmw_register_u8(0x0E, 0x00);
+    CHECK(dev.secondary_bus() == 0);
 
     CHECK(dev.bar(6) == 0xffffffff);
 }

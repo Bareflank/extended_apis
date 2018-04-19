@@ -39,7 +39,6 @@ static void enumerate_pci_one_device(std::vector<phys_pci> &vect, bus_type bus,
                                      device_type device);
 static void enumerate_pci_one_function(std::vector<phys_pci> &vect, bus_type bus,
                                        device_type device, func_type func);
-static bus_type get_secondary_bus(bus_type bus, device_type device, func_type func);
 
 void pci::phys_pci::enumerate(std::vector<phys_pci> &vect)
 {
@@ -96,18 +95,11 @@ static void enumerate_pci_one_function(std::vector<phys_pci> &vect, bus_type bus
     phys_pci pci_func(bus, device, func);
 
     if (pci_func.device_class() == 0x06 && pci_func.device_subclass() == 0x04) {
-        bus_type sec_bus = get_secondary_bus(bus, device, func);
+        bus_type sec_bus = pci_func.secondary_bus();
         enumerate_pci_one_bus(vect, sec_bus);
     }
 
     vect.push_back(pci_func);
-}
-
-static bus_type get_secondary_bus(bus_type bus, device_type device,
-                                  func_type func)
-{
-    phys_pci pci_func(bus, device, func);
-    return pci_func.read_register_u8(0x19);
 }
 
 enum bar::bar_type

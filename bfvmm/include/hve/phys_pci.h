@@ -205,6 +205,18 @@ public:
         }
     }
 
+    /// @brief Return the secondary bus if this is a bridge, or 0 otherwise.
+    /// @return secondary bus or 0
+    inline uint8_t secondary_bus() const
+    {
+        if ((header_type() & 0x7F) == 1) {
+            return read_register_u8(0x19);
+        }
+        else {
+            return 0;
+        }
+    }
+
     /// Write a command to the device's command register
     /// @param command command register contents
     inline void send_command(uint16_t command) { rmw_register_u16(0x04, command); }
