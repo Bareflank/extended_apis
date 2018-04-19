@@ -188,7 +188,6 @@ memory_map::allocate_page_table(epte_t &entry)
     epte::read_access::enable(entry);
     epte::write_access::enable(entry);
     epte::execute_access::enable(entry);
-    epte::memory_type::set(entry, epte::memory_type::wb);
     epte::set_hpa(entry, pt_hpa);
 }
 
