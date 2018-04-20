@@ -17,15 +17,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <support/arch/intel_x64/test_support.h>
 #include "ept_test_support.h"
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 namespace test_ept
 {
-
-extern "C" uint64_t unsafe_write_cstr(const char *cstr, size_t len)
-{ bfignored(cstr); bfignored(len); return 0; }
 
 namespace ept = eapis::intel_x64::ept;
 

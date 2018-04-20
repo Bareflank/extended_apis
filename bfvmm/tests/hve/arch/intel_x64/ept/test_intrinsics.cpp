@@ -20,7 +20,6 @@
 #include <catch/catch.hpp>
 #include <hve/arch/intel_x64/ept/intrinsics.h>
 
-// using namespace eapis::intel_x64::ept::epte;
 namespace eapis
 {
 namespace intel_x64
