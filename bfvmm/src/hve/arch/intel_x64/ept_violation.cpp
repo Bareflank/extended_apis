@@ -152,6 +152,9 @@ ept_violation::handle_read(gsl::not_null<vmcs_t *> vmcs, info_t &info)
         }
     }
 
+    bferror_nhex(0, "gva", info.gva);
+    bferror_nhex(0, "gpa", info.gpa);
+    vmcs_n::exit_qualification::ept_violation::dump(0);
     throw std::runtime_error(
         "ept_violation: unhandled ept read violation");
 }
@@ -174,6 +177,9 @@ ept_violation::handle_write(gsl::not_null<vmcs_t *> vmcs, info_t &info)
         }
     }
 
+    bferror_nhex(0, "gva", info.gva);
+    bferror_nhex(0, "gpa", info.gpa);
+    vmcs_n::exit_qualification::ept_violation::dump(0);
     throw std::runtime_error(
         "ept_violation: unhandled ept write violation");
 }
@@ -196,6 +202,9 @@ ept_violation::handle_execute(gsl::not_null<vmcs_t *> vmcs, info_t &info)
         }
     }
 
+    bferror_nhex(0, "gva", info.gva);
+    bferror_nhex(0, "gpa", info.gpa);
+    vmcs_n::exit_qualification::ept_violation::dump(0);
     throw std::runtime_error("ept_violation: unhandled ept execute violation");
 }
 
