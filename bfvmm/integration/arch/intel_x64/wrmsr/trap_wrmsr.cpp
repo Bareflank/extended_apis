@@ -62,7 +62,11 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~vcpu() = default;
+    ~vcpu()
+    {
+        const auto base = ::intel_x64::msrs::ia32_apic_base::get();
+        ::intel_x64::msrs::ia32_apic_base::set(base);
+    }
 };
 
 }

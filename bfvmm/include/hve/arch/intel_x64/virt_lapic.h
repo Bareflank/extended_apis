@@ -38,21 +38,19 @@ class EXPORT_EAPIS_HVE virt_lapic
 {
 public:
 
-    /// Register count
-    ///
-    /// The number of 32-bit registers used by each virt_lapic
-    ///
-    static constexpr auto s_reg_count = ept::page_size_4k >> 2U;
-
     /// Access type
     ///
     /// The interface used by the guest to talk to the virt_lapic
     ///
     enum class access_t : uint64_t {
-        msr, mmio
+        /// MSR access for x2apic mode
+        msrs,
+
+        /// MMIO access for xAPIC mode
+        mmio
     };
 
-    /// Default Constructor
+    /// Constructor
     ///
     /// @expects
     /// @ensures
@@ -166,6 +164,9 @@ public:
     void write_self_ipi(uint64_t vector);
     void write_svr(uint64_t svr);
 
+    void init_registers_from_phys_xapic(
+        eapis::intel_x64::phys_xapic *phys);
+
     /// @endcond
 
 #ifndef ENABLE_BUILD_TEST
@@ -176,9 +177,6 @@ private:
 
     void queue_interrupt(uint64_t vector);
     void inject_interrupt(uint64_t vector);
-
-    void init_registers_from_phys_xapic(
-        eapis::intel_x64::phys_xapic *phys);
 
     void init_registers_from_phys_x2apic(
         eapis::intel_x64::phys_x2apic *phys);

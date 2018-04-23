@@ -41,7 +41,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    phys_xapic(uint8_t *base);
+    phys_xapic(uintptr_t base);
 
     /// Destructor
     ///
@@ -49,6 +49,20 @@ public:
     /// @ensures
     ///
     ~phys_xapic() override = default;
+
+    /// Base
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    uintptr_t base() override;
+
+    /// Relocate
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void relocate(uintptr_t base) override;
 
     /// Enable interrupts
     ///

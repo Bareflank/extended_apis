@@ -25,7 +25,7 @@ namespace intel_x64
 
 namespace lapic_register
 {
-    std::array<attr_t, count> attributes;
+std::array<attr_t, count> attributes;
 }
 
 void

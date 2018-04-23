@@ -96,14 +96,17 @@ public:
     ///
     using handler_delegate_t = external_interrupt::handler_delegate_t;
 
-    /// Default Constructor
+    /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
     /// @param hve the hve object for this vic.
+    /// @param ept_mm the existing EPT memory map
     ///
-    vic(gsl::not_null<eapis::intel_x64::hve *> hve);
+    vic(
+        gsl::not_null<eapis::intel_x64::hve *> hve,
+        gsl::not_null<eapis::intel_x64::ept::memory_map *> ept_mm);
 
     /// Destructor
     ///
@@ -270,7 +273,7 @@ public:
     ///
     bool handle_x2apic_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
-    /// Handle x2apic EOI write
+    /// Handle x2apic EOI write exit
     ///
     /// Handle guest attempts to write an EOI
     ///
@@ -284,34 +287,6 @@ public:
     bool handle_x2apic_eoi_write(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
-    /// Handle x2apic ICR write exit
-    ///
-    /// Handle guest attempts to write to the ICR
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param vmcs the vmcs pointer for this vmexit
-    /// @param info the info structure for this vmexit
-    /// @return true iff the exit has been handled
-    ///
-    bool handle_x2apic_icr_write(
-        gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
-
-    /// Handle x2apic self-IPI write exit
-    ///
-    /// Handle guest attempts to write to the self-IPI
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param vmcs the vmcs pointer for this vmexit
-    /// @param info the info structure for this vmexit
-    /// @return true iff the exit has been handled
-    ///
-    bool handle_x2apic_self_ipi_write(
-        gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
-
     /// Handle xAPIC write exit
     ///
     /// @expects
@@ -321,8 +296,20 @@ public:
     /// @param info the info structure for this vmexit
     /// @return true iff the exit has been handled
     ///
-    bool handle_ept_write(
+    bool handle_xapic_write(
         gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &info);
+
+    /// Handle xAPIC write monitor trap exit
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
+    bool handle_xapic_write_mtf(
+        gsl::not_null<vmcs_t *> vmcs, monitor_trap::info_t &info);
 
     /// Handle cr8 read exit
     ///
@@ -376,19 +363,9 @@ public:
     bool handle_wrmsr_apic_base(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
-    /// Handle EPT write monitor trap
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param vmcs the vmcs pointer for this vmexit
-    /// @param info the info structure for this vmexit
-    /// @return true iff the exit has been handled
-    ///
-    bool handle_ept_write_mtf(
-        gsl::not_null<vmcs_t *> vmcs, monitor_trap::info_t &info);
-
 private:
+
+    static constexpr const auto s_num_vectors = 256ULL;
 
     void add_exit_handlers();
     void add_cr8_handlers();
@@ -400,9 +377,8 @@ private:
     void add_x2apic_read_handler(lapic_register::offset_t offset);
     void add_x2apic_write_handler(lapic_register::offset_t offset);
 
-    void init_phys_idt();
-    void init_apic_base();
-    void init_phys_lapic();
+    void init_idt();
+    void init_lapic();
     void init_phys_xapic();
     void init_phys_x2apic();
     void init_virt_lapic();
@@ -412,22 +388,22 @@ private:
     bool handle_spurious_interrupt(
         gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info);
 
+    uint64_t m_virt_base_msr;
+    uint64_t m_phys_base_msr;
+    const uint64_t m_orig_base_msr;
 
     eapis::intel_x64::hve *m_hve;
+    eapis::intel_x64::ept::memory_map *m_emm;
+
+    std::array<uint8_t, s_num_vectors> m_interrupt_map;
+    std::array<std::list<handler_delegate_t>, s_num_vectors> m_handlers;
+    alignas(0x1000) std::array<uint32_t, lapic_register::count> m_virt_lapic_regs;
 
     std::unique_ptr<gsl::byte[]> m_ist1;
-    std::unique_ptr<uint32_t[]> m_virt_lapic_pg;
     std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
     std::unique_ptr<eapis::intel_x64::phys_lapic> m_phys_lapic;
-    std::unique_ptr<eapis::intel_x64::ept::memory_map> m_ept_mm;
-
-    std::array<uint64_t, 256U> m_interrupt_map;
-    std::array<std::list<handler_delegate_t>, 256U> m_handlers;
 
     bfvmm::x64::unique_map_ptr<uint8_t> m_xapic_ump;
-    uint64_t m_virt_apic_base;
-    lapic_register::offset_t m_ept_write_offset;
-    bool m_ept_write_mtf;
 
     friend class test::vcpu;
 

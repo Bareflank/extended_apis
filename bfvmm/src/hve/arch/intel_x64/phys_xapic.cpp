@@ -30,9 +30,16 @@ namespace eapis
 namespace intel_x64
 {
 
-phys_xapic::phys_xapic(uint8_t *base) :
-    m_base{reinterpret_cast<uintptr_t>(base)}
+phys_xapic::phys_xapic(uintptr_t base) : m_base{base}
 { }
+
+uintptr_t
+phys_xapic::base()
+{ return m_base; }
+
+void
+phys_xapic::relocate(uintptr_t base)
+{ m_base = base; }
 
 void
 phys_xapic::enable_interrupts()
@@ -146,7 +153,7 @@ phys_xapic::write_self_ipi(uint64_t vector)
 {
     using namespace ::intel_x64::lapic;
 
-    auto ipi = 0U;
+    auto ipi = 0ULL;
     ipi = icr::vector::set(ipi, vector);
     ipi = icr::delivery_mode::set(ipi, icr::delivery_mode::fixed);
     ipi = icr::level::enable(ipi);

@@ -50,6 +50,20 @@ public:
     ///
     ~phys_x2apic() override = default;
 
+    /// Base
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    uintptr_t base() override;
+
+    /// Relocate
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void relocate(uintptr_t base) override;
+
     /// Enable interrupts
     ///
     /// Enable physical interrupts on this cpu

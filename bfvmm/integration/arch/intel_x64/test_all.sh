@@ -430,7 +430,7 @@ init_test()
 
 parse_test_name()
 {
-    name=$(basename $1 | sed 's|eapis_integration_intel_x64_\(.*\)_static|\1|')
+    name=$(basename $1 | sed 's|eapis_integration_intel_x64_\(.*\)_\(.*\)|\1_\2|')
     echo "$name"
 }
 
@@ -449,7 +449,7 @@ then
     exit 1
 fi
 
-bash -c "cmake $hyp_src -DCONFIG=$config && make -j$(nproc)"
+#bash -c "cmake $hyp_src -DCONFIG=$config && make -j$(nproc)"
 popd
 
 echo_task "cleaning bfdriver\n"
@@ -469,12 +469,13 @@ do
 
     sudo $bfm load $vmm
     sudo $bfm start
-    sleep 1
     sudo $bfm stop
     sudo $bfm dump > serial.out
 
     check_test $vmm
     check_test_all
+
+    sleep 3
 
     if [[ $option_keep_dumps -eq 0 ]]
     then

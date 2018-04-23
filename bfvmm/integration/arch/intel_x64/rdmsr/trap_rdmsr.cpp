@@ -62,7 +62,11 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~vcpu() = default;
+    ~vcpu()
+    {
+        auto val = ::intel_x64::msrs::get(0x3BU);
+        val += 1U;
+    }
 };
 
 }
