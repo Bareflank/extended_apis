@@ -96,7 +96,8 @@ intercept_bar_write(uint32_t addr, uint32_t value)
             return 0xFFFFFFFF;
         }
         else {
-            return ~(BAR_TEST_REGION_LENGTH - 1);
+            uint32_t old_value = g_pci_config_space[addr];
+            return (~(BAR_TEST_REGION_LENGTH - 1u) & 0xFFFFFFFE) | (old_value & 0x1);
         }
     }
     else {
