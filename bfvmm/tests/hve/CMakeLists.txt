@@ -79,3 +79,8 @@ do_test(test_pci_register
     SOURCES arch/x64/test_pci_register.cpp
     ${ARGN}
 )
+
+do_test(test_pci_device_allocator
+    SOURCES test_pci_device_allocator.cpp
+    ${ARGN}
+)

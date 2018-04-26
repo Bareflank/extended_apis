@@ -38,6 +38,22 @@ using func_type = uint8_t;
 /// Type of register index. Should be <= 0x3F
 using register_type = uint8_t;
 
+/// Full geographical address of a device
+struct device_id
+{
+    /// Bus number
+    bus_type bus;
+
+    /// Device number
+    device_type device;
+
+    /// Function number
+    func_type func;
+
+    /// Secondary bus if this is a bridge, else 0
+    bus_type secondary_bus;
+};
+
 ///
 /// @brief Read 8 bits from a geographically addressed register.
 ///
