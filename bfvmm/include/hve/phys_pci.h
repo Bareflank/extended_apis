@@ -408,7 +408,7 @@ public:
     /// @brief Get the length of this BAR's memory region.
     /// This is not const because it must write to the BAR to query.
     /// @return memory/IO region length in bytes
-    uintptr_t region_length();
+    size_t region_length();
 
     /// @brief Get whether this region is prefetchable.
     /// Always returns false for IO BARs.
@@ -434,7 +434,7 @@ private:
     enum bar_type compute_type() const;
 
     /// Compute the memory region length for 64-bit only
-    uintptr_t region_length_64();
+    size_t region_length_64();
 
     /// Return the bitmask of address bits for this BAR type
     uint32_t mask() const;

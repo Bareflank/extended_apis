@@ -173,7 +173,7 @@ bar::base_address() const
     return addr;
 }
 
-uintptr_t
+size_t
 bar::region_length()
 {
     if (m_type == bar_memory_64bit) {
@@ -188,7 +188,7 @@ bar::region_length()
     uint32_t region_bits = m_device.bar(m_index);
     m_device.set_bar(m_index, orig_contents);
 
-    uintptr_t len = ~(0xFFFFFFFF00000000uLL | static_cast<uintptr_t>(region_bits & mask())) + 1uLL;
+    size_t len = ~(0xFFFFFFFF00000000uLL | static_cast<size_t>(region_bits & mask())) + 1uLL;
 
     if (m_type == bar_io) {
         len &= 0xFFFF;
@@ -197,7 +197,7 @@ bar::region_length()
     return len;
 }
 
-uintptr_t
+size_t
 bar::region_length_64()
 {
     uint32_t orig_contents[2] = {
@@ -220,7 +220,7 @@ bar::region_length_64()
     const uint64_t merged = static_cast<uint64_t>(region_bits[0]) | (static_cast<uint64_t>(region_bits[1]) << 32);
     const uint64_t masked = merged & mask;
 
-    return static_cast<uintptr_t>(~masked + 1);
+    return static_cast<size_t>(~masked + 1);
 }
 
 bool
