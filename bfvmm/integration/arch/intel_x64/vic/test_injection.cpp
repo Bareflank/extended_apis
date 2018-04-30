@@ -16,6 +16,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <bfsupport.h>
 #include <bfvmm/vcpu/vcpu_factory.h>
 #include <eapis/vcpu/arch/intel_x64/vcpu.h>
 
@@ -31,15 +32,19 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param hve the address of the hve for this vic
+    /// @param id the vcpuid
     ///
     explicit vcpu(vcpuid::type id) : eapis::intel_x64::vcpu{id}
     {
+        const auto vmm_addr = vic()->m_phys_lapic->base();
+        vic()->m_phys_lapic->relocate(get_platform_info()->xapic_virt);
+
         const auto phys_svr = vic()->m_phys_lapic->read_svr();
         const auto piv = ::intel_x64::lapic::svr::vector::get(phys_svr);
         const auto viv = vic()->phys_to_virt(piv);
 
         vic()->m_virt_lapic->inject_spurious(viv);
+        vic()->m_phys_lapic->relocate(vmm_addr);
     }
 
     /// Destructor

@@ -16,6 +16,9 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/config/default.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/depends/capstone.cmake)
+
 if(ENABLE_BUILD_VMM)
     vmm_extension(
         eapis
@@ -89,18 +92,12 @@ if(ENABLE_BUILD_VMM)
         DEPENDS eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/wrmsr/
     )
-
-    vmm_extension(
-        eapis_integration_intel_x64_phys_pci
-        DEPENDS eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/phys_pci/
-    )
 endif()
 
-if(ENABLE_BUILD_TEST)
-    test_extension(
-        eapis
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
-        DEPENDS bfvmm
-    )
-endif()
+ if(ENABLE_BUILD_TEST)
+     test_extension(
+         eapis
+         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
+         DEPENDS bfvmm
+     )
+ endif()

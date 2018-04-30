@@ -28,4 +28,5 @@ add_vmm_executable(
     eapis_integration_intel_x64_drs_trap_dr7
     SOURCES trap_dr7.cpp
     LIBRARIES eapis_hve
+    LIBRARIES capstone
 )

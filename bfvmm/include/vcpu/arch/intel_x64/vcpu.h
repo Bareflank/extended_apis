@@ -21,6 +21,7 @@
 
 #include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
 
+#include "../../../hve/arch/intel_x64/ept/memory_map.h"
 #include "../../../hve/arch/intel_x64/hve.h"
 #include "../../../hve/arch/intel_x64/vic.h"
 
@@ -33,7 +34,7 @@ namespace intel_x64
 ///
 /// Manages the lifetime of the exit handlers created upon construction.
 /// This class serves as the root from which all other resources may be
-/// accesses, e.g. the vmcs and exit_handler.
+/// accessed, e.g. the vmcs, exit_handler, vic, ept memory map etc.
 ///
 class vcpu : public bfvmm::intel_x64::vcpu
 {
@@ -46,11 +47,15 @@ public:
     /// @ensures
     ///
     /// @param id the id of this vcpu
+    /// @param emm the ept memory map of this vcpu
+    /// @param hve the hve of this vcpu
+    /// @param vic the vic of this vcpu
     ///
     vcpu(vcpuid::type id) :
         bfvmm::intel_x64::vcpu{id},
+        m_emm{std::make_unique<eapis::intel_x64::ept::memory_map>()},
         m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())},
-        m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get())}
+        m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get(), m_emm.get())}
     { }
 
     /// Destructor
@@ -84,6 +89,7 @@ private:
 
     /// @cond
 
+    std::unique_ptr<eapis::intel_x64::ept::memory_map> m_emm;
     std::unique_ptr<eapis::intel_x64::hve> m_hve;
     std::unique_ptr<eapis::intel_x64::vic> m_vic;
 

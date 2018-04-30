@@ -28,17 +28,18 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/io_instruction.cpp
         arch/intel_x64/isr.cpp
         arch/intel_x64/lapic_register.cpp
+        arch/intel_x64/phys_xapic.cpp
         arch/intel_x64/phys_x2apic.cpp
-        arch/intel_x64/virt_x2apic.cpp
+        arch/intel_x64/virt_lapic.cpp
         arch/intel_x64/monitor_trap.cpp
         arch/intel_x64/mov_dr.cpp
         arch/intel_x64/rdmsr.cpp
+        arch/intel_x64/ept/helpers.cpp
+        arch/intel_x64/ept/memory_map.cpp
         arch/intel_x64/vic.cpp
         arch/intel_x64/vpid.cpp
         arch/intel_x64/wrmsr.cpp
         arch/intel_x64/hve.cpp
-        arch/intel_x64/ept/helpers.cpp
-        arch/intel_x64/ept/memory_map.cpp
         arch/x64/pci_register.cpp
     )
 

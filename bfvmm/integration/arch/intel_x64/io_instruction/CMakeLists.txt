@@ -28,4 +28,5 @@ add_vmm_executable(
     eapis_integration_intel_x64_io_instruction_trap_in_out
     SOURCES trap_in_out.cpp
     LIBRARIES eapis_hve
+    LIBRARIES capstone
 )
