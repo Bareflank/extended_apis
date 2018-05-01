@@ -31,7 +31,8 @@
 #include "rdmsr.h"
 #include "vpid.h"
 #include "wrmsr.h"
-#include "ept.h"
+#include "ept_misconfiguration.h"
+#include "ept_violation.h"
 
 namespace eapis
 {

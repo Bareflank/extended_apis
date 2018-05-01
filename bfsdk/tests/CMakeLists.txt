@@ -1,6 +1,6 @@
 #
 # Bareflank Hypervisor
-# Copyright (C) 2015 Assured Information Security, Inc.
+# Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,16 +17,17 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 cmake_minimum_required(VERSION 3.6)
-project(eapis_main C CXX)
+project(eapis_bfsdk_test C CXX)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
-    INCLUDES ../../../../include
+    INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../include
 )
 
-add_vmm_executable(
-    eapis_integration_intel_x64_vic_injection
-    SOURCES test_injection.cpp
-    LIBRARIES eapis_hve
-    LIBRARIES capstone
-)
+do_test(test_capstone)
+
+# -----------------------------------------------------------------------------
+# Install
+# -----------------------------------------------------------------------------
+
+install(DIRECTORY ../include/ DESTINATION include/eapis)

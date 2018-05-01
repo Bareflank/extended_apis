@@ -20,6 +20,7 @@
 #ifndef EPT_HELPERS_INTEL_X64_H
 #define EPT_HELPERS_INTEL_X64_H
 
+#include "../hve.h"
 #include "memory_map.h"
 #include "intrinsics.h"
 #include "types.h"
@@ -30,6 +31,36 @@ namespace intel_x64
 {
 namespace ept
 {
+
+/// Align the given address to 1G boundary
+///
+/// @expects
+/// @ensures
+///
+/// @param addr the address to align
+/// @return the aligned address
+///
+uintptr_t align_1g(uintptr_t addr);
+
+/// Align the given address to 2M boundary
+///
+/// @expects
+/// @ensures
+///
+/// @param addr the address to align
+/// @return the aligned address
+///
+uintptr_t align_2m(uintptr_t addr);
+
+/// Align the given address to 4K boundary
+///
+/// @expects
+/// @ensures
+///
+/// @param addr the address to align
+/// @return the aligned address
+///
+uintptr_t align_4k(uintptr_t addr);
 
 /// Calculate the VMCS extended page table pointer (EPTP) field for the given
 /// memory map. The returned EPTP defaults to wb memory type with accessed and
@@ -44,14 +75,15 @@ namespace ept
 ///
 uint64_t eptp(memory_map &mem_map);
 
-/// Enable EPT (and VPID if it is not enabled) using the given VMCS EPT pointer
+/// Enable EPT (and VPID if it is not enabled) using the given pointers
 ///
 /// @expects
 /// @ensures
 ///
 /// @param eptp the VMCS EPT pointer value to enable EPT with
+/// @param hve address of this vCPU's hve object
 ///
-void enable_ept(uint64_t eptp);
+void enable_ept(uint64_t eptp, gsl::not_null<eapis::intel_x64::hve *> hve);
 
 /// Disable EPT
 ///
@@ -329,6 +361,41 @@ void identity_map_n_contig_4k(memory_map &mem_map, gpa_t gpa, uint64_t n,
 ///
 void identity_map_range_4k(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
         memory_attr_t mattr = epte::memory_attr::wb_pt);
+
+/// Identity map the range of guest physical addresses from gpa_s to gpa_e
+/// (inclusive) using as few pages as possible. This means that 1G pages
+/// will be mapped from gpa_s to align_1g(gpa_e), 2M pages mapped
+/// from align_1g(gpa_e) to align_2m(gpa_e), and 4K pages mapped from
+/// align_2m(gpa_e) to align_4k(gpa_e).
+///
+/// @expects gpa_s == align_1g(gpa_s)
+/// @expects gpa_s < align_4k(gpa_e)
+/// @ensures
+///
+/// @param mem_map the memory map to be modified
+/// @param gpa_s the guest physical address to start mapping from
+/// @param gpa_e the guest physical address to end mapping to
+/// @param mattr page table entry memory attributes to be applied to the mapping
+///
+void identity_map_bestfit_lo(ept::memory_map &mem_map, gpa_t gpa_s,
+        gpa_t gpa_e, memory_attr_t mattr = epte::memory_attr::wb_pt);
+
+/// Identity map the range of guest physical addresses from gpa_s to gpa_e
+/// (inclusive) using as few pages as possible. This means that 4K pages
+/// will be mapped from gpa_s untile the next 2M boundary, then 2M pages
+/// until the next 1G boundary, then 1G pages until gpa_e
+///
+/// @expects align_1g(gpa_e) == gpa_e
+/// @expects align_4k(gpa_s) == gpa_s
+/// @ensures
+///
+/// @param mem_map the memory map to be modified
+/// @param gpa_s the guest physical address to start mapping from
+/// @param gpa_e the guest physical address to end mapping to
+/// @param mattr page table entry memory attributes to be applied to the mapping
+///
+void identity_map_bestfit_hi(ept::memory_map &mem_map, gpa_t gpa_s,
+        gpa_t gpa_e, memory_attr_t mattr = epte::memory_attr::wb_pt);
 
 //--------------------------------------------------------------------------
 // Unmapping

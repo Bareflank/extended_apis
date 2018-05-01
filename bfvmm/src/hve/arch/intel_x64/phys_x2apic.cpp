@@ -26,6 +26,14 @@ namespace eapis
 namespace intel_x64
 {
 
+uintptr_t
+phys_x2apic::base()
+{ return 0U; }
+
+void
+phys_x2apic::relocate(uintptr_t base)
+{ bfignored(base); }
+
 void
 phys_x2apic::enable_interrupts()
 { ::x64::rflags::interrupt_enable_flag::enable(); }

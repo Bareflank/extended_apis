@@ -50,6 +50,11 @@ do_test(test_vpid
     ${ARGN}
 )
 
+do_test(test_phys_x2apic
+    SOURCES arch/intel_x64/test_phys_x2apic.cpp
+    ${ARGN}
+)
+
 do_test(test_virt_x2apic
     SOURCES arch/intel_x64/test_virt_x2apic.cpp
     ${ARGN}

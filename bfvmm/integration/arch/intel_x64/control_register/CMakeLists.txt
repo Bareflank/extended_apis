@@ -28,22 +28,26 @@ add_vmm_executable(
     eapis_integration_intel_x64_control_register_trap_cr0
     SOURCES trap_cr0.cpp
     LIBRARIES eapis_hve
+    LIBRARIES capstone
 )
 
 add_vmm_executable(
     eapis_integration_intel_x64_control_register_trap_cr3
     SOURCES trap_cr3.cpp
     LIBRARIES eapis_hve
+    LIBRARIES capstone
 )
 
 add_vmm_executable(
     eapis_integration_intel_x64_control_register_trap_cr4
     SOURCES trap_cr4.cpp
     LIBRARIES eapis_hve
+    LIBRARIES capstone
 )
 
 add_vmm_executable(
     eapis_integration_intel_x64_control_register_trap_cr8
     SOURCES trap_cr8.cpp
     LIBRARIES eapis_hve
+    LIBRARIES capstone
 )

@@ -16,6 +16,9 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/config/default.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/depends/capstone.cmake)
+
 if(ENABLE_BUILD_VMM)
     vmm_extension(
         eapis
@@ -102,5 +105,11 @@ if(ENABLE_BUILD_TEST)
         eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
         DEPENDS bfvmm
+    )
+
+    test_extension(
+        eapis_bfsdk
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfsdk/tests/
+        DEPENDS capstone
     )
 endif()

@@ -1,6 +1,6 @@
 #
 # Bareflank Hypervisor
-# Copyright (C) 2015 Assured Information Security, Inc.
+# Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,17 +16,12 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-cmake_minimum_required(VERSION 3.6)
-project(eapis_main C CXX)
-
-include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project(
-    INCLUDES ../../../../include
+set(CAPSTONE_URL "https://github.com/bareflank/capstone/archive/v2.0.zip"
+    CACHE INTERNAL FORCE
+    "Capstone URL"
 )
 
-add_vmm_executable(
-    eapis_integration_intel_x64_vic_injection
-    SOURCES test_injection.cpp
-    LIBRARIES eapis_hve
-    LIBRARIES capstone
+set(CAPSTONE_URL_MD5 "2d3809e48b97d93e29e6b6ac7a0dd1aa"
+    CACHE INTERNAL FORCE
+    "Capstone URL MD5 hash"
 )
