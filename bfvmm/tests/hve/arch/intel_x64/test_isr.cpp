@@ -70,6 +70,7 @@ TEST_CASE("isr: vector_to_str")
 TEST_CASE("isr: default_isr - interrupt")
 {
     MockRepository mocks;
+    setup_ept();
     auto hve = setup_hve(mocks);
     auto vic = setup_vic(hve.get());
 
@@ -93,6 +94,7 @@ TEST_CASE("isr: default_isr - interrupt")
 TEST_CASE("isr: default_isr - exception")
 {
     MockRepository mocks;
+    setup_ept();
     auto hve = setup_hve(mocks);
     auto vic = setup_vic(hve.get());
 

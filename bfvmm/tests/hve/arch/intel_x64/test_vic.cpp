@@ -34,11 +34,12 @@ namespace intel_x64
 
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};
+std::unique_ptr<eapis::intel_x64::ept::memory_map> g_emap{nullptr};
 
 std::list<std::function<void(void)>> window_closers = {
     [](){ ::x64::rflags::interrupt_enable_flag::disable(); },
     [](){ vmcs_n::guest_interruptibility_state::blocking_by_sti::enable(); },
-    []() { vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::enable(); }
+    [](){ vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::enable(); }
 };
 
 static auto
@@ -67,6 +68,7 @@ handle_external_interrupt_stub(
 {
     bfignored(vmcs);
     bfignored(info);
+
     return true;
 }
 
@@ -76,34 +78,35 @@ TEST_CASE("vic: constructor")
 
     MockRepository mocks;
     auto hve = setup_hve(mocks);
+    auto emm = setup_ept();
 
     disable_lapic();
     CHECK(!lapic_n::is_present());
-    CHECK_THROWS(eapis::intel_x64::vic(hve.get()));
+    CHECK_THROWS(eapis::intel_x64::vic(hve.get(), emm));
 
     enable_lapic();
     disable_x2apic();
     CHECK(lapic_n::is_present());
     CHECK(!lapic_n::x2apic_supported());
-    CHECK_THROWS(eapis::intel_x64::vic(hve.get()));
+    CHECK_THROWS(eapis::intel_x64::vic(hve.get(), emm));
 
     enable_x2apic();
     msrs_n::ia32_apic_base::state::enable_xapic();
     CHECK(lapic_n::x2apic_supported());
     CHECK(state::get() == state::xapic);
-    CHECK_THROWS(eapis::intel_x64::vic(hve.get()));
+    CHECK_THROWS(eapis::intel_x64::vic(hve.get(), emm));
 
     msrs_n::ia32_apic_base::state::disable();
     CHECK(state::get() == state::disabled);
-    CHECK_THROWS(eapis::intel_x64::vic(hve.get()));
+    CHECK_THROWS(eapis::intel_x64::vic(hve.get(), emm));
 
     msrs_n::ia32_apic_base::state::set(msrs_n::ia32_apic_base::state::invalid);
     CHECK(state::get() == state::invalid);
-    CHECK_THROWS(eapis::intel_x64::vic(hve.get()));
+    CHECK_THROWS(eapis::intel_x64::vic(hve.get(), emm));
 
     msrs_n::ia32_apic_base::state::enable_x2apic();
     CHECK(state::get() == state::x2apic);
-    CHECK_NOTHROW(eapis::intel_x64::vic(hve.get()));
+    CHECK_NOTHROW(eapis::intel_x64::vic(hve.get(), emm));
 }
 
 TEST_CASE("vic: destructor")

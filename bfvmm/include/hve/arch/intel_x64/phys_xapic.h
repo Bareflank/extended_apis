@@ -129,6 +129,7 @@ public:
     phys_xapic &operator=(const phys_xapic &) = delete;
 
 private:
+    static const uint64_t s_page_size = 4096U;
     uintptr_t m_base;
 
     /// @endcond

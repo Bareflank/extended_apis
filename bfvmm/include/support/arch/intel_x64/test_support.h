@@ -24,6 +24,7 @@
 #include <bfvmm/support/arch/intel_x64/test_support.h>
 #include "../../../hve/arch/intel_x64/hve.h"
 #include "../../../hve/arch/intel_x64/vic.h"
+#include "../../../hve/arch/intel_x64/ept/memory_map.h"
 
 namespace msrs_n = ::intel_x64::msrs;
 namespace lapic_n = ::intel_x64::lapic;
@@ -38,6 +39,10 @@ namespace proc_ctls2 = vmcs_n::secondary_processor_based_vm_execution_controls;
 std::unique_ptr<uint32_t[]> g_vmcs_region;
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs;
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr;
+std::unique_ptr<eapis::intel_x64::ept::memory_map> g_emap;
+
+extern "C" void _sfence()
+{ return; }
 
 inline auto
 setup_hve(MockRepository &mocks)
@@ -50,6 +55,16 @@ setup_hve(MockRepository &mocks)
     g_ehlr = std::make_unique<bfvmm::intel_x64::exit_handler>(g_vmcs.get());
 
     return std::make_unique<eapis::intel_x64::hve>(g_ehlr.get(), g_vmcs.get());
+}
+
+inline auto
+setup_ept()
+{
+    if (g_emap == nullptr) {
+        g_emap = std::make_unique<eapis::intel_x64::ept::memory_map>();
+    }
+
+    return g_emap.get();
 }
 
 inline auto
@@ -99,7 +114,7 @@ setup_vic(gsl::not_null<eapis::intel_x64::hve *> hve)
     enable_x2apic();
     msrs_n::ia32_apic_base::state::enable_x2apic();
 
-    return eapis::intel_x64::vic(hve);
+    return eapis::intel_x64::vic(hve, g_emap.get());
 }
 
 inline auto

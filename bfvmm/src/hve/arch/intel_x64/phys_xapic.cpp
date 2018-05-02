@@ -30,8 +30,14 @@ namespace eapis
 namespace intel_x64
 {
 
-phys_xapic::phys_xapic(uintptr_t base) : m_base{base}
-{ }
+static uintptr_t align_xapic(uintptr_t addr)
+{ return addr & ~(x64::page_size - 1U); }
+
+phys_xapic::phys_xapic(uintptr_t base)
+{
+    expects(base == align_xapic(base));
+    m_base = base;
+}
 
 uintptr_t
 phys_xapic::base()
@@ -39,7 +45,10 @@ phys_xapic::base()
 
 void
 phys_xapic::relocate(uintptr_t base)
-{ m_base = base; }
+{
+    expects(base == align_xapic(base));
+    m_base = base;
+}
 
 void
 phys_xapic::enable_interrupts()
@@ -140,8 +149,8 @@ phys_xapic::write_icr(uint64_t icr)
     constexpr auto lo_offset = lapic_register::msr_addr_to_offset(addr);
     constexpr auto hi_offset = lapic_register::msr_addr_to_offset(addr | 1U);
 
-    const volatile uint32_t lo_val = (icr & 0xFFFFFFFFU);
-    const volatile uint32_t hi_val = (icr >> 32U);
+    const volatile uint32_t lo_val = gsl::narrow_cast<uint32_t>(icr & 0xFFFFFFFFU);
+    const volatile uint32_t hi_val = gsl::narrow_cast<uint32_t>(icr >> 32U);
 
     this->write_register(hi_offset, hi_val);
     ::intel_x64::barrier::sfence();

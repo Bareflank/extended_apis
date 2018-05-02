@@ -105,11 +105,13 @@ if(ENABLE_BUILD_TEST)
         eapis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
         DEPENDS bfvmm
+        DEPENDS bfintrinsics
     )
 
     test_extension(
         eapis_bfsdk
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfsdk/tests/
+        DEPENDS bfvmm
         DEPENDS capstone
     )
 endif()

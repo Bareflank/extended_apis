@@ -26,9 +26,14 @@ namespace eapis
 namespace intel_x64
 {
 
-vic::vic(gsl::not_null<eapis::intel_x64::hve *> hve) :
+vic::vic(
+    gsl::not_null<eapis::intel_x64::hve *> hve,
+    gsl::not_null<eapis::intel_x64::ept::memory_map *> emm
+) :
+    m_virt_base_msr{apic_base::apic_base::get()},
+    m_phys_base_msr{m_virt_base_msr},
     m_hve{hve},
-    m_virt_apic_base{0}
+    m_emm{emm}
 {
     this->init_phys_idt();
     this->init_phys_lapic();
@@ -61,7 +66,7 @@ vic::virt_to_phys(uint64_t virt)
 
 void
 vic::map(uint64_t phys, uint64_t virt)
-{ m_interrupt_map.at(phys) = virt; }
+{ m_interrupt_map.at(phys) = gsl::narrow_cast<uint8_t>(virt); }
 
 void
 vic::unmap(uint64_t virt)
@@ -140,10 +145,12 @@ vic::init_virt_lapic()
 {
     using namespace ::intel_x64::msrs;
 
-    m_virt_apic_base = ia32_apic_base::get();
-    m_virt_apic_base = ia32_apic_base::state::enable_x2apic(m_virt_apic_base);
-
-    m_virt_lapic = std::make_unique<virt_x2apic>(m_hve, m_phys_lapic.get());
+    m_virt_base_msr = ia32_apic_base::get();
+    m_virt_base_msr = ia32_apic_base::state::enable_x2apic(m_virt_base_msr);
+    m_virt_lapic = std::make_unique<virt_lapic>(
+        m_hve,
+        m_virt_lapic_regs.data(),
+        m_phys_lapic.get());
 }
 
 void
@@ -221,20 +228,6 @@ vic::add_x2apic_write_handler(uint64_t offset)
             m_hve->add_wrmsr_handler(addr,
                                      wrmsr::handler_delegate_t::create<vic,
                                      &vic::handle_x2apic_eoi_write>(this)
-                                    );
-            break;
-
-        case ia32_x2apic_icr::addr:
-            m_hve->add_wrmsr_handler(addr,
-                                     wrmsr::handler_delegate_t::create<vic,
-                                     &vic::handle_x2apic_icr_write>(this)
-                                    );
-            break;
-
-        case ia32_x2apic_self_ipi::addr:
-            m_hve->add_wrmsr_handler(addr,
-                                     wrmsr::handler_delegate_t::create<vic,
-                                     &vic::handle_x2apic_self_ipi_write>(this)
                                     );
             break;
 
@@ -329,36 +322,6 @@ vic::handle_x2apic_eoi_write(
 }
 
 bool
-vic::handle_x2apic_icr_write(
-    gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
-{
-    bfignored(vmcs);
-
-    m_virt_lapic->write_icr(info.val);
-    m_phys_lapic->write_icr(info.val);
-
-    info.ignore_write = true;
-    info.ignore_advance = false;
-
-    return true;
-}
-
-bool
-vic::handle_x2apic_self_ipi_write(
-    gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
-{
-    bfignored(vmcs);
-
-    m_virt_lapic->write_self_ipi(info.val);
-    m_phys_lapic->write_self_ipi(info.val);
-
-    info.ignore_write = true;
-    info.ignore_advance = false;
-
-    return true;
-}
-
-bool
 vic::handle_x2apic_read(
     gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
 {
@@ -410,7 +373,7 @@ vic::handle_rdmsr_apic_base(
     bfignored(vmcs);
 
     bfdebug_info(VIC_LOG_ALERT, "rdmsr: apic_base");
-    info.val = m_virt_apic_base;
+    info.val = m_virt_base_msr;
 
     return true;
 }
@@ -424,7 +387,7 @@ vic::handle_wrmsr_apic_base(
     bfignored(vmcs);
 
     bfdebug_info(VIC_LOG_ALERT, "wrmsr: apic_base");
-    m_virt_apic_base = info.val;
+    m_virt_base_msr = info.val;
 
     return true;
 }

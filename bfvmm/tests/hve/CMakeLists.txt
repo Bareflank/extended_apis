@@ -50,13 +50,18 @@ do_test(test_vpid
     ${ARGN}
 )
 
+do_test(test_phys_xapic
+    SOURCES arch/intel_x64/test_phys_xapic.cpp
+    ${ARGN}
+)
+
 do_test(test_phys_x2apic
     SOURCES arch/intel_x64/test_phys_x2apic.cpp
     ${ARGN}
 )
 
-do_test(test_virt_x2apic
-    SOURCES arch/intel_x64/test_virt_x2apic.cpp
+do_test(test_virt_lapic
+    SOURCES arch/intel_x64/test_virt_lapic.cpp
     ${ARGN}
 )
 
@@ -68,11 +73,13 @@ do_test(test_lapic_register
 do_test(test_vic
     SOURCES arch/intel_x64/test_vic.cpp
     ${ARGN}
+    CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
 )
 
 do_test(test_isr
     SOURCES arch/intel_x64/test_isr.cpp
     ${ARGN}
+    CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
 )
 
 do_test(test_phys_pci

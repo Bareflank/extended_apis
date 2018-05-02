@@ -19,10 +19,13 @@
 #ifndef VIC_INTEL_X64_EAPIS_H
 #define VIC_INTEL_X64_EAPIS_H
 
+#include <bfvmm/memory_manager/arch/x64/map_ptr.h>
+
 #include "hve.h"
 #include "lapic_register.h"
+#include "phys_xapic.h"
 #include "phys_x2apic.h"
-#include "virt_x2apic.h"
+#include "virt_lapic.h"
 
 #ifndef VIC_LOG_LEVELS
 #define VIC_LOG_FATAL 0U
@@ -42,6 +45,41 @@ namespace eapis
 namespace intel_x64
 {
 
+namespace ept
+{
+    class memory_map;
+}
+
+///-----------------------------------------------------------------------------
+/// Namespace aliases
+///-----------------------------------------------------------------------------
+
+namespace apic_base = ::intel_x64::msrs::ia32_apic_base;
+namespace proc_ctl1 = vmcs_n::primary_processor_based_vm_execution_controls;
+namespace proc_ctl2 = vmcs_n::secondary_processor_based_vm_execution_controls;
+
+///-----------------------------------------------------------------------------
+/// Debug helpers
+///-----------------------------------------------------------------------------
+
+template<
+    typename N,
+    typename = std::enable_if_t<std::is_integral<N>::value ||
+                                std::is_pointer<N>::value>>
+inline void
+throw_vic_fatal(const char *msg, N nhex)
+{
+    bferror_nhex(VIC_LOG_FATAL, msg, nhex);
+    throw std::runtime_error(msg + std::to_string(nhex));
+}
+
+inline void
+throw_vic_fatal(const char *msg)
+{
+    bferror_info(VIC_LOG_FATAL, msg);
+    throw std::runtime_error(msg);
+}
+
 /// Virtual interrupt controller (VIC)
 ///
 /// Provides an interface for managing physical and
@@ -58,14 +96,17 @@ public:
     ///
     using handler_delegate_t = external_interrupt::handler_delegate_t;
 
-    /// Default Constructor
+    /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
     /// @param hve the hve object for this vic.
+    /// @param emm the existing EPT memory map
     ///
-    vic(gsl::not_null<eapis::intel_x64::hve *> hve);
+    vic(
+        gsl::not_null<eapis::intel_x64::hve *> hve,
+        gsl::not_null<eapis::intel_x64::ept::memory_map *> emm);
 
     /// Destructor
     ///
@@ -232,7 +273,7 @@ public:
     ///
     bool handle_x2apic_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
-    /// Handle x2apic EOI write
+    /// Handle x2apic EOI write exit
     ///
     /// Handle guest attempts to write an EOI
     ///
@@ -244,34 +285,6 @@ public:
     /// @return true iff the exit has been handled
     ///
     bool handle_x2apic_eoi_write(
-        gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
-
-    /// Handle x2apic ICR write exit
-    ///
-    /// Handle guest attempts to write to the ICR
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param vmcs the vmcs pointer for this vmexit
-    /// @param info the info structure for this vmexit
-    /// @return true iff the exit has been handled
-    ///
-    bool handle_x2apic_icr_write(
-        gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
-
-    /// Handle x2apic self-IPI write exit
-    ///
-    /// Handle guest attempts to write to the self-IPI
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param vmcs the vmcs pointer for this vmexit
-    /// @param info the info structure for this vmexit
-    /// @return true iff the exit has been handled
-    ///
-    bool handle_x2apic_self_ipi_write(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
     /// Handle cr8 read exit
@@ -328,17 +341,20 @@ public:
 
 private:
 
+    static constexpr const auto s_num_vectors = 256ULL;
+
     void add_exit_handlers();
     void add_cr8_handlers();
+    void add_lapic_handlers();
     void add_apic_base_handlers();
     void add_external_interrupt_handlers();
-
     void add_x2apic_handlers();
     void add_x2apic_read_handler(lapic_register::offset_t offset);
     void add_x2apic_write_handler(lapic_register::offset_t offset);
 
     void init_phys_idt();
     void init_phys_lapic();
+    void init_phys_xapic();
     void init_phys_x2apic();
     void init_virt_lapic();
     void init_save_state();
@@ -347,15 +363,19 @@ private:
     bool handle_spurious_interrupt(
         gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info);
 
+    uint64_t m_virt_base_msr;
+    uint64_t m_phys_base_msr;
+
     eapis::intel_x64::hve *m_hve;
+    eapis::intel_x64::ept::memory_map *m_emm;
+
+    std::array<uint8_t, s_num_vectors> m_interrupt_map;
+    std::array<uint32_t, 1024U> m_virt_lapic_regs;
+    std::array<std::list<handler_delegate_t>, 256U> m_handlers;
 
     std::unique_ptr<gsl::byte[]> m_ist1;
     std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
     std::unique_ptr<eapis::intel_x64::phys_lapic> m_phys_lapic;
-
-    std::array<std::list<handler_delegate_t>, 256> m_handlers;
-    std::array<uint64_t, 256> m_interrupt_map;
-    uint64_t m_virt_apic_base;
 
     friend class test::vcpu;
 
