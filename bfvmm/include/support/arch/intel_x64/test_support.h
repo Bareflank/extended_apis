@@ -19,6 +19,7 @@
 #ifndef TEST_SUPPORT_EAPIS_H
 #define TEST_SUPPORT_EAPIS_H
 
+#include <bfsupport.h>
 #include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
 #include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
 #include <bfvmm/support/arch/intel_x64/test_support.h>
@@ -40,6 +41,12 @@ std::unique_ptr<uint32_t[]> g_vmcs_region;
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs;
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr;
 std::unique_ptr<eapis::intel_x64::ept::memory_map> g_emap;
+
+struct platform_info_t g_platform_info;
+
+extern "C" struct platform_info_t *
+get_platform_info(void)
+{ return &g_platform_info; }
 
 extern "C" void _sfence()
 { return; }
@@ -87,6 +94,7 @@ enable_lapic()
     g_edx_cpuid[info::addr] = val;
 }
 
+
 inline auto
 disable_x2apic()
 {
@@ -108,7 +116,16 @@ enable_x2apic()
 }
 
 inline auto
-setup_vic(gsl::not_null<eapis::intel_x64::hve *> hve)
+setup_vic_xapic(gsl::not_null<eapis::intel_x64::hve *> hve)
+{
+    enable_lapic();
+    msrs_n::ia32_apic_base::state::enable_xapic();
+
+    return eapis::intel_x64::vic(hve, g_emap.get());
+}
+
+inline auto
+setup_vic_x2apic(gsl::not_null<eapis::intel_x64::hve *> hve)
 {
     enable_lapic();
     enable_x2apic();

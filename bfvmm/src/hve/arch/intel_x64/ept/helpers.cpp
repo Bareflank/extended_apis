@@ -217,7 +217,7 @@ identity_map_range_4k(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, memory_attr
 
 void
 identity_map_bestfit_lo(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
-    memory_attr_t mattr)
+                        memory_attr_t mattr)
 {
     expects(gpa_s == align_1g(gpa_s));
     expects(gpa_s < align_4k(gpa_e));
@@ -232,7 +232,7 @@ identity_map_bestfit_lo(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
         ept::identity_map_1g(emm, i, mattr);
     }
 
-    for(; i < end_2m; i += ept::page_size_2m) {
+    for (; i < end_2m; i += ept::page_size_2m) {
         ept::identity_map_2m(emm, i, mattr);
     }
 
@@ -243,7 +243,7 @@ identity_map_bestfit_lo(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
 
 void
 identity_map_bestfit_hi(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
-    memory_attr_t mattr)
+                        memory_attr_t mattr)
 {
     expects(align_4k(gpa_s) == gpa_s);
     expects(align_1g(gpa_e) == gpa_e);

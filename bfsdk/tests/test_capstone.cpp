@@ -20,6 +20,7 @@
 #include <bfcapstone.h>
 #include <bfvmm/hve/arch/intel_x64/save_state.h>
 
+#ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
 TEST_CASE("capstone::read throws")
 {
@@ -61,7 +62,6 @@ TEST_CASE("eapis::intel_x64::capstone::read16")
     CHECK(eapis::intel_x64::capstone::read16(&state, 1U) == 0x2211U);
     CHECK(eapis::intel_x64::capstone::read16(&state, 0U) == 0x1100U);
 }
-
 
 TEST_CASE("eapis::intel_x64::capstone::read32")
 {
@@ -167,6 +167,4 @@ TEST_CASE("eapis::intel_x64::capstone::read_op_val")
     free(insn.detail);
 }
 
-
-
-
+#endif

@@ -19,6 +19,7 @@
 #ifndef VIC_INTEL_X64_EAPIS_H
 #define VIC_INTEL_X64_EAPIS_H
 
+#include <bfcapstone.h>
 #include <bfvmm/memory_manager/arch/x64/map_ptr.h>
 
 #include "hve.h"
@@ -59,7 +60,7 @@ namespace proc_ctl1 = vmcs_n::primary_processor_based_vm_execution_controls;
 namespace proc_ctl2 = vmcs_n::secondary_processor_based_vm_execution_controls;
 
 ///-----------------------------------------------------------------------------
-/// Debug helpers
+/// Helpers
 ///-----------------------------------------------------------------------------
 
 template<
@@ -78,6 +79,42 @@ throw_vic_fatal(const char *msg)
 {
     bferror_info(VIC_LOG_FATAL, msg);
     throw std::runtime_error(msg);
+}
+
+inline void verify_xapic_write(cs_insn *insn)
+{
+    expects(insn->detail != nullptr);
+    expects(insn->detail->x86.op_count == 2U);
+
+    cs_x86_op *dst = &insn->detail->x86.operands[0U];
+    cs_x86_op *src = &insn->detail->x86.operands[1U];
+
+    expects(dst->type == X86_OP_MEM);
+    expects(src->type != X86_OP_FP);
+}
+
+inline void disasm_xapic_write(csh *cs, cs_insn **insn, const uint8_t *rip)
+{
+    expects(cs != nullptr);
+    expects(insn != nullptr);
+    expects(rip != nullptr);
+
+    cs_err err = cs_open(CS_ARCH_X86, CS_MODE_64, cs);
+
+    if (err != CS_ERR_OK) {
+        throw_vic_fatal("cs_open failed, err = ", static_cast<uint64_t>(err));
+    }
+
+    cs_option(*cs, CS_OPT_DETAIL, CS_OPT_ON);
+
+    const auto need = 1U;
+    const auto insn_int = reinterpret_cast<uintptr_t>(rip);
+    const auto nr_bytes = vmcs_n::vm_exit_instruction_length::get();
+    const auto nr_disasm = cs_disasm(*cs, rip, nr_bytes, insn_int, need, insn);
+
+    if (nr_disasm != need) {
+        throw std::runtime_error("xapic_write: expected to disasm 1 insn");
+    }
 }
 
 /// Virtual interrupt controller (VIC)
@@ -287,6 +324,18 @@ public:
     bool handle_x2apic_eoi_write(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
+    /// Handle xAPIC write exit
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
+    bool handle_xapic_write(
+        gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &info);
+
     /// Handle cr8 read exit
     ///
     /// Handle guest attempts to read cr8
@@ -348,12 +397,13 @@ private:
     void add_lapic_handlers();
     void add_apic_base_handlers();
     void add_external_interrupt_handlers();
+    void add_xapic_handlers();
     void add_x2apic_handlers();
     void add_x2apic_read_handler(lapic_register::offset_t offset);
     void add_x2apic_write_handler(lapic_register::offset_t offset);
 
-    void init_phys_idt();
-    void init_phys_lapic();
+    void init_idt();
+    void init_lapic();
     void init_phys_xapic();
     void init_phys_x2apic();
     void init_virt_lapic();
@@ -365,17 +415,20 @@ private:
 
     uint64_t m_virt_base_msr;
     uint64_t m_phys_base_msr;
+    const uint64_t m_orig_base_msr;
 
     eapis::intel_x64::hve *m_hve;
     eapis::intel_x64::ept::memory_map *m_emm;
 
     std::array<uint8_t, s_num_vectors> m_interrupt_map;
-    std::array<uint32_t, 1024U> m_virt_lapic_regs;
-    std::array<std::list<handler_delegate_t>, 256U> m_handlers;
+    std::array<std::list<handler_delegate_t>, s_num_vectors> m_handlers;
+    alignas(0x1000) std::array<uint32_t, lapic_register::count> m_virt_lapic_regs;
 
     std::unique_ptr<gsl::byte[]> m_ist1;
     std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
     std::unique_ptr<eapis::intel_x64::phys_lapic> m_phys_lapic;
+
+    bfvmm::x64::unique_map_ptr<uint8_t> m_xapic_ump;
 
     friend class test::vcpu;
 

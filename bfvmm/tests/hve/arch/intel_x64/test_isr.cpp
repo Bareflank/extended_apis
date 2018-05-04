@@ -72,7 +72,7 @@ TEST_CASE("isr: default_isr - interrupt")
     MockRepository mocks;
     setup_ept();
     auto hve = setup_hve(mocks);
-    auto vic = setup_vic(hve.get());
+    auto vic = setup_vic_x2apic(hve.get());
 
     reg[0] = reinterpret_cast<uint64_t>(&vic);
     vmcs_n::vm_entry_interruption_information::valid_bit::disable();
@@ -96,7 +96,7 @@ TEST_CASE("isr: default_isr - exception")
     MockRepository mocks;
     setup_ept();
     auto hve = setup_hve(mocks);
-    auto vic = setup_vic(hve.get());
+    auto vic = setup_vic_x2apic(hve.get());
 
     reg[0] = reinterpret_cast<uint64_t>(&vic);
     vmcs_n::vm_entry_interruption_information::valid_bit::disable();

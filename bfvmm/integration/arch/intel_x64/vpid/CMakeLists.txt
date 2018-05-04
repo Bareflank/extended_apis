@@ -22,6 +22,7 @@ project(eapis_main C CXX)
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
     INCLUDES ../../../../include
+    INCLUDES ../../../../../bfsdk/include
 )
 
 add_vmm_executable(

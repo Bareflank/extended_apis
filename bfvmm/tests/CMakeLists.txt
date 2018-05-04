@@ -22,6 +22,7 @@ project(eapis_test C CXX)
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
     INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../include
+    INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../../bfsdk/include
 )
 
 add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)

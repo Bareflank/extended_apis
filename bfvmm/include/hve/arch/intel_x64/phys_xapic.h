@@ -40,6 +40,8 @@ public:
     ///
     /// @expects
     /// @ensures
+    //
+    /// @param base the address of the apic
     ///
     phys_xapic(uintptr_t base);
 
@@ -55,12 +57,17 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @return the linear base address of the physical APIC
+    /// @note this is only well-defined for xAPIC mode
+    ///
     uintptr_t base() override;
 
     /// Relocate
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param base the new base address of the apic
     ///
     void relocate(uintptr_t base) override;
 

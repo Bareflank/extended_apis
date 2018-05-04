@@ -46,11 +46,6 @@ namespace capstone
         uint64_t byte_offset;
     };
 
-
-    /// These structs describe the subset of registers that
-    /// (we suspect) the guest could use to write to the xAPIC. Each
-    /// enum x86_reg referenced below is defined in include/x86.h
-    /// in the capstone tree.
     constexpr struct reg al = { X86_REG_AL, byte, 0x0U };
     constexpr struct reg ah = { X86_REG_AH, byte, 0x1U };
     constexpr struct reg ax = { X86_REG_AX, word, 0x0U };
@@ -161,42 +156,39 @@ namespace capstone
 
     using bfvmm::intel_x64::save_state_t;
 
-    uint8_t read8(const save_state_t *state, uintptr_t byte_offset)
+    inline uint8_t read8(const save_state_t *state, uint64_t byte_offset)
     {
-        expects(byte_offset <= 0x87U);
-        return reinterpret_cast<const uint8_t *>(state)[byte_offset];
+        expects(byte_offset < 0x88U);
+        auto addr = reinterpret_cast<const uintptr_t>(state) + byte_offset;
+        return *reinterpret_cast<const uint8_t *>(addr);
     }
 
-    uint16_t read16(const save_state_t *state, uintptr_t byte_offset)
+    inline uint16_t read16(const save_state_t *state, uint64_t byte_offset)
     {
         expects(byte_offset <= 0x86U);
-        const auto addr = reinterpret_cast<const uint8_t *>(state) + byte_offset;
+        auto addr = reinterpret_cast<const uintptr_t>(state) + byte_offset;
         return *reinterpret_cast<const uint16_t *>(addr);
     }
 
-
-    uint32_t read32(const save_state_t *state, uintptr_t byte_offset)
+    inline uint32_t read32(const save_state_t *state, uint64_t byte_offset)
     {
         expects(byte_offset <= 0x84U);
-        const auto addr = reinterpret_cast<const uint8_t *>(state) + byte_offset;
+        auto addr = reinterpret_cast<const uintptr_t>(state) + byte_offset;
         return *reinterpret_cast<const uint32_t *>(addr);
     }
 
-
-    uint64_t read64(const save_state_t *state, uintptr_t byte_offset)
+    inline uint64_t read64(const save_state_t *state, uint64_t byte_offset)
     {
         expects(byte_offset <= 0x80U);
-        const auto addr = reinterpret_cast<const uint8_t *>(state) + byte_offset;
+        auto addr = reinterpret_cast<const uintptr_t>(state) + byte_offset;
         return *reinterpret_cast<const uint64_t *>(addr);
     }
 
     /// We return unsigned here because this function is intended
-    /// to be used with unsigned values, like xAPIC regs.
+    /// to be used with unsigned values, like xAPIC regs. The name
+    /// should probably be changed reflect this.
     inline uint64_t read_imm_val(const save_state_t *state, const cs_x86_op *op)
-    {
-        bfignored(state);
-        return static_cast<uint64_t>(op->imm);
-    }
+    { return static_cast<uint64_t>(op->imm); }
 
     inline uint64_t read_reg_val(const save_state_t *state, const cs_x86_op *op)
     {
@@ -214,9 +206,7 @@ namespace capstone
         }
     }
 
-    /// The guest very well could use value from memory as the src operand
-    /// of an xAPIC write, but in practice (Linux at least) they use registers
-    uint64_t read_mem_val(const save_state_t *state, const cs_x86_op *op)
+    inline uint64_t read_mem_val(const save_state_t *state, const cs_x86_op *op)
     {
         bfalert_info(0, "read_mem_value");
         bfdebug_nhex(0, "op->mem.segment", op->mem.segment);
@@ -228,7 +218,7 @@ namespace capstone
         throw std::runtime_error("capstone: unexpected mem read");
      }
 
-    uint64_t read_op_val(
+    inline uint64_t read_op_val(
         const save_state_t *state, const cs_insn *insn, size_t op_index)
     {
         expects(op_index < insn->detail->x86.op_count);

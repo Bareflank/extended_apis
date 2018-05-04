@@ -55,12 +55,16 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @return 0 (doesn't apply to x2apic)
+    ///
     uintptr_t base() override;
 
     /// Relocate
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @param base is ignored
     ///
     void relocate(uintptr_t base) override;
 
