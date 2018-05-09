@@ -16,104 +16,40 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-if(NOT CYGWIN)
-    include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/config/default.cmake)
-    include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/depends/capstone.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/config/default.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/depends/capstone.cmake)
 
-    if(ENABLE_BUILD_VMM)
-        vmm_extension(
-            eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src
-        )
+if(ENABLE_BUILD_VMM)
+    vmm_extension(
+        eapis
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src
+    )
 
-        vmm_extension(
-            eapis_main
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src/main
-        )
+    vmm_extension(
+        eapis_main
+        DEPENDS eapis
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src/main
+    )
 
-    # MOVE ME
+    vmm_extension(
+        eapis_integration
+        DEPENDS eapis
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/
+    )
+endif()
 
-        vmm_extension(
-            eapis_integration_intel_x64_control_register
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/control_register/
-        )
+if(ENABLE_BUILD_TEST)
+    test_extension(
+        eapis
+        DEPENDS bfvmm
+        DEPENDS capstone
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
+    )
 
-        vmm_extension(
-            eapis_integration_intel_x64_cpuid
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/cpuid/
-        )
-
-        vmm_extension(
-            eapis_integration_intel_x64_ept
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/ept/
-        )
-
-        vmm_extension(
-            eapis_integration_intel_x64_io_instruction
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/io_instruction/
-        )
-
-        vmm_extension(
-            eapis_integration_intel_x64_monitor_trap
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/monitor_trap/
-        )
-
-        vmm_extension(
-            eapis_integration_intel_x64_mov_dr
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/mov_dr/
-        )
-
-        vmm_extension(
-            eapis_integration_intel_x64_rdmsr
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/rdmsr/
-        )
-
-        vmm_extension(
-            eapis_integration_intel_x64_vic
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/vic/
-        )
-
-        vmm_extension(
-            eapis_integration_intel_x64_vpid
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/vpid/
-        )
-
-        vmm_extension(
-            eapis_integration_intel_x64_wrmsr
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/wrmsr/
-        )
-
-        vmm_extension(
-            eapis_integration_intel_x64_phys_pci
-            DEPENDS eapis
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/arch/intel_x64/phys_pci/
-        )
-    endif()
-
-    if(ENABLE_BUILD_TEST)
-        test_extension(
-            eapis
-            DEPENDS bfvmm
-            DEPENDS capstone
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
-        )
-
-        test_extension(
-            eapis_bfsdk
-            DEPENDS bfvmm
-            DEPENDS capstone
-            SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfsdk/tests/
-        )
-    endif()
+    test_extension(
+        eapis_bfsdk
+        DEPENDS bfvmm
+        DEPENDS capstone
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfsdk/tests/
+    )
 endif()
