@@ -125,6 +125,50 @@ namespace lapic_register
 
     /// @cond
 
+    namespace xapic_unstable
+    {
+        constexpr const auto mask = 0x20U;
+        constexpr const auto from = 5U;
+        constexpr const auto name = "xapic_unstable";
+
+        constexpr inline auto is_enabled(attr_t attr) noexcept
+        { return is_bit_set(attr, from); }
+
+        constexpr inline auto is_disabled(attr_t attr) noexcept
+        { return is_bit_cleared(attr, from); }
+
+        constexpr inline auto enable(attr_t attr) noexcept
+        { return set_bit(attr, from); }
+
+        constexpr inline auto disable(attr_t attr) noexcept
+        { return clear_bit(attr, from); }
+
+        inline void dump(int level, attr_t attr, std::string *msg = nullptr)
+        { bfdebug_subbool(level, name, is_enabled(attr), msg); }
+    }
+
+    namespace x2apic_unstable
+    {
+        constexpr const auto mask = 0x10U;
+        constexpr const auto from = 4U;
+        constexpr const auto name = "x2apic_unstable";
+
+        constexpr inline auto is_enabled(attr_t attr) noexcept
+        { return is_bit_set(attr, from); }
+
+        constexpr inline auto is_disabled(attr_t attr) noexcept
+        { return is_bit_cleared(attr, from); }
+
+        constexpr inline auto enable(attr_t attr) noexcept
+        { return set_bit(attr, from); }
+
+        constexpr inline auto disable(attr_t attr) noexcept
+        { return clear_bit(attr, from); }
+
+        inline void dump(int level, attr_t attr, std::string *msg = nullptr)
+        { bfdebug_subbool(level, name, is_enabled(attr), msg); }
+    }
+
     namespace xapic_readable
     {
         constexpr const auto mask = 0x08U;
@@ -233,6 +277,12 @@ namespace lapic_register
         return lapic_register::x2apic_writable::is_enabled(attr);
     }
 
+    inline auto stable_in_x2apic(offset_t offset)
+    {
+        const auto attr = attributes.at(offset);
+        return lapic_register::x2apic_unstable::is_disabled(attr);
+    }
+
     inline auto exists_in_xapic(offset_t offset)
     {
         const auto attr = attributes.at(offset);
@@ -251,6 +301,12 @@ namespace lapic_register
     {
         const auto attr = attributes.at(offset);
         return lapic_register::xapic_writable::is_enabled(attr);
+    }
+
+    inline auto stable_in_xapic(offset_t offset)
+    {
+        const auto attr = attributes.at(offset);
+        return lapic_register::xapic_unstable::is_disabled(attr);
     }
 
     extern void init_attributes() noexcept;

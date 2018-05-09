@@ -18,6 +18,7 @@
 
 #include <bfvmm/vcpu/vcpu_factory.h>
 #include <eapis/vcpu/arch/intel_x64/vcpu.h>
+#include <eapis/hve/arch/intel_x64/ept.h>
 
 namespace ept = eapis::intel_x64::ept;
 namespace vmcs = ::intel_x64::vmcs;

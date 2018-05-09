@@ -22,10 +22,12 @@ project(eapis_main C CXX)
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
     INCLUDES ../../../../include
+    INCLUDES ../../../../../bfsdk/include
 )
 
 add_vmm_executable(
     eapis_integration_intel_x64_io_instruction_trap_in_out
     SOURCES trap_in_out.cpp
     LIBRARIES eapis_hve
+    LIBRARIES capstone
 )

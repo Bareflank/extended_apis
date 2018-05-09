@@ -21,7 +21,8 @@
 #include <intrinsics.h>
 
 #include <hve/arch/intel_x64/hve.h>
-#include <hve/arch/intel_x64/virt_x2apic.h>
+#include <hve/arch/intel_x64/phys_lapic.h>
+#include <hve/arch/intel_x64/virt_lapic.h>
 #include <support/arch/intel_x64/test_support.h>
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
@@ -39,30 +40,35 @@ namespace proc_ctls2 = vmcs_n::secondary_processor_based_vm_execution_controls;
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};
 
-TEST_CASE("virt_x2apic::virt_x2apic(hve)")
+uint32_t g_regs[1024U] = {0U};
+
+TEST_CASE("virt_lapic::virt_lapic")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
 
     CHECK_NOTHROW(vapic);
     CHECK(vapic.read_id() == 0);
 }
 
-TEST_CASE("virt_x2apic::virt_x2apic(hve, phys_lapic)")
+TEST_CASE("virt_lapic::virt_lapic(hve, phys_lapic)")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
     auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
 
-    CHECK_NOTHROW(eapis::intel_x64::virt_x2apic(hve.get(), phys_lapic.get()));
+    CHECK_NOTHROW(eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get()));
 }
 
-TEST_CASE("virt_x2apic::read_register")
+TEST_CASE("virt_lapic::read_register")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::mmio;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
 
     for (auto i = lapic_n::x2apic_base; i <= lapic_n::x2apic_last; ++i) {
         auto offset = lapic_register::msr_addr_to_offset(i);
@@ -74,11 +80,12 @@ TEST_CASE("virt_x2apic::read_register")
     }
 }
 
-TEST_CASE("virt_x2apic::write_register")
+TEST_CASE("virt_lapic::write_register")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
 
     for (auto i = lapic_n::x2apic_base; i <= lapic_n::x2apic_last; ++i) {
         auto offset = lapic_register::msr_addr_to_offset(i);
@@ -90,11 +97,12 @@ TEST_CASE("virt_x2apic::write_register")
     }
 }
 
-TEST_CASE("virt_x2apic: reset values")
+TEST_CASE("virt_lapic: reset values")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::mmio;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
 
     CHECK(vapic.read_id() == 0U);
     CHECK(vapic.read_icr() == 0U);
@@ -109,11 +117,12 @@ TEST_CASE("virt_x2apic: reset values")
     CHECK(vapic.read_version() == ver);
 }
 
-TEST_CASE("virt_x2apic: clear values")
+TEST_CASE("virt_lapic: clear values")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
 
     for (auto i = 0U; i < lapic_register::count; ++i) {
         if (!lapic_register::exists_in_x2apic(i)) {
@@ -122,11 +131,12 @@ TEST_CASE("virt_x2apic: clear values")
     }
 }
 
-TEST_CASE("virt_x2apic: tpr")
+TEST_CASE("virt_lapic: tpr")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     auto off = lapic_register::msr_addr_to_offset(msrs_n::ia32_x2apic_sivr::addr);
 
     vapic.write_register(off, 0xFFFFFFFF00000000U);
@@ -136,11 +146,12 @@ TEST_CASE("virt_x2apic: tpr")
     CHECK(vapic.read_tpr() == 0xDEADU);
 }
 
-TEST_CASE("virt_x2apic: icr")
+TEST_CASE("virt_lapic: icr")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     auto icr0 = lapic_register::msr_addr_to_offset(msrs_n::ia32_x2apic_icr::addr);
     auto icr1 = lapic_register::msr_addr_to_offset(msrs_n::ia32_x2apic_icr::addr | 1U);
 
@@ -159,11 +170,12 @@ TEST_CASE("virt_x2apic: icr")
     CHECK(vapic.read_icr() == 0xCAFE00000000BABEU);
 }
 
-TEST_CASE("virt_x2apic: self_ipi")
+TEST_CASE("virt_lapic: self_ipi")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
 
     vapic.write_self_ipi(0xFEU);
 
@@ -171,11 +183,12 @@ TEST_CASE("virt_x2apic: self_ipi")
     CHECK(vapic.read_register(off) == 0xFEU);
 }
 
-TEST_CASE("virt_x2apic: svr")
+TEST_CASE("virt_lapic: svr")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     auto off = lapic_register::msr_addr_to_offset(msrs_n::ia32_x2apic_sivr::addr);
 
     vapic.write_register(off, 0xFFFFFFFF00000000U);
@@ -185,11 +198,12 @@ TEST_CASE("virt_x2apic: svr")
     CHECK(vapic.read_svr() == 0xDEADU);
 }
 
-TEST_CASE("virt_x2apic: queue_injection - window closed - rflags.if")
+TEST_CASE("virt_lapic: queue_injection - window closed - rflags.if")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     auto vec = 100U;
 
     CHECK(vapic.irr_is_empty());
@@ -204,11 +218,12 @@ TEST_CASE("virt_x2apic: queue_injection - window closed - rflags.if")
     CHECK(vapic.irr_is_empty());
 }
 
-TEST_CASE("virt_x2apic: queue_injection - window closed - blocking by sti")
+TEST_CASE("virt_lapic: queue_injection - window closed - blocking by sti")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     auto vec = 32U;
 
     CHECK(vapic.irr_is_empty());
@@ -223,11 +238,12 @@ TEST_CASE("virt_x2apic: queue_injection - window closed - blocking by sti")
     CHECK(vapic.irr_is_empty());
 }
 
-TEST_CASE("virt_x2apic: queue_injection - window closed - blocking by mov ss")
+TEST_CASE("virt_lapic: queue_injection - window closed - blocking by mov ss")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     auto vec = 42U;
 
     CHECK(vapic.irr_is_empty());
@@ -242,17 +258,17 @@ TEST_CASE("virt_x2apic: queue_injection - window closed - blocking by mov ss")
     CHECK(vapic.irr_is_empty());
 }
 
-TEST_CASE("virt_x2apic: queue_injection - window open")
+TEST_CASE("virt_lapic: queue_injection - window open")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     auto vec = 99U;
 
     vmcs_n::guest_rflags::interrupt_enable_flag::enable();
     vmcs_n::guest_interruptibility_state::blocking_by_sti::disable();
     vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::disable();
-
     vapic.queue_injection(vec);
 
     CHECK(vapic.irr_is_empty());
@@ -260,17 +276,17 @@ TEST_CASE("virt_x2apic: queue_injection - window open")
     CHECK(vmcs_n::vm_entry_interruption_information::valid_bit::is_enabled());
 }
 
-TEST_CASE("virt_x2apic: inject_spurious - window open")
+TEST_CASE("virt_lapic: inject_spurious - window open")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     auto spur = 0xFFU;
 
     vmcs_n::guest_rflags::interrupt_enable_flag::enable();
     vmcs_n::guest_interruptibility_state::blocking_by_sti::disable();
     vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::disable();
-
     vapic.inject_spurious(spur);
 
     CHECK(vapic.irr_is_empty());
@@ -278,26 +294,26 @@ TEST_CASE("virt_x2apic: inject_spurious - window open")
     CHECK(vmcs_n::vm_entry_interruption_information::valid_bit::is_enabled());
 }
 
-TEST_CASE("virt_x2apic: inject_spurious - window closed")
+TEST_CASE("virt_lapic: inject_spurious - window closed")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     auto spur = 0xFFU;
 
     CHECK(vapic.irr_is_empty());
-
     vmcs_n::guest_rflags::interrupt_enable_flag::disable();
     vapic.inject_spurious(spur);
-
     CHECK(vapic.irr_is_empty());
 }
 
-TEST_CASE("virt_x2apic: top_irr")
+TEST_CASE("virt_lapic: top_irr")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     std::list<uint8_t> vec = { 0x32U, 0x33U, 0x65U, 0x70U, 0xEFU, 0xF0U, 0xFFU };
     const auto max = 0xFFU;
 
@@ -319,11 +335,12 @@ TEST_CASE("virt_x2apic: top_irr")
 
 }
 
-TEST_CASE("virt_x2apic: top_isr")
+TEST_CASE("virt_lapic: top_isr")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     std::list<uint8_t> vec = { 0x32U, 0x33U, 0x65U, 0x70U, 0xEFU, 0xF0U, 0xFFU };
     const auto max = 0xFFU;
 
@@ -344,11 +361,12 @@ TEST_CASE("virt_x2apic: top_isr")
     while (std::next_permutation(vec.begin(), vec.end()));
 }
 
-TEST_CASE("virt_x2apic: interrupt_window_exit - single")
+TEST_CASE("virt_lapic: interrupt_window_exit - single")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     auto vec = 0x80U;
 
     CHECK(vapic.irr_is_empty());
@@ -373,11 +391,12 @@ TEST_CASE("virt_x2apic: interrupt_window_exit - single")
     CHECK(vapic.isr_is_empty());
 }
 
-TEST_CASE("virt_x2apic: interrupt_window_exit - permuted")
+TEST_CASE("virt_lapic: interrupt_window_exit - permuted")
 {
     MockRepository mocks;
     auto hve = setup_hve(mocks);
-    auto vapic = eapis::intel_x64::virt_x2apic(hve.get());
+    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
     std::list<uint8_t> vec = { 0x32U, 0x33U, 0x65U, 0x66U, 0xEFU, 0xFEU, 0xFFU };
     const auto max = 0xFFU;
 

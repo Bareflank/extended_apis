@@ -18,6 +18,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <intrinsics.h>
+#include "hve/arch/intel_x64/hve.h"
 #include "hve/arch/intel_x64/ept/helpers.h"
 #include "hve/arch/intel_x64/ept/memory_map.h"
 #include "hve/arch/intel_x64/ept/intrinsics.h"
@@ -31,6 +32,15 @@ namespace intel_x64
 {
 namespace ept
 {
+
+uintptr_t align_1g(uintptr_t addr)
+{ return (addr & ~(ept::page_size_1g - 1U)); }
+
+uintptr_t align_2m(uintptr_t addr)
+{ return (addr & ~(ept::page_size_2m - 1U)); }
+
+uintptr_t align_4k(uintptr_t addr)
+{ return (addr & ~(ept::page_size_4k - 1U)); }
 
 uint64_t
 eptp(memory_map &map)
@@ -47,11 +57,11 @@ eptp(memory_map &map)
 }
 
 void
-enable_ept(uint64_t eptp)
+enable_ept(uint64_t eptp, gsl::not_null<eapis::intel_x64::hve *> hve)
 {
     vmcs::ept_pointer::set(eptp);
-    vmcs::secondary_processor_based_vm_execution_controls::enable_vpid::enable();
     vmcs::secondary_processor_based_vm_execution_controls::enable_ept::enable();
+    hve->enable_vpid();
 }
 
 void
@@ -203,6 +213,58 @@ identity_map_range_4k(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, memory_attr
 
     auto n = ((gpa_e - gpa_s) / page_size_4k) + 1ULL;
     identity_map_n_contig_4k(mem_map, gpa_s, n, mattr);
+}
+
+void
+identity_map_bestfit_lo(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
+                        memory_attr_t mattr)
+{
+    expects(gpa_s == align_1g(gpa_s));
+    expects(gpa_s < align_4k(gpa_e));
+
+    const auto end_1g = align_1g(gpa_e);
+    const auto end_2m = align_2m(gpa_e);
+    const auto end_4k = align_4k(gpa_e);
+
+    auto i = gpa_s;
+
+    for (; i < end_1g; i += ept::page_size_1g) {
+        ept::identity_map_1g(emm, i, mattr);
+    }
+
+    for (; i < end_2m; i += ept::page_size_2m) {
+        ept::identity_map_2m(emm, i, mattr);
+    }
+
+    for (; i <= end_4k; i += ept::page_size_4k) {
+        ept::identity_map_4k(emm, i, mattr);
+    }
+}
+
+void
+identity_map_bestfit_hi(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
+                        memory_attr_t mattr)
+{
+    expects(align_4k(gpa_s) == gpa_s);
+    expects(align_1g(gpa_e) == gpa_e);
+
+    const auto end_4k = align_2m(gpa_s) + ept::page_size_2m;
+    const auto end_2m = align_1g(gpa_s) + ept::page_size_1g;
+    const auto end_1g = gpa_e;
+
+    auto i = gpa_s;
+
+    for (; i < end_4k; i += ept::page_size_4k) {
+        ept::identity_map_4k(emm, i, mattr);
+    }
+
+    for (; i < end_2m; i += ept::page_size_2m) {
+        ept::identity_map_2m(emm, i, mattr);
+    }
+
+    for (; i <= end_1g; i += ept::page_size_1g) {
+        ept::identity_map_1g(emm, i, mattr);
+    }
 }
 
 //--------------------------------------------------------------------------

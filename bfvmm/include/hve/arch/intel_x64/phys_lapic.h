@@ -49,6 +49,25 @@ public:
     ///
     virtual ~phys_lapic() = default;
 
+    /// Base
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the linear base address of the physical APIC
+    /// @note this is only well-defined for xAPIC mode
+    ///
+    virtual uintptr_t base() = 0;
+
+    /// Relocate
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param base the new base address of the apic
+    ///
+    virtual void relocate(uintptr_t base) = 0;
+
     /// Enable interrupts
     ///
     /// Enable physical interrupts on this cpu

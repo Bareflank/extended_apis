@@ -22,10 +22,12 @@ project(eapis_main C CXX)
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
     INCLUDES ../../../../include
+    INCLUDES ../../../../../bfsdk/include
 )
 
 add_vmm_executable(
     eapis_integration_intel_x64_phys_pci
     SOURCES phys_pci.cpp
     LIBRARIES eapis_hve
+    LIBRARIES capstone
 )

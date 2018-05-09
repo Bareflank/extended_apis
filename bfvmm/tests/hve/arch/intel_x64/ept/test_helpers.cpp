@@ -28,6 +28,32 @@ namespace eptp = intel_x64::vmcs::ept_pointer;
 namespace test_ept
 {
 
+//--------------------------------------------------------------------------
+// Alignment
+//--------------------------------------------------------------------------
+
+TEST_CASE("ept::align_1g")
+{
+    auto addr = 0x1122334455667788U;
+    CHECK(ept::align_1g(addr) == (addr & ~(ept::page_size_1g - 1U)));
+}
+
+TEST_CASE("ept::ept::align_2m")
+{
+    auto addr = 0x1122334455667788U;
+    CHECK(ept::align_2m(addr) == (addr & ~(ept::page_size_2m - 1U)));
+}
+
+TEST_CASE("ept::ept::align_4k")
+{
+    auto addr = 0x1122334455667788U;
+    CHECK(ept::align_4k(addr) == (addr & ~(ept::page_size_4k - 1U)));
+}
+
+//--------------------------------------------------------------------------
+// EPT pointer
+//--------------------------------------------------------------------------
+
 TEST_CASE("ept::eptp")
 {
     MockRepository mocks;
@@ -116,7 +142,7 @@ TEST_CASE("ept::map_n_contig_1g with attributes")
     uintptr_t hpa = gpa + ept::page_size_1g;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_1g);
     uintptr_t end_hpa = hpa + ((page_count - 1) * ept::page_size_1g);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::map_n_contig_1g(*mem_map, gpa, hpa, page_count, mattr);
@@ -173,7 +199,7 @@ TEST_CASE("ept::map_range_1g with attributes")
     uintptr_t hpa = gpa + ept::page_size_1g;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_1g);
     uintptr_t end_hpa = hpa + ((page_count - 1) * ept::page_size_1g);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::map_range_1g(*mem_map, gpa, end_gpa, hpa, mattr);
@@ -260,7 +286,7 @@ TEST_CASE("ept::identity_map_n_contig_1g with attributes")
     auto page_count = 10ULL;
     uintptr_t gpa = test_ept::g_unmapped_gpa;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_1g);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::identity_map_n_contig_1g(*mem_map, gpa, page_count, mattr);
@@ -313,7 +339,7 @@ TEST_CASE("ept::identity_map_range_1g with attributes")
     auto page_count = 10ULL;
     uintptr_t gpa = test_ept::g_unmapped_gpa;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_1g);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::identity_map_range_1g(*mem_map, gpa, end_gpa, mattr);
@@ -409,7 +435,7 @@ TEST_CASE("ept::map_n_contig_2m with attributes")
     uintptr_t hpa = gpa + ept::page_size_2m;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_2m);
     uintptr_t end_hpa = hpa + ((page_count - 1) * ept::page_size_2m);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::map_n_contig_2m(*mem_map, gpa, hpa, page_count, mattr);
@@ -466,7 +492,7 @@ TEST_CASE("ept::map_range_2m with attributes")
     uintptr_t hpa = gpa + ept::page_size_2m;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_2m);
     uintptr_t end_hpa = hpa + ((page_count - 1) * ept::page_size_2m);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::map_range_2m(*mem_map, gpa, end_gpa, hpa, mattr);
@@ -553,7 +579,7 @@ TEST_CASE("ept::identity_map_n_contig_2m with attributes")
     auto page_count = 10ULL;
     uintptr_t gpa = test_ept::g_unmapped_gpa;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_2m);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::identity_map_n_contig_2m(*mem_map, gpa, page_count, mattr);
@@ -606,7 +632,7 @@ TEST_CASE("ept::identity_map_range_2m with attributes")
     auto page_count = 10ULL;
     uintptr_t gpa = test_ept::g_unmapped_gpa;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_2m);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::identity_map_range_2m(*mem_map, gpa, end_gpa, mattr);
@@ -702,7 +728,7 @@ TEST_CASE("ept::map_n_contig_4k with attributes")
     uintptr_t hpa = gpa + ept::page_size_4k;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_4k);
     uintptr_t end_hpa = hpa + ((page_count - 1) * ept::page_size_4k);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::map_n_contig_4k(*mem_map, gpa, hpa, page_count, mattr);
@@ -759,7 +785,7 @@ TEST_CASE("ept::map_range_4k with attributes")
     uintptr_t hpa = gpa + ept::page_size_4k;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_4k);
     uintptr_t end_hpa = hpa + ((page_count - 1) * ept::page_size_4k);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::map_range_4k(*mem_map, gpa, end_gpa, hpa, mattr);
@@ -846,7 +872,7 @@ TEST_CASE("ept::identity_map_n_contig_4k with attributes")
     auto page_count = 10ULL;
     uintptr_t gpa = test_ept::g_unmapped_gpa;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_4k);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::identity_map_n_contig_4k(*mem_map, gpa, page_count, mattr);
@@ -899,7 +925,7 @@ TEST_CASE("ept::identity_map_range_4k with attributes")
     auto page_count = 10ULL;
     uintptr_t gpa = test_ept::g_unmapped_gpa;
     uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_4k);
-    auto mattr = ept::epte::memory_attr::uc_eo;
+    uintptr_t mattr = ept::epte::memory_attr::uc_eo;
     ept::epte_t result_entry{0ULL};
 
     ept::identity_map_range_4k(*mem_map, gpa, end_gpa, mattr);
@@ -920,6 +946,112 @@ TEST_CASE("ept::identity_map_range_4k with attributes")
     CHECK(ept::epte::write_access::is_disabled(result_entry));
     CHECK(ept::epte::execute_access::is_enabled(result_entry));
     CHECK(ept::epte::memory_type::get(result_entry) == ept::epte::memory_type::uc);
+}
+
+TEST_CASE("ept::identity_map_bestfit_lo throws")
+{
+    MockRepository mocks;
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+
+    CHECK_THROWS(ept::identity_map_bestfit_lo(*mem_map, 0x1000U, 0U));
+    CHECK_THROWS(ept::identity_map_bestfit_lo(*mem_map, 0x100000U, 0U));
+    CHECK_THROWS(ept::identity_map_bestfit_lo(*mem_map, 0x1000U, 0x1000U));
+    CHECK_THROWS(ept::identity_map_bestfit_lo(*mem_map, 0x1000U, 0x100FU));
+}
+
+TEST_CASE("ept::identity_map_bestfit_lo 4K end page")
+{
+    MockRepository mocks;
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    uintptr_t gpa = test_ept::g_unmapped_gpa + ept::page_size_1g;
+    uintptr_t start = gpa + ept::page_size_1g;
+    uintptr_t end = start + ept::page_size_4k;
+
+    ept::identity_map_bestfit_lo(*mem_map, start, end);
+
+    auto entry_1g = mem_map->gpa_to_epte(start);
+    auto entry_4k = mem_map->gpa_to_epte(end);
+
+    CHECK(ept::epte::entry_type::is_enabled(entry_1g));
+    CHECK(ept::epte::entry_type::is_enabled(entry_4k));
+    CHECK(ept::epte::memory_type::get(entry_1g) == ept::epte::memory_type::wb);
+    CHECK(ept::epte::memory_type::get(entry_4k) == ept::epte::memory_type::wb);
+}
+
+TEST_CASE("ept::identity_map_bestfit_lo mattr")
+{
+    MockRepository mocks;
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    auto page_count = 10ULL;
+    uintptr_t gpa = test_ept::g_unmapped_gpa;
+    uintptr_t end_gpa = gpa + ((page_count - 1) * ept::page_size_1g);
+    uintptr_t mattr = ept::epte::memory_attr::uc_pt;
+
+    ept::identity_map_bestfit_lo(*mem_map, gpa, end_gpa - ept::page_size_4k, mattr);
+
+    auto entry_1g = mem_map->gpa_to_epte(gpa);
+    auto entry_2m = mem_map->gpa_to_epte(end_gpa - 512 * ept::page_size_2m);
+    auto entry_4k = mem_map->gpa_to_epte(end_gpa - ept::page_size_4k);
+
+    CHECK(ept::epte::entry_type::is_enabled(entry_1g));
+    CHECK(ept::epte::entry_type::is_enabled(entry_2m));
+    CHECK(ept::epte::entry_type::is_enabled(entry_4k));
+
+    CHECK(ept::epte::memory_type::get(entry_1g) == ept::epte::memory_type::uc);
+    CHECK(ept::epte::memory_type::get(entry_2m) == ept::epte::memory_type::uc);
+    CHECK(ept::epte::memory_type::get(entry_4k) == ept::epte::memory_type::uc);
+}
+
+TEST_CASE("ept::identity_map_bestfit_hi throws")
+{
+    MockRepository mocks;
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+
+    CHECK_THROWS(ept::identity_map_bestfit_hi(*mem_map, 0x1001U, 0U));
+    CHECK_THROWS(ept::identity_map_bestfit_hi(*mem_map, 0x100000U, 0x2000U));
+}
+
+TEST_CASE("ept::identity_map_bestfit_hi 4K end page")
+{
+    MockRepository mocks;
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    auto page_count = 10ULL;
+    uintptr_t gpa = test_ept::g_unmapped_gpa + ept::page_size_4k;
+    uintptr_t end_gpa = ept::align_1g(gpa + ((page_count - 1) * ept::page_size_1g));
+
+    ept::identity_map_bestfit_hi(*mem_map, gpa, end_gpa);
+
+    auto entry_4k = mem_map->gpa_to_epte(gpa);
+    auto entry_2m = mem_map->gpa_to_epte(ept::align_2m(gpa + ept::page_size_2m));
+    auto entry_1g = mem_map->gpa_to_epte(ept::align_1g(gpa + ept::page_size_1g));
+
+    CHECK(ept::epte::entry_type::is_enabled(entry_4k));
+    CHECK(ept::epte::entry_type::is_enabled(entry_2m));
+    CHECK(ept::epte::entry_type::is_enabled(entry_1g));
+}
+
+TEST_CASE("ept::identity_map_bestfit_hi mattr")
+{
+    MockRepository mocks;
+    auto mock_ept = std::make_unique<ept_test_support>(mocks);
+    auto mem_map = std::make_unique<ept::memory_map>();
+    auto page_count = 2ULL;
+    uintptr_t gpa = test_ept::g_unmapped_gpa + ept::page_size_1g - ept::page_size_4k;
+    uintptr_t end_gpa = test_ept::g_unmapped_gpa + ept::page_size_1g;
+    uintptr_t mattr = ept::epte::memory_attr::wc_eo;
+
+    ept::identity_map_bestfit_hi(*mem_map, gpa, end_gpa);
+
+    auto entry_4k = mem_map->gpa_to_epte(gpa);
+    auto entry_1g = mem_map->gpa_to_epte(gpa + ept::page_size_4k);
+
+    CHECK(ept::epte::entry_type::is_enabled(entry_4k));
+    CHECK(ept::epte::entry_type::is_enabled(entry_1g));
 }
 
 }

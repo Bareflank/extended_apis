@@ -66,6 +66,7 @@ ept_test_support::setup_mock_empty_pml4(ept::memory_map &map)
 
     for (auto entry : gsl::make_span(m_pml4.get(), ept::page_table::num_entries)) {
         entry = 0ULL;
+        entry = entry;
     }
 
     map.m_pml4_hva = reinterpret_cast<uintptr_t>(m_pml4.get());
@@ -203,22 +204,27 @@ ept_test_support::reset(ept::memory_map &map)
 
     for (auto entry : gsl::make_span(m_pml4.get(), ept::page_table::num_entries)) {
         entry = 0xffffffffffffffff;
+        entry = entry;
     }
 
     for (auto entry : gsl::make_span(m_pdpt.get(), ept::page_table::num_entries)) {
         entry = 0xffffffffffffffff;
+        entry = entry;
     }
 
     for (auto entry : gsl::make_span(m_pd.get(), ept::page_table::num_entries)) {
         entry = 0xffffffffffffffff;
+        entry = entry;
     }
 
     for (auto entry : gsl::make_span(m_pt.get(), ept::page_table::num_entries)) {
         entry = 0xffffffffffffffff;
+        entry = entry;
     }
 
     for (auto entry : gsl::make_span(m_page.get(), ept::page_table::num_entries)) {
         entry = gsl::byte(0xff);
+        entry = entry;
     }
 
     if (m_saved_pml4_hva) {

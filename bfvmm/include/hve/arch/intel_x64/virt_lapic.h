@@ -20,8 +20,6 @@
 #define VIRT_LAPIC_INTEL_X64_EAPIS_H
 
 #include <array>
-#include <list>
-
 #include "lapic_register.h"
 
 namespace eapis
@@ -29,28 +27,74 @@ namespace eapis
 namespace intel_x64
 {
 
-/// Virtual LAPIC
+class hve;
+class phys_xapic;
+class phys_x2apic;
+
 ///
-/// Provides an interface to a virtual local APIC, which
-/// is abstracted over both xAPIC and x2APIC functionality.
+/// Virtual Local APIC
 ///
 class EXPORT_EAPIS_HVE virt_lapic
 {
 public:
 
-    /// Default Constructor
+    /// Access type
+    ///
+    /// The interface used by the guest to talk to the virt_lapic
+    ///
+    enum class access_t : uint64_t {
+        /// MSR access for x2apic mode
+        msrs,
+
+        /// MMIO access for xAPIC mode
+        mmio
+    };
+
+    /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
-    virt_lapic() = default;
+    /// @param hve the hve object of the virt_lapic
+    /// @param register_page the base address of this' registers
+    /// @param access the access_t for this virt_lapic
+    ///
+    virt_lapic(
+        gsl::not_null<eapis::intel_x64::hve *> hve,
+        gsl::not_null<uint32_t *> register_page,
+        access_t access
+    );
+
+    /// Constructor from physical local APIC
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param hve the hve object of the virt_lapic
+    /// @param register_page the base address of this' registers
+    /// @param phys the phys_lapic object for this physical core
+    ///
+    virt_lapic(
+        gsl::not_null<eapis::intel_x64::hve *> hve,
+        gsl::not_null<uint32_t *> register_page,
+        eapis::intel_x64::phys_lapic *phys
+    );
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    virtual ~virt_lapic() = default;
+    ~virt_lapic() = default;
+
+    /// Access Type
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the access type for this virtual apic
+    ///
+    access_t access_type() const;
 
     /// Read Register
     ///
@@ -58,9 +102,9 @@ public:
     /// @ensures
     ///
     /// @param offset the register offset to read
-    /// @return the value of the register
+    /// @return the value of the 32-bit register given by offset
     ///
-    virtual uint64_t read_register(lapic_register::offset_t offset) const = 0;
+    uint64_t read_register(lapic_register::offset_t offset) const;
 
     /// Write Register
     ///
@@ -70,8 +114,7 @@ public:
     /// @param offset the register offset to write
     /// @param val the value to write
     ///
-    virtual void write_register(
-        lapic_register::offset_t offset, uint64_t val) = 0;
+    void write_register(lapic_register::offset_t offset, uint64_t val);
 
     /// Handle interrupt window exit
     ///
@@ -81,7 +124,7 @@ public:
     /// @param vmcs the vmcs pointer for this exit
     /// @return true iff the exit is handled
     ///
-    virtual bool handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs) = 0;
+    bool handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs);
 
     /// Queue Interrupt
     ///
@@ -90,7 +133,7 @@ public:
     ///
     /// @param vector of the interrupt to queue
     ///
-    virtual void queue_injection(uint64_t vector) = 0;
+    void queue_injection(uint64_t vector);
 
     /// Inject spurious interrupt
     ///
@@ -99,95 +142,72 @@ public:
     ///
     /// @param vector the spurious vector inject
     ///
-    virtual void inject_spurious(uint64_t vector) = 0;
+    void inject_spurious(uint64_t vector);
 
-    /// Read ID
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return the value of the ID register
-    ///
-    virtual uint64_t read_id() const = 0;
+    /// @cond
 
-    /// Read version
     ///
-    /// @expects
-    /// @ensures
+    /// Register reads
     ///
-    /// @return the value of the version register
-    ///
-    virtual uint64_t read_version() const = 0;
+    uint64_t read_id() const;
+    uint64_t read_version() const;
+    uint64_t read_tpr() const;
+    uint64_t read_icr() const;
+    uint64_t read_svr() const;
 
-    /// Read TPR
     ///
-    /// @expects
-    /// @ensures
+    /// Register writes
     ///
-    /// @return the value of the TPR
-    ///
-    virtual uint64_t read_tpr() const = 0;
+    void write_eoi();
+    void write_tpr(uint64_t tpr);
+    void write_icr(uint64_t icr);
+    void write_self_ipi(uint64_t vector);
+    void write_svr(uint64_t svr);
 
-    /// Read SVR
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return the value of the SVR
-    ///
-    virtual uint64_t read_svr() const = 0;
+    void init_registers_from_phys_xapic(
+        eapis::intel_x64::phys_xapic *phys);
 
-    /// Read ICR
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return the value of the ICR
-    ///
-    virtual uint64_t read_icr() const = 0;
+    /// @endcond
 
-    /// Write EOI
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    virtual void write_eoi() = 0;
+#ifndef ENABLE_BUILD_TEST
+private:
+#endif
 
-    /// Write TPR
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param tpr the value of the tpr to write
-    ///
-    virtual void write_tpr(uint64_t tpr) = 0;
+    /// @cond
 
-    /// Write ICR
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param icr the value of the ICR to write
-    ///
-    virtual void write_icr(uint64_t icr) = 0;
+    void queue_interrupt(uint64_t vector);
+    void inject_interrupt(uint64_t vector);
 
-    /// Write self-IPI
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param vector the vector of the self-IPI to send
-    ///
-    virtual void write_self_ipi(uint64_t vector) = 0;
+    void init_registers_from_phys_x2apic(
+        eapis::intel_x64::phys_x2apic *phys);
 
-    /// Write SVR
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param svr the value of the SVR to write
-    ///
-    virtual void write_svr(uint64_t svr) = 0;
+    void init_interrupt_window_handler();
+    void init_id();
+
+    void reset_svr();
+    void reset_version();
+    void reset_registers();
+    void reset_register(lapic_register::offset_t offset);
+    void reset_lvt_register(lapic_register::offset_t offset);
+    void clear_register(lapic_register::offset_t offset);
+
+    bool irr_is_empty();
+    bool isr_is_empty();
+    bool is_empty_256bit(uint64_t last);
+
+    void pop_irr();
+    void pop_isr();
+    void pop_256bit(uint64_t last);
+
+    uint64_t top_irr();
+    uint64_t top_isr();
+    uint64_t top_256bit(uint64_t last);
+
+    eapis::intel_x64::hve *m_hve;
+    uint32_t *m_reg;
+    access_t m_access_type;
+
+    /// @endcond
 
 public:
 
@@ -201,6 +221,7 @@ public:
 
     /// @endcond
 };
+
 
 }
 }
