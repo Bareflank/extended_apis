@@ -16,15 +16,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-cmake_minimum_required(VERSION 3.6)
-project(eapis_main C CXX)
-
-include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project(
-    INCLUDES ../../../../include
-    INCLUDES ../../../../../bfsdk/include
-)
-
 add_vmm_executable(
     eapis_integration_intel_x64_ept_trap
     SOURCES trap_ept.cpp
