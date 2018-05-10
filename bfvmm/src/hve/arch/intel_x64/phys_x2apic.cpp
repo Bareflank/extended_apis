@@ -17,14 +17,14 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <intrinsics.h>
-
-#include <hve/arch/intel_x64/lapic_register.h>
 #include <hve/arch/intel_x64/phys_x2apic.h>
 
 namespace eapis
 {
 namespace intel_x64
 {
+
+namespace lapic = ::intel_x64::lapic;
 
 uintptr_t
 phys_x2apic::base()
@@ -43,20 +43,20 @@ phys_x2apic::disable_interrupts()
 { ::x64::rflags::interrupt_enable_flag::disable(); }
 
 uint64_t
-phys_x2apic::read_register(lapic_register::offset_t offset) const
+phys_x2apic::read_register(lapic::offset_t offset) const
 {
     const auto addr = gsl::narrow_cast<::intel_x64::msrs::field_type>(
-                          lapic_register::offset_to_msr_addr(offset)
+                          lapic::offset_to_msr_addr(offset)
                       );
 
     return ::intel_x64::msrs::get(addr);
 }
 
 void
-phys_x2apic::write_register(lapic_register::offset_t offset, uint64_t val)
+phys_x2apic::write_register(lapic::offset_t offset, uint64_t val)
 {
     const auto addr = gsl::narrow_cast<::intel_x64::msrs::field_type>(
-                          lapic_register::offset_to_msr_addr(offset)
+                          lapic::offset_to_msr_addr(offset)
                       );
 
     return ::intel_x64::msrs::set(addr, val);

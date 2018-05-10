@@ -76,11 +76,6 @@ do_test(test_virt_lapic
     ${ARGN}
 )
 
-do_test(test_lapic_register
-    SOURCES arch/intel_x64/test_lapic_register.cpp
-    ${ARGN}
-)
-
 do_test(test_vic
     SOURCES arch/intel_x64/test_vic.cpp
     ${ARGN}

@@ -35,6 +35,8 @@ namespace eapis
 namespace intel_x64
 {
 
+namespace lapic = ::intel_x64::lapic;
+
 /// Initialize the ept permissions to virtualize xAPIC accesses
 ///
 /// The xAPIC is mapped to a 4KB page with guest-physical address equal
@@ -140,7 +142,7 @@ vic::init_idt()
 void
 vic::init_lapic()
 {
-    if (!::intel_x64::lapic::is_present()) {
+    if (!lapic::is_present()) {
         throw std::runtime_error("lapic not present");
     }
 
@@ -193,7 +195,7 @@ vic::init_phys_xapic()
 void
 vic::init_virt_lapic()
 {
-    static_assert(lapic_register::count > 0ULL, "Need lapic_register::count > 0");
+    static_assert(lapic::count > 0ULL, "Need lapic_register::count > 0");
 
     m_virt_base_msr = m_orig_base_msr;
     m_virt_lapic = std::make_unique<virt_lapic>(
@@ -282,12 +284,12 @@ vic::add_xapic_handlers()
 void
 vic::add_x2apic_handlers()
 {
-    for (auto i = 0U; i < lapic_register::attributes.size(); ++i) {
-        if (lapic_register::readable_in_x2apic(i)) {
+    for (auto i = 0U; i < lapic::attributes.size(); ++i) {
+        if (lapic::readable_in_x2apic(i)) {
             this->add_x2apic_read_handler(i);
         }
 
-        if (lapic_register::writable_in_x2apic(i)) {
+        if (lapic::writable_in_x2apic(i)) {
             this->add_x2apic_write_handler(i);
         }
     }
@@ -297,7 +299,7 @@ void
 vic::add_x2apic_read_handler(uint64_t offset)
 {
     m_hve->add_rdmsr_handler(
-        lapic_register::offset_to_msr_addr(offset),
+        lapic::offset_to_msr_addr(offset),
         rdmsr::handler_delegate_t::create<vic,
         &vic::handle_x2apic_read>(this)
     );
@@ -308,7 +310,7 @@ vic::add_x2apic_write_handler(uint64_t offset)
 {
     using namespace ::intel_x64::msrs;
 
-    const auto addr = lapic_register::offset_to_msr_addr(offset);
+    const auto addr = lapic::offset_to_msr_addr(offset);
     switch (addr) {
         case ia32_x2apic_eoi::addr:
             m_hve->add_wrmsr_handler(
@@ -344,7 +346,7 @@ void
 vic::add_external_interrupt_handlers()
 {
     const auto svr = m_virt_lapic->read_svr();
-    const auto svr_vector = ::intel_x64::lapic::svr::vector::get(svr);
+    const auto svr_vector = lapic::svr::vector::get(svr);
 
     for (auto vector = 32U; vector < s_num_vectors; ++vector) {
         m_hve->add_external_interrupt_handler(
@@ -388,8 +390,8 @@ vic::handle_xapic_write(gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &inf
         return false;
     }
 
-    const auto reg = lapic_register::mem_addr_to_offset(info.gpa);
-    if (reg == lapic_register::msr_addr_to_offset(ia32_x2apic_eoi::addr)) {
+    const auto reg = lapic::mem_addr_to_offset(info.gpa);
+    if (reg == lapic::msr_addr_to_offset(ia32_x2apic_eoi::addr)) {
         // Returning straight-away here without checking the value assumes that
         // the guest wrote a zero; if not then we technically should inject a GP
         m_virt_lapic->write_eoi();
@@ -434,7 +436,7 @@ vic::handle_x2apic_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
     bfignored(vmcs);
 
-    const auto offset = lapic_register::msr_addr_to_offset(info.msr);
+    const auto offset = lapic::msr_addr_to_offset(info.msr);
 
     m_virt_lapic->write_register(offset, info.val);
     m_phys_lapic->write_register(offset, info.val);
@@ -463,7 +465,7 @@ vic::handle_x2apic_read(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
 {
     bfignored(vmcs);
 
-    const auto offset = lapic_register::msr_addr_to_offset(info.msr);
+    const auto offset = lapic::msr_addr_to_offset(info.msr);
     info.val = m_virt_lapic->read_register(offset);
 
     info.ignore_write = false;

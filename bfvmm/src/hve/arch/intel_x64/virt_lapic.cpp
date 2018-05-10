@@ -19,7 +19,7 @@
 #include <arch/intel_x64/msrs.h>
 
 #include <hve/arch/intel_x64/hve.h>
-#include <hve/arch/intel_x64/lapic_register.h>
+#include <arch/intel_x64/apic/lapic.h>
 #include <hve/arch/intel_x64/phys_xapic.h>
 #include <hve/arch/intel_x64/phys_x2apic.h>
 #include <hve/arch/intel_x64/vic.h>
@@ -31,7 +31,7 @@ namespace intel_x64
 {
 
 using namespace ::intel_x64::msrs;
-using namespace lapic_register;
+namespace lapic = ::intel_x64::lapic;
 
 ///----------------------------------------------------------------------------
 /// Initialization
@@ -46,7 +46,7 @@ virt_lapic::virt_lapic(
     m_reg{register_page},
     m_access_type{access}
 {
-    lapic_register::init_attributes();
+    lapic::init_attributes();
     this->init_id();
     this->init_interrupt_window_handler();
     this->reset_registers();
@@ -60,7 +60,7 @@ virt_lapic::virt_lapic(
     m_hve{hve},
     m_reg{register_page}
 {
-    lapic_register::init_attributes();
+    lapic::init_attributes();
     this->init_id();
     this->init_interrupt_window_handler();
 
@@ -88,7 +88,7 @@ virt_lapic::access_type() const
 inline void
 virt_lapic::init_id()
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_apicid::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_apicid::addr);
     this->write_register(offset, m_hve->vmcs()->save_state()->vcpuid);
 }
 
@@ -98,10 +98,10 @@ virt_lapic::init_id()
 void
 virt_lapic::init_registers_from_phys_xapic(eapis::intel_x64::phys_xapic *phys)
 {
-    for (auto i = 0ULL; i < lapic_register::count; ++i) {
-        if (lapic_register::exists_in_xapic(i)) {
-            if (lapic_register::readable_in_xapic(i)) {
-                if (lapic_register::stable_in_xapic(i)) {
+    for (auto i = 0ULL; i < lapic::count; ++i) {
+        if (lapic::exists_in_xapic(i)) {
+            if (lapic::readable_in_xapic(i)) {
+                if (lapic::stable_in_xapic(i)) {
                     this->write_register(i, phys->read_register(i));
                     continue;
                 }
@@ -119,10 +119,10 @@ void
 virt_lapic::init_registers_from_phys_x2apic(
     eapis::intel_x64::phys_x2apic *phys)
 {
-    for (auto i = 0ULL; i < lapic_register::count; ++i) {
-        if (lapic_register::exists_in_x2apic(i)) {
-            if (lapic_register::readable_in_x2apic(i)) {
-                if (lapic_register::stable_in_x2apic(i)) {
+    for (auto i = 0ULL; i < lapic::count; ++i) {
+        if (lapic::exists_in_x2apic(i)) {
+            if (lapic::readable_in_x2apic(i)) {
+                if (lapic::stable_in_x2apic(i)) {
                     this->write_register(i, phys->read_register(i));
                     continue;
                 }
@@ -150,9 +150,9 @@ virt_lapic::init_interrupt_window_handler()
 ///----------------------------------------------------------------------------
 
 uint64_t
-virt_lapic::read_register(lapic_register::offset_t offset) const
+virt_lapic::read_register(lapic::offset_t offset) const
 {
-    if (offset >= lapic_register::count) {
+    if (offset >= lapic::count) {
         throw_vic_fatal("virt_lapic::read_register: invalid offset: ", offset);
     }
 
@@ -162,29 +162,29 @@ virt_lapic::read_register(lapic_register::offset_t offset) const
 uint64_t
 virt_lapic::read_id() const
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_apicid::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_apicid::addr);
     return this->read_register(offset);
 }
 
 uint64_t
 virt_lapic::read_version() const
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_version::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_version::addr);
     return this->read_register(offset);
 }
 
 uint64_t
 virt_lapic::read_tpr() const
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_tpr::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_tpr::addr);
     return this->read_register(offset);
 }
 
 uint64_t
 virt_lapic::read_icr() const
 {
-    const auto icr0 = msr_addr_to_offset(ia32_x2apic_icr::addr);
-    const auto icr1 = msr_addr_to_offset(ia32_x2apic_icr::addr | 1U);
+    const auto icr0 = lapic::msr_addr_to_offset(ia32_x2apic_icr::addr);
+    const auto icr1 = lapic::msr_addr_to_offset(ia32_x2apic_icr::addr | 1U);
 
     uint64_t icr = this->read_register(icr1) << 32U;
     icr |= this->read_register(icr0);
@@ -195,7 +195,7 @@ virt_lapic::read_icr() const
 uint64_t
 virt_lapic::read_svr() const
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_sivr::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_sivr::addr);
     return this->read_register(offset);
 }
 
@@ -204,9 +204,9 @@ virt_lapic::read_svr() const
 ///----------------------------------------------------------------------------
 
 void
-virt_lapic::write_register(lapic_register::offset_t offset, uint64_t val)
+virt_lapic::write_register(lapic::offset_t offset, uint64_t val)
 {
-    if (offset >= lapic_register::count) {
+    if (offset >= lapic::count) {
         throw_vic_fatal("virt_lapic::write_register: invalid offset: ", offset);
     }
 
@@ -216,7 +216,7 @@ virt_lapic::write_register(lapic_register::offset_t offset, uint64_t val)
 void
 virt_lapic::write_eoi()
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_eoi::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_eoi::addr);
     this->write_register(offset, 0U);
     this->pop_isr();
 }
@@ -224,15 +224,15 @@ virt_lapic::write_eoi()
 void
 virt_lapic::write_tpr(uint64_t tpr)
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_tpr::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_tpr::addr);
     this->write_register(offset, tpr);
 }
 
 void
 virt_lapic::write_icr(uint64_t icr)
 {
-    const auto icr0 = msr_addr_to_offset(ia32_x2apic_icr::addr);
-    const auto icr1 = msr_addr_to_offset(ia32_x2apic_icr::addr | 1U);
+    const auto icr0 = lapic::msr_addr_to_offset(ia32_x2apic_icr::addr);
+    const auto icr1 = lapic::msr_addr_to_offset(ia32_x2apic_icr::addr | 1U);
 
     this->write_register(icr1, icr >> 32U);
     this->write_register(icr0, icr & 0xFFFFFFFFU);
@@ -241,14 +241,14 @@ virt_lapic::write_icr(uint64_t icr)
 void
 virt_lapic::write_self_ipi(uint64_t vector)
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_self_ipi::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_self_ipi::addr);
     this->write_register(offset, vector);
 }
 
 void
 virt_lapic::write_svr(uint64_t svr)
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_sivr::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_sivr::addr);
     this->write_register(offset, svr);
 }
 
@@ -274,7 +274,7 @@ virt_lapic::queue_interrupt(uint64_t vector)
     const auto ipc = (vector & 0xE0U) >> 5U;
     const auto bit = (vector & 0x1FU) >> 0U;
 
-    auto offset = lapic_register::msr_addr_to_offset(ia32_x2apic_irr0::addr);
+    auto offset = lapic::msr_addr_to_offset(ia32_x2apic_irr0::addr);
     offset |= ipc;
     this->write_register(offset, set_bit(this->read_register(offset), bit));
 }
@@ -285,8 +285,8 @@ virt_lapic::inject_interrupt(uint64_t vector)
     const auto ipc = (vector & 0xE0U) >> 5U;
     const auto bit = (vector & 0x1FU) >> 0U;
 
-    auto irr_offset = lapic_register::msr_addr_to_offset(ia32_x2apic_irr0::addr);
-    auto isr_offset = lapic_register::msr_addr_to_offset(ia32_x2apic_isr0::addr);
+    auto irr_offset = lapic::msr_addr_to_offset(ia32_x2apic_irr0::addr);
+    auto isr_offset = lapic::msr_addr_to_offset(ia32_x2apic_isr0::addr);
 
     irr_offset |= ipc;
     isr_offset |= ipc;
@@ -331,7 +331,7 @@ virt_lapic::top_256bit(uint64_t last)
 
     for (auto i = 0ULL; i < 8ULL; ++i) {
         const auto addr = last - i;
-        const auto offset = lapic_register::msr_addr_to_offset(addr);
+        const auto offset = lapic::msr_addr_to_offset(addr);
         const auto reg = this->read_register(offset);
 
         if (reg) {
@@ -363,7 +363,7 @@ virt_lapic::pop_256bit(uint64_t last)
 {
     for (auto i = 0ULL; i < 8ULL; ++i) {
         const auto addr = last - i;
-        const auto offset = lapic_register::msr_addr_to_offset(addr);
+        const auto offset = lapic::msr_addr_to_offset(addr);
         const auto reg = this->read_register(offset);
 
         if (reg) {
@@ -393,7 +393,7 @@ virt_lapic::is_empty_256bit(uint64_t last)
 {
     for (auto i = 0ULL; i < 8ULL; ++i) {
         const auto addr = last - i;
-        const auto offset = lapic_register::msr_addr_to_offset(addr);
+        const auto offset = lapic::msr_addr_to_offset(addr);
         const auto reg = this->read_register(offset);
 
         if (reg != 0ULL) {
@@ -433,7 +433,7 @@ virt_lapic::handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs)
 void
 virt_lapic::reset_registers()
 {
-    for (auto i = 0ULL; i < lapic_register::count; ++i) {
+    for (auto i = 0ULL; i < lapic::count; ++i) {
         this->reset_register(i);
     }
 }
@@ -454,44 +454,44 @@ virt_lapic::reset_version()
     val = version::max_lvt_entry_minus_one::set(val, lvt_limit);
     val = version::suppress_eoi_broadcast_supported::disable(val);
 
-    const auto offset = msr_addr_to_offset(ia32_x2apic_version::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_version::addr);
     this->write_register(offset, val);
 }
 
 void
 virt_lapic::reset_svr()
 {
-    const auto offset = msr_addr_to_offset(ia32_x2apic_sivr::addr);
+    const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_sivr::addr);
     this->write_register(offset, ::intel_x64::lapic::svr::reset_value);
 }
 
 void
-virt_lapic::reset_lvt_register(lapic_register::offset_t offset)
+virt_lapic::reset_lvt_register(lapic::offset_t offset)
 { this->write_register(offset, ::intel_x64::lapic::lvt::reset_value); }
 
 void
-virt_lapic::clear_register(lapic_register::offset_t offset)
+virt_lapic::clear_register(lapic::offset_t offset)
 { this->write_register(offset, 0ULL); }
 
 void
-virt_lapic::reset_register(lapic_register::offset_t offset)
+virt_lapic::reset_register(lapic::offset_t offset)
 {
     switch (offset) {
-        case msr_addr_to_offset(ia32_x2apic_version::addr):
+        case lapic::msr_addr_to_offset(ia32_x2apic_version::addr):
             this->reset_version();
             break;
 
-        case msr_addr_to_offset(ia32_x2apic_lvt_cmci::addr):
-        case msr_addr_to_offset(ia32_x2apic_lvt_timer::addr):
-        case msr_addr_to_offset(ia32_x2apic_lvt_thermal::addr):
-        case msr_addr_to_offset(ia32_x2apic_lvt_pmi::addr):
-        case msr_addr_to_offset(ia32_x2apic_lvt_lint0::addr):
-        case msr_addr_to_offset(ia32_x2apic_lvt_lint1::addr):
-        case msr_addr_to_offset(ia32_x2apic_lvt_error::addr):
+        case lapic::msr_addr_to_offset(ia32_x2apic_lvt_cmci::addr):
+        case lapic::msr_addr_to_offset(ia32_x2apic_lvt_timer::addr):
+        case lapic::msr_addr_to_offset(ia32_x2apic_lvt_thermal::addr):
+        case lapic::msr_addr_to_offset(ia32_x2apic_lvt_pmi::addr):
+        case lapic::msr_addr_to_offset(ia32_x2apic_lvt_lint0::addr):
+        case lapic::msr_addr_to_offset(ia32_x2apic_lvt_lint1::addr):
+        case lapic::msr_addr_to_offset(ia32_x2apic_lvt_error::addr):
             this->reset_lvt_register(offset);
             break;
 
-        case msr_addr_to_offset(ia32_x2apic_sivr::addr):
+        case lapic::msr_addr_to_offset(ia32_x2apic_sivr::addr):
             this->reset_svr();
             break;
 

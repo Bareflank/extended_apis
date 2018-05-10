@@ -38,7 +38,7 @@ public:
 
     /// Default Constructor
     ///
-    /// @expects (base != 0) && ::intel_x64::ioapic::align_base(base) == base
+    /// @expects (base != 0) && align_base(base) == base
     /// @ensures
     ///
     /// @param base the base address of the ioapic

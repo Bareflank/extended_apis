@@ -22,6 +22,8 @@
 #include <hve/arch/intel_x64/isr.h>
 #include <hve/arch/intel_x64/vic.h>
 
+namespace lapic = ::intel_x64::lapic;
+
 extern "C" void unlock_write(void);
 
 const char *

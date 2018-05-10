@@ -21,9 +21,9 @@
 
 #include <bfcapstone.h>
 #include <bfvmm/memory_manager/arch/x64/map_ptr.h>
+#include <arch/intel_x64/apic/lapic.h>
 
 #include "hve.h"
-#include "lapic_register.h"
 #include "phys_xapic.h"
 #include "phys_x2apic.h"
 #include "virt_lapic.h"
@@ -399,8 +399,8 @@ private:
     void add_external_interrupt_handlers();
     void add_xapic_handlers();
     void add_x2apic_handlers();
-    void add_x2apic_read_handler(lapic_register::offset_t offset);
-    void add_x2apic_write_handler(lapic_register::offset_t offset);
+    void add_x2apic_read_handler(::intel_x64::lapic::offset_t offset);
+    void add_x2apic_write_handler(::intel_x64::lapic::offset_t offset);
 
     void init_idt();
     void init_lapic();
@@ -422,7 +422,7 @@ private:
 
     std::array<uint8_t, s_num_vectors> m_interrupt_map;
     std::array<std::list<handler_delegate_t>, s_num_vectors> m_handlers;
-    alignas(0x1000) std::array<uint32_t, lapic_register::count> m_virt_lapic_regs;
+    alignas(0x1000) std::array<uint32_t, ::intel_x64::lapic::count> m_virt_lapic_regs;
 
     std::unique_ptr<gsl::byte[]> m_ist1;
     std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
