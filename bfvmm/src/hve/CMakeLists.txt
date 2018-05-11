@@ -26,6 +26,7 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/hve.cpp
         arch/intel_x64/interrupt_window.cpp
         arch/intel_x64/io_instruction.cpp
+        arch/intel_x64/esr.cpp
         arch/intel_x64/isr.cpp
         arch/intel_x64/phys_ioapic.cpp
         arch/intel_x64/phys_xapic.cpp
@@ -46,6 +47,7 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
 
     if (NOT WIN32 AND NOT ENABLE_MOCKING)
         list(APPEND SOURCES
+            arch/intel_x64/esr.asm
             arch/intel_x64/isr.asm
         )
     endif()

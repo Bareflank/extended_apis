@@ -24,6 +24,7 @@
 #include <arch/x64/rflags.h>
 #include <arch/intel_x64/vmx.h>
 
+#include <hve/arch/intel_x64/esr.h>
 #include <hve/arch/intel_x64/isr.h>
 #include <hve/arch/intel_x64/vic.h>
 #include <hve/arch/intel_x64/ept/helpers.h>
@@ -136,6 +137,7 @@ vic::init_idt()
     m_hve->exit_handler()->host_tss()->ist1 = setup_stack(m_ist1.get());
 
     const auto selector = 8U;
+    set_default_esrs(m_hve->exit_handler()->host_idt(), selector);
     set_default_isrs(m_hve->exit_handler()->host_idt(), selector);
 }
 
