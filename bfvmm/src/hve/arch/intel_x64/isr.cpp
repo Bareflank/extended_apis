@@ -17,114 +17,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <cstdlib>
-
 #include <hve/arch/intel_x64/isr.h>
 #include <hve/arch/intel_x64/vic.h>
 
-namespace lapic = ::intel_x64::lapic;
-
-extern "C" void unlock_write(void);
-
-const char *
-vector_to_str(uint64_t vec) noexcept
-{
-    switch (vec) {
-        case 0x00: return "fault: divide by 0";
-        case 0x01: return "fault/trap: debug exception";
-        case 0x02: return "interrupt: nmi";
-        case 0x03: return "trap: breakpoint";
-        case 0x04: return "trap: overflow";
-        case 0x05: return "fault: bound range exceeded";
-        case 0x06: return "fault: invalid opcode";
-        case 0x07: return "fault: device not available (no math coprocessor";
-        case 0x08: return "abort: double fault";
-        case 0x09: return "fault: coprocessor segment overrun";
-        case 0x0A: return "fault: invalid TSS";
-        case 0x0B: return "fault: segment not present";
-        case 0x0C: return "fault: stack segment fault";
-        case 0x0D: return "fault: general protection fault";
-        case 0x0E: return "fault: page fault";
-        case 0x10: return "fault: x87 fpu floating point error";
-        case 0x11: return "fault: alignment check";
-        case 0x12: return "abort: machine check";
-        case 0x13: return "fault: simd floating point exception";
-        case 0x14: return "fault: virtualization exception";
-        default: return "undefined";
-    }
-}
-
 extern "C" EXPORT_SYM void
-default_isr(uint64_t vec, uint64_t ec, bool ec_valid, uint64_t *reg) noexcept
+default_isr(uint64_t vec, uint64_t *reg) noexcept
 {
-    if (vec >= 0x20U) {
-        auto vic = reinterpret_cast<eapis::intel_x64::vic *>(*reg);
-        vic->handle_interrupt(vec);
-    }
-    else {
-
-        // NOTE:
-        //
-        // If the 'write' function throws a hardware exception, this function will
-        // deadlock because it doesn't unlock the write mutex. If we end up with
-        // stability issues with the debugging logic, we should modify the code
-        // to detect when the same core attempts to get the lock, and unlock as
-        // needed. For now, this case is unlikely, so it is ignored.
-        //
-
-        bfdebug_transaction(0, [&](std::string * msg) {
-            bferror_lnbr(0, msg);
-            bferror_lnbr(0, msg);
-            bferror_lnbr(0, msg);
-            bferror_brk1(0, msg);
-            bferror_info(0, "VMM Panic!!!", msg);
-            bferror_brk1(0, msg);
-
-            if (vec == 0x0E && ::intel_x64::cr2::get() == 0) {
-                bferror_info(0, "fault: null dereference", msg);
-            }
-            else {
-                bferror_info(0, vector_to_str(vec), msg);
-            }
-
-            bferror_lnbr(0, msg);
-
-            if (ec_valid) {
-                bferror_subnhex(0, "error code", ec, msg);
-            }
-
-            auto view = gsl::span<uint64_t>(reg, 38);
-
-            bferror_subnhex(0, "ss    ", view[37], msg);
-            bferror_subnhex(0, "rsp   ", view[36], msg);
-            bferror_subnhex(0, "rflags", view[35], msg);
-            bferror_subnhex(0, "cs    ", view[34], msg);
-            bferror_subnhex(0, "rip   ", view[33], msg);
-            bferror_subnhex(0, "rax   ", view[15], msg);
-            bferror_subnhex(0, "rbx   ", view[14], msg);
-            bferror_subnhex(0, "rcx   ", view[13], msg);
-            bferror_subnhex(0, "rdx   ", view[12], msg);
-            bferror_subnhex(0, "rbp   ", view[11], msg);
-            bferror_subnhex(0, "rsi   ", view[10], msg);
-            bferror_subnhex(0, "rdi   ", view[9], msg);
-            bferror_subnhex(0, "r8    ", view[8], msg);
-            bferror_subnhex(0, "r9    ", view[7], msg);
-            bferror_subnhex(0, "r10   ", view[6], msg);
-            bferror_subnhex(0, "r11   ", view[5], msg);
-            bferror_subnhex(0, "r12   ", view[4], msg);
-            bferror_subnhex(0, "r13   ", view[3], msg);
-            bferror_subnhex(0, "r14   ", view[2], msg);
-            bferror_subnhex(0, "r15   ", view[1], msg);
-            bferror_subnhex(0, "vic   ", view[0], msg);
-
-            bferror_subnhex(0, "cr0   ", ::intel_x64::cr0::get(), msg);
-            bferror_subnhex(0, "cr2   ", ::intel_x64::cr2::get(), msg);
-            bferror_subnhex(0, "cr3   ", ::intel_x64::cr3::get(), msg);
-            bferror_subnhex(0, "cr4   ", ::intel_x64::cr4::get(), msg);
-        });
-
-        ::x64::pm::halt();
-    }
+    auto vic = reinterpret_cast<eapis::intel_x64::vic *>(*reg);
+    vic->handle_interrupt(vec);
 }
 
 // -----------------------------------------------------------------------------
@@ -135,38 +35,6 @@ void set_default_isrs(
     bfvmm::x64::idt *idt,
     bfvmm::x64::idt::selector_type selector)
 {
-    idt->set(0, _isr0, selector);
-    idt->set(1, _isr1, selector);
-    idt->set(2, _isr2, selector);
-    idt->set(3, _isr3, selector);
-    idt->set(4, _isr4, selector);
-    idt->set(5, _isr5, selector);
-    idt->set(6, _isr6, selector);
-    idt->set(7, _isr7, selector);
-    idt->set(8, _isr8, selector);
-    idt->set(9, _isr9, selector);
-    idt->set(10, _isr10, selector);
-    idt->set(11, _isr11, selector);
-    idt->set(12, _isr12, selector);
-    idt->set(13, _isr13, selector);
-    idt->set(14, _isr14, selector);
-    idt->set(15, _isr15, selector);
-    idt->set(16, _isr16, selector);
-    idt->set(17, _isr17, selector);
-    idt->set(18, _isr18, selector);
-    idt->set(19, _isr19, selector);
-    idt->set(20, _isr20, selector);
-    idt->set(21, _isr21, selector);
-    idt->set(22, _isr22, selector);
-    idt->set(23, _isr23, selector);
-    idt->set(24, _isr24, selector);
-    idt->set(25, _isr25, selector);
-    idt->set(26, _isr26, selector);
-    idt->set(27, _isr27, selector);
-    idt->set(28, _isr28, selector);
-    idt->set(29, _isr29, selector);
-    idt->set(30, _isr30, selector);
-    idt->set(31, _isr31, selector);
     idt->set(32, _isr32, selector);
     idt->set(33, _isr33, selector);
     idt->set(34, _isr34, selector);

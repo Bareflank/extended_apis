@@ -88,6 +88,11 @@ do_test(test_isr
     CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
 )
 
+do_test(test_esr
+    SOURCES arch/intel_x64/test_esr.cpp
+    ${ARGN}
+)
+
 do_test(test_phys_pci
     SOURCES test_phys_pci.cpp
     ${ARGN}

@@ -24,48 +24,13 @@
 
 /// @cond
 
-const char *vector_to_str(uint64_t vec) noexcept;
-
 extern "C" EXPORT_SYM void
-default_isr(
-    uint64_t vector, uint64_t ec, bool ec_valid, uint64_t *regs) noexcept;
+default_isr(uint64_t vector, uint64_t *regs) noexcept;
 
 extern "C" void
 set_default_isrs(
     bfvmm::x64::idt *idt, bfvmm::x64::idt::selector_type selector);
 
-extern "C" void _isr0(void) noexcept;
-extern "C" void _isr1(void) noexcept;
-extern "C" void _isr2(void) noexcept;
-extern "C" void _isr3(void) noexcept;
-extern "C" void _isr4(void) noexcept;
-extern "C" void _isr5(void) noexcept;
-extern "C" void _isr6(void) noexcept;
-extern "C" void _isr7(void) noexcept;
-extern "C" void _isr8(void) noexcept;
-extern "C" void _isr9(void) noexcept;
-extern "C" void _isr10(void) noexcept;
-extern "C" void _isr11(void) noexcept;
-extern "C" void _isr12(void) noexcept;
-extern "C" void _isr13(void) noexcept;
-extern "C" void _isr14(void) noexcept;
-extern "C" void _isr15(void) noexcept;
-extern "C" void _isr16(void) noexcept;
-extern "C" void _isr17(void) noexcept;
-extern "C" void _isr18(void) noexcept;
-extern "C" void _isr19(void) noexcept;
-extern "C" void _isr20(void) noexcept;
-extern "C" void _isr21(void) noexcept;
-extern "C" void _isr22(void) noexcept;
-extern "C" void _isr23(void) noexcept;
-extern "C" void _isr24(void) noexcept;
-extern "C" void _isr25(void) noexcept;
-extern "C" void _isr26(void) noexcept;
-extern "C" void _isr27(void) noexcept;
-extern "C" void _isr28(void) noexcept;
-extern "C" void _isr29(void) noexcept;
-extern "C" void _isr30(void) noexcept;
-extern "C" void _isr31(void) noexcept;
 extern "C" void _isr32(void) noexcept;
 extern "C" void _isr33(void) noexcept;
 extern "C" void _isr34(void) noexcept;
