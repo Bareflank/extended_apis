@@ -20,7 +20,7 @@
 #define VIRT_LAPIC_INTEL_X64_EAPIS_H
 
 #include <array>
-#include "lapic_register.h"
+#include <arch/intel_x64/apic/lapic.h>
 
 namespace eapis
 {
@@ -104,7 +104,7 @@ public:
     /// @param offset the register offset to read
     /// @return the value of the 32-bit register given by offset
     ///
-    uint64_t read_register(lapic_register::offset_t offset) const;
+    uint64_t read_register(::intel_x64::lapic::offset_t offset) const;
 
     /// Write Register
     ///
@@ -114,7 +114,7 @@ public:
     /// @param offset the register offset to write
     /// @param val the value to write
     ///
-    void write_register(lapic_register::offset_t offset, uint64_t val);
+    void write_register(::intel_x64::lapic::offset_t offset, uint64_t val);
 
     /// Handle interrupt window exit
     ///
@@ -187,9 +187,9 @@ private:
     void reset_svr();
     void reset_version();
     void reset_registers();
-    void reset_register(lapic_register::offset_t offset);
-    void reset_lvt_register(lapic_register::offset_t offset);
-    void clear_register(lapic_register::offset_t offset);
+    void reset_register(::intel_x64::lapic::offset_t offset);
+    void reset_lvt_register(::intel_x64::lapic::offset_t offset);
+    void clear_register(::intel_x64::lapic::offset_t offset);
 
     bool irr_is_empty();
     bool isr_is_empty();

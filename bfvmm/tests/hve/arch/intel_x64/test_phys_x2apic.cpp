@@ -30,8 +30,8 @@ namespace eapis
 namespace intel_x64
 {
 
-namespace msrs_n = ::intel_x64::msrs;
-namespace lapic_n = ::intel_x64::lapic;
+namespace msrs = ::intel_x64::msrs;
+namespace lapic = ::intel_x64::lapic;
 
 /// The 'base' field is only defined in xAPIC mode;
 /// in x2APIC we just return 0
@@ -63,8 +63,8 @@ TEST_CASE("phys_x2apic: interrupts")
 TEST_CASE("phys_x2apic: read_register")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs_n::ia32_x2apic_apicid::addr;
-    auto off = lapic_register::msr_addr_to_offset(addr);
+    auto addr = msrs::ia32_x2apic_apicid::addr;
+    auto off = lapic::msr_addr_to_offset(addr);
 
     g_msrs[addr] = 0xEEU;
     CHECK(apic.read_register(off) == 0xEEU);
@@ -73,8 +73,8 @@ TEST_CASE("phys_x2apic: read_register")
 TEST_CASE("phys_x2apic: write_register")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs_n::ia32_x2apic_eoi::addr;
-    auto off = lapic_register::msr_addr_to_offset(addr);
+    auto addr = msrs::ia32_x2apic_eoi::addr;
+    auto off = lapic::msr_addr_to_offset(addr);
 
     g_msrs[addr] = 0xFFFFU;
     apic.write_register(off, 0U);
@@ -84,7 +84,7 @@ TEST_CASE("phys_x2apic: write_register")
 TEST_CASE("phys_x2apic::read_id")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs_n::ia32_x2apic_apicid::addr;
+    auto addr = msrs::ia32_x2apic_apicid::addr;
 
     g_msrs[addr] = 0xBFU;
     CHECK(apic.read_id() == 0xBFU);
@@ -93,7 +93,7 @@ TEST_CASE("phys_x2apic::read_id")
 TEST_CASE("phys_x2apic::read_version")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs_n::ia32_x2apic_version::addr;
+    auto addr = msrs::ia32_x2apic_version::addr;
 
     g_msrs[addr] = 0xBFU;
     CHECK(apic.read_version() == 0xBFU);
@@ -110,7 +110,7 @@ TEST_CASE("phys_x2apic::read_tpr")
 TEST_CASE("phys_x2apic::read_svr")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs_n::ia32_x2apic_sivr::addr;
+    auto addr = msrs::ia32_x2apic_sivr::addr;
 
     g_msrs[addr] = 0xF00DU;
     CHECK(apic.read_svr() == 0xF00DU);
@@ -119,7 +119,7 @@ TEST_CASE("phys_x2apic::read_svr")
 TEST_CASE("phys_x2apic::read_icr")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs_n::ia32_x2apic_icr::addr;
+    auto addr = msrs::ia32_x2apic_icr::addr;
 
     g_msrs[addr] = 0xBEEFU;
     CHECK(apic.read_icr() == 0xBEEFU);
@@ -128,7 +128,7 @@ TEST_CASE("phys_x2apic::read_icr")
 TEST_CASE("phys_x2apic::write_eoi")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs_n::ia32_x2apic_eoi::addr;
+    auto addr = msrs::ia32_x2apic_eoi::addr;
 
     g_msrs[addr] = 0xFFFFU;
     apic.write_eoi();
@@ -147,7 +147,7 @@ TEST_CASE("phys_x2apic::write_tpr")
 TEST_CASE("phys_x2apic::write_svr")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs_n::ia32_x2apic_sivr::addr;
+    auto addr = msrs::ia32_x2apic_sivr::addr;
 
     g_msrs[addr] = 0xFFFFU;
     apic.write_svr(0U);
@@ -158,7 +158,7 @@ TEST_CASE("phys_x2apic::write_svr")
 TEST_CASE("phys_x2apic::write_icr")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs_n::ia32_x2apic_icr::addr;
+    auto addr = msrs::ia32_x2apic_icr::addr;
 
     g_msrs[addr] = 0xFFFFU;
     apic.write_icr(0U);
@@ -168,7 +168,7 @@ TEST_CASE("phys_x2apic::write_icr")
 TEST_CASE("phys_x2apic::write_self_ipi")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs_n::ia32_x2apic_self_ipi::addr;
+    auto addr = msrs::ia32_x2apic_self_ipi::addr;
 
     g_msrs[addr] = 0x0U;
     apic.write_self_ipi(0xFEU);

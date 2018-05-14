@@ -24,7 +24,7 @@
 
 #include <hve/arch/intel_x64/hve.h>
 #include <hve/arch/intel_x64/vic.h>
-#include <hve/arch/intel_x64/lapic_register.h>
+#include <arch/intel_x64/apic/lapic.h>
 #include <support/arch/intel_x64/test_support.h>
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
@@ -514,9 +514,9 @@ TEST_CASE("vic: handle_x2apic_read")
     auto vic = setup_vic_x2apic(hve.get());
 
     g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::rdmsr;
-    for (auto i = 0U; i < eapis::intel_x64::lapic_register::count; ++i) {
-        auto addr = eapis::intel_x64::lapic_register::offset_to_msr_addr(i);
-        if (eapis::intel_x64::lapic_register::x2apic_readable::is_enabled(addr)) {
+    for (auto i = 0U; i < ::intel_x64::lapic::count; ++i) {
+        auto addr = ::intel_x64::lapic::offset_to_msr_addr(i);
+        if (::intel_x64::lapic::x2apic_readable::is_enabled(addr)) {
             g_save_state.rcx = addr;
             CHECK_NOTHROW(ehlr->handle(ehlr));
         }
@@ -531,9 +531,9 @@ TEST_CASE("vic: handle_x2apic_write")
     auto ehlr = hve->exit_handler();
 
     g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::wrmsr;
-    for (auto i = 0U; i < eapis::intel_x64::lapic_register::count; ++i) {
-        auto addr = eapis::intel_x64::lapic_register::offset_to_msr_addr(i);
-        if (eapis::intel_x64::lapic_register::x2apic_writable::is_enabled(addr)) {
+    for (auto i = 0U; i < ::intel_x64::lapic::count; ++i) {
+        auto addr = ::intel_x64::lapic::offset_to_msr_addr(i);
+        if (::intel_x64::lapic::x2apic_writable::is_enabled(addr)) {
             g_save_state.rcx = addr;
             CHECK_NOTHROW(ehlr->handle(ehlr));
         }

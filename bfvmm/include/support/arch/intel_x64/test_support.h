@@ -35,6 +35,14 @@ namespace exit_ctls = vmcs_n::vm_exit_controls;
 namespace proc_ctls1 = vmcs_n::primary_processor_based_vm_execution_controls;
 namespace proc_ctls2 = vmcs_n::secondary_processor_based_vm_execution_controls;
 
+namespace intel_x64
+{
+namespace lapic
+{
+    std::array<attr_t, count> attributes;
+}
+}
+
 ::intel_x64::vmcs::value_type g_vcpuid{0U};
 
 std::unique_ptr<uint32_t[]> g_vmcs_region;

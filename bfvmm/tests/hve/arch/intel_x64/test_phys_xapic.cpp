@@ -70,7 +70,7 @@ TEST_CASE("phys_xapic: read_register")
 {
     auto apic = phys_xapic(g_base);
     auto id_addr = g_base + 0x20U;
-    auto off = lapic_register::mem_addr_to_offset(id_addr);
+    auto off = lapic_n::mem_addr_to_offset(id_addr);
 
     g_xapic[off << 4U] = 0xEEU;
     CHECK(apic.read_register(off) == 0xEEU);
@@ -80,7 +80,7 @@ TEST_CASE("phys_xapic: write_register")
 {
     auto apic = phys_xapic(g_base);
     auto icr0_addr = g_base + 0x300U;
-    auto off = lapic_register::mem_addr_to_offset(icr0_addr);
+    auto off = lapic_n::mem_addr_to_offset(icr0_addr);
 
     apic.write_register(off, 0xEDU);
     CHECK(g_xapic[off << 4U] == 0xEDU);
@@ -90,7 +90,7 @@ TEST_CASE("phys_xapic::read_id")
 {
     auto apic = phys_xapic(g_base);
     auto id_addr = g_base + 0x020U;
-    auto off = lapic_register::mem_addr_to_offset(id_addr);
+    auto off = lapic_n::mem_addr_to_offset(id_addr);
 
     apic.write_register(off, 0xEDU);
     CHECK(apic.read_id() == 0xEDU);
@@ -100,7 +100,7 @@ TEST_CASE("phys_xapic::read_version")
 {
     auto apic = phys_xapic(g_base);
     auto ver_addr = g_base + 0x030U;
-    auto off = lapic_register::mem_addr_to_offset(ver_addr);
+    auto off = lapic_n::mem_addr_to_offset(ver_addr);
 
     apic.write_register(off, 0xEDU);
     CHECK(apic.read_version() == 0xEDU);
@@ -118,7 +118,7 @@ TEST_CASE("phys_xapic::read_svr")
 {
     auto apic = phys_xapic(g_base);
     auto svr_addr = g_base + 0x0F0U;
-    auto off = lapic_register::mem_addr_to_offset(svr_addr);
+    auto off = lapic_n::mem_addr_to_offset(svr_addr);
 
     apic.write_register(off, 0xEDU);
     CHECK(apic.read_svr() == 0xEDU);
@@ -129,8 +129,8 @@ TEST_CASE("phys_xapic::read_icr")
     auto apic = phys_xapic(g_base);
     auto icr0 = g_base + 0x300U;
     auto icr1 = g_base + 0x310U;
-    auto off0 = lapic_register::mem_addr_to_offset(icr0);
-    auto off1 = lapic_register::mem_addr_to_offset(icr1);
+    auto off0 = lapic_n::mem_addr_to_offset(icr0);
+    auto off1 = lapic_n::mem_addr_to_offset(icr1);
 
     apic.write_register(off1, 0xEDU);
     apic.write_register(off0, 0xCC00U);
@@ -141,7 +141,7 @@ TEST_CASE("phys_xapic::write_eoi")
 {
     auto apic = phys_xapic(g_base);
     auto eoi_addr = g_base + 0x0B0U;
-    auto off = lapic_register::mem_addr_to_offset(eoi_addr);
+    auto off = lapic_n::mem_addr_to_offset(eoi_addr);
     auto ptr = reinterpret_cast<uint32_t *>(eoi_addr);
 
     *ptr = 0x11223344U;
@@ -162,7 +162,7 @@ TEST_CASE("phys_xapic::write_svr")
 {
     auto apic = phys_xapic(g_base);
     auto svr_addr = g_base + 0x0F0U;
-    auto off = lapic_register::mem_addr_to_offset(svr_addr);
+    auto off = lapic_n::mem_addr_to_offset(svr_addr);
     auto ptr = reinterpret_cast<uint32_t *>(svr_addr);
 
     *ptr = 0x00CC7722U;
@@ -175,8 +175,8 @@ TEST_CASE("phys_xapic::write_icr")
     auto apic = phys_xapic(g_base);
     auto icr0 = g_base + 0x300U;
     auto icr1 = g_base + 0x310U;
-    auto off0 = lapic_register::mem_addr_to_offset(icr0);
-    auto off1 = lapic_register::mem_addr_to_offset(icr1);
+    auto off0 = lapic_n::mem_addr_to_offset(icr0);
+    auto off1 = lapic_n::mem_addr_to_offset(icr1);
     auto ptr0 = reinterpret_cast<uint32_t *>(icr0);
     auto ptr1 = reinterpret_cast<uint32_t *>(icr1);
 
@@ -189,7 +189,7 @@ TEST_CASE("phys_xapic::write_self_ipi")
 {
     auto apic = phys_xapic(g_base);
     auto icr0 = g_base + 0x300U;
-    auto off0 = lapic_register::mem_addr_to_offset(icr0);
+    auto off0 = lapic_n::mem_addr_to_offset(icr0);
     auto ptr0 = reinterpret_cast<uint32_t *>(icr0);
 
     apic.write_self_ipi(0xFEU);
