@@ -21,7 +21,7 @@ project(eapis_bfsdk_test C CXX)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
-    INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../include
+    INCLUDES ${PROJECT_SOURCE_DIR}/../include
 )
 
 do_test(test_capstone)
