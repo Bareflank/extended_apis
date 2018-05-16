@@ -19,7 +19,7 @@
 #include <bfdebug.h>
 #include <hve/arch/intel_x64/hve.h>
 
-#include <bfvmm/memory_manager/arch/x64/map_ptr.h>
+#include <bfvmm/memory_manager/arch/x64/unique_map.h>
 
 namespace eapis
 {
@@ -309,9 +309,11 @@ io_instruction::load_operand(
     if (info.address != 0ULL) {
         switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte: {
-                auto map = bfvmm::x64::make_unique_map<uint8_t>(
-                               info.address, vmcs_n::guest_cr3::get(),
-                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                auto map =
+                    bfvmm::x64::make_unique_map<uint8_t>(
+                               info.address,
+                               vmcs_n::guest_cr3::get(),
+                               info.size_of_access
                            );
 
                 info.val = map.get()[0] & 0x00000000000000FFULL;
@@ -319,9 +321,11 @@ io_instruction::load_operand(
             }
 
             case io_instruction::size_of_access::two_byte: {
-                auto map = bfvmm::x64::make_unique_map<uint16_t>(
-                               info.address, vmcs_n::guest_cr3::get(),
-                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                auto map =
+                    bfvmm::x64::make_unique_map<uint16_t>(
+                               info.address,
+                               vmcs_n::guest_cr3::get(),
+                               info.size_of_access
                            );
 
                 info.val = map.get()[0] & 0x000000000000FFFFULL;
@@ -329,9 +333,11 @@ io_instruction::load_operand(
             }
 
             default: {
-                auto map = bfvmm::x64::make_unique_map<uint32_t>(
-                               info.address, vmcs_n::guest_cr3::get(),
-                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                auto map =
+                    bfvmm::x64::make_unique_map<uint32_t>(
+                               info.address,
+                               vmcs_n::guest_cr3::get(),
+                               info.size_of_access
                            );
 
                 info.val = map.get()[0] & 0x00000000FFFFFFFFULL;
@@ -365,9 +371,11 @@ io_instruction::store_operand(
     if (info.address != 0ULL) {
         switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte: {
-                auto map = bfvmm::x64::make_unique_map<uint8_t>(
-                               info.address, vmcs_n::guest_cr3::get(),
-                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                auto map =
+                    bfvmm::x64::make_unique_map<uint8_t>(
+                               info.address,
+                               vmcs_n::guest_cr3::get(),
+                               info.size_of_access
                            );
 
                 map.get()[0] = gsl::narrow_cast<uint8_t>(info.val);
@@ -375,9 +383,11 @@ io_instruction::store_operand(
             }
 
             case io_instruction::size_of_access::two_byte: {
-                auto map = bfvmm::x64::make_unique_map<uint16_t>(
-                               info.address, vmcs_n::guest_cr3::get(),
-                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                auto map =
+                    bfvmm::x64::make_unique_map<uint16_t>(
+                               info.address,
+                               vmcs_n::guest_cr3::get(),
+                               info.size_of_access
                            );
 
                 map.get()[0] = gsl::narrow_cast<uint16_t>(info.val);
@@ -385,9 +395,11 @@ io_instruction::store_operand(
             }
 
             default: {
-                auto map = bfvmm::x64::make_unique_map<uint32_t>(
-                               info.address, vmcs_n::guest_cr3::get(),
-                               info.size_of_access, vmcs_n::guest_ia32_pat::get()
+                auto map =
+                    bfvmm::x64::make_unique_map<uint32_t>(
+                               info.address,
+                               vmcs_n::guest_cr3::get(),
+                               info.size_of_access
                            );
 
                 map.get()[0] = gsl::narrow_cast<uint32_t>(info.val);

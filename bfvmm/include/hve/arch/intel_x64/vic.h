@@ -20,8 +20,9 @@
 #define VIC_INTEL_X64_EAPIS_H
 
 #include <bfcapstone.h>
-#include <bfvmm/memory_manager/arch/x64/map_ptr.h>
+
 #include <arch/intel_x64/apic/lapic.h>
+#include <bfvmm/memory_manager/arch/x64/unique_map.h>
 
 #include "hve.h"
 #include "phys_xapic.h"

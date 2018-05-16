@@ -364,7 +364,7 @@ void hve::check_io_bitmaps()
     using namespace vmcs_n;
 
     if (!m_io_bitmaps) {
-        m_io_bitmaps = std::make_unique<uint8_t[]>(::x64::page_size * 2);
+        m_io_bitmaps = std::make_unique<uint8_t[]>(::x64::pt::page_size * 2);
 
         address_of_io_bitmap_a::set(g_mm->virtptr_to_physint(&m_io_bitmaps[0x0000]));
         address_of_io_bitmap_b::set(g_mm->virtptr_to_physint(&m_io_bitmaps[010000]));
@@ -385,7 +385,7 @@ void hve::check_msr_bitmap()
     using namespace vmcs_n;
 
     if (!m_msr_bitmap) {
-        m_msr_bitmap = std::make_unique<uint8_t[]>(::x64::page_size);
+        m_msr_bitmap = std::make_unique<uint8_t[]>(::x64::pt::page_size);
 
         address_of_msr_bitmap::set(g_mm->virtptr_to_physint(m_msr_bitmap.get()));
         primary_processor_based_vm_execution_controls::use_msr_bitmap::enable();
@@ -411,10 +411,10 @@ void hve::check_wrmsr()
 }
 
 gsl::span<uint8_t> hve::msr_bitmap()
-{ return gsl::make_span(m_msr_bitmap.get(), ::x64::page_size); }
+{ return gsl::make_span(m_msr_bitmap.get(), ::x64::pt::page_size); }
 
 gsl::span<uint8_t> hve::io_bitmaps()
-{ return gsl::make_span(m_io_bitmaps.get(), ::x64::page_size << 1U); }
+{ return gsl::make_span(m_io_bitmaps.get(), ::x64::pt::page_size << 1U); }
 
 }
 }

@@ -43,9 +43,8 @@ uint64_t reg[38] = {0};
 
 TEST_CASE("default_isr")
 {
-    MockRepository mocks;
     setup_ept();
-    auto hve = setup_hve(mocks);
+    auto hve = setup_hve();
     auto vic = setup_vic_x2apic(hve.get());
 
     reg[0] = reinterpret_cast<uint64_t>(&vic);
