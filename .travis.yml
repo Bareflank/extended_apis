@@ -1,4 +1,22 @@
 #
+# Bareflank Hypervisor
+# Copyright (C) 2015 Assured Information Security, Inc.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
+#
 # Configuration
 #
 language: cpp
@@ -17,39 +35,40 @@ cache:
 before_script:
 
   #
-  # Cache
+  # Cache / Depends
   #
   - mkdir -p ../cache
 
   #
-  # Build Folder
+  # Build Enviornment
   #
   - git clone https://github.com/bareflank/hypervisor.git hypervisor
-  - mkdir build
+  - mkdir -p build
   - cd build
-
-  #
-  # Update / Install CMake
-  #
-  - |
-    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      mkdir -p external/cmake
-      pushd external/cmake
-      wget https://cmake.org/files/v3.8/cmake-3.8.0-Linux-x86_64.sh
-      chmod +x cmake-*-Linux-x86_64.sh
-      ./cmake-*-Linux-x86_64.sh --exclude-subdir --skip-license
-      export PATH="${PWD}/bin:$PATH"
-      popd
-    else
-      if ! brew ls --version cmake &>/dev/null; then brew install cmake; fi
-    fi
 
   #
   # Update GCC
   #
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 100
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 100
-  - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-6 100
+  - |
+    if [[ -f "/usr/bin/gcc-6" ]]; then
+      sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 100
+      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 100
+      sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-6 100
+    fi
+
+  - |
+    if [[ -f "/usr/bin/gcc-7" ]]; then
+      sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 100
+      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 100
+      sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-7 100
+    fi
+
+  - |
+    if [[ -f "/usr/bin/gcc-8" ]]; then
+      sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 100
+      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 100
+      sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-8 100
+    fi
 
 #
 # Build Matrix
@@ -66,13 +85,13 @@ matrix:
         sources:
           - ubuntu-toolchain-r-test
         packages:
-          - gcc-6
-          - g++-6
+          - gcc-8
+          - g++-8
           - doxygen
     env:
       - TEST="Doxygen"
     script:
-      - cd ../
+      - cd ..
       - doxygen .doxygen.txt
       - |
         if [[ -s doxygen_warnings.txt ]]; then
@@ -91,8 +110,8 @@ matrix:
         sources:
           - ubuntu-toolchain-r-test
         packages:
-          - gcc-6
-          - g++-6
+          - gcc-8
+          - g++-8
     env:
       - TEST="Git Check"
     script:
@@ -112,18 +131,18 @@ matrix:
       apt:
         sources:
           - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-4.0
+          - llvm-toolchain-trusty-6.0
         packages:
-          - gcc-6
-          - g++-6
-          - clang-4.0
+          - gcc-8
+          - g++-8
+          - clang-6.0
           - nasm
     env:
       - TEST="Format"
     script:
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_format.cmake -DEXTENSION=.. ../hypervisor
+      - cmake -DCONFIG=travis_format -DEXTENSION=.. ../hypervisor
       - make astyle_x86_64-userspace-elf
-      - make format-all
+      - make format
       - |
         if [[ -n $(git diff) ]]; then
           echo "You must run make format before submitting a pull request"
@@ -135,178 +154,27 @@ matrix:
   #
   # Clang Tidy
   #
-  - os: linux
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-4.0
-        packages:
-          - clang-4.0
-          - clang-tidy-4.0
-          - gcc-6
-          - g++-6
-          - nasm
-    env:
-      - TEST="Clang Tidy"
-    script:
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_tidy.cmake -DEXTENSION=.. -DENABLE_BUILD_TEST=ON ../hypervisor
-      - make -j3
-      - make tidy
+  # - os: linux
+  #   addons:
+  #     apt:
+  #       sources:
+  #         - ubuntu-toolchain-r-test
+  #         - llvm-toolchain-trusty-6.0
+  #       packages:
+  #         - clang-6.0
+  #         - clang-tidy-6.0
+  #         - gcc-8
+  #         - g++-8
+  #         - nasm
+  #   env:
+  #     - TEST="Clang Tidy"
+  #   script:
+  #     - cmake -DCONFIG=travis_tidy -DEXTENSION=.. ../hypervisor
+  #     - make -j3
+  #     - make tidy
 
   #
   # Codecov
-  #
-  - os: linux
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-4.0
-        packages:
-          - gcc-6
-          - g++-6
-          - clang-4.0
-          - nasm
-    env:
-      - TEST="Codecov"
-    script:
-      - export LD_BIN=ld.gold
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_codecov.cmake -DEXTENSION=.. -DENABLE_BUILD_TEST=ON ../hypervisor
-      - make -j3 eapis_x86_64-test-elf
-      - make -j3 eapis_bfsdk_x86_64-test-elf
-      - make test
-      - cd ..
-      - bash <(curl -s https://codecov.io/bash)
-
-  #
-  # Google Address Sanitizer
-  #
-  - os: linux
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-4.0
-        packages:
-          - gcc-6
-          - g++-6
-          - clang-4.0
-          - nasm
-    env:
-      - TEST="Google Address Sanitizer"
-    script:
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_asan.cmake -DEXTENSION=.. -DENABLE_BUILD_TEST=ON ../hypervisor
-      - make -j3
-      - make test
-
-  #
-  # Google Undefined Sanitizer
-  #
-  - os: linux
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-4.0
-        packages:
-          - gcc-6
-          - g++-6
-          - clang-4.0
-          - nasm
-    env:
-      - TEST="Google Undefined Sanitizer"
-    script:
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_usan.cmake -DEXTENSION=.. -DENABLE_BUILD_TEST=ON ../hypervisor
-      - make -j3
-      - make test
-
-  #
-  # Clang 3.8 (Static Libraries)
-  #
-  - os: linux
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-3.8
-        packages:
-          - gcc-6
-          - g++-6
-          - clang-3.8
-          - nasm
-    env:
-      - TEST="Clang 3.8 (Static Libraries)"
-    script:
-      - export CLANG_BIN=clang-3.8
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_static.cmake -DEXTENSION=.. ../hypervisor
-      - make -j3
-
-  #
-  # Clang 3.9 (Static Libraries)
-  #
-  - os: linux
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-3.9
-        packages:
-          - gcc-6
-          - g++-6
-          - clang-3.9
-          - nasm
-    env:
-      - TEST="Clang 3.9 (Static Libraries)"
-    script:
-      - export CLANG_BIN=clang-3.9
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_static.cmake -DEXTENSION=.. ../hypervisor
-      - make -j3
-
-  #
-  # Clang 4.0 (Static Libraries)
-  #
-  - os: linux
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-4.0
-        packages:
-          - gcc-6
-          - g++-6
-          - clang-4.0
-          - nasm
-    env:
-      - TEST="Clang 4.0 (Static Libraries)"
-    script:
-      - export CLANG_BIN=clang-4.0
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_static.cmake -DEXTENSION=.. ../hypervisor
-      - make -j3
-
-  #
-  # Clang 5.0 (Static Libraries)
-  #
-  - os: linux
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-5.0
-        packages:
-          - gcc-6
-          - g++-6
-          - clang-5.0
-          - nasm
-    env:
-      - TEST="Clang 5.0 (Static Libraries)"
-    script:
-      - export CLANG_BIN=clang-5.0
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_static.cmake -DEXTENSION=.. ../hypervisor
-      - make -j3
-
-  #
-  # Clang 6.0 (Static Libraries)
   #
   - os: linux
     addons:
@@ -320,71 +188,239 @@ matrix:
           - clang-6.0
           - nasm
     env:
+      - TEST="Codecov"
+    script:
+      - export LD_BIN=ld.gold
+      - cmake -DCONFIG=travis_codecov -DEXTENSION=.. ../hypervisor
+      - make -j3
+      - make unittest
+      - cd ..
+      - bash <(curl -s https://codecov.io/bash)
+
+  #
+  # Google Address Sanitizer
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
+        packages:
+          - gcc-8
+          - g++-8
+          - clang-6.0
+          - nasm
+    env:
+      - TEST="Google Address Sanitizer"
+    script:
+      - cmake -DCONFIG=travis_asan -DEXTENSION=.. ../hypervisor
+      - make -j3
+      - make unittest
+
+  #
+  # Google Undefined Sanitizer
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
+        packages:
+          - gcc-8
+          - g++-8
+          - clang-6.0
+          - nasm
+    env:
+      - TEST="Google Undefined Sanitizer"
+    script:
+      - cmake -DCONFIG=travis_usan -DEXTENSION=.. ../hypervisor
+      - make -j3
+      - make unittest
+
+  #
+  # Clang 5.0 (Static Libraries)
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-5.0
+        packages:
+          - gcc-8
+          - g++-8
+          - clang-5.0
+          - nasm
+    env:
+      - TEST="Clang 5.0 (Static Libraries)"
+    script:
+      - export CLANG_BIN=clang-5.0
+      - cmake -DCONFIG=travis_static -DEXTENSION=.. ../hypervisor
+      - make -j3
+
+  #
+  # Clang 6.0 (Static Libraries)
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
+        packages:
+          - gcc-8
+          - g++-8
+          - clang-6.0
+          - nasm
+    env:
       - TEST="Clang 6.0 (Static Libraries)"
     script:
       - export CLANG_BIN=clang-6.0
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_static.cmake -DEXTENSION=.. ../hypervisor
+      - cmake -DCONFIG=travis_static -DEXTENSION=.. ../hypervisor
       - make -j3
 
   #
-  # Clang 3.8 (Shared Libraries)
+  # Clang 5.0 (Shared Libraries)
   #
   - os: linux
     addons:
       apt:
         sources:
           - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-3.8
+          - llvm-toolchain-trusty-5.0
         packages:
-          - gcc-6
-          - g++-6
-          - clang-3.8
+          - gcc-8
+          - g++-8
+          - clang-5.0
           - nasm
     env:
-      - TEST="Clang 3.8 (Shared Libraries)"
+      - TEST="Clang 5.0 (Shared Libraries)"
     script:
-      - export CLANG_BIN=clang-3.8
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_shared.cmake -DEXTENSION=.. ../hypervisor
+      - export CLANG_BIN=clang-5.0
+      - cmake -DCONFIG=travis_shared -DEXTENSION=.. ../hypervisor
       - make -j3
 
   #
-  # Clang 3.9 (Shared Libraries)
+  # Clang 6.0 (Shared Libraries)
   #
   - os: linux
     addons:
       apt:
         sources:
           - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-3.9
+          - llvm-toolchain-trusty-6.0
         packages:
-          - gcc-6
-          - g++-6
-          - clang-3.9
+          - gcc-8
+          - g++-8
+          - clang-6.0
           - nasm
     env:
-      - TEST="Clang 3.9 (Shared Libraries)"
+      - TEST="Clang 6.0 (Shared Libraries)"
     script:
-      - export CLANG_BIN=clang-3.9
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_shared.cmake -DEXTENSION=.. ../hypervisor
+      - export CLANG_BIN=clang-6.0
+      - cmake -DCONFIG=travis_shared -DEXTENSION=.. ../hypervisor
       - make -j3
 
   #
-  # Clang 4.0 (Shared Libraries)
+  # GCC 6
   #
   - os: linux
     addons:
       apt:
         sources:
           - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-4.0
+          - llvm-toolchain-trusty-6.0
         packages:
           - gcc-6
           - g++-6
-          - clang-4.0
+          - clang-6.0
           - nasm
     env:
-      - TEST="Clang 4.0 (Shared Libraries)"
+      - TEST="GCC 6"
     script:
-      - export CLANG_BIN=clang-4.0
-      - cmake -DCONFIG=../hypervisor/scripts/cmake/config/travis_shared.cmake -DEXTENSION=.. ../hypervisor
+      - cmake -DCONFIG=travis_shared -DEXTENSION=.. ../hypervisor
+      - make -j3
+
+  #
+  # GCC 7
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
+        packages:
+          - gcc-7
+          - g++-7
+          - clang-6.0
+          - nasm
+    env:
+      - TEST="GCC 7"
+    script:
+      - cmake -DCONFIG=travis_shared -DEXTENSION=.. ../hypervisor
+      - make -j3
+
+  #
+  # GCC 8
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
+        packages:
+          - gcc-8
+          - g++-8
+          - clang-6.0
+          - nasm
+    env:
+      - TEST="GCC 8"
+    script:
+      - cmake -DCONFIG=travis_shared -DEXTENSION=.. ../hypervisor
+      - make -j3
+
+  #
+  # ld.gold
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
+        packages:
+          - gcc-8
+          - g++-8
+          - clang-6.0
+          - nasm
+    env:
+      - TEST="ld.gold"
+    script:
+      - export LD_BIN=ld.gold
+      - cmake -DCONFIG=travis_shared -DEXTENSION=.. ../hypervisor
+      - make -j3
+
+  #
+  # ld.lld
+  #
+  - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
+        packages:
+          - gcc-8
+          - g++-8
+          - clang-6.0
+          - nasm
+    env:
+      - TEST="ld.lld"
+    script:
+      - export LD_BIN=ld.lld
+      - cmake -DCONFIG=travis_shared -DEXTENSION=.. ../hypervisor
       - make -j3

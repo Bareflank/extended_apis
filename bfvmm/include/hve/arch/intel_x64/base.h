@@ -184,8 +184,7 @@ protected:
     {
         using namespace vmcs_n::exit_qualification::control_register_access;
 
-        switch (general_purpose_register::get())
-        {
+        switch (general_purpose_register::get()) {
             case general_purpose_register::rax:
                 return vmcs->save_state()->rax;
 

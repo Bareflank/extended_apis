@@ -39,8 +39,7 @@ using func_type = uint8_t;
 using register_type = uint8_t;
 
 /// Full geographical address of a device
-struct device_id
-{
+struct device_id {
     /// Bus number
     bus_type bus;
 

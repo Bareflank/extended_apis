@@ -39,7 +39,7 @@
 
 namespace test
 {
-    class vcpu;
+class vcpu;
 }
 
 namespace eapis
@@ -49,7 +49,7 @@ namespace intel_x64
 
 namespace ept
 {
-    class memory_map;
+class memory_map;
 }
 
 ///-----------------------------------------------------------------------------
@@ -64,10 +64,10 @@ namespace proc_ctl2 = vmcs_n::secondary_processor_based_vm_execution_controls;
 /// Helpers
 ///-----------------------------------------------------------------------------
 
-template<
+template <
     typename N,
-    typename = std::enable_if_t<std::is_integral<N>::value ||
-                                std::is_pointer<N>::value>>
+    typename = std::enable_if_t < std::is_integral<N>::value ||
+                                  std::is_pointer<N>::value >>
 inline void
 throw_vic_fatal(const char *msg, N nhex)
 {

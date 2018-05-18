@@ -311,10 +311,10 @@ io_instruction::load_operand(
             case io_instruction::size_of_access::one_byte: {
                 auto map =
                     bfvmm::x64::make_unique_map<uint8_t>(
-                               info.address,
-                               vmcs_n::guest_cr3::get(),
-                               info.size_of_access
-                           );
+                        info.address,
+                        vmcs_n::guest_cr3::get(),
+                        info.size_of_access
+                    );
 
                 info.val = map.get()[0] & 0x00000000000000FFULL;
                 break;
@@ -323,10 +323,10 @@ io_instruction::load_operand(
             case io_instruction::size_of_access::two_byte: {
                 auto map =
                     bfvmm::x64::make_unique_map<uint16_t>(
-                               info.address,
-                               vmcs_n::guest_cr3::get(),
-                               info.size_of_access
-                           );
+                        info.address,
+                        vmcs_n::guest_cr3::get(),
+                        info.size_of_access
+                    );
 
                 info.val = map.get()[0] & 0x000000000000FFFFULL;
                 break;
@@ -335,10 +335,10 @@ io_instruction::load_operand(
             default: {
                 auto map =
                     bfvmm::x64::make_unique_map<uint32_t>(
-                               info.address,
-                               vmcs_n::guest_cr3::get(),
-                               info.size_of_access
-                           );
+                        info.address,
+                        vmcs_n::guest_cr3::get(),
+                        info.size_of_access
+                    );
 
                 info.val = map.get()[0] & 0x00000000FFFFFFFFULL;
                 break;
@@ -373,10 +373,10 @@ io_instruction::store_operand(
             case io_instruction::size_of_access::one_byte: {
                 auto map =
                     bfvmm::x64::make_unique_map<uint8_t>(
-                               info.address,
-                               vmcs_n::guest_cr3::get(),
-                               info.size_of_access
-                           );
+                        info.address,
+                        vmcs_n::guest_cr3::get(),
+                        info.size_of_access
+                    );
 
                 map.get()[0] = gsl::narrow_cast<uint8_t>(info.val);
                 break;
@@ -385,10 +385,10 @@ io_instruction::store_operand(
             case io_instruction::size_of_access::two_byte: {
                 auto map =
                     bfvmm::x64::make_unique_map<uint16_t>(
-                               info.address,
-                               vmcs_n::guest_cr3::get(),
-                               info.size_of_access
-                           );
+                        info.address,
+                        vmcs_n::guest_cr3::get(),
+                        info.size_of_access
+                    );
 
                 map.get()[0] = gsl::narrow_cast<uint16_t>(info.val);
                 break;
@@ -397,10 +397,10 @@ io_instruction::store_operand(
             default: {
                 auto map =
                     bfvmm::x64::make_unique_map<uint32_t>(
-                               info.address,
-                               vmcs_n::guest_cr3::get(),
-                               info.size_of_access
-                           );
+                        info.address,
+                        vmcs_n::guest_cr3::get(),
+                        info.size_of_access
+                    );
 
                 map.get()[0] = gsl::narrow_cast<uint32_t>(info.val);
                 break;

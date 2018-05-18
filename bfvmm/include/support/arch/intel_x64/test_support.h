@@ -42,15 +42,13 @@ namespace intel_x64
 {
 namespace lapic
 {
-    std::array<attr_t, count> attributes;
+std::array<attr_t, count> attributes;
 }
 }
 
 ::intel_x64::vmcs::value_type g_vcpuid{0U};
 
 std::unique_ptr<uint32_t[]> g_vmcs_region;
-std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs;
-std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr;
 std::unique_ptr<eapis::intel_x64::ept::memory_map> g_emap;
 
 struct platform_info_t g_platform_info;
@@ -88,10 +86,11 @@ extern "C" void _sfence()
 inline auto
 setup_hve()
 {
+    bfignored(g_mm);
     setup_test_support();
 
-    g_vmcs = std::make_unique<bfvmm::intel_x64::vmcs>(g_vcpuid);
-    g_ehlr = std::make_unique<bfvmm::intel_x64::exit_handler>(g_vmcs.get());
+    static auto g_vmcs = std::make_unique<bfvmm::intel_x64::vmcs>(g_vcpuid);
+    static auto g_ehlr = std::make_unique<bfvmm::intel_x64::exit_handler>(g_vmcs.get());
 
     return std::make_unique<eapis::intel_x64::hve>(g_ehlr.get(), g_vmcs.get());
 }
