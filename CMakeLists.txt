@@ -22,12 +22,14 @@ include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/depends/capstone.cmake)
 if(ENABLE_BUILD_VMM)
     vmm_extension(
         eapis
+        DEPENDS capstone
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src
     )
 
     vmm_extension(
         eapis_main
         DEPENDS eapis
+        DEPENDS capstone
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src/main
     )
 
