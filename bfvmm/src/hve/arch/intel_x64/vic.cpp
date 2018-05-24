@@ -400,28 +400,25 @@ vic::handle_xapic_write(gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &inf
         return true;
     }
 
-    const auto pat = vmcs_n::guest_ia32_pat::get();
-    const auto cr3 = vmcs_n::guest_cr3::get();
     const auto rip = vmcs_n::guest_rip::get();
-    const auto off = rip & (ept::page_size_4k - 1U);
+    auto pair = m_write_cache.find(rip);
+    if (pair == m_write_cache.end()) {
+        const auto off = rip & (ept::page_size_4k - 1U);
 
-    // We need two pages if the instruction straddles a page boundary.
-    // TODO: optimize this (cache the translation, etc)
-    const auto size = (off > 0xFF0U) ? 2U * ept::page_size_4k : ept::page_size_4k;
-    const auto map = make_unique_map<uint8_t>(rip, ept::align_4k(cr3), size, pat);
-    if (map == nullptr) {
-        throw_vic_fatal("handle_xapic_write: unable to map guest_rip", rip);
+        // We need two pages if the instruction straddles a page boundary.
+        const auto size = (off > 0xFF0U) ? 2U * ept::page_size_4k : ept::page_size_4k;
+        const auto pat = vmcs_n::guest_ia32_pat::get();
+        const auto cr3 = vmcs_n::guest_cr3::get();
+        auto ump = make_unique_map<uint8_t>(rip, ept::align_4k(cr3), size, pat);
+        if (ump == nullptr) {
+            throw_vic_fatal("handle_xapic_write: unable to map guest_rip", rip);
+        }
+
+        m_write_cache[rip] = std::move(ump);
+        pair = m_write_cache.find(rip);
     }
 
-    csh cstone{0U};
-    cs_insn *insn{nullptr};
-
-    disasm_xapic_write(&cstone, &insn, map.get());
-    verify_xapic_write(insn);
-
-    const auto src = 1U;
-    const auto val = capstone::read_op_val(vmcs->save_state(), insn, src);
-    free(insn);
+    const auto val = parse_written_val(vmcs, pair->second.get());
 
     m_virt_lapic->write_register(reg, val);
     m_phys_lapic->write_register(reg, val);

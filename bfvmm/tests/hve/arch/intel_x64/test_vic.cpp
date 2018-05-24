@@ -586,7 +586,7 @@ TEST_CASE("vic: handle_xapic_write null guest_rip map")
     CHECK_NOTHROW(ehlr->handle(ehlr));
 }
 
-TEST_CASE("vic: handle_xapic_write success")
+TEST_CASE("vic: handle_xapic_write write_cache")
 {
     MockRepository mocks;
 
@@ -594,6 +594,13 @@ TEST_CASE("vic: handle_xapic_write success")
     auto vic = setup_vic_xapic(hve.get());
     auto ehlr = hve->exit_handler();
 
+    // cache miss
+    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::ept_violation;
+    g_vmcs_fields[vmcs_n::guest_physical_address::addr] = 0xFEE00020U;
+    ::intel_x64::msrs::ia32_apic_base::apic_base::set(0xFEE00000U);
+    CHECK_NOTHROW(ehlr->handle(ehlr));
+
+    // cache hit
     g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::ept_violation;
     g_vmcs_fields[vmcs_n::guest_physical_address::addr] = 0xFEE00020U;
     ::intel_x64::msrs::ia32_apic_base::apic_base::set(0xFEE00000U);
@@ -681,6 +688,17 @@ TEST_CASE("vic: disasm_xapic_write success")
     CHECK(insn != nullptr);
 
     free(insn);
+}
+
+TEST_CASE("vic: parse_written_val")
+{
+    MockRepository mocks;
+    auto vmcs = setup_hve(mocks)->vmcs();
+
+    // mov [rax], rbx
+    const uint8_t rip[3] = { 0x48U, 0x89U, 0x18U };
+    g_vmcs_fields[vmcs_n::vm_exit_instruction_length::addr] = 3U;
+    CHECK_NOTHROW(parse_written_val(vmcs, rip));
 }
 
 }
