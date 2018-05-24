@@ -109,10 +109,10 @@ TEST_CASE("virt_lapic: reset values")
     CHECK(vapic.read_tpr() == 0U);
     CHECK(vapic.read_svr() == lapic_n::svr::reset_value);
 
-    auto ver = 0ULL;
-    ver |= lapic_n::version::version::set(ver, lapic_n::version::version::reset_value);
-    ver |= lapic_n::version::max_lvt_entry_minus_one::set(ver, lapic_n::lvt::default_size - 1U);
-    ver |= lapic_n::version::suppress_eoi_broadcast_supported::disable(ver);
+    uint64_t ver = 0;
+    lapic_n::version::version::set(ver, lapic_n::version::version::reset_value);
+    lapic_n::version::max_lvt_entry_minus_one::set(ver, lapic_n::lvt::default_size - 1U);
+    lapic_n::version::suppress_eoi_broadcast_supported::disable(ver);
 
     CHECK(vapic.read_version() == ver);
 }

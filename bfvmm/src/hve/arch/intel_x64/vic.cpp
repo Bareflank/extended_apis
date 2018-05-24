@@ -347,7 +347,7 @@ vic::add_apic_base_handlers()
 void
 vic::add_external_interrupt_handlers()
 {
-    const auto svr = m_virt_lapic->read_svr();
+    auto svr = m_virt_lapic->read_svr();
     const auto svr_vector = lapic::svr::vector::get(svr);
 
     for (auto vector = 32U; vector < s_num_vectors; ++vector) {

@@ -65,7 +65,7 @@ ept_violation::dump_log()
             bfdebug_info(0, "ept violation log", msg);
             bfdebug_brk2(0, msg);
 
-            for (const auto &record : m_log) {
+            for (auto &record : m_log) {
 
                 if (vmcs_n::exit_qualification::ept_violation::data_read::is_enabled(record.exit_qualification)) {
                     bfdebug_info(0, "data read record", msg);

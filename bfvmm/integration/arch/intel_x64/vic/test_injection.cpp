@@ -35,7 +35,7 @@ public:
     ///
     explicit vcpu(vcpuid::type id) : eapis::intel_x64::vcpu{id}
     {
-        const auto phys_svr = vic()->m_phys_lapic->read_svr();
+        auto phys_svr = vic()->m_phys_lapic->read_svr();
         const auto piv = ::intel_x64::lapic::svr::vector::get(phys_svr);
         const auto viv = vic()->phys_to_virt(piv);
 
