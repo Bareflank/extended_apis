@@ -117,6 +117,21 @@ inline void disasm_xapic_write(csh *cs, cs_insn **insn, const uint8_t *rip)
     }
 }
 
+inline uint32_t parse_written_val(
+    gsl::not_null<vmcs_t *> vmcs,
+    gsl::not_null<const uint8_t *> rip)
+{
+    csh cstone{0U};
+    cs_insn *insn{nullptr};
+    disasm_xapic_write(&cstone, &insn, rip);
+    verify_xapic_write(insn);
+    const auto src = 1U;
+    const auto val = capstone::read_op_val(vmcs->save_state(), insn, src);
+    free(insn);
+
+    return val;
+}
+
 /// Virtual interrupt controller (VIC)
 ///
 /// Provides an interface for managing physical and
@@ -429,6 +444,7 @@ private:
     std::unique_ptr<eapis::intel_x64::phys_lapic> m_phys_lapic;
 
     bfvmm::x64::unique_map_ptr<uint8_t> m_xapic_ump;
+    std::unordered_map<uintptr_t, bfvmm::x64::unique_map_ptr<uint8_t>> m_write_cache;
 
     friend class test::vcpu;
 
