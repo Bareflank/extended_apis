@@ -430,7 +430,7 @@ private:
 
     uint64_t m_virt_base_msr;
     uint64_t m_phys_base_msr;
-    const uint64_t m_orig_base_msr;
+    uint64_t m_orig_base_msr;
 
     eapis::intel_x64::hve *m_hve;
     eapis::intel_x64::ept::memory_map *m_emm;

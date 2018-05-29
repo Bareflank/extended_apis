@@ -72,7 +72,7 @@ interrupt_window::is_open()
             return false;
     }
 
-    const auto state = guest_interruptibility_state::get();
+    auto state = guest_interruptibility_state::get();
 
     if (guest_interruptibility_state::blocking_by_sti::is_enabled(state)) {
         return false;
@@ -91,10 +91,10 @@ interrupt_window::inject(uint64_t vector)
 {
     using namespace vmcs_n::vm_entry_interruption_information;
 
-    auto info = 0ULL;
-    info = vector::set(info, vector);
-    info = interruption_type::set(info, interruption_type::external_interrupt);
-    info = valid_bit::enable(info);
+    uint64_t info = 0;
+    vector::set(info, vector);
+    interruption_type::set(info, interruption_type::external_interrupt);
+    valid_bit::enable(info);
 
     vmcs_n::vm_entry_interruption_information::set(info);
 

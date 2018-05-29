@@ -60,10 +60,10 @@ TEST_CASE("ept::eptp")
     auto mock_ept = std::make_unique<ept_test_support>(mocks);
     auto mem_map = std::make_unique<ept::memory_map>();
 
-    uint64_t expected{0ULL};
-    expected = eptp::memory_type::set(expected, eptp::memory_type::write_back);
-    expected = eptp::page_walk_length_minus_one::set(expected, 3ULL);
-    expected = eptp::phys_addr::set(expected, mem_map->m_pml4_hpa);
+    uint64_t expected{0};
+    eptp::memory_type::set(expected, eptp::memory_type::write_back);
+    eptp::page_walk_length_minus_one::set(expected, 3ULL);
+    eptp::phys_addr::set(expected, mem_map->m_pml4_hpa);
 
     uint64_t eptp_val = ept::eptp(*mem_map);
     CHECK(eptp_val == expected);

@@ -163,12 +163,12 @@ phys_xapic::write_self_ipi(uint64_t vector)
 {
     using namespace ::intel_x64::lapic;
 
-    auto ipi = 0ULL;
-    ipi = icr::vector::set(ipi, vector);
-    ipi = icr::delivery_mode::set(ipi, icr::delivery_mode::fixed);
-    ipi = icr::level::enable(ipi);
-    ipi = icr::trigger_mode::set(ipi, icr::trigger_mode::edge);
-    ipi = icr::destination_shorthand::set(ipi, icr::destination_shorthand::self);
+    uint64_t ipi = 0;
+    icr::vector::set(ipi, vector);
+    icr::delivery_mode::set(ipi, icr::delivery_mode::fixed);
+    icr::level::enable(ipi);
+    icr::trigger_mode::set(ipi, icr::trigger_mode::edge);
+    icr::destination_shorthand::set(ipi, icr::destination_shorthand::self);
 
     this->write_icr(ipi);
 }

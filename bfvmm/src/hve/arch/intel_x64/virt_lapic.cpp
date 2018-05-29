@@ -449,10 +449,10 @@ virt_lapic::reset_version()
     static_assert(lvt::default_size > 0ULL, "Need LVT size > 0");
     const auto lvt_limit = lvt::default_size - 1ULL;
 
-    auto val = 0ULL;
-    val = version::version::set(val, version::version::reset_value);
-    val = version::max_lvt_entry_minus_one::set(val, lvt_limit);
-    val = version::suppress_eoi_broadcast_supported::disable(val);
+    uint64_t val = 0;
+    version::version::set(val, version::version::reset_value);
+    version::max_lvt_entry_minus_one::set(val, lvt_limit);
+    version::suppress_eoi_broadcast_supported::disable(val);
 
     const auto offset = lapic::msr_addr_to_offset(ia32_x2apic_version::addr);
     this->write_register(offset, val);
