@@ -43,6 +43,7 @@ do_test(test_memory_map
 do_test(test_ept_helpers
     SOURCES arch/intel_x64/ept/test_helpers.cpp
     SOURCES arch/intel_x64/ept/ept_test_support.cpp
+    CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
     ${ARGN}
 )
 
@@ -53,6 +54,11 @@ do_test(test_vpid
 
 do_test(test_phys_ioapic
     SOURCES arch/intel_x64/test_phys_ioapic.cpp
+    ${ARGN}
+)
+
+do_test(test_phys_mtrr
+    SOURCES arch/intel_x64/test_phys_mtrr.cpp
     ${ARGN}
 )
 

@@ -52,6 +52,29 @@ std::unique_ptr<eapis::intel_x64::ept::memory_map> g_emap;
 
 struct platform_info_t g_platform_info;
 
+extern "C" uint64_t
+_bsf(uint64_t value) noexcept
+{
+    for (size_t i = 0U; i < 64U; ++i) {
+        if (((1ULL << i) & value) != 0U) {
+            return i;
+        }
+    }
+    return ~0ULL;
+}
+
+extern "C" uint64_t
+_popcnt(uint64_t value) noexcept
+{
+    size_t count = 0U;
+    for (size_t i = 0U; i < 64U; ++i) {
+        if (((1ULL << i) & value) != 0U) {
+            ++count;
+        }
+    }
+    return count;
+}
+
 extern "C" struct platform_info_t *
 get_platform_info(void)
 { return &g_platform_info; }
