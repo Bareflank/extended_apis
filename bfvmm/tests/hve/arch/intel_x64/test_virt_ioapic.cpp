@@ -49,10 +49,15 @@ TEST_CASE("virt_ioapic")
     }
 
     for (ioapic::offset_t i = ioapic::rte_begin; i < ioapic::rte_end; ++i) {
+        uint64_t val = 0;
         CHECK_NOTHROW(virt.select(i));
-        CHECK_NOTHROW(virt.read() == ioapic::rte::mask_bit::enable(0U));
+
+        ioapic::rte::mask_bit::enable(val);
+        CHECK_NOTHROW(virt.read() == val);
+
         virt.write(0ULL);
-        CHECK(ioapic::rte::mask_bit::is_disabled(virt.read()));
+        val = virt.read();
+        CHECK(ioapic::rte::mask_bit::is_disabled(val));
     }
 }
 

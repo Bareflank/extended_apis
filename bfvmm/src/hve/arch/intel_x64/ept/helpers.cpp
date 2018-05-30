@@ -45,13 +45,13 @@ uintptr_t align_4k(uintptr_t addr)
 uint64_t
 eptp(memory_map &map)
 {
-    auto val = 0ULL;
+    uint64_t val = 0;
     auto pml4_hpa = map.hpa();
 
-    val = eptp::memory_type::set(val, eptp::memory_type::write_back);
-    val = eptp::page_walk_length_minus_one::set(val, max_page_walk_length - 1U);
-    val = eptp::accessed_and_dirty_flags::disable(val);
-    val = eptp::phys_addr::set(val, pml4_hpa);
+    eptp::memory_type::set(val, eptp::memory_type::write_back);
+    eptp::page_walk_length_minus_one::set(val, max_page_walk_length - 1U);
+    eptp::accessed_and_dirty_flags::disable(val);
+    eptp::phys_addr::set(val, pml4_hpa);
 
     return val;
 }

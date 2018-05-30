@@ -36,7 +36,9 @@ virt_ioapic::virt_ioapic() :
 
     /// Init registers 16-63 (RTEs)
     for (ioapic::offset_t i = ioapic::rte_begin; i < ioapic::rte_end; ++i) {
-        m_reg.at(i) = gsl::narrow_cast<uint32_t>(ioapic::rte::mask_bit::enable(0U));
+        uint64_t val = 0;
+        ioapic::rte::mask_bit::enable(val);
+        m_reg.at(i) = gsl::narrow_cast<uint32_t>(val);
     }
 }
 
