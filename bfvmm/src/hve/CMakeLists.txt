@@ -29,6 +29,7 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/esr.cpp
         arch/intel_x64/isr.cpp
         arch/intel_x64/phys_ioapic.cpp
+        arch/intel_x64/phys_mtrr.cpp
         arch/intel_x64/phys_xapic.cpp
         arch/intel_x64/phys_x2apic.cpp
         arch/intel_x64/virt_ioapic.cpp
