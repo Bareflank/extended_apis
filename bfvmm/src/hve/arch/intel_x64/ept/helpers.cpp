@@ -22,6 +22,7 @@
 #include "hve/arch/intel_x64/ept/helpers.h"
 #include "hve/arch/intel_x64/ept/memory_map.h"
 #include "hve/arch/intel_x64/ept/intrinsics.h"
+#include "hve/arch/intel_x64/phys_mtrr.h"
 
 namespace vmcs = intel_x64::vmcs;
 namespace eptp = intel_x64::vmcs::ept_pointer;
@@ -32,6 +33,8 @@ namespace intel_x64
 {
 namespace ept
 {
+
+static auto g_mtrrs = std::make_unique<::eapis::intel_x64::phys_mtrr>();
 
 uintptr_t align_1g(uintptr_t addr)
 { return (addr & ~(ept::page_size_1g - 1U)); }
@@ -215,6 +218,10 @@ identity_map_range_4k(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, memory_attr
     identity_map_n_contig_4k(mem_map, gpa_s, n, mattr);
 }
 
+//--------------------------------------------------------------------------
+// Best fit
+//--------------------------------------------------------------------------
+
 void
 identity_map_bestfit_lo(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
                         memory_attr_t mattr)
@@ -266,6 +273,155 @@ identity_map_bestfit_hi(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
         ept::identity_map_1g(emm, i, mattr);
     }
 }
+
+void
+map_bestfit_2m(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa,
+               memory_attr_t mattr)
+{
+    // If the whole range < 2MB, map all at a smaller granularity
+    if (gpa_e - gpa_s < ept::page_size_2m - 1) {
+        ept::map_range_4k(mem_map, gpa_s, gpa_e, hpa, mattr);
+        return;
+    }
+
+    auto current_gpa = gpa_s;
+    auto current_hpa = hpa;
+
+    // Map the region starting at gpa_s that is not aligned to 2MB
+    if (align_2m(current_gpa) != current_gpa) {
+        const auto next_2m = align_2m(current_gpa) + ept::page_size_2m;
+        const auto offset = next_2m - current_gpa;
+
+        ept::map_range_4k(mem_map, current_gpa, next_2m - 1, current_hpa, mattr);
+        current_gpa += offset;
+        current_hpa += offset;
+    }
+
+    // Map the "middle" 2MB aligned page(s)
+    if (gpa_e - current_gpa >= ept::page_size_2m - 1) {
+        auto last_2m = align_2m(gpa_e);
+        if (align_2m(current_gpa) < last_2m && gpa_e - last_2m < ept::page_size_2m - 1) {
+            last_2m -= ept::page_size_2m;
+        }
+
+        ept::map_range_2m(mem_map, current_gpa, last_2m, current_hpa, mattr);
+
+        const auto offset = (last_2m - current_gpa) + ept::page_size_2m;
+        current_gpa += offset;
+        current_hpa += offset;
+    }
+
+    // Map the "tail" region smaller than 2MB
+    if (current_gpa < gpa_e) {
+        ept::map_range_4k(mem_map, current_gpa, gpa_e, current_hpa, mattr);
+    }
+}
+
+void
+map_bestfit_1g(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa,
+               memory_attr_t mattr)
+{
+    // If the whole range < 1G, map all at a smaller granularity
+    if (gpa_e - gpa_s < ept::page_size_1g - 1) {
+        ept::map_bestfit_2m(mem_map, gpa_s, gpa_e, hpa, mattr);
+        return;
+    }
+
+    auto current_gpa = gpa_s;
+    auto current_hpa = hpa;
+
+    // Map the region starting at gpa_s that is not aligned to 1GB
+    if (align_1g(current_gpa) != current_gpa) {
+        const auto next_1g = align_1g(current_gpa) + ept::page_size_1g;
+        const auto offset = next_1g - current_gpa;
+
+        ept::map_bestfit_2m(mem_map, current_gpa, next_1g - 1, current_hpa, mattr);
+        current_gpa += offset;
+        current_hpa += offset;
+    }
+
+    // Map the "middle" 1GB aligned page(s)
+    if (gpa_e - current_gpa >= ept::page_size_1g - 1) {
+        auto last_1g = align_1g(gpa_e);
+        if (align_1g(current_gpa) < last_1g && gpa_e - last_1g < ept::page_size_1g - 1) {
+            last_1g -= ept::page_size_1g;
+        }
+
+        ept::map_range_1g(mem_map, current_gpa, last_1g, current_hpa, mattr);
+
+        const auto offset = (last_1g - current_gpa) + ept::page_size_1g;
+        current_gpa += offset;
+        current_hpa += offset;
+    }
+
+    // Map the "tail" region smaller than 1GB
+    if (current_gpa < gpa_e) {
+        ept::map_bestfit_2m(mem_map, current_gpa, gpa_e, current_hpa, mattr);
+    }
+}
+
+void
+map_bestfit(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa,
+            memory_attr_t mattr)
+{
+    const auto msr = ::intel_x64::msrs::ia32_vmx_ept_vpid_cap::get();
+
+    auto max_page_size = ept::page_size_4k;
+    if (::intel_x64::msrs::ia32_vmx_ept_vpid_cap::pdpte_1gb_support::is_enabled(msr)) {
+        max_page_size = ept::page_size_1g;
+    }
+    else if (::intel_x64::msrs::ia32_vmx_ept_vpid_cap::pde_2mb_support::is_enabled(msr)) {
+        max_page_size = ept::page_size_2m;
+    }
+
+    switch (max_page_size) {
+        case ept::page_size_1g:
+            map_bestfit_1g(mem_map, gpa_s, gpa_e, hpa, mattr);
+            break;
+        case ept::page_size_2m:
+            map_bestfit_2m(mem_map, gpa_s, gpa_e, hpa, mattr);
+            break;
+        default:
+            ept::map_range_4k(mem_map, gpa_s, gpa_e, hpa, mattr);
+    }
+}
+
+//--------------------------------------------------------------------------
+// High-level
+//--------------------------------------------------------------------------
+
+void
+map(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa)
+{
+    auto range_list = g_mtrrs->range_list();
+    auto current_gpa = gpa_s;
+    auto current_hpa = hpa;
+    memory_attr_t mattr = epte::memory_attr::wb_pt;
+
+    for (auto range : *range_list) {
+        auto range_end = range.base + range.size - 1;
+
+        if (current_gpa >= range.base && current_gpa < range_end) {
+            ept::epte::memory_type::set(mattr, range.type);
+
+            if (gpa_e < range_end) {
+                map_bestfit(mem_map, current_gpa, gpa_e, current_hpa, mattr);
+                return;
+            }
+            else {
+                map_bestfit(mem_map, current_gpa, range_end, current_hpa, mattr);
+                current_gpa += range.size;
+                current_hpa += range.size;
+            }
+        }
+    }
+
+    ensures(current_gpa >= gpa_e);
+}
+
+void
+identity_map(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e)
+{ map(mem_map, gpa_s, gpa_e, gpa_s); }
 
 //--------------------------------------------------------------------------
 // Unmapping
