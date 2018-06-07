@@ -18,6 +18,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <array>
+#include <algorithm>
 
 #include <arch/x64/misc.h>
 #include <arch/intel_x64/cpuid.h>
@@ -74,9 +75,15 @@ void enable_mtrr()
     g_msrs[ia32_mtrrcap::addr] |= (1U << 10U); // enable wc support
     g_msrs[ia32_mtrrcap::addr] |= (1U << 8U);  // enable fixed support
     g_msrs[ia32_mtrrcap::addr] |= 1U;          // set vcnt to 1
+
+    uint64_t base = 0x800000U;
+    uint64_t mask = size_to_mask(0x1000U, 39U) | (1U << 11U);
+
+    ::intel_x64::msrs::set(ia32_physbase::start_addr, base);
+    ::intel_x64::msrs::set(ia32_physmask::start_addr, mask);
 }
 
-static uint64_t init_multi_fixed()
+static void init_multi_fixed()
 {
     expects(mtrr_type.size() == 5U);
 
@@ -85,7 +92,17 @@ static uint64_t init_multi_fixed()
         val |= mtrr_type.at(j) << (j << 3U);
     }
 
-    return val;
+    ::intel_x64::msrs::set(fix64k_00000::addr, val);
+    ::intel_x64::msrs::set(fix16k_80000::addr, val);
+    ::intel_x64::msrs::set(fix16k_A0000::addr, val);
+    ::intel_x64::msrs::set(fix4k_C0000::addr, val);
+    ::intel_x64::msrs::set(fix4k_C8000::addr, val);
+    ::intel_x64::msrs::set(fix4k_D0000::addr, val);
+    ::intel_x64::msrs::set(fix4k_D8000::addr, val);
+    ::intel_x64::msrs::set(fix4k_E0000::addr, val);
+    ::intel_x64::msrs::set(fix4k_E8000::addr, val);
+    ::intel_x64::msrs::set(fix4k_F0000::addr, val);
+    ::intel_x64::msrs::set(fix4k_F8000::addr, val);
 }
 
 static bool
@@ -168,7 +185,7 @@ TEST_CASE("phys_mtrr: constructor")
     ::intel_x64::msrs::set(ia32_physbase::start_addr, base);
     CHECK_THROWS(phys_mtrr());
 
-    base = 0x080000U;
+    base = 0x800000U;
     mask = size_to_mask(0x1000U, 39U) | (1U << 11U);
     ::intel_x64::msrs::set(ia32_physbase::start_addr, base);
     ::intel_x64::msrs::set(ia32_physmask::start_addr, mask);
@@ -184,7 +201,7 @@ TEST_CASE("phys_mtrr: ia32_mtrrcap fields")
     auto mtrr = phys_mtrr();
 
     CHECK(mtrr.variable_count() == 1U);
-    CHECK(mtrr.fixed_count() == 11U);
+    CHECK(mtrr.fixed_count() == 88U);
     CHECK(mtrr.enabled());
     CHECK(mtrr.fixed_enabled());
     CHECK(mtrr.wc_supported());
@@ -210,7 +227,7 @@ TEST_CASE("phys_mtrr: mem_type - fixed, single type")
         auto mtrr = phys_mtrr();
         CHECK(mtrr.fixed_enabled());
 
-        for (auto i = 0U; i < phys_mtrr::s_fixed_size; i += 0x1000U) {
+        for (auto i = 0U; i < mtrr::fixed_size; i += 0x1000U) {
             CHECK(mtrr.mem_type(i) == type);
         }
     }
@@ -219,44 +236,12 @@ TEST_CASE("phys_mtrr: mem_type - fixed, single type")
 TEST_CASE("phys_mtrr: mem_type - fixed, 64KB, multi-type")
 {
     enable_mtrr();
-    auto val = init_multi_fixed();
-
-    ::intel_x64::msrs::set(fix64k_00000::addr, val);
-
+    init_multi_fixed();
     auto mtrr = phys_mtrr();
+
     CHECK(mtrr.fixed_enabled());
     CHECK(check_64kb_ranges(std::move(mtrr)));
-}
-
-TEST_CASE("phys_mtrr: mem_type - fixed, 16KB, multi-type")
-{
-    enable_mtrr();
-    auto val = init_multi_fixed();
-
-    ::intel_x64::msrs::set(fix16k_80000::addr, val);
-    ::intel_x64::msrs::set(fix16k_A0000::addr, val);
-
-    auto mtrr = phys_mtrr();
-    CHECK(mtrr.fixed_enabled());
     CHECK(check_16kb_ranges(std::move(mtrr)));
-}
-
-TEST_CASE("phys_mtrr: mem_type - fixed, 4KB, multi-type")
-{
-    enable_mtrr();
-    auto val = init_multi_fixed();
-
-    ::intel_x64::msrs::set(fix4k_C0000::addr, val);
-    ::intel_x64::msrs::set(fix4k_C8000::addr, val);
-    ::intel_x64::msrs::set(fix4k_D0000::addr, val);
-    ::intel_x64::msrs::set(fix4k_D8000::addr, val);
-    ::intel_x64::msrs::set(fix4k_E0000::addr, val);
-    ::intel_x64::msrs::set(fix4k_E8000::addr, val);
-    ::intel_x64::msrs::set(fix4k_F0000::addr, val);
-    ::intel_x64::msrs::set(fix4k_F8000::addr, val);
-
-    auto mtrr = phys_mtrr();
-    CHECK(mtrr.fixed_enabled());
     CHECK(check_4kb_ranges(std::move(mtrr)));
 }
 
@@ -291,105 +276,116 @@ TEST_CASE("phys_mtrr: mem_type - variable")
     }
 }
 
-TEST_CASE("phys_mtrr: range_list throws")
+TEST_CASE("phys_mtrr: range_list - variable")
 {
     enable_mtrr();
-    std::vector<mtrr::range> list;
+    init_multi_fixed();
     auto mtrr = phys_mtrr();
+    auto list = mtrr.range_list();
+    CHECK(list->size() == 59U);
 
-    CHECK_THROWS(mtrr.range_list(0, 0x0000, list));
-    CHECK_THROWS(mtrr.range_list(1, 0x1000, list));
-    CHECK_THROWS(mtrr.range_list(0, 0x1002, list));
-    CHECK_THROWS(mtrr.range_list(~0ULL, 0x1000, list));
+    auto cmp = [](const range & lhs, const range & rhs)
+    { return lhs.base < rhs.base; };
+
+    CHECK(std::is_sorted(list->begin(), list->end(), cmp));
+
+    CHECK(list->at(56).base == mtrr::fixed_size);
+    CHECK(list->at(56).size == list->at(57).base - list->at(56).base);
+    CHECK(list->at(56).type == ia32_mtrr_def_type::type::get());
+
+    CHECK(list->at(57).base == 0x800000U);
+    CHECK(list->at(57).size == 0x1000U);
+    CHECK(list->at(57).type == uncacheable);
+
+    CHECK(list->at(58).base == list->at(57).base + list->at(57).size);
+    CHECK(list->at(58).type == ia32_mtrr_def_type::type::get());
 }
 
-TEST_CASE("phys_mtrr: range_list over fixed")
+TEST_CASE("phys_mtrr: range_list - 64KB")
 {
     enable_mtrr();
-    std::vector<mtrr::range> list;
-    auto val = init_multi_fixed();
-
-    ::intel_x64::msrs::set(fix64k_00000::addr, val);
-
+    init_multi_fixed();
     auto mtrr = phys_mtrr();
-    mtrr.range_list(0, 8 * (1U << 16U), list);
-    CHECK(list.size() == 6U);
+    auto list = mtrr.range_list();
 
-    for (auto i = 0U; i < 5U; ++i) {
-        CHECK(list[i].base == i * (1U << 16U));
-        CHECK(list[i].size == (1U << 16U));
+    CHECK(list->size() == 59U);
+
+    for (auto i = 0U; i < 6U; ++i) {
+        CHECK(list->at(i).base == i * (1U << 16U));
+        CHECK(list->at(i).type == mtrr_type.at(i % 5U));
+
+        if (i < 5U) {
+            CHECK(list->at(i).size == (1U << 16U));
+            continue;
+        }
+        CHECK(list->at(i).size == 3 * (1U << 16U) + (1U << 14U));
     }
-
-    CHECK(list[5].base == 5 * (1U << 16U));
-    CHECK(list[5].size == 3 * (1U << 16U));
-
-    CHECK(list[0].type == uncacheable);
-    CHECK(list[1].type == write_combining);
-    CHECK(list[2].type == write_through);
-    CHECK(list[3].type == write_protected);
-    CHECK(list[4].type == write_back);
-    CHECK(list[5].type == uncacheable);
 }
 
-TEST_CASE("phys_mtrr: range_list over variable")
+TEST_CASE("phys_mtrr: range_list - 16KB")
 {
     enable_mtrr();
+    init_multi_fixed();
+    auto mtrr = phys_mtrr();
+    auto list = mtrr.range_list();
 
-    std::array<uint64_t, 3U> type = {
-        uncacheable, write_protected, write_through
-    };
-    std::array<uint64_t, 3U> size = {
-        0x1000U, 0x4000U, 0x40000000U
-    };
-    std::array<uintptr_t, 3U> base = {
-        0x100000U, 0x204000U, 0x40000000U
-    };
-    expects(base.size() == size.size() && size.size() == type.size());
+    CHECK(list->size() == 59U);
+    uint64_t base = list->at(5U).base + list->at(5U).size;
 
-    for (auto i = 0U; i < base.size(); ++i) {
-        uint64_t physbase = 0U;
-        uint64_t physmask = 0U;
-        uint64_t pas = g_eax_cpuid[addr_size::addr];
-        uint64_t mask = size_to_mask(size[i], pas);
+    for (auto i = 6U; i < 11U; ++i) {
+        CHECK(list->at(i).base == base + (i - 6U) * (1U << 14U));
+        CHECK(list->at(i).type == mtrr_type.at(i % 5U));
 
-        ia32_physbase::type::set(physbase, type[i]);
-        ia32_physbase::physbase::set(physbase, base[i] >> 12U, pas);
-
-        ia32_physmask::valid::enable(physmask);
-        ia32_physmask::physmask::set(physmask, mask >> 12U, pas);
-
-        msrs_n::set(ia32_physbase::start_addr + (i * 2U), physbase);
-        msrs_n::set(ia32_physmask::start_addr + (i * 2U), physmask);
+        if (i < 10U) {
+            CHECK(list->at(i).size == (1U << 14U));
+            continue;
+        }
+        CHECK(list->at(i).size == 4 * (1U << 14U));
     }
 
-    uint64_t cap = ia32_mtrrcap::get();
-    g_msrs[ia32_mtrrcap::addr] = (cap & ~0xFFULL) | base.size();
-    ia32_mtrr_def_type::type::set(write_back);
+    base = list->at(10).base + list->at(10).size;
 
+    for (auto i = 11U; i < 16U; ++i) {
+        CHECK(list->at(i).base == base + (i - 11U) * (1U << 14U));
+        CHECK(list->at(i).type == mtrr_type.at(i % 5U));
+
+        if (i < 15U) {
+            CHECK(list->at(i).size == (1U << 14U));
+            continue;
+        }
+        CHECK(list->at(i).size == 3 * (1U << 14U) + (1U << 12U));
+    }
+}
+
+TEST_CASE("phys_mtrr: range_list - 4KB")
+{
+    enable_mtrr();
+    init_multi_fixed();
     auto mtrr = phys_mtrr();
-    std::vector<mtrr::range> list{0};
-    mtrr.range_list(base[0], (base[2] + size[2]) - base[0], list);
+    auto list = mtrr.range_list();
 
-    CHECK(list.size() == 5U); // 3 explicit ranges + 2 holes
-    CHECK(list[0].base == base[0]);
-    CHECK(list[0].size == size[0]);
-    CHECK(list[0].type == type[0]);
+    CHECK(list->size() == 59U);
 
-    CHECK(list[1].base == list[0].base + list[0].size);
-    CHECK(list[1].size == base[1] - list[1].base);
-    CHECK(list[1].type == write_back);
-
-    CHECK(list[2].base == base[1]);
-    CHECK(list[2].size == size[1]);
-    CHECK(list[2].type == type[1]);
-
-    CHECK(list[3].base == list[2].base + list[2].size);
-    CHECK(list[3].size == base[2] - list[3].base);
-    CHECK(list[3].type == write_back);
-
-    CHECK(list[4].base == base[2]);
-    CHECK(list[4].size == size[2]);
-    CHECK(list[4].type == type[2]);
+    for (auto i = 16U; i < 56U; ++i) {
+        if (i % 5U != 0U) {
+            uint64_t k = (i / 5U) * 5U;
+            uint64_t base = list->at(k).base + list->at(k).size;
+            CHECK(list->at(i).base == base + ((i % 5U) - 1U) * (1U << 12U));
+            CHECK(list->at(i).type == mtrr_type.at(i % 5U));
+            CHECK(list->at(i).size == (1U << 12U));
+        }
+        else {
+            uint64_t base = list->at(i - 1U).base + list->at(i - 1U).size;
+            CHECK(list->at(i).base == base);
+            CHECK(list->at(i).type == uncacheable);
+            if (i != 55U) {
+                CHECK(list->at(i).size == 4U * (1U << 12U));
+            }
+            else {
+                CHECK(list->at(i).size == 3U * (1U << 12U));
+            }
+        }
+    }
 }
 
 }
