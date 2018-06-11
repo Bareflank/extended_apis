@@ -31,6 +31,22 @@ namespace intel_x64
 {
 
 using namespace ::intel_x64::mtrr;
+using namespace ::eapis::intel_x64::mtrr;
+
+const std::array<::intel_x64::msrs::field_type, 11U> fixed_addr = {{
+        fix64k_00000::addr,
+        fix16k_80000::addr,
+        fix16k_A0000::addr,
+        fix4k_C0000::addr,
+        fix4k_C8000::addr,
+        fix4k_D0000::addr,
+        fix4k_D8000::addr,
+        fix4k_E0000::addr,
+        fix4k_E8000::addr,
+        fix4k_F0000::addr,
+        fix4k_F8000::addr
+    }
+};
 
 ///
 /// Helpers
@@ -40,17 +56,17 @@ static inline uint64_t fixed_range_size(uint64_t range)
     expects(range <= 87U);
 
     if (range <= 7U) {
-        return 1U << 16U;
+        return 1ULL << 16U;
     }
     else if (range <= 23U) {
-        return 1U << 14U;
+        return 1ULL << 14U;
     }
 
-    return 1U << 12U;
+    return 1ULL << 12U;
 }
 
 static inline bool in_fixed_range(uintptr_t addr)
-{ return addr < phys_mtrr::s_fixed_size; }
+{ return addr < mtrr::fixed_size; }
 
 void
 phys_mtrr::print_variable_ranges(uint64_t level) const
@@ -92,6 +108,18 @@ phys_mtrr::print_fixed_ranges(uint64_t level) const
     }
 }
 
+void
+phys_mtrr::print_range_list(uint64_t level) const
+{
+    bfdebug_info(level, "phys_mtrr range_list:");
+
+    for (const auto &range : m_range_list) {
+        bfdebug_subtext(level, "type", type_to_cstr(range.type));
+        bfdebug_subnhex(level, "base", range.base);
+        bfdebug_subnhex(level, "last", range.base + (range.size - 1U));
+    }
+}
+
 ///
 /// Implementation
 ///
@@ -110,101 +138,85 @@ phys_mtrr::phys_mtrr()
     m_def = def;
     m_pas = ::x64::cpuid::addr_size::phys::get();
 
-    this->init_fixed_ranges();
-    this->init_variable_ranges();
+    this->parse_fixed_mtrrs();
+    this->parse_variable_mtrrs();
+    this->setup_range_list();
 
     bfdebug_transaction(1, [&](std::string *) {
         this->print_fixed_ranges(1);
         this->print_variable_ranges(1);
+        this->print_range_list(1);
     });
 }
 
-/// Init fixed ranges
+/// Parse fixed MTRRs
 ///
 /// This functions creates a mapping from {0..255} to {0..87}. Each
-/// mapped value is an index into a memory type table. Each conditional
-/// corresponds to the set of ranges with the same granularity i.e. 64KB,
-/// 16KB, and 4KB. Each value assigned to 'at(i)' is the index that byte
-/// i maps to in the type array. Table 11-9 in the Intel SDM contains 88 entries,
-/// and each entry can have a different memory type. Note the map
-/// {0..87} -> {memory types} is provided in the fixed_type array.
+/// mapped value is one of the 88 fixed ranges. When we need the type
+/// of an address in the fixed range, we can use the byte b = address[19-12]
+/// as a key into the m_fixed_range array.  The value m_fixed_range[b] is the
+/// range the address belongs to.
 ///
-/// As a plus, once -std=c++17 is fully integrated, this function can be
-/// made constexpr.
+/// Table 11-9 in the Intel SDM contains 88 entries, and each entry can
+/// have a different memory type. The m_fixed_type array maps these
+/// entries to their corresponding type from the 8 fixed MTRRS.
+///
+/// As a plus, once -std=c++17 is integrated, this function can be
+/// made mostly constexpr.
 ///
 void
-phys_mtrr::init_fixed_ranges()
+phys_mtrr::parse_fixed_mtrrs()
 {
-    for (auto i = 0U; i <= 0xFFU; ++i) {
+    for (uint64_t i64 = 0U; i64 <= 0xFFU; ++i64) {
+        uint8_t i = gsl::narrow_cast<uint8_t>(i64);
+
         if (i <= 0x7FU) {
             m_fixed_range.at(i) = (i & 0x70U) >> 4U;
         }
         else if (i <= 0xBFU) {
-            const uint64_t mod = 4U;
-            const uint64_t base = 8U;
-            const uint64_t scale = ((i & 0xF0U) >> 4U) & (mod - 1U);
-            const uint64_t index = ((i & 0x0FU) >> 2U);
-            m_fixed_range.at(i) = gsl::narrow_cast<uint64_t>(
-                                      base + index + (scale * mod));
+            const auto mod = 4U;
+            const auto base = 8U;
+            const auto index = gsl::narrow_cast<uint8_t>(((i & 0x0FU) >> 2U));
+            const auto scale = gsl::narrow_cast<uint8_t>(((i & 0xF0U) >> 4U) & (mod - 1U));
+            m_fixed_range.at(i) = gsl::narrow_cast<uint8_t>(base + index + (scale * mod));
         }
-        else if (i <= 0xFF) {
-            const uint64_t mod = 16U;
-            const uint64_t base = 24U;
-            const uint64_t scale = (((i & 0xF0U) >> 4U) & (mod - 1U)) - 0xCU;
-            const uint64_t index = i & 0x0FU;
-            m_fixed_range.at(i) = gsl::narrow_cast<uint64_t>(
-                                      base + index + (scale * mod));
+        else {
+            const auto mod = 16U;
+            const auto base = 24U;
+            const auto index = gsl::narrow_cast<uint8_t>(i & 0x0FU);
+            const auto scale = gsl::narrow_cast<uint8_t>((((i & 0xF0U) >> 4U) & (mod - 1U)) - 0xCU);
+            m_fixed_range.at(i) = gsl::narrow_cast<uint8_t>(base + index + (scale * mod));
         }
     }
 
-    this->init_fixed_types();
+    for (uint64_t i = 0U; i < fixed_addr.size(); ++i) {
+        const uint64_t msr = ::intel_x64::msrs::get(fixed_addr.at(i));
+        for (uint64_t j = 0U; j < 8U; ++j) {
+            const auto from = gsl::narrow_cast<uint8_t>(j << 3U);
+            const uint64_t mask = 0xFFULL << from;
+            const auto type = gsl::narrow_cast<uint8_t>(get_bits(msr, mask) >> from);
+            m_fixed_type.at((i << 3U) + j) = type;
+        }
+    }
 }
 
 void
-phys_mtrr::init_variable_ranges()
+phys_mtrr::parse_variable_mtrrs()
 {
-    const auto vcnt = ia32_mtrrcap::vcnt::get(m_cap);
-    const auto base_addr = ia32_physbase::start_addr;
-    const auto mask_addr = ia32_physmask::start_addr;
+    const uint64_t vcnt = ia32_mtrrcap::vcnt::get(m_cap);
+    const ::intel_x64::msrs::field_type base_addr = ia32_physbase::start_addr;
+    const ::intel_x64::msrs::field_type mask_addr = ia32_physmask::start_addr;
 
-    for (auto i = 0U; i < (vcnt << 1U); i += 2U) {
-        const auto mask_msr = ::intel_x64::msrs::get(mask_addr + i);
+    for (uint32_t i = 0U; i < (vcnt << 1U); i += 2U) {
+        const uint64_t mask_msr = ::intel_x64::msrs::get(mask_addr + i);
         if (ia32_physmask::valid::is_disabled(mask_msr)) {
             continue;
         }
-        const auto base_msr = ::intel_x64::msrs::get(base_addr + i);
+        const uint64_t base_msr = ::intel_x64::msrs::get(base_addr + i);
         m_variable_range.push_back({base_msr, mask_msr, m_pas});
     }
-}
 
-void
-phys_mtrr::init_fixed_types()
-{
-    const std::array<::intel_x64::msrs::field_type, 11U> addrs = {{
-            fix64k_00000::addr,
-            fix16k_80000::addr,
-            fix16k_A0000::addr,
-            fix4k_C0000::addr,
-            fix4k_C8000::addr,
-            fix4k_D0000::addr,
-            fix4k_D8000::addr,
-            fix4k_E0000::addr,
-            fix4k_E8000::addr,
-            fix4k_F0000::addr,
-            fix4k_F8000::addr
-        }
-    };
-
-    for (uint64_t i = 0U; i < addrs.size(); ++i) {
-        const auto msr = ::intel_x64::msrs::get(addrs.at(i));
-        constexpr auto size = 8ULL;
-
-        for (uint64_t j = 0U; j < size; ++j) {
-            const auto from = (j << 3U);
-            const auto mask = 0xFFULL << from;
-            m_fixed_type.at((i << 3U) + j) = get_bits(msr, mask) >> from;
-        }
-    }
+    ensures(m_variable_range[0].base() >= mtrr::fixed_size);
 }
 
 uint64_t
@@ -213,7 +225,7 @@ phys_mtrr::variable_count() const
 
 uint64_t
 phys_mtrr::fixed_count() const
-{ return 11U; }
+{ return mtrr::fixed_count; }
 
 bool
 phys_mtrr::variable_supported() const
@@ -285,44 +297,75 @@ phys_mtrr::mem_type(uintptr_t addr) const
 }
 
 void
-phys_mtrr::range_list(
-    const uintptr_t base,
-    const uint64_t size,
-    std::vector<mtrr::range> &list) const
+phys_mtrr::setup_fixed_range_list()
 {
-    expects(size > 0U);
-    expects(size == ept::align_4k(size));
-    expects(base == ept::align_4k(base));
-    expects(base < (base + size));
-
+    uint64_t base = 0U;
     uint64_t pages = 0U;
     uint64_t type = this->mem_type(base);
     uint64_t prev_type = type;
-    uintptr_t prev_base = base;
     constexpr const uint64_t page_size = 0x1000U;
 
-    this->print_variable_ranges(0);
-
-    for (uint64_t addr = base; addr < (base + size); addr += page_size) {
+    for (uint64_t addr = base; addr < mtrr::fixed_size; addr += page_size) {
         type = this->mem_type(addr);
         if (type == prev_type) {
             ++pages;
             continue;
         }
 
-        list.push_back({prev_base, pages * page_size, prev_type});
-
-        prev_base = addr;
-        prev_type = type;
+        m_range_list.push_back({base, pages * page_size, prev_type});
+        base = addr;
         pages = 1U;
+        prev_type = type;
     }
 
-    if (type != prev_type) {
-        return;
+    if (type == prev_type) {
+        m_range_list.push_back({base, pages * page_size, prev_type});
     }
-
-    list.push_back({prev_base, pages * page_size, prev_type});
 }
+
+void
+phys_mtrr::setup_variable_range_list()
+{
+    const auto cmp = [](const variable_range & lhs, const variable_range & rhs)
+    { return lhs.base() < rhs.base(); };
+
+    std::sort(m_variable_range.begin(), m_variable_range.end(), cmp);
+
+    uint64_t base = mtrr::fixed_size;
+    uint64_t size = 0x00U;
+    uint64_t type = 0xFFU;
+
+    for (uint64_t i = 0U; i < m_variable_range.size(); ++i) {
+        if (base < m_variable_range[i].base()) {
+            size = m_variable_range[i].base() - base;
+            type = ia32_mtrr_def_type::type::get(m_def);
+            m_range_list.push_back({base, size, type});
+            base = m_variable_range[i].base();
+        }
+
+        size = m_variable_range[i].size();
+        type = m_variable_range[i].type();
+        m_range_list.push_back({base, size, type});
+        base += size;
+    }
+
+    if (GSL_LIKELY(base < (1ULL << m_pas))) {
+        size = (1ULL << m_pas) - base;
+        type = ia32_mtrr_def_type::type::get(m_def);
+        m_range_list.push_back({base, size, type});
+    }
+}
+
+void
+phys_mtrr::setup_range_list()
+{
+    this->setup_fixed_range_list();
+    this->setup_variable_range_list();
+}
+
+const std::vector<mtrr::range> *
+phys_mtrr::range_list()
+{ return &m_range_list; }
 
 }
 }

@@ -32,6 +32,13 @@ namespace intel_x64
 namespace mtrr
 {
 
+/// There are 88 fixed ranges total
+static constexpr uint64_t fixed_count = 88U;
+
+/// The total size over all fixed range MTRRs is 1MB. The base is
+/// defined by the manual as 0.
+static constexpr uint64_t fixed_size = 0x100000U; // First 1MB
+
 /// MTRR range
 ///
 /// This structure provides an abstraction over the MTRR ranges
@@ -134,8 +141,8 @@ constexpr inline uint64_t mask_to_size(uint64_t mask, uint64_t pas)
 /// Variable MTRR range
 ///
 ///
-struct variable_range {
-
+struct variable_range
+{
     /// Constructor
     ///
     /// Create a variable range from the physbase and physmask
@@ -157,7 +164,6 @@ struct variable_range {
         expects(::intel_x64::mtrr::valid_type(type));
         expects(x64::is_physical_address_valid(base, pas));
         expects(size >= min_size);
-        expects(base >= size);
         expects((size & (size - 1U)) == 0U);
         expects((base & (size - 1U)) == 0U);
         expects((base + size) > base);
