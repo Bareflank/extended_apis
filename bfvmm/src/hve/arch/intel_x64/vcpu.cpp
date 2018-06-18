@@ -39,7 +39,7 @@ vcpu::efi_handle_cpuid(gsl::not_null<vmcs_t *> vmcs)
         setter = clear_bit(setter, ::intel_x64::cpuid::feature_information::ecx::osxsave::from);
         setter = clear_bit(setter, ::intel_x64::cpuid::feature_information::ecx::vmx::from);
         vmcs->save_state()->rcx = setter;
-        setter = clear_bit(ret.rdx, ::intel_x64::cpuid::feature_information::edx::mtrr::from);
+        setter = set_bit(ret.rdx, ::intel_x64::cpuid::feature_information::edx::mtrr::from);
         vmcs->save_state()->rdx = setter;
     }
     else if ((leaf & 0xC0000000) == 0xC0000000) {
@@ -159,8 +159,8 @@ vcpu::efi_handle_wrcr4(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &i
 bool
 vcpu::efi_handle_vmcall(gsl::not_null<vmcs_t *> vmcs)
 {
-    uint8_t core = thread_context_cpuid();
-    uint16_t bf = 0xFB00;
+    uint64_t core = thread_context_cpuid();
+    uint64_t bf = 0xFB00;
     vmcs->save_state()->rax = static_cast<uint64_t>(bf | core);
     return advance(vmcs);
 }
@@ -354,8 +354,8 @@ void vcpu::add_efi_handlers()
 vcpu::vcpu(vcpuid::type id) :
         bfvmm::intel_x64::vcpu{id},
         m_emm{std::make_unique<eapis::intel_x64::ept::memory_map>()},
-        m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())}
-//        m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get(), m_emm.get())}
+        m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())},
+        m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get(), m_emm.get())}
     {
         if (get_platform_info()->efi.enabled)
         {

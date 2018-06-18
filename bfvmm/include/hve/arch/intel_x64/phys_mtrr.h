@@ -90,7 +90,7 @@ public:
     ///
     /// @return the system's memory-type range list
     ///
-    const std::vector<mtrr::range> *range_list();
+    const std::vector<mtrr::range> *range_list() const;
 
     /// Enabled
     ///
