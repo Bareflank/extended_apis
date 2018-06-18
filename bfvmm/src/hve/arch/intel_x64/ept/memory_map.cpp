@@ -17,6 +17,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <arch/intel_x64/msrs.h>
 #include <bfvmm/memory_manager/memory_manager.h>
 #include "hve/arch/intel_x64/ept/memory_map.h"
 #include "hve/arch/intel_x64/ept/intrinsics.h"
@@ -33,6 +34,15 @@ memory_map::memory_map()
     auto pml4 = new epte_t[page_table::num_entries]();
     m_pml4_hva = reinterpret_cast<hva_t>(pml4);
     m_pml4_hpa = g_mm->virtint_to_physint(m_pml4_hva);
+
+    m_cap = ::intel_x64::msrs::ia32_vmx_ept_vpid_cap::get();
+    m_max_page_size = ept::page_size_4k;
+    if (::intel_x64::msrs::ia32_vmx_ept_vpid_cap::pdpte_1gb_support::is_enabled(m_cap)) {
+        m_max_page_size = ept::page_size_1g;
+    }
+    else if (::intel_x64::msrs::ia32_vmx_ept_vpid_cap::pde_2mb_support::is_enabled(m_cap)) {
+        m_max_page_size = ept::page_size_2m;
+    }
 }
 
 memory_map::~memory_map()
@@ -49,6 +59,10 @@ memory_map::~memory_map()
 
     delete[] pml4;
 }
+
+uint64_t
+memory_map::max_page_size() const
+{ return m_max_page_size; }
 
 epte_t &
 memory_map::map(gpa_t gpa, hpa_t hpa, uint64_t size)
