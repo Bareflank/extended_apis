@@ -215,8 +215,6 @@ phys_mtrr::parse_variable_mtrrs()
         const uint64_t base_msr = ::intel_x64::msrs::get(base_addr + i);
         m_variable_range.push_back({base_msr, mask_msr, m_pas});
     }
-
-    ensures(m_variable_range[0].base() >= mtrr::fixed_size);
 }
 
 uint64_t
@@ -361,10 +359,16 @@ phys_mtrr::setup_range_list()
 {
     this->setup_fixed_range_list();
     this->setup_variable_range_list();
+
+    // Ensure there is no overlap
+    for (uint64_t i = 0; i < m_range_list.size() - 1; ++i) {
+        const auto last = m_range_list[i].base + (m_range_list[i].size - 1);
+        ensures(last < m_range_list[i + 1].base);
+    }
 }
 
 const std::vector<mtrr::range> *
-phys_mtrr::range_list()
+phys_mtrr::range_list() const
 { return &m_range_list; }
 
 }

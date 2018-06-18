@@ -34,7 +34,12 @@ namespace intel_x64
 namespace ept
 {
 
-static auto g_mtrrs = std::make_unique<::eapis::intel_x64::phys_mtrr>();
+static const eapis::intel_x64::phys_mtrr *
+g_mtrr()
+{
+    static auto g_mtrr = std::make_unique<eapis::intel_x64::phys_mtrr>();
+    return g_mtrr.get();
+}
 
 uintptr_t align_1g(uintptr_t addr)
 { return (addr & ~(ept::page_size_1g - 1U)); }
@@ -93,7 +98,7 @@ map_n_contig_1g(memory_map &mem_map, gpa_t gpa, hpa_t hpa, uint64_t n, memory_at
 void
 map_range_1g(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa, memory_attr_t mattr)
 {
-    expects(gpa_s < gpa_e);
+    expects(gpa_s <= gpa_e);
 
     auto n = ((gpa_e - gpa_s) / page_size_1g) + 1ULL;
     map_n_contig_1g(mem_map, gpa_s, hpa, n, mattr);
@@ -114,7 +119,7 @@ identity_map_n_contig_1g(memory_map &mem_map, gpa_t gpa, uint64_t n, memory_attr
 void
 identity_map_range_1g(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, memory_attr_t mattr)
 {
-    expects(gpa_s < gpa_e);
+    expects(gpa_s <= gpa_e);
 
     auto n = ((gpa_e - gpa_s) / page_size_1g) + 1ULL;
     identity_map_n_contig_1g(mem_map, gpa_s, n, mattr);
@@ -142,7 +147,7 @@ map_n_contig_2m(memory_map &mem_map, gpa_t gpa, hpa_t hpa, uint64_t n, memory_at
 void
 map_range_2m(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa, memory_attr_t mattr)
 {
-    expects(gpa_s < gpa_e);
+    expects(gpa_s <= gpa_e);
 
     auto n = ((gpa_e - gpa_s) / page_size_2m) + 1ULL;
     map_n_contig_2m(mem_map, gpa_s, hpa, n, mattr);
@@ -163,7 +168,7 @@ identity_map_n_contig_2m(memory_map &mem_map, gpa_t gpa, uint64_t n, memory_attr
 void
 identity_map_range_2m(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, memory_attr_t mattr)
 {
-    expects(gpa_s < gpa_e);
+    expects(gpa_s <= gpa_e);
 
     auto n = ((gpa_e - gpa_s) / page_size_2m) + 1ULL;
     identity_map_n_contig_2m(mem_map, gpa_s, n, mattr);
@@ -191,7 +196,7 @@ map_n_contig_4k(memory_map &mem_map, gpa_t gpa, hpa_t hpa, uint64_t n, memory_at
 void
 map_range_4k(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa, memory_attr_t mattr)
 {
-    expects(gpa_s < gpa_e);
+    expects(gpa_s <= gpa_e);
 
     auto n = ((gpa_e - gpa_s) / page_size_4k) + 1ULL;
     map_n_contig_4k(mem_map, gpa_s, hpa, n, mattr);
@@ -212,7 +217,7 @@ identity_map_n_contig_4k(memory_map &mem_map, gpa_t gpa, uint64_t n, memory_attr
 void
 identity_map_range_4k(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, memory_attr_t mattr)
 {
-    expects(gpa_s < gpa_e);
+    expects(gpa_s <= gpa_e);
 
     auto n = ((gpa_e - gpa_s) / page_size_4k) + 1ULL;
     identity_map_n_contig_4k(mem_map, gpa_s, n, mattr);
@@ -396,8 +401,8 @@ map(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa)
         return range.contains(hpa + (nr_bytes - 1U));
     };
 
-    const auto begin = g_mtrrs->range_list()->cbegin();
-    const auto end = g_mtrrs->range_list()->cend();
+    const auto begin = g_mtrr()->range_list()->cbegin();
+    const auto end = g_mtrr()->range_list()->cend();
     const auto base = std::find_if(begin, end, base_range);
     const auto last = std::find_if(begin, end, last_range);
 
