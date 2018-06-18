@@ -53,15 +53,8 @@ static auto init_xapic_ept(
     uintptr_t xapic_gpa,
     uintptr_t xapic_hpa)
 {
-    expects(ept::align_4k(xapic_gpa) > 0ULL);
-
-    const auto lo_end = ept::align_4k(xapic_gpa) - ept::page_size_4k;
-    const auto hi_end = 0x900000000ULL - ept::page_size_1g;
-
-    ept::identity_map_bestfit_lo(emm, 0ULL, lo_end);
-    ept::map_4k(emm, xapic_gpa, xapic_hpa, ept::epte::memory_attr::uc_re);
-    ept::identity_map_bestfit_hi(emm, xapic_gpa + ept::page_size_4k, hi_end);
-    ept::enable_ept(ept::eptp(emm), hve);
+    ept::map_4k(
+        emm, xapic_gpa, xapic_hpa, ept::epte::memory_attr::uc_re);
 }
 
 vic::vic(
@@ -170,6 +163,10 @@ vic::init_lapic()
 void
 vic::init_phys_x2apic()
 { m_phys_lapic = std::make_unique<phys_x2apic>(); }
+
+uintptr_t
+vic::phys_xapic_base() const
+{ return apic_base::apic_base::get(m_orig_base_msr); }
 
 /// Note that the apic_base::get returns the *actual* physical address
 /// and that this 4K page must be mapped in read-write, uncacheable (rw_uc)
