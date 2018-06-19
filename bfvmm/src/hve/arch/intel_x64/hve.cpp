@@ -134,7 +134,7 @@ void hve::add_external_interrupt_handler(
 }
 
 //--------------------------------------------------------------------------
-// Init Signal
+// INIT Signal
 //--------------------------------------------------------------------------
 
 gsl::not_null<init_signal *> hve::init_signal()
@@ -147,6 +147,22 @@ void hve::add_init_signal_handler(init_signal::handler_delegate_t &&d)
     }
 
     m_init_signal->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// SIPI
+//--------------------------------------------------------------------------
+
+gsl::not_null<sipi *> hve::sipi()
+{ return m_sipi.get(); }
+
+void hve::add_sipi_handler(sipi::handler_delegate_t &&d)
+{
+    if (!m_sipi) {
+        m_sipi = std::make_unique<eapis::intel_x64::sipi>(this);
+    }
+
+    m_sipi->add_handler(std::move(d));
 }
 
 //--------------------------------------------------------------------------

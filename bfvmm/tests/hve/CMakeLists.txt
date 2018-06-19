@@ -52,6 +52,11 @@ do_test(test_vpid
     ${ARGN}
 )
 
+do_test(test_sipi
+    SOURCES arch/intel_x64/test_sipi.cpp
+    ${ARGN}
+)
+
 do_test(test_init_signal
     SOURCES arch/intel_x64/test_init_signal.cpp
     ${ARGN}

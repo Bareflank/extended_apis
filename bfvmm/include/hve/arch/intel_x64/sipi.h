@@ -16,8 +16,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef INIT_SIGNAL_INTEL_X64_EAPIS_H
-#define INIT_SIGNAL_INTEL_X64_EAPIS_H
+#ifndef SIPI_INTEL_X64_EAPIS_H
+#define SIPI_INTEL_X64_EAPIS_H
 
 #include "base.h"
 
@@ -32,11 +32,11 @@ namespace intel_x64
 
 class hve;
 
-/// INIT signal
+/// SIPI handler
 ///
-/// Provides an interface for registering handlers of the INIT signal exit.
+/// Provides an interface for registering handlers of SIPI exits
 ///
-class EXPORT_EAPIS_HVE init_signal : public base
+class EXPORT_EAPIS_HVE sipi : public base
 {
 public:
 
@@ -52,16 +52,16 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param hve the hve object for this INIT signal handler
+    /// @param hve the hve object for this sipi handler
     ///
-    init_signal(gsl::not_null<eapis::intel_x64::hve *> hve);
+    sipi(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~init_signal() = default;
+    ~sipi() = default;
 
     /// Add Handler
     ///
@@ -73,11 +73,6 @@ public:
     void add_handler(handler_delegate_t &&d);
 
     /// Dump Log
-    ///
-    /// Example:
-    /// @code
-    /// this->dump_log();
-    /// @endcode
     ///
     /// @expects
     /// @ensures
@@ -102,11 +97,11 @@ public:
 
     /// @cond
 
-    init_signal(init_signal &&) = default;
-    init_signal &operator=(init_signal &&) = default;
+    sipi(sipi &&) = default;
+    sipi &operator=(sipi &&) = default;
 
-    init_signal(const init_signal &) = delete;
-    init_signal &operator=(const init_signal &) = delete;
+    sipi(const sipi &) = delete;
+    sipi &operator=(const sipi &) = delete;
 
     /// @endcond
 };
