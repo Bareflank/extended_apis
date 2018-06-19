@@ -24,6 +24,7 @@
 #include "control_register.h"
 #include "cpuid.h"
 #include "external_interrupt.h"
+#include "init_signal.h"
 #include "interrupt_window.h"
 #include "io_instruction.h"
 #include "monitor_trap.h"
@@ -234,7 +235,29 @@ public:
         vmcs_n::value_type v, external_interrupt::handler_delegate_t &&d);
 
     //--------------------------------------------------------------------------
-    // Interrupt Window
+    // Init Signal
+    //--------------------------------------------------------------------------
+
+    /// Get Init Signal Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the init signal object stored in the hve
+    ///
+    gsl::not_null<eapis::intel_x64::init_signal *> init_signal();
+
+    /// Add Init Signal Handler
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the delegate to call when an init signal exit occurs
+    ///
+    void add_init_signal_handler(init_signal::handler_delegate_t &&d);
+
+    //--------------------------------------------------------------------------
+    // Interrupt Signal
     //--------------------------------------------------------------------------
 
     /// Get Interrupt Window Object
@@ -535,6 +558,7 @@ private:
     std::unique_ptr<eapis::intel_x64::control_register> m_control_register;
     std::unique_ptr<eapis::intel_x64::cpuid> m_cpuid;
     std::unique_ptr<eapis::intel_x64::external_interrupt> m_external_interrupt;
+    std::unique_ptr<eapis::intel_x64::init_signal> m_init_signal;
     std::unique_ptr<eapis::intel_x64::interrupt_window> m_interrupt_window;
     std::unique_ptr<eapis::intel_x64::io_instruction> m_io_instruction;
     std::unique_ptr<eapis::intel_x64::monitor_trap> m_monitor_trap;
