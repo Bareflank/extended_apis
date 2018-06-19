@@ -134,6 +134,22 @@ void hve::add_external_interrupt_handler(
 }
 
 //--------------------------------------------------------------------------
+// Init Signal
+//--------------------------------------------------------------------------
+
+gsl::not_null<init_signal *> hve::init_signal()
+{ return m_init_signal.get(); }
+
+void hve::add_init_signal_handler(init_signal::handler_delegate_t &&d)
+{
+    if (!m_init_signal) {
+        m_init_signal = std::make_unique<eapis::intel_x64::init_signal>(this);
+    }
+
+    m_init_signal->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
 // Interrupt Window
 //--------------------------------------------------------------------------
 

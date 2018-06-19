@@ -34,6 +34,7 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/ept_violation.cpp
         arch/intel_x64/external_interrupt.cpp
         arch/intel_x64/hve.cpp
+        arch/intel_x64/init_signal.cpp
         arch/intel_x64/interrupt_window.cpp
         arch/intel_x64/io_instruction.cpp
         arch/intel_x64/esr.cpp
