@@ -53,7 +53,7 @@ do_test(test_vpid
 )
 
 do_test(test_phys_ioapic
-    SOURCES arch/intel_x64/test_phys_ioapic.cpp
+    SOURCES arch/intel_x64/apic/test_phys_ioapic.cpp
     ${ARGN}
 )
 
@@ -63,27 +63,27 @@ do_test(test_phys_mtrr
 )
 
 do_test(test_virt_ioapic
-    SOURCES arch/intel_x64/test_virt_ioapic.cpp
+    SOURCES arch/intel_x64/apic/test_virt_ioapic.cpp
     ${ARGN}
 )
 
 do_test(test_phys_xapic
-    SOURCES arch/intel_x64/test_phys_xapic.cpp
+    SOURCES arch/intel_x64/apic/test_phys_xapic.cpp
     ${ARGN}
 )
 
 do_test(test_phys_x2apic
-    SOURCES arch/intel_x64/test_phys_x2apic.cpp
+    SOURCES arch/intel_x64/apic/test_phys_x2apic.cpp
     ${ARGN}
 )
 
 do_test(test_virt_lapic
-    SOURCES arch/intel_x64/test_virt_lapic.cpp
+    SOURCES arch/intel_x64/apic/test_virt_lapic.cpp
     ${ARGN}
 )
 
 do_test(test_vic
-    SOURCES arch/intel_x64/test_vic.cpp
+    SOURCES arch/intel_x64/apic/test_vic.cpp
     ${ARGN}
     CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
 )
