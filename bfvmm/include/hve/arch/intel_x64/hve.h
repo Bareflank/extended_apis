@@ -30,6 +30,7 @@
 #include "monitor_trap.h"
 #include "mov_dr.h"
 #include "rdmsr.h"
+#include "sipi.h"
 #include "vpid.h"
 #include "wrmsr.h"
 #include "ept_misconfiguration.h"
@@ -235,29 +236,51 @@ public:
         vmcs_n::value_type v, external_interrupt::handler_delegate_t &&d);
 
     //--------------------------------------------------------------------------
-    // Init Signal
+    // SIPI
     //--------------------------------------------------------------------------
 
-    /// Get Init Signal Object
+    /// Get SIPI Object
     ///
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the init signal object stored in the hve
+    /// @return Returns the sipi object stored in the hve
+    ///
+    gsl::not_null<eapis::intel_x64::sipi *> sipi();
+
+    /// Add SIPI Handler
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the delegate to call when a SIPI exit occurs
+    ///
+    void add_sipi_handler(sipi::handler_delegate_t &&d);
+
+    //--------------------------------------------------------------------------
+    // INIT Signal
+    //--------------------------------------------------------------------------
+
+    /// Get INIT Signal Object
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return Returns the INIT signal object stored in the hve
     ///
     gsl::not_null<eapis::intel_x64::init_signal *> init_signal();
 
-    /// Add Init Signal Handler
+    /// Add INIT Signal Handler
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param d the delegate to call when an init signal exit occurs
+    /// @param d the delegate to call when an INIT signal exit occurs
     ///
     void add_init_signal_handler(init_signal::handler_delegate_t &&d);
 
     //--------------------------------------------------------------------------
-    // Interrupt Signal
+    // Interrupt Window
     //--------------------------------------------------------------------------
 
     /// Get Interrupt Window Object
@@ -265,7 +288,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the interrupt window object stored in the hve if
+    /// @return Returns the interrupt-window object stored in the hve if
     ///
     gsl::not_null<eapis::intel_x64::interrupt_window *> interrupt_window();
 
@@ -564,6 +587,7 @@ private:
     std::unique_ptr<eapis::intel_x64::monitor_trap> m_monitor_trap;
     std::unique_ptr<eapis::intel_x64::mov_dr> m_mov_dr;
     std::unique_ptr<eapis::intel_x64::rdmsr> m_rdmsr;
+    std::unique_ptr<eapis::intel_x64::sipi> m_sipi;
     std::unique_ptr<eapis::intel_x64::vpid> m_vpid;
     std::unique_ptr<eapis::intel_x64::wrmsr> m_wrmsr;
     std::unique_ptr<eapis::intel_x64::ept_misconfiguration> m_ept_misconfiguration;
