@@ -19,10 +19,13 @@
 #ifndef TEST_SUPPORT_EAPIS_H
 #define TEST_SUPPORT_EAPIS_H
 
+#include <hippomocks.h>
+#include <catch/catch.hpp>
+
 #include <bfsupport.h>
 #include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
 #include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
-#include <bfvmm/support/arch/intel_x64/test_support.h>
+#include <bfvmm/test/support.h>
 #include "../../../hve/arch/intel_x64/hve.h"
 #include "../../../hve/arch/intel_x64/vic.h"
 #include "../../../hve/arch/intel_x64/ept/memory_map.h"
@@ -83,11 +86,9 @@ extern "C" void _sfence()
 { return; }
 
 inline auto
-setup_hve(MockRepository &mocks)
+setup_hve()
 {
-    setup_msrs();
-    setup_mm(mocks);
-    setup_pt(mocks);
+    setup_test_support();
 
     g_vmcs = std::make_unique<bfvmm::intel_x64::vmcs>(g_vcpuid);
     g_ehlr = std::make_unique<bfvmm::intel_x64::exit_handler>(g_vmcs.get());

@@ -180,7 +180,7 @@ vic::init_phys_xapic()
 
     const auto orig_virt = get_platform_info()->xapic_virt;
     const auto orig_phys = apic_base::apic_base::get(m_orig_base_msr);
-    auto map = make_unique_map<uint8_t>(orig_phys, x64::memory_attr::rw_uc);
+    auto map = make_unique_map<uint8_t>(orig_phys, cr3::mmap::memory_type::uncacheable);
 
     if (map == nullptr) {
         throw_vic_fatal("init_phys_xapic: unable to map in xAPIC page");
@@ -407,9 +407,8 @@ vic::handle_xapic_write(gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &inf
 
         // We need two pages if the instruction straddles a page boundary.
         const auto size = (off > 0xFF0U) ? 2U * ept::page_size_4k : ept::page_size_4k;
-        const auto pat = vmcs_n::guest_ia32_pat::get();
         const auto cr3 = vmcs_n::guest_cr3::get();
-        auto ump = make_unique_map<uint8_t>(rip, ept::align_4k(cr3), size, pat);
+        auto ump = make_unique_map<uint8_t>(rip, ept::align_4k(cr3), size);
         if (ump == nullptr) {
             throw_vic_fatal("handle_xapic_write: unable to map guest_rip", rip);
         }

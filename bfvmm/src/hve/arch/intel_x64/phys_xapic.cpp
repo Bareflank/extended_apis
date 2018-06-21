@@ -16,6 +16,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <bfupperlower.h>
+
 #include <arch/x64/rflags.h>
 #include <arch/intel_x64/barrier.h>
 #include <arch/intel_x64/crs.h>
@@ -32,7 +34,7 @@ namespace intel_x64
 namespace lapic = ::intel_x64::lapic;
 
 static uintptr_t align_xapic(uintptr_t addr)
-{ return addr & ~(x64::page_size - 1U); }
+{ return bfn::upper(addr); }
 
 phys_xapic::phys_xapic(uintptr_t base)
 {
