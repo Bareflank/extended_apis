@@ -403,6 +403,9 @@ public:
     bool handle_wrmsr_apic_base(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
+    /// @return the physical address of the xAPIC
+    uintptr_t phys_xapic_base() const;
+
 private:
 
     static constexpr const auto s_num_vectors = 256ULL;

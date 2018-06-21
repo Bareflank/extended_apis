@@ -134,6 +134,38 @@ void hve::add_external_interrupt_handler(
 }
 
 //--------------------------------------------------------------------------
+// INIT Signal
+//--------------------------------------------------------------------------
+
+gsl::not_null<init_signal *> hve::init_signal()
+{ return m_init_signal.get(); }
+
+void hve::add_init_signal_handler(init_signal::handler_delegate_t &&d)
+{
+    if (!m_init_signal) {
+        m_init_signal = std::make_unique<eapis::intel_x64::init_signal>(this);
+    }
+
+    m_init_signal->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// SIPI
+//--------------------------------------------------------------------------
+
+gsl::not_null<sipi *> hve::sipi()
+{ return m_sipi.get(); }
+
+void hve::add_sipi_handler(sipi::handler_delegate_t &&d)
+{
+    if (!m_sipi) {
+        m_sipi = std::make_unique<eapis::intel_x64::sipi>(this);
+    }
+
+    m_sipi->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
 // Interrupt Window
 //--------------------------------------------------------------------------
 

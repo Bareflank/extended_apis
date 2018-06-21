@@ -18,6 +18,7 @@
 
 #include <bfdebug.h>
 #include <hve/arch/intel_x64/hve.h>
+#include <hve/arch/intel_x64/esr.h>
 
 namespace eapis
 {
@@ -86,6 +87,19 @@ external_interrupt::dump_log()
 // Handle
 // -----------------------------------------------------------------------------
 
+static void inject_exception(uint64_t vector)
+{
+    using namespace vmcs_n::vm_entry_interruption_information;
+
+    uint64_t info = 0;
+    vector::set(info, vector);
+    interruption_type::set(info, interruption_type::hardware_exception);
+    valid_bit::enable(info);
+    vmcs_n::vm_entry_interruption_information::set(info);
+
+    return;
+}
+
 bool
 external_interrupt::handle(gsl::not_null<vmcs_t *> vmcs)
 {
@@ -101,6 +115,16 @@ external_interrupt::handle(gsl::not_null<vmcs_t *> vmcs)
         if (d(vmcs, info)) {
             return true;
         }
+    }
+
+    switch (info.vector) {
+        case eapis::intel_x64::exception::nm:
+            //bfalert_info(0, "Received #NM as external interrupt...advancing");
+            return advance(vmcs);
+        case eapis::intel_x64::exception::de:
+            bfalert_info(0, "Received #DE as external interrupt...injecting");
+            inject_exception(info.vector);
+            return true;
     }
 
     throw std::runtime_error("Unhandled interrupt vector: "

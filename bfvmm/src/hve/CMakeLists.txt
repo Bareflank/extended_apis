@@ -18,28 +18,33 @@
 
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
+        arch/intel_x64/apic/phys_ioapic.cpp
+        arch/intel_x64/apic/phys_xapic.cpp
+        arch/intel_x64/apic/phys_x2apic.cpp
+        arch/intel_x64/apic/virt_ioapic.cpp
+        arch/intel_x64/apic/virt_lapic.cpp
+        arch/intel_x64/apic/vic.cpp
+
+        arch/intel_x64/ept/helpers.cpp
+        arch/intel_x64/ept/memory_map.cpp
+
         arch/intel_x64/control_register.cpp
         arch/intel_x64/cpuid.cpp
         arch/intel_x64/ept_misconfiguration.cpp
         arch/intel_x64/ept_violation.cpp
         arch/intel_x64/external_interrupt.cpp
         arch/intel_x64/hve.cpp
+        arch/intel_x64/init_signal.cpp
         arch/intel_x64/interrupt_window.cpp
         arch/intel_x64/io_instruction.cpp
         arch/intel_x64/esr.cpp
         arch/intel_x64/isr.cpp
-        arch/intel_x64/phys_ioapic.cpp
         arch/intel_x64/phys_mtrr.cpp
-        arch/intel_x64/phys_xapic.cpp
-        arch/intel_x64/phys_x2apic.cpp
-        arch/intel_x64/virt_ioapic.cpp
-        arch/intel_x64/virt_lapic.cpp
         arch/intel_x64/monitor_trap.cpp
         arch/intel_x64/mov_dr.cpp
         arch/intel_x64/rdmsr.cpp
-        arch/intel_x64/ept/helpers.cpp
-        arch/intel_x64/ept/memory_map.cpp
-        arch/intel_x64/vic.cpp
+        arch/intel_x64/sipi.cpp
+        arch/intel_x64/vcpu.cpp
         arch/intel_x64/vpid.cpp
         arch/intel_x64/wrmsr.cpp
         arch/intel_x64/hve.cpp

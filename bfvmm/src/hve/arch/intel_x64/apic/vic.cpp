@@ -38,32 +38,6 @@ namespace intel_x64
 
 namespace lapic = ::intel_x64::lapic;
 
-/// Initialize the ept permissions to virtualize xAPIC accesses
-///
-/// The xAPIC is mapped to a 4KB page with guest-physical address equal
-/// to apic_base::apic_base::get(m_virt_base_msr). We map that gpa to
-/// a shadow page (m_virt_lapic_regs) and trap on write accesses. Since
-/// the virtual lapic page has already been initialized to the values we want,
-/// we can pass through reads to the shadow page, but we still need to trap
-/// on writes.
-///
-static auto init_xapic_ept(
-    gsl::not_null<eapis::intel_x64::hve *> hve,
-    ept::memory_map &emm,
-    uintptr_t xapic_gpa,
-    uintptr_t xapic_hpa)
-{
-    expects(ept::align_4k(xapic_gpa) > 0ULL);
-
-    const auto lo_end = ept::align_4k(xapic_gpa) - ept::page_size_4k;
-    const auto hi_end = 0x900000000ULL - ept::page_size_1g;
-
-    ept::identity_map_bestfit_lo(emm, 0ULL, lo_end);
-    ept::map_4k(emm, xapic_gpa, xapic_hpa, ept::epte::memory_attr::uc_re);
-    ept::identity_map_bestfit_hi(emm, xapic_gpa + ept::page_size_4k, hi_end);
-    ept::enable_ept(ept::eptp(emm), hve);
-}
-
 vic::vic(
     gsl::not_null<eapis::intel_x64::hve *> hve,
     gsl::not_null<eapis::intel_x64::ept::memory_map *> emm
@@ -78,10 +52,8 @@ vic::vic(
     this->init_lapic();
     this->init_save_state();
     this->init_interrupt_map();
-
     this->add_exit_handlers();
 
-    m_phys_lapic->disable_interrupts();
     m_phys_lapic->relocate(reinterpret_cast<uintptr_t>(m_xapic_ump.get()));
 }
 
@@ -170,6 +142,10 @@ vic::init_lapic()
 void
 vic::init_phys_x2apic()
 { m_phys_lapic = std::make_unique<phys_x2apic>(); }
+
+uintptr_t
+vic::phys_xapic_base() const
+{ return apic_base::apic_base::get(m_orig_base_msr); }
 
 /// Note that the apic_base::get returns the *actual* physical address
 /// and that this 4K page must be mapped in read-write, uncacheable (rw_uc)
@@ -276,11 +252,15 @@ vic::add_xapic_handlers()
     const auto xapic_gpa = apic_base::apic_base::get(m_virt_base_msr);
     const auto shadow_hpa = g_mm->virtptr_to_physint(m_virt_lapic_regs.data());
 
-    init_xapic_ept(m_hve, *m_emm, xapic_gpa, shadow_hpa);
+    ept::identity_map(*m_emm, 0, xapic_gpa - 0x1000);
+    ept::map_4k(*m_emm, xapic_gpa, shadow_hpa, ept::epte::memory_attr::uc_re);
+    ept::identity_map(*m_emm, xapic_gpa + 0x1000, 0x900000000 - 0x1000);
 
     m_hve->add_ept_write_violation_handler(
         ept_violation::handler_delegate_t::create<vic,
         &vic::handle_xapic_write>(this));
+
+    ept::enable_ept(ept::eptp(*m_emm), m_hve);
 }
 
 void
