@@ -1,3 +1,21 @@
+#
+# Bareflank Hypervisor
+# Copyright (C) 2015 Assured Information Security, Inc.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
 os: Visual Studio 2017
 platform: x64
 
@@ -9,11 +27,12 @@ environment:
     CYG_ROOT: C:\cygwin_bareflank
     CYG_BASH: C:\cygwin_bareflank\bin\bash
     CYG_MIRROR: http://mirrors.kernel.org/sourceware/cygwin/
-    CYG_PACKAGES: git,make,gcc-core,gcc-g++,nasm,clang,clang++,cmake,python,gettext
+    CYG_PACKAGES: make,gcc-core,gcc-g++,nasm,clang,clang++,cmake,python,gettext
     BFPATH: '%PATH%'
     PATH: '%PATH%;C:\Program Files\NASM'
 
-test: off
+cache:
+  - ../cache
 
 #
 # Setup Cygwin
@@ -38,20 +57,27 @@ install:
 build_script:
 
   #
-  # Visual Studio (MSBuild / Static Libraries)
+  # Depends
   #
   - git clone https://github.com/bareflank/hypervisor.git hypervisor
-  - mkdir hypervisor\build
-  - cd hypervisor\build
-  - cmake -G "Visual Studio 15 2017 Win64" -DEXTENSION=..\.. -DENABLE_BUILD_VMM=OFF -DENABLE_BUILD_USERSPACE=OFF -DENABLE_BUILD_TEST=ON ..
+
+  #
+  # Visual Studio (MSBuild / Static Libraries)
+  #
+  - mkdir build_msbuild
+  - cd build_msbuild
+  - cmake -G "Visual Studio 15 2017 Win64" -DEXTENSION=.. -DENABLE_BUILD_VMM=OFF -DENABLE_BUILD_USERSPACE=OFF -DENABLE_BUILD_TEST=ON ../hypervisor
   - msbuild /m:3 hypervisor.sln
-  - cmake --build . --target eapis_x86_64-test-pe
-  - cd ..
+  - cmake --build . --target unittest
 
   #
   # Cygwin (Shared Libraries)
   #
-  - set PATH=%BFPATH%;%APPVEYOR_BUILD_FOLDER%/hypervisor/build_cygwin/bfprefix/bin
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; ls; mkdir hypervisor/build_cygwin"'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; cmake -DEXTENSION=../..  .."'
-  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/hypervisor/build_cygwin; make -j3"'
+  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER; mkdir build_cygwin"'
+  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/build_cygwin; cmake -DEXTENSION=.. ../hypervisor"'
+  - '%CYG_BASH% -lc "cd $APPVEYOR_BUILD_FOLDER/build_cygwin; make -j3"'
+
+#
+# No AppVeyor Tests
+#
+test: off

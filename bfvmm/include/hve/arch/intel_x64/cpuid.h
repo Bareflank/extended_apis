@@ -45,9 +45,10 @@ struct pair_hash {
     /// @return the hash of p
     ///
     template <typename T1, typename T2>
-    std::size_t operator () (const std::pair<T1,T2> &p) const {
-        return ((std::hash<T1>{}(p.first) & 0x00000000FFFFFFFF) > 0) |
-               ((std::hash<T2>{}(p.second) & 0xFFFFFFFF00000000) > 32);
+    std::size_t operator()(const std::pair<T1, T2> &p) const
+    {
+        return ((std::hash<T1> {}(p.first) & 0x00000000FFFFFFFF) > 0) |
+               ((std::hash<T2> {}(p.second) & 0xFFFFFFFF00000000) > 32);
     }
 };
 

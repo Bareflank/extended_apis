@@ -619,7 +619,7 @@ TEST_CASE("vic: disasm_xapic_write cs_open error")
     cs_insn *insn;
     const uint8_t rip[1] = { 0xC3U };
 
-//     mocks.OnCallFunc(cs_open).Return(static_cast<cs_err>(CS_ERR_OK + 1U));
+    //     mocks.OnCallFunc(cs_open).Return(static_cast<cs_err>(CS_ERR_OK + 1U));
     CHECK_THROWS(disasm_xapic_write(&cs, &insn, rip));
 }
 
@@ -629,7 +629,7 @@ TEST_CASE("vic: disasm_xapic_write nr_disasm != need")
     cs_insn *insn;
     const uint8_t rip[1] = { 0xC3U };
 
-//     mocks.OnCallFunc(cs_disasm).Return(0U);
+    //     mocks.OnCallFunc(cs_disasm).Return(0U);
     CHECK_THROWS(disasm_xapic_write(&cs, &insn, rip));
 }
 

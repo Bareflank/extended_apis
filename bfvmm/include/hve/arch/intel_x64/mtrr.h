@@ -45,8 +45,7 @@ static constexpr uint64_t fixed_size = 0x100000U; // First 1MB
 /// Users don't need to care whether the range described by an
 /// instance of this is fixed, variable, or a combination of both
 ///
-struct range
-{
+struct range {
     /// base the base address of the range
     uintptr_t base;
 
@@ -141,8 +140,7 @@ constexpr inline uint64_t mask_to_size(uint64_t mask, uint64_t pas)
 /// Variable MTRR range
 ///
 ///
-struct variable_range
-{
+struct variable_range {
     /// Constructor
     ///
     /// Create a variable range from the physbase and physmask

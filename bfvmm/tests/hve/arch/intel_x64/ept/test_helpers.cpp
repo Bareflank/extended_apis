@@ -34,6 +34,9 @@ namespace test_ept
 
 TEST_CASE("ept::align_1g")
 {
+    int i[10];
+    i[0] = 0;
+
     auto addr = 0x1122334455667788U;
     CHECK(ept::align_1g(addr) == (addr & ~(ept::page_size_1g - 1U)));
 }

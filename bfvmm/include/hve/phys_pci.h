@@ -200,7 +200,8 @@ public:
     {
         if (n < 6) {
             return read_register_u32(0x10 + 4 * n);
-        } else {
+        }
+        else {
             return 0xFFFFFFFF;
         }
     }
@@ -390,7 +391,7 @@ public:
     ///         check type().
     bar(phys_pci device, unsigned int index)
         : m_device(device),
-            m_index(index)
+          m_index(index)
     {
         m_type = compute_type();
     }
