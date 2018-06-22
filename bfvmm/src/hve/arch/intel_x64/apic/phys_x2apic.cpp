@@ -16,7 +16,9 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <intrinsics.h>
+#include <arch/intel_x64/msrs.h>
+#include <arch/intel_x64/apic/lapic.h>
+#include <arch/intel_x64/apic/x2apic.h>
 #include <hve/arch/intel_x64/phys_x2apic.h>
 
 namespace eapis
@@ -34,6 +36,30 @@ void
 phys_x2apic::relocate(uintptr_t base)
 { bfignored(base); }
 
+/// Note the following registers are read-only or dont exist:
+/// ID, Version, IRR, ISR, TMR, PPR, LDR, DFR, Current count
+void
+phys_x2apic::reset_from_init()
+{
+    using namespace lapic;
+
+    ::intel_x64::cr8::set(0xF);
+    ::intel_x64::msrs::ia32_x2apic_icr::set(0);
+    ::intel_x64::msrs::ia32_x2apic_tpr::set(0);
+    ::intel_x64::msrs::ia32_x2apic_init_count::set(0);
+    ::intel_x64::msrs::ia32_x2apic_dcr::set(0);
+    ::intel_x64::msrs::ia32_x2apic_esr::set(0);
+    ::intel_x64::msrs::ia32_x2apic_lvt_cmci::set(lvt::reset_value);
+    ::intel_x64::msrs::ia32_x2apic_lvt_timer::set(lvt::reset_value);
+    ::intel_x64::msrs::ia32_x2apic_lvt_thermal::set(lvt::reset_value);
+    ::intel_x64::msrs::ia32_x2apic_lvt_pmi::set(lvt::reset_value);
+    ::intel_x64::msrs::ia32_x2apic_lvt_lint0::set(lvt::reset_value);
+    ::intel_x64::msrs::ia32_x2apic_lvt_lint1::set(lvt::reset_value);
+    ::intel_x64::msrs::ia32_x2apic_lvt_error::set(lvt::reset_value);
+    ::intel_x64::msrs::ia32_x2apic_sivr::set(svr::reset_value);
+    ::intel_x64::cr8::set(0);
+}
+
 void
 phys_x2apic::enable_interrupts()
 { ::x64::rflags::interrupt_enable_flag::enable(); }
@@ -46,7 +72,7 @@ uint64_t
 phys_x2apic::read_register(lapic::offset_t offset) const
 {
     const auto addr = gsl::narrow_cast<::intel_x64::msrs::field_type>(
-                          lapic::offset_to_msr_addr(offset)
+                          lapic::offset::to_msr_addr(offset)
                       );
 
     return ::intel_x64::msrs::get(addr);
@@ -56,7 +82,7 @@ void
 phys_x2apic::write_register(lapic::offset_t offset, uint64_t val)
 {
     const auto addr = gsl::narrow_cast<::intel_x64::msrs::field_type>(
-                          lapic::offset_to_msr_addr(offset)
+                          lapic::offset::to_msr_addr(offset)
                       );
 
     return ::intel_x64::msrs::set(addr, val);

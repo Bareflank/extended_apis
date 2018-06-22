@@ -184,6 +184,23 @@ inline uint64_t read64(const save_state_t *state, uint64_t byte_offset)
     return *reinterpret_cast<const uint64_t *>(addr);
 }
 
+inline uint32_t *reg32_addr(const save_state_t *state, const cs_x86_op *op)
+{
+    const auto reg = reg_map.at(op->reg);
+
+    switch (reg.width) {
+        case dword: {
+            auto addr = reinterpret_cast<uintptr_t>(state) + reg.byte_offset;
+            return reinterpret_cast<uint32_t *>(addr);
+        }
+
+        default:
+            throw std::invalid_argument(
+            "write32_reg: invalid width " + std::to_string(reg.width));
+    }
+
+}
+
 /// We return unsigned here because this function is intended
 /// to be used with unsigned values, like xAPIC regs. The name
 /// should probably be changed reflect this.

@@ -68,6 +68,15 @@ public:
     ///
     virtual void relocate(uintptr_t base) = 0;
 
+    /// Reset from INIT
+    ///
+    /// Reset register state in response to an INIT signal
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    virtual void reset_from_init() = 0;
+
     /// Enable interrupts
     ///
     /// Enable physical interrupts on this cpu

@@ -388,7 +388,7 @@ map_bestfit(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa,
 void
 map(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa)
 {
-    expects(gpa_e > gpa_s);
+    expects(gpa_e >= gpa_s);
     expects(align_4k(gpa_e - gpa_s) == (gpa_e - gpa_s));
     expects(align_4k(hpa) == hpa);
 

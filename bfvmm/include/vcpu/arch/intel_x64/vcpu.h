@@ -100,11 +100,10 @@ private:
     ///
     bool efi_handle_cpuid(gsl::not_null<vmcs_t *> vmcs);
     bool efi_handle_rdmsr(gsl::not_null<vmcs_t *> vmcs);
-    bool efi_handle_wrmsr(gsl::not_null<vmcs_t *> vmcs);
-    bool efi_handle_ept_violation(gsl::not_null<vmcs_t *> vmcs);
+    bool efi_handle_wrmsr_efer(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
+    bool efi_handle_wrmsr_perf_global_ctrl(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
     bool efi_handle_wrcr0(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info);
     bool efi_handle_wrcr4(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info);
-    bool efi_handle_vmcall(gsl::not_null<vmcs_t *> vmcs);
     bool efi_handle_init_signal(gsl::not_null<vmcs_t *> vmcs);
     bool efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs);
 
@@ -112,6 +111,7 @@ private:
     std::unique_ptr<eapis::intel_x64::hve> m_hve;
     std::unique_ptr<eapis::intel_x64::vic> m_vic;
 
+    uint64_t m_sipi_count{0};
 };
 
 }

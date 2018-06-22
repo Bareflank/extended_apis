@@ -106,6 +106,13 @@ public:
     ///
     void write_register(uint64_t offset, uint64_t val) override;
 
+    /// Reset from INIT signal
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void reset_from_init() override;
+
     /// @cond
 
     ///

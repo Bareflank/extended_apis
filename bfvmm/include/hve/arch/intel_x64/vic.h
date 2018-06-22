@@ -94,7 +94,19 @@ inline void verify_xapic_write(cs_insn *insn)
     expects(src->type != X86_OP_FP);
 }
 
-inline void disasm_xapic_write(csh *cs, cs_insn **insn, const uint8_t *rip)
+inline void verify_xapic_read(cs_insn *insn)
+{
+    expects(insn->detail != nullptr);
+    expects(insn->detail->x86.op_count == 2U);
+
+    cs_x86_op *dst = &insn->detail->x86.operands[0U];
+    cs_x86_op *src = &insn->detail->x86.operands[1U];
+
+    expects(dst->type == X86_OP_REG);
+    expects(src->type == X86_OP_MEM);
+}
+
+inline void disasm_xapic_access(csh *cs, cs_insn **insn, const uint8_t *rip)
 {
     expects(cs != nullptr);
     expects(insn != nullptr);
@@ -118,13 +130,28 @@ inline void disasm_xapic_write(csh *cs, cs_insn **insn, const uint8_t *rip)
     }
 }
 
+inline uint32_t *get_dst_addr(
+    gsl::not_null<vmcs_t *> vmcs,
+    gsl::not_null<const uint8_t *> rip)
+{
+    csh cstone{0U};
+    cs_insn *insn{nullptr};
+    disasm_xapic_access(&cstone, &insn, rip);
+    verify_xapic_read(insn);
+    const auto op = &insn->detail->x86.operands[0];
+    uint32_t *addr = capstone::reg32_addr(vmcs->save_state(), op);
+    free(insn);
+
+    return addr;
+}
+
 inline uint32_t parse_written_val(
     gsl::not_null<vmcs_t *> vmcs,
     gsl::not_null<const uint8_t *> rip)
 {
     csh cstone{0U};
     cs_insn *insn{nullptr};
-    disasm_xapic_write(&cstone, &insn, rip);
+    disasm_xapic_access(&cstone, &insn, rip);
     verify_xapic_write(insn);
     const auto src = 1U;
     const auto val = capstone::read_op_val(vmcs->save_state(), insn, src);
@@ -326,6 +353,46 @@ public:
     ///
     bool handle_x2apic_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
+    /// Handle x2apic ICR write
+    ///
+    /// Handle guest attempts to write the ICR
+    ///
+    /// @expects
+    /// @ensures
+    //
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
+    bool handle_x2apic_icr_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
+
+    /// Handle x2apic self-IPI
+    ///
+    /// Handle guest attempts to write the self-IPI register
+    ///
+    /// @expects
+    /// @ensures
+    //
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
+    bool handle_x2apic_self_ipi(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
+
+
+    /// Handle x2apic ICR read
+    ///
+    /// Handle guest attempts to read the ICR
+    ///
+    /// @expects
+    /// @ensures
+    //
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
+    bool handle_x2apic_icr_read(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info);
+
     /// Handle x2apic EOI write exit
     ///
     /// Handle guest attempts to write an EOI
@@ -339,6 +406,18 @@ public:
     ///
     bool handle_x2apic_eoi_write(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
+
+    /// Handle xAPIC read exit
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vmcs the vmcs pointer for this vmexit
+    /// @param info the info structure for this vmexit
+    /// @return true iff the exit has been handled
+    ///
+    bool handle_xapic_read(
+        gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &info);
 
     /// Handle xAPIC write exit
     ///
@@ -404,9 +483,6 @@ public:
     bool handle_wrmsr_apic_base(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
-    /// @return the physical address of the xAPIC
-    uintptr_t phys_xapic_base() const;
-
 private:
 
     static constexpr const auto s_num_vectors = 256ULL;
@@ -429,11 +505,12 @@ private:
     void init_save_state();
     void init_interrupt_map();
 
+    bool handle_ipi(uint64_t icr);
+
     bool handle_spurious_interrupt(
         gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info);
 
     uint64_t m_virt_base_msr;
-    uint64_t m_phys_base_msr;
     const uint64_t m_orig_base_msr;
 
     eapis::intel_x64::hve *m_hve;
@@ -441,7 +518,6 @@ private:
 
     std::array<uint8_t, s_num_vectors> m_interrupt_map;
     std::array<std::list<handler_delegate_t>, s_num_vectors> m_handlers;
-    alignas(0x1000) std::array<uint32_t, ::intel_x64::lapic::count> m_virt_lapic_regs;
 
     std::unique_ptr<gsl::byte[]> m_ist1;
     std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
@@ -449,6 +525,7 @@ private:
 
     bfvmm::x64::unique_map_ptr<uint8_t> m_xapic_ump;
     std::unordered_map<uintptr_t, bfvmm::x64::unique_map_ptr<uint8_t>> m_write_cache;
+    std::unordered_map<uintptr_t, bfvmm::x64::unique_map_ptr<uint8_t>> m_read_cache;
 
     friend class test::vcpu;
 
