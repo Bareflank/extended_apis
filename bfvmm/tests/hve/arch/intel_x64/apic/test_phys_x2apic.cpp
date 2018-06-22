@@ -64,7 +64,7 @@ TEST_CASE("phys_x2apic: read_register")
 {
     auto apic = phys_x2apic();
     auto addr = msrs::ia32_x2apic_apicid::addr;
-    auto off = lapic::msr_addr_to_offset(addr);
+    auto off = lapic::offset::from_msr_addr(addr);
 
     g_msrs[addr] = 0xEEU;
     CHECK(apic.read_register(off) == 0xEEU);
@@ -74,7 +74,7 @@ TEST_CASE("phys_x2apic: write_register")
 {
     auto apic = phys_x2apic();
     auto addr = msrs::ia32_x2apic_eoi::addr;
-    auto off = lapic::msr_addr_to_offset(addr);
+    auto off = lapic::offset::from_msr_addr(addr);
 
     g_msrs[addr] = 0xFFFFU;
     apic.write_register(off, 0U);

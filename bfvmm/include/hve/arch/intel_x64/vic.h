@@ -406,6 +406,12 @@ public:
     /// @return the physical address of the xAPIC
     uintptr_t phys_xapic_base() const;
 
+    /// Reset from INIT signal
+    ///
+    /// Reset both physical and virtual lapics in response to an INIT signal
+    ///
+    void reset_from_init();
+
 private:
 
     static constexpr const auto s_num_vectors = 256ULL;
@@ -427,6 +433,8 @@ private:
     void init_virt_lapic();
     void init_save_state();
     void init_interrupt_map();
+
+    bool handle_ipi(uint64_t icr);
 
     bool handle_spurious_interrupt(
         gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info);

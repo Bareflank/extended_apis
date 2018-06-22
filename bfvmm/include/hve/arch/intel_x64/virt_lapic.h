@@ -167,6 +167,8 @@ public:
     void init_registers_from_phys_xapic(
         eapis::intel_x64::phys_xapic *phys);
 
+    void reset_from_init();
+
     /// @endcond
 
 #ifndef ENABLE_BUILD_TEST

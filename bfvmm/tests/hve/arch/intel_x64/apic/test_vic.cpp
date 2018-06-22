@@ -515,7 +515,7 @@ TEST_CASE("vic: handle_x2apic_read")
 
     g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::rdmsr;
     for (auto i = 0U; i < ::intel_x64::lapic::count; ++i) {
-        auto addr = ::intel_x64::lapic::offset_to_msr_addr(i);
+        auto addr = ::intel_x64::lapic::offset::to_msr_addr(i);
         if (::intel_x64::lapic::x2apic_readable::is_enabled(addr)) {
             g_save_state.rcx = addr;
             CHECK_NOTHROW(ehlr->handle(ehlr));
@@ -532,7 +532,7 @@ TEST_CASE("vic: handle_x2apic_write")
 
     g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::wrmsr;
     for (auto i = 0U; i < ::intel_x64::lapic::count; ++i) {
-        auto addr = ::intel_x64::lapic::offset_to_msr_addr(i);
+        auto addr = ::intel_x64::lapic::offset::to_msr_addr(i);
         if (::intel_x64::lapic::x2apic_writable::is_enabled(addr)) {
             g_save_state.rcx = addr;
             CHECK_NOTHROW(ehlr->handle(ehlr));

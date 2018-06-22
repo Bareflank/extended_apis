@@ -98,6 +98,7 @@ vcpu::efi_handle_wrmsr(gsl::not_null<vmcs_t *> vmcs)
     auto msr = gsl::narrow_cast<::x64::msrs::field_type>(vmcs->save_state()->rcx);
     uint64_t val = ((vmcs->save_state()->rdx) << 0x20) | ((vmcs->save_state()->rax) & 0xFFFFFFFF);
 
+
     if (msr == ::intel_x64::msrs::ia32_efer::addr) {
         if (::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::is_disabled()) {
             return false;
@@ -115,26 +116,22 @@ vcpu::efi_handle_wrmsr(gsl::not_null<vmcs_t *> vmcs)
             ::vmcs_n::guest_cr0::set(s_cr0);
             ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::enable();
             ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::disable();
-            ::vmcs_n::secondary_processor_based_vm_execution_controls::enable_ept::disable();
             ::vmcs_n::primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
             val |= ::intel_x64::msrs::ia32_efer::lma::mask;
         }
 
         ::vmcs_n::guest_ia32_efer::set(val);
-
         return advance(vmcs);
     }
 
-    return false;
-}
+    if (msr == ::intel_x64::msrs::ia32_perf_global_ctrl::addr) {
+        val &= ~::vmcs_n::guest_ia32_perf_global_ctrl::reserved::mask;
+        ::vmcs_n::guest_ia32_perf_global_ctrl::set(val);
+        return advance(vmcs);
+    }
 
-bool
-vcpu::efi_handle_ept_violation(gsl::not_null<vmcs_t *> vmcs)
-{
-    bfignored(vmcs);
-    bfdebug_info(0, "warning: ept violation");
-    ::vmcs_n::secondary_processor_based_vm_execution_controls::enable_ept::disable();
-    return true;
+
+    return false;
 }
 
 bool
@@ -157,6 +154,19 @@ vcpu::efi_handle_wrcr0(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &i
         info.shadow = info.val;
         ::vmcs_n::guest_cr0::extension_type::enable(info.val);
         ::vmcs_n::guest_cr0::numeric_error::enable(info.val);
+
+        if (vmcs_n::guest_cr0::paging::is_disabled(info.val)) {
+            ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::enable();
+            ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::disable();
+            ::vmcs_n::guest_ia32_efer::lma::disable();
+            ::vmcs_n::guest_ia32_efer::lme::disable();
+        } else {
+            ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::disable();
+            ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::enable();
+            ::vmcs_n::guest_ia32_efer::lma::enable();
+            ::vmcs_n::guest_ia32_efer::lme::enable();
+        }
+
     }
     else {
         throw std::runtime_error("efi_handle_wrcr0 invalid access_type " + std::to_string(access_type));
@@ -187,20 +197,17 @@ bool
 vcpu::efi_handle_init_signal(gsl::not_null<vmcs_t *> vmcs)
 {
     bfignored(vmcs);
+    m_vic->reset_from_init();
     ::vmcs_n::guest_activity_state::set(::vmcs_n::guest_activity_state::wait_for_sipi);
+    bfalert_info(0, "init");
     return true;
 }
 
 bool
 vcpu::efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs)
 {
+
     bfignored(vmcs);
-    if (emm() == nullptr) {
-        emm() = new ept::memory_map();
-    }
-    ept::identity_map_2m(*emm(), 0, ept::epte::memory_attr::wb_pt);
-    ::vmcs_n::ept_pointer::set(ept::eptp(*emm()));
-    ::vmcs_n::secondary_processor_based_vm_execution_controls::enable_ept::enable();
 
     ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::enable();
     ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::disable();
@@ -217,7 +224,6 @@ vcpu::efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs)
     ::vmcs_n::guest_cr3::set(0);
 
     ::intel_x64::cr2::set(0);
-    ::intel_x64::cr8::set(0);
 
     ::vmcs_n::value_type s_ds_ar = 0;
     ::vmcs_n::guest_ds_access_rights::type::set(s_ds_ar, 0x3);
@@ -310,6 +316,7 @@ vcpu::efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs)
     ::vmcs_n::guest_ia32_efer::set(0);
 
     ::vmcs_n::guest_activity_state::set(::vmcs_n::guest_activity_state::active);
+    bfalert_info(0, "sipi");
 
     return true;
 }
@@ -358,30 +365,22 @@ void vcpu::add_efi_handlers()
         );
 
     exit_handler()->add_handler(
-        ::intel_x64::vmcs::exit_reason::basic_exit_reason::ept_violation,
-        ::handler_delegate_t::create<vcpu, &vcpu::efi_handle_ept_violation>(this)
-        );
-
-    exit_handler()->add_handler(
         ::intel_x64::vmcs::exit_reason::basic_exit_reason::vmcall,
         ::handler_delegate_t::create<vcpu, &vcpu::efi_handle_vmcall>(this)
         );
-
 }
 
 vcpu::vcpu(vcpuid::type id) :
-        bfvmm::intel_x64::vcpu{id},
-        m_emm{std::make_unique<eapis::intel_x64::ept::memory_map>()},
-        m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())},
-        m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get(), m_emm.get())}
-    {
-        if (get_platform_info()->efi.enabled)
-        {
-            bfdebug_info(0, "Enabling EFI exit handlers");
-            this->add_efi_handlers();
-        }
-
+    bfvmm::intel_x64::vcpu{id},
+    m_emm{std::make_unique<eapis::intel_x64::ept::memory_map>()},
+    m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())},
+    m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get(), m_emm.get())}
+{
+    if (get_platform_info()->efi.enabled) {
+        bfdebug_info(0, "Enabling EFI exit handlers");
+        this->add_efi_handlers();
     }
+}
 
 gsl::not_null<eapis::intel_x64::hve *> vcpu::hve()
 {

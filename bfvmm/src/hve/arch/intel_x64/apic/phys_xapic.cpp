@@ -51,6 +51,33 @@ phys_xapic::relocate(uintptr_t base)
     m_base = base;
 }
 
+/// Note the following registers are read-only an cannot be written:
+/// ID, Version, IRR, ISR, TMR, PPR, Current count
+void
+phys_xapic::reset_from_init()
+{
+    using namespace lapic;
+
+    ::intel_x64::cr8::set(0xF);
+    this->write_register(offset::icr1, 0);
+    this->write_register(offset::icr0, 0);
+    this->write_register(offset::ldr, 0);
+    this->write_register(offset::tpr, 0);
+    this->write_register(offset::init_count, 0);
+    this->write_register(offset::dcr, 0);
+    this->write_register(offset::dfr, 0xFFFFFFFF);
+    this->write_register(offset::esr, 0);
+    this->write_register(offset::lvt_cmci,  lvt::reset_value);
+    this->write_register(offset::lvt_timer,  lvt::reset_value);
+    this->write_register(offset::lvt_thermal,  lvt::reset_value);
+    this->write_register(offset::lvt_pmi,  lvt::reset_value);
+    this->write_register(offset::lvt_lint0,  lvt::reset_value);
+    this->write_register(offset::lvt_lint1,  lvt::reset_value);
+    this->write_register(offset::lvt_error,  lvt::reset_value);
+    this->write_register(offset::svr,  svr::reset_value);
+    ::intel_x64::cr8::set(0);
+}
+
 void
 phys_xapic::enable_interrupts()
 { ::x64::rflags::interrupt_enable_flag::enable(); }
@@ -62,14 +89,14 @@ phys_xapic::disable_interrupts()
 uint64_t
 phys_xapic::read_register(lapic::offset_t offset) const
 {
-    const auto addr = lapic::offset_to_mem_addr(offset, m_base);
+    const auto addr = lapic::offset::to_mem_addr(offset, m_base);
     return *reinterpret_cast<uint32_t *>(addr);
 }
 
 void
 phys_xapic::write_register(lapic::offset_t offset, uint64_t val)
 {
-    const volatile auto addr64 = lapic::offset_to_mem_addr(offset, m_base);
+    const volatile auto addr64 = lapic::offset::to_mem_addr(offset, m_base);
     const volatile auto addr32 = reinterpret_cast<uint32_t *>(addr64);
 
     *addr32 = gsl::narrow_cast<uint32_t>(val);
@@ -79,7 +106,7 @@ uint64_t
 phys_xapic::read_id() const
 {
     constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_apicid::addr;
-    constexpr auto offset = lapic::msr_addr_to_offset(addr);
+    constexpr auto offset = lapic::offset::from_msr_addr(addr);
 
     return this->read_register(offset);
 }
@@ -88,7 +115,7 @@ uint64_t
 phys_xapic::read_version() const
 {
     constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_version::addr;
-    constexpr auto offset = lapic::msr_addr_to_offset(addr);
+    constexpr auto offset = lapic::offset::from_msr_addr(addr);
 
     return this->read_register(offset);
 }
@@ -101,7 +128,7 @@ uint64_t
 phys_xapic::read_svr() const
 {
     constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_sivr::addr;
-    constexpr auto offset = lapic::msr_addr_to_offset(addr);
+    constexpr auto offset = lapic::offset::from_msr_addr(addr);
 
     return this->read_register(offset);
 }
@@ -110,8 +137,8 @@ uint64_t
 phys_xapic::read_icr() const
 {
     constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_icr::addr;
-    constexpr auto lo_offset = lapic::msr_addr_to_offset(addr);
-    constexpr auto hi_offset = lapic::msr_addr_to_offset(addr | 1U);
+    constexpr auto lo_offset = lapic::offset::from_msr_addr(addr);
+    constexpr auto hi_offset = lapic::offset::from_msr_addr(addr | 1U);
 
     const auto lo = this->read_register(lo_offset);
     const auto hi = this->read_register(hi_offset);
@@ -123,7 +150,7 @@ void
 phys_xapic::write_eoi()
 {
     constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_eoi::addr;
-    constexpr auto offset = lapic::msr_addr_to_offset(addr);
+    constexpr auto offset = lapic::offset::from_msr_addr(addr);
 
     return this->write_register(offset, 0x0U);
 }
@@ -136,7 +163,7 @@ void
 phys_xapic::write_svr(uint64_t svr)
 {
     constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_sivr::addr;
-    constexpr auto offset = lapic::msr_addr_to_offset(addr);
+    constexpr auto offset = lapic::offset::from_msr_addr(addr);
 
     return this->write_register(offset, svr);
 }
@@ -147,8 +174,8 @@ void
 phys_xapic::write_icr(uint64_t icr)
 {
     constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_icr::addr;
-    constexpr auto lo_offset = lapic::msr_addr_to_offset(addr);
-    constexpr auto hi_offset = lapic::msr_addr_to_offset(addr | 1U);
+    constexpr auto lo_offset = lapic::offset::from_msr_addr(addr);
+    constexpr auto hi_offset = lapic::offset::from_msr_addr(addr | 1U);
 
     const volatile uint32_t lo_val = gsl::narrow_cast<uint32_t>(icr & 0xFFFFFFFFU);
     const volatile uint32_t hi_val = gsl::narrow_cast<uint32_t>(icr >> 32U);

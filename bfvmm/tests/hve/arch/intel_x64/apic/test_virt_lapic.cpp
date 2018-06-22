@@ -71,7 +71,7 @@ TEST_CASE("virt_lapic::read_register")
     auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
 
     for (auto i = lapic_n::x2apic_base; i <= lapic_n::x2apic_last; ++i) {
-        auto offset = lapic_n::msr_addr_to_offset(i);
+        auto offset = lapic_n::offset::from_msr_addr(i);
 
         if (lapic_n::readable_in_x2apic(offset)) {
             CHECK(lapic_n::exists_in_x2apic(offset));
@@ -88,7 +88,7 @@ TEST_CASE("virt_lapic::write_register")
     auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
 
     for (auto i = lapic_n::x2apic_base; i <= lapic_n::x2apic_last; ++i) {
-        auto offset = lapic_n::msr_addr_to_offset(i);
+        auto offset = lapic_n::offset::from_msr_addr(i);
 
         if (lapic_n::writable_in_x2apic(offset)) {
             CHECK(lapic_n::exists_in_x2apic(offset));
@@ -137,7 +137,7 @@ TEST_CASE("virt_lapic: tpr")
     auto hve = setup_hve(mocks);
     auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
     auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
-    auto off = lapic_n::msr_addr_to_offset(msrs_n::ia32_x2apic_sivr::addr);
+    auto off = lapic_n::offset::from_msr_addr(msrs_n::ia32_x2apic_sivr::addr);
 
     vapic.write_register(off, 0xFFFFFFFF00000000U);
     CHECK(vapic.read_register(off) ==  0x0U);
@@ -152,8 +152,8 @@ TEST_CASE("virt_lapic: icr")
     auto hve = setup_hve(mocks);
     auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
     auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
-    auto icr0 = lapic_n::msr_addr_to_offset(msrs_n::ia32_x2apic_icr::addr);
-    auto icr1 = lapic_n::msr_addr_to_offset(msrs_n::ia32_x2apic_icr::addr | 1U);
+    auto icr0 = lapic_n::offset::from_msr_addr(msrs_n::ia32_x2apic_icr::addr);
+    auto icr1 = lapic_n::offset::from_msr_addr(msrs_n::ia32_x2apic_icr::addr | 1U);
 
     vapic.write_register(icr1, 0xF00DU);
     CHECK(vapic.read_register(icr1) == 0xF00DU);
@@ -179,7 +179,7 @@ TEST_CASE("virt_lapic: self_ipi")
 
     vapic.write_self_ipi(0xFEU);
 
-    auto off = lapic_n::msr_addr_to_offset(msrs_n::ia32_x2apic_self_ipi::addr);
+    auto off = lapic_n::offset::from_msr_addr(msrs_n::ia32_x2apic_self_ipi::addr);
     CHECK(vapic.read_register(off) == 0xFEU);
 }
 
@@ -189,7 +189,7 @@ TEST_CASE("virt_lapic: svr")
     auto hve = setup_hve(mocks);
     auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
     auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
-    auto off = lapic_n::msr_addr_to_offset(msrs_n::ia32_x2apic_sivr::addr);
+    auto off = lapic_n::offset::from_msr_addr(msrs_n::ia32_x2apic_sivr::addr);
 
     vapic.write_register(off, 0xFFFFFFFF00000000U);
     CHECK(vapic.read_register(off) ==  0x0U);

@@ -196,6 +196,13 @@ vic::init_interrupt_map()
     }
 }
 
+void
+vic::reset_from_init()
+{
+    m_virt_lapic->reset_from_init();
+    m_phys_lapic->reset_from_init();
+}
+
 /// --------------------------------------------------------------------------
 /// Exit handler registration
 /// --------------------------------------------------------------------------
@@ -281,7 +288,7 @@ void
 vic::add_x2apic_read_handler(uint64_t offset)
 {
     m_hve->add_rdmsr_handler(
-        lapic::offset_to_msr_addr(offset),
+        lapic::offset::to_msr_addr(offset),
         rdmsr::handler_delegate_t::create<vic,
         &vic::handle_x2apic_read>(this)
     );
@@ -292,7 +299,7 @@ vic::add_x2apic_write_handler(uint64_t offset)
 {
     using namespace ::intel_x64::msrs;
 
-    const auto addr = lapic::offset_to_msr_addr(offset);
+    const auto addr = lapic::offset::to_msr_addr(offset);
     switch (addr) {
         case ia32_x2apic_eoi::addr:
             m_hve->add_wrmsr_handler(
@@ -372,8 +379,8 @@ vic::handle_xapic_write(gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &inf
         return false;
     }
 
-    const auto reg = lapic::mem_addr_to_offset(info.gpa);
-    if (reg == lapic::msr_addr_to_offset(ia32_x2apic_eoi::addr)) {
+    const auto reg = lapic::offset::from_mem_addr(info.gpa);
+    if (reg == lapic::offset::from_msr_addr(ia32_x2apic_eoi::addr)) {
         // Returning straight-away here without checking the value assumes that
         // the guest wrote a zero; if not then we technically should inject a GP
         m_virt_lapic->write_eoi();
@@ -398,11 +405,83 @@ vic::handle_xapic_write(gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &inf
         pair = m_write_cache.find(rip);
     }
 
-    const auto val = parse_written_val(vmcs, pair->second.get());
+    uint64_t val = parse_written_val(vmcs, pair->second.get());
+    if (reg == lapic::offset::icr0) {
+        val |= (m_virt_lapic->read_register(lapic::offset::icr1) << 32U);
+        return this->handle_ipi(val);
+    }
 
     m_virt_lapic->write_register(reg, val);
     m_phys_lapic->write_register(reg, val);
 
+    return true;
+}
+
+/// We have to check how the guest programmed the ICR before
+/// calling queue_injection; a necessary condition for
+/// injecting the vector is that the delivery mode is *fixed*
+///
+/// INITs and SIPIs can't be injected, so we have to ensure that
+/// we only write to the physical lapic in those two cases.
+///
+bool
+vic::handle_ipi(uint64_t icr)
+{
+    using namespace lapic::icr;
+
+    const uint64_t deliv = delivery_mode::get(icr);
+    switch (deliv) {
+        case delivery_mode::fixed:
+            break;
+
+        case delivery_mode::init:
+        case delivery_mode::sipi:
+            m_phys_lapic->write_icr(icr);
+            return true;
+
+        case delivery_mode::lowest_priority:
+        case delivery_mode::smi:
+        case delivery_mode::nmi:
+            bfalert_nhex(0, "Received IPI with delivery mode:", deliv);
+            m_phys_lapic->write_icr(icr);
+            return true;
+
+        default:
+            bferror_nhex(0, "Received IPI with unknown delivery mode:", deliv);
+            return true;
+    }
+
+    uint64_t shorthand = destination_shorthand::get(icr);
+    switch (shorthand) {
+        case destination_shorthand::none:
+            break;
+
+        case destination_shorthand::self:
+            m_virt_lapic->queue_injection(vector::get(icr));
+            return true;
+
+        case destination_shorthand::all_incl_self:
+            m_virt_lapic->queue_injection(vector::get(icr));
+            destination_shorthand::set(
+                icr, destination_shorthand::all_excl_self);
+            m_phys_lapic->write_icr(icr);
+            return true;
+
+        case destination_shorthand::all_excl_self:
+            m_phys_lapic->write_icr(icr);
+            return true;
+
+        default:
+            bferror_nhex(
+                0, "Received IPI with unknown destination_shorthand:", shorthand);
+            return true;
+    }
+
+    // TODO: "self" could still be specified by the destination_mode and/or
+    // destination field. If "self" is a destination, we really should
+    // queue the vector here to save a world switch (this is the reason
+    // for the separate case from all_excl_self)
+    m_phys_lapic->write_icr(icr);
     return true;
 }
 
@@ -415,7 +494,7 @@ vic::handle_x2apic_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
     bfignored(vmcs);
 
-    const auto offset = lapic::msr_addr_to_offset(info.msr);
+    const auto offset = lapic::offset::from_msr_addr(info.msr);
 
     m_virt_lapic->write_register(offset, info.val);
     m_phys_lapic->write_register(offset, info.val);
@@ -444,7 +523,7 @@ vic::handle_x2apic_read(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
 {
     bfignored(vmcs);
 
-    const auto offset = lapic::msr_addr_to_offset(info.msr);
+    const auto offset = lapic::offset::from_msr_addr(info.msr);
     info.val = m_virt_lapic->read_register(offset);
 
     info.ignore_write = false;
@@ -464,6 +543,7 @@ vic::handle_rdcr8(
     bfignored(vmcs);
 
     info.val = m_virt_lapic->read_tpr() >> 4U;
+    //bfdebug_nhex(0, "rdcr8", info.val);
 
     info.ignore_write = false;
     info.ignore_advance = false;
@@ -479,6 +559,7 @@ vic::handle_wrcr8(
 
     m_virt_lapic->write_tpr(info.val << 4U);
     m_phys_lapic->write_tpr(info.val << 4U);
+    //bfdebug_nhex(0, "wrcr8", info.val);
 
     info.ignore_write = false;
     info.ignore_advance = false;
@@ -491,8 +572,8 @@ vic::handle_rdmsr_apic_base(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
 {
     bfignored(vmcs);
 
-    bfdebug_info(VIC_LOG_ALERT, "rdmsr: apic_base");
     info.val = m_virt_base_msr;
+    //bfdebug_nhex(0, "rdmsr: apic_base", info.val);
 
     return true;
 }
@@ -504,8 +585,8 @@ vic::handle_wrmsr_apic_base(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
     bfignored(vmcs);
 
-    bfdebug_info(VIC_LOG_ALERT, "wrmsr: apic_base");
     m_virt_base_msr = info.val;
+    //bfdebug_nhex(0, "wrmsr: apic_base", info.val);
 
     return true;
 }
@@ -539,7 +620,7 @@ vic::handle_spurious_interrupt(
 {
     bfignored(vmcs);
 
-    bfalert_nhex(VIC_LOG_ALERT, "Spurious interrupt handled:", info.vector);
+    bfalert_nhex(0, "Spurious interrupt handled:", info.vector);
     m_virt_lapic->inject_spurious(this->phys_to_virt(info.vector));
 
     return true;

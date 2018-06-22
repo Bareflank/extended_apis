@@ -101,7 +101,6 @@ private:
     bool efi_handle_cpuid(gsl::not_null<vmcs_t *> vmcs);
     bool efi_handle_rdmsr(gsl::not_null<vmcs_t *> vmcs);
     bool efi_handle_wrmsr(gsl::not_null<vmcs_t *> vmcs);
-    bool efi_handle_ept_violation(gsl::not_null<vmcs_t *> vmcs);
     bool efi_handle_wrcr0(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info);
     bool efi_handle_wrcr4(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info);
     bool efi_handle_vmcall(gsl::not_null<vmcs_t *> vmcs);
