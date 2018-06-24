@@ -42,19 +42,25 @@ vic::vic(
     gsl::not_null<eapis::intel_x64::hve *> hve,
     gsl::not_null<eapis::intel_x64::ept::memory_map *> emm
 ) :
-    m_virt_base_msr{0ULL},
-    m_phys_base_msr{0ULL},
+    m_virt_base_msr{apic_base::get()},
     m_orig_base_msr{apic_base::get()},
     m_hve{hve},
     m_emm{emm}
 {
     this->init_idt();
-    this->init_lapic();
     this->init_save_state();
     this->init_interrupt_map();
-    this->add_exit_handlers();
 
-    m_phys_lapic->relocate(reinterpret_cast<uintptr_t>(m_xapic_ump.get()));
+    if (!get_platform_info()->efi.enabled) {
+        this->init_lapic();
+        this->add_exit_handlers();
+        m_phys_lapic->relocate(reinterpret_cast<uintptr_t>(m_xapic_ump.get()));
+        return;
+    }
+
+    this->add_apic_base_handlers();
+    ept::identity_map(*m_emm, 0, 0x900000000 - 0x1000);
+    ept::enable_ept(ept::eptp(*m_emm), m_hve);
 }
 
 vic::~vic()
@@ -94,6 +100,7 @@ void
 vic::send_phys_ipi(uint64_t icr)
 { m_phys_lapic->write_icr(icr); }
 
+// TODO: remove me
 void
 vic::send_virt_ipi(uint64_t icr)
 { m_virt_lapic->queue_injection(icr); }
@@ -139,13 +146,10 @@ vic::init_lapic()
     this->init_virt_lapic();
 }
 
+
 void
 vic::init_phys_x2apic()
 { m_phys_lapic = std::make_unique<phys_x2apic>(); }
-
-uintptr_t
-vic::phys_xapic_base() const
-{ return apic_base::apic_base::get(m_orig_base_msr); }
 
 /// Note that the apic_base::get returns the *actual* physical address
 /// and that this 4K page must be mapped in read-write, uncacheable (rw_uc)
@@ -172,14 +176,7 @@ vic::init_phys_xapic()
 
 void
 vic::init_virt_lapic()
-{
-    static_assert(lapic::count > 0ULL, "Need lapic_register::count > 0");
-
-    m_virt_base_msr = m_orig_base_msr;
-    m_virt_lapic = std::make_unique<virt_lapic>(
-                       m_hve, m_virt_lapic_regs.data(), m_phys_lapic.get()
-                   );
-}
+{ m_virt_lapic = std::make_unique<virt_lapic>(m_hve, m_phys_lapic.get()); }
 
 void
 vic::init_save_state()
@@ -194,13 +191,6 @@ vic::init_interrupt_map()
     for (auto i = 0ULL; i < s_num_vectors; ++i) {
         this->map(i, i);
     }
-}
-
-void
-vic::reset_from_init()
-{
-    m_virt_lapic->reset_from_init();
-    m_phys_lapic->reset_from_init();
 }
 
 /// --------------------------------------------------------------------------
@@ -257,23 +247,27 @@ vic::add_xapic_handlers()
     expects(m_emm != nullptr);
 
     const auto xapic_gpa = apic_base::apic_base::get(m_virt_base_msr);
-    const auto shadow_hpa = g_mm->virtptr_to_physint(m_virt_lapic_regs.data());
+    const auto shadow_hpa = g_mm->virtint_to_physint(m_virt_lapic->base());
 
     ept::identity_map(*m_emm, 0, xapic_gpa - 0x1000);
     ept::map_4k(*m_emm, xapic_gpa, shadow_hpa, ept::epte::memory_attr::uc_re);
     ept::identity_map(*m_emm, xapic_gpa + 0x1000, 0x900000000 - 0x1000);
 
-    m_hve->add_ept_write_violation_handler(
-        ept_violation::handler_delegate_t::create<vic,
-        &vic::handle_xapic_write>(this));
+//    m_hve->add_ept_read_violation_handler(
+//        ept_violation::handler_delegate_t::create<vic,
+//        &vic::handle_xapic_read>(this));
 
-    ept::enable_ept(ept::eptp(*m_emm), m_hve);
+//    m_hve->add_ept_write_violation_handler(
+//        ept_violation::handler_delegate_t::create<vic,
+//        &vic::handle_xapic_write>(this));
+//
+//    ept::enable_ept(ept::eptp(*m_emm), m_hve);
 }
 
 void
 vic::add_x2apic_handlers()
 {
-    for (auto i = 0U; i < lapic::attributes.size(); ++i) {
+    for (const auto i : lapic::offset::list) {
         if (lapic::readable_in_x2apic(i)) {
             this->add_x2apic_read_handler(i);
         }
@@ -287,11 +281,24 @@ vic::add_x2apic_handlers()
 void
 vic::add_x2apic_read_handler(uint64_t offset)
 {
-    m_hve->add_rdmsr_handler(
-        lapic::offset::to_msr_addr(offset),
-        rdmsr::handler_delegate_t::create<vic,
-        &vic::handle_x2apic_read>(this)
-    );
+    using namespace ::intel_x64::msrs;
+
+    const auto addr = lapic::offset::to_msr_addr(offset);
+    switch (addr) {
+        case ia32_x2apic_icr::addr:
+            m_hve->add_rdmsr_handler(
+                addr,
+                rdmsr::handler_delegate_t::create<vic,
+                &vic::handle_x2apic_icr_read>(this));
+            break;
+
+        default:
+            m_hve->add_rdmsr_handler(
+                addr,
+                rdmsr::handler_delegate_t::create<vic,
+                &vic::handle_x2apic_read>(this));
+            break;
+    }
 }
 
 void
@@ -306,6 +313,20 @@ vic::add_x2apic_write_handler(uint64_t offset)
                 addr,
                 wrmsr::handler_delegate_t::create<vic,
                 &vic::handle_x2apic_eoi_write>(this));
+            break;
+
+        case ia32_x2apic_icr::addr:
+            m_hve->add_wrmsr_handler(
+                addr,
+                wrmsr::handler_delegate_t::create<vic,
+                &vic::handle_x2apic_icr_write>(this));
+            break;
+
+        case ia32_x2apic_self_ipi::addr:
+            m_hve->add_wrmsr_handler(
+                addr,
+                wrmsr::handler_delegate_t::create<vic,
+                &vic::handle_x2apic_self_ipi>(this));
             break;
 
         default:
@@ -368,19 +389,43 @@ vic::add_external_interrupt_handlers()
 /// --------------------------------------------------------------------------
 
 bool
+vic::handle_xapic_read(gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &info)
+{
+    using namespace ::bfvmm::x64;
+    using namespace ::intel_x64::msrs;
+
+    const auto rip = vmcs_n::guest_rip::get();
+    auto pair = m_read_cache.find(rip);
+    if (pair == m_read_cache.end()) {
+        const auto off = rip & (ept::page_size_4k - 1U);
+        const auto size = (off > 0xFF0U) ? 2U * ept::page_size_4k : ept::page_size_4k;
+        const auto pat = vmcs_n::guest_ia32_pat::get();
+        const auto cr3 = vmcs_n::guest_cr3::get();
+
+        auto ump = make_unique_map<uint8_t>(rip, ept::align_4k(cr3), size, pat);
+        if (GSL_UNLIKELY(ump == nullptr)) {
+            throw_vic_fatal("handle_xapic_read: unable to map guest_rip", rip);
+        }
+
+        m_read_cache[rip] = std::move(ump);
+        pair = m_read_cache.find(rip);
+    }
+
+    uint32_t *dst = get_dst_addr(vmcs, pair->second.get());
+    const auto reg = lapic::offset::from_mem_addr(info.gpa);
+    *dst = gsl::narrow_cast<uint32_t>(m_virt_lapic->read_register(reg));
+
+    return true;
+}
+
+bool
 vic::handle_xapic_write(gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &info)
 {
     using namespace ::bfvmm::x64;
     using namespace ::intel_x64::msrs;
 
-    const auto exit_base = ept::align_4k(info.gpa);
-    const auto virt_base = ia32_apic_base::apic_base::get(m_virt_base_msr);
-    if (exit_base != virt_base) {
-        return false;
-    }
-
     const auto reg = lapic::offset::from_mem_addr(info.gpa);
-    if (reg == lapic::offset::from_msr_addr(ia32_x2apic_eoi::addr)) {
+    if (reg == lapic::offset::eoi) {
         // Returning straight-away here without checking the value assumes that
         // the guest wrote a zero; if not then we technically should inject a GP
         m_virt_lapic->write_eoi();
@@ -397,7 +442,7 @@ vic::handle_xapic_write(gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &inf
         const auto pat = vmcs_n::guest_ia32_pat::get();
         const auto cr3 = vmcs_n::guest_cr3::get();
         auto ump = make_unique_map<uint8_t>(rip, ept::align_4k(cr3), size, pat);
-        if (ump == nullptr) {
+        if (GSL_UNLIKELY(ump == nullptr)) {
             throw_vic_fatal("handle_xapic_write: unable to map guest_rip", rip);
         }
 
@@ -408,8 +453,15 @@ vic::handle_xapic_write(gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &inf
     uint64_t val = parse_written_val(vmcs, pair->second.get());
     if (reg == lapic::offset::icr0) {
         val |= (m_virt_lapic->read_register(lapic::offset::icr1) << 32U);
-        return this->handle_ipi(val);
-    }
+        val &= ~0x1000ULL; // ensure guest sees IPI as sent
+        //return this->handle_ipi(val);
+    //    if (xapic_debug) {
+    //        lapic::icr::dump(0, val);
+    //    }
+    }// else if (xapic_debug) {
+    //    bfdebug_nhex(0, "xa write", reg);
+    //    bfdebug_subnhex(0, "val", val);
+    //}
 
     m_virt_lapic->write_register(reg, val);
     m_phys_lapic->write_register(reg, val);
@@ -419,11 +471,10 @@ vic::handle_xapic_write(gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &inf
 
 /// We have to check how the guest programmed the ICR before
 /// calling queue_injection; a necessary condition for
-/// injecting the vector is that the delivery mode is *fixed*
-///
-/// INITs and SIPIs can't be injected, so we have to ensure that
-/// we only write to the physical lapic in those two cases.
-///
+/// injecting the vector through VM entry is that the delivery
+/// mode is *fixed*. So INITs and SIPIs can't be injected, and we
+/// have to ensure that we only write to the physical lapic
+/// in those two cases.
 bool
 vic::handle_ipi(uint64_t icr)
 {
@@ -434,20 +485,13 @@ vic::handle_ipi(uint64_t icr)
         case delivery_mode::fixed:
             break;
 
-        case delivery_mode::init:
-        case delivery_mode::sipi:
-            m_phys_lapic->write_icr(icr);
-            return true;
-
         case delivery_mode::lowest_priority:
         case delivery_mode::smi:
         case delivery_mode::nmi:
-            bfalert_nhex(0, "Received IPI with delivery mode:", deliv);
+        case delivery_mode::init:
+        case delivery_mode::sipi:
+            m_virt_lapic->write_icr(icr);
             m_phys_lapic->write_icr(icr);
-            return true;
-
-        default:
-            bferror_nhex(0, "Received IPI with unknown delivery mode:", deliv);
             return true;
     }
 
@@ -458,16 +502,19 @@ vic::handle_ipi(uint64_t icr)
 
         case destination_shorthand::self:
             m_virt_lapic->queue_injection(vector::get(icr));
+            m_virt_lapic->write_icr(icr);
             return true;
 
         case destination_shorthand::all_incl_self:
             m_virt_lapic->queue_injection(vector::get(icr));
             destination_shorthand::set(
                 icr, destination_shorthand::all_excl_self);
+            m_virt_lapic->write_icr(icr);
             m_phys_lapic->write_icr(icr);
             return true;
 
         case destination_shorthand::all_excl_self:
+            m_virt_lapic->write_icr(icr);
             m_phys_lapic->write_icr(icr);
             return true;
 
@@ -481,6 +528,7 @@ vic::handle_ipi(uint64_t icr)
     // destination field. If "self" is a destination, we really should
     // queue the vector here to save a world switch (this is the reason
     // for the separate case from all_excl_self)
+    m_virt_lapic->write_icr(icr);
     m_phys_lapic->write_icr(icr);
     return true;
 }
@@ -519,15 +567,57 @@ vic::handle_x2apic_eoi_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 }
 
 bool
+vic::handle_x2apic_icr_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
+{
+    bfignored(vmcs);
+
+    const auto mode = lapic::icr::delivery_mode::get(info.val);
+    switch (mode) {
+        case lapic::icr::delivery_mode::init:
+        case lapic::icr::delivery_mode::sipi:
+            lapic::icr::dump(0, info.val);
+            break;
+        default:
+            break;
+    }
+
+    m_virt_lapic->write_icr(info.val);
+    m_phys_lapic->write_icr(info.val);
+
+    info.ignore_write = true;
+    info.ignore_advance = false;
+
+    return true;
+}
+
+bool
+vic::handle_x2apic_self_ipi(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
+{
+    bfignored(vmcs);
+
+    m_virt_lapic->queue_injection(info.val);
+
+    info.ignore_write = true;
+    info.ignore_advance = false;
+
+    return true;
+}
+
+bool
+vic::handle_x2apic_icr_read(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
+{
+    bfignored(vmcs);
+    info.val = m_virt_lapic->read_icr();
+    return true;
+}
+
+bool
 vic::handle_x2apic_read(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
 {
     bfignored(vmcs);
 
     const auto offset = lapic::offset::from_msr_addr(info.msr);
     info.val = m_virt_lapic->read_register(offset);
-
-    info.ignore_write = false;
-    info.ignore_advance = false;
 
     return true;
 }
@@ -543,7 +633,6 @@ vic::handle_rdcr8(
     bfignored(vmcs);
 
     info.val = m_virt_lapic->read_tpr() >> 4U;
-    //bfdebug_nhex(0, "rdcr8", info.val);
 
     info.ignore_write = false;
     info.ignore_advance = false;
@@ -559,7 +648,6 @@ vic::handle_wrcr8(
 
     m_virt_lapic->write_tpr(info.val << 4U);
     m_phys_lapic->write_tpr(info.val << 4U);
-    //bfdebug_nhex(0, "wrcr8", info.val);
 
     info.ignore_write = false;
     info.ignore_advance = false;
@@ -573,8 +661,6 @@ vic::handle_rdmsr_apic_base(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
     bfignored(vmcs);
 
     info.val = m_virt_base_msr;
-    //bfdebug_nhex(0, "rdmsr: apic_base", info.val);
-
     return true;
 }
 
@@ -584,10 +670,29 @@ bool
 vic::handle_wrmsr_apic_base(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
     bfignored(vmcs);
+    bfdebug_nhex(0, "wrmsr apic_base", info.val);
+
+    const auto state = apic_base::state::get(info.val);
+    switch (state) {
+        case apic_base::state::x2apic:
+            apic_base::set(info.val);
+            this->init_phys_x2apic();
+            break;
+
+        case apic_base::state::xapic:
+        case apic_base::state::disabled:
+        case apic_base::state::invalid:
+        default:
+            throw_vic_fatal("init_lapic: invalid start state: ", state);
+    }
+
+    this->init_virt_lapic();
+    this->add_cr8_handlers();
+    this->add_lapic_handlers();
+    this->add_external_interrupt_handlers();
 
     m_virt_base_msr = info.val;
-    //bfdebug_nhex(0, "wrmsr: apic_base", info.val);
-
+    info.ignore_write = true;
     return true;
 }
 

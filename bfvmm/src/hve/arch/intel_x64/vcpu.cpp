@@ -16,11 +16,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <bfcapstone.h>
 #include <bfsupport.h>
 #include <bfthreadcontext.h>
+#include <arch/intel_x64/mtrr.h>
 #include <vcpu/arch/intel_x64/vcpu.h>
 #include <hve/arch/intel_x64/ept/helpers.h>
 #include <hve/arch/intel_x64/ept/intrinsics.h>
+#include <bfvmm/memory_manager/arch/x64/map_ptr.h>
 
 namespace eapis
 {
@@ -57,7 +60,7 @@ vcpu::efi_handle_cpuid(gsl::not_null<vmcs_t *> vmcs)
         setter = clear_bit(setter, ::intel_x64::cpuid::feature_information::ecx::osxsave::from);
         setter = clear_bit(setter, ::intel_x64::cpuid::feature_information::ecx::vmx::from);
         vmcs->save_state()->rcx = setter;
-        setter = set_bit(ret.rdx, ::intel_x64::cpuid::feature_information::edx::mtrr::from);
+        setter = clear_bit(ret.rdx, ::intel_x64::cpuid::feature_information::edx::mtrr::from);
         vmcs->save_state()->rdx = setter;
     }
     else if ((leaf & 0xC0000000) == 0xC0000000) {
@@ -130,7 +133,6 @@ vcpu::efi_handle_wrmsr(gsl::not_null<vmcs_t *> vmcs)
         return advance(vmcs);
     }
 
-
     return false;
 }
 
@@ -190,6 +192,7 @@ vcpu::efi_handle_vmcall(gsl::not_null<vmcs_t *> vmcs)
     uint64_t core = thread_context_cpuid();
     uint64_t bf = 0xFB00;
     vmcs->save_state()->rax = static_cast<uint64_t>(bf | core);
+
     return advance(vmcs);
 }
 
@@ -197,17 +200,19 @@ bool
 vcpu::efi_handle_init_signal(gsl::not_null<vmcs_t *> vmcs)
 {
     bfignored(vmcs);
-    m_vic->reset_from_init();
     ::vmcs_n::guest_activity_state::set(::vmcs_n::guest_activity_state::wait_for_sipi);
-    bfalert_info(0, "init");
     return true;
 }
 
 bool
 vcpu::efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs)
 {
-
     bfignored(vmcs);
+
+    if (m_sipi_count == 0) {
+        m_sipi_count++;
+        return true;
+    }
 
     ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::enable();
     ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::disable();
@@ -316,9 +321,27 @@ vcpu::efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs)
     ::vmcs_n::guest_ia32_efer::set(0);
 
     ::vmcs_n::guest_activity_state::set(::vmcs_n::guest_activity_state::active);
-    bfalert_info(0, "sipi");
 
     return true;
+}
+
+bool vcpu::efi_handle_pause(gsl::not_null<vmcs_t *> vmcs)
+{
+//    const auto rip = vmcs_n::guest_rip::get();
+////    const auto size = 0x1000U;
+////    const auto pat = vmcs_n::guest_ia32_pat::get();
+////    const auto cr3 = vmcs_n::guest_cr3::get();
+//    auto ump = bfvmm::x64::make_unique_map<uint8_t>(rip, 0x1000);
+//    if (GSL_UNLIKELY(ump == nullptr)) {
+//        bferror_nhex(0, "handle_xapic_write: unable to map guest_rip", rip);
+//    }
+//
+//    for (auto i = 0U; i < 64; ++i) {
+//        printf("%02x", ump.get()[i]);
+//    }
+//    printf("\n");
+
+    return advance(vmcs);
 }
 
 void vcpu::add_efi_handlers()
@@ -368,6 +391,12 @@ void vcpu::add_efi_handlers()
         ::intel_x64::vmcs::exit_reason::basic_exit_reason::vmcall,
         ::handler_delegate_t::create<vcpu, &vcpu::efi_handle_vmcall>(this)
         );
+
+    //exit_handler()->add_handler(
+    //    ::intel_x64::vmcs::exit_reason::basic_exit_reason::pause,
+    //    ::handler_delegate_t::create<vcpu, &vcpu::efi_handle_pause>(this)
+    //    );
+
 }
 
 vcpu::vcpu(vcpuid::type id) :
@@ -376,9 +405,17 @@ vcpu::vcpu(vcpuid::type id) :
     m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())},
     m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get(), m_emm.get())}
 {
+    exit_handler()->add_handler(
+        ::intel_x64::vmcs::exit_reason::basic_exit_reason::vmcall,
+        ::handler_delegate_t::create<vcpu, &vcpu::efi_handle_vmcall>(this)
+        );
+
     if (get_platform_info()->efi.enabled) {
         bfdebug_info(0, "Enabling EFI exit handlers");
         this->add_efi_handlers();
+//        ::intel_x64::vmcs::primary_processor_based_vm_execution_controls::hlt_exiting::enable();
+//        ::intel_x64::vmcs::primary_processor_based_vm_execution_controls::pause_exiting::enable();
+//        ::intel_x64::vmcs::primary_processor_based_vm_execution_controls::monitor_exiting::enable();
     }
 }
 

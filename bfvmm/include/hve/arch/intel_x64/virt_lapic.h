@@ -50,33 +50,16 @@ public:
         mmio
     };
 
-    /// Constructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param hve the hve object of the virt_lapic
-    /// @param register_page the base address of this' registers
-    /// @param access the access_t for this virt_lapic
-    ///
-    virt_lapic(
-        gsl::not_null<eapis::intel_x64::hve *> hve,
-        gsl::not_null<uint32_t *> register_page,
-        access_t access
-    );
-
     /// Constructor from physical local APIC
     ///
     /// @expects
     /// @ensures
     ///
     /// @param hve the hve object of the virt_lapic
-    /// @param register_page the base address of this' registers
     /// @param phys the phys_lapic object for this physical core
     ///
     virt_lapic(
         gsl::not_null<eapis::intel_x64::hve *> hve,
-        gsl::not_null<uint32_t *> register_page,
         eapis::intel_x64::phys_lapic *phys
     );
 
@@ -95,6 +78,17 @@ public:
     /// @return the access type for this virtual apic
     ///
     access_t access_type() const;
+
+    /// Base
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the base address of the virt_lapics registers
+    /// @note the register layout is the same as the xAPIC MMIO
+    /// interface (i.e. 16-byte aligned).
+    ///
+    uintptr_t base();
 
     /// Read Register
     ///
@@ -206,8 +200,9 @@ private:
     uint64_t top_256bit(uint64_t last);
 
     eapis::intel_x64::hve *m_hve;
-    uint32_t *m_reg;
     access_t m_access_type;
+    std::unique_ptr<gsl::byte[]> m_reg;
+    static constexpr uint64_t s_reg_bytes = 0x1000U;
 
     /// @endcond
 

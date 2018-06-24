@@ -21,6 +21,7 @@
 #include <arch/intel_x64/crs.h>
 #include <arch/intel_x64/msrs.h>
 #include <arch/intel_x64/apic/lapic.h>
+#include <arch/intel_x64/apic/xapic.h>
 
 #include <hve/arch/intel_x64/phys_xapic.h>
 
@@ -32,7 +33,7 @@ namespace intel_x64
 namespace lapic = ::intel_x64::lapic;
 
 static uintptr_t align_xapic(uintptr_t addr)
-{ return addr & ~(x64::page_size - 1U); }
+{ return addr & ~0xFFFULL; }
 
 phys_xapic::phys_xapic(uintptr_t base)
 {
@@ -75,6 +76,7 @@ phys_xapic::reset_from_init()
     this->write_register(offset::lvt_lint1,  lvt::reset_value);
     this->write_register(offset::lvt_error,  lvt::reset_value);
     this->write_register(offset::svr,  svr::reset_value);
+
     ::intel_x64::cr8::set(0);
 }
 
@@ -90,35 +92,23 @@ uint64_t
 phys_xapic::read_register(lapic::offset_t offset) const
 {
     const auto addr = lapic::offset::to_mem_addr(offset, m_base);
-    return *reinterpret_cast<uint32_t *>(addr);
+    return ::intel_x64::xapic::read(addr);
 }
 
 void
 phys_xapic::write_register(lapic::offset_t offset, uint64_t val)
 {
-    const volatile auto addr64 = lapic::offset::to_mem_addr(offset, m_base);
-    const volatile auto addr32 = reinterpret_cast<uint32_t *>(addr64);
-
-    *addr32 = gsl::narrow_cast<uint32_t>(val);
+    const auto addr = lapic::offset::to_mem_addr(offset, m_base);
+    ::intel_x64::xapic::write(addr, gsl::narrow_cast<uint32_t>(val));
 }
 
 uint64_t
 phys_xapic::read_id() const
-{
-    constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_apicid::addr;
-    constexpr auto offset = lapic::offset::from_msr_addr(addr);
-
-    return this->read_register(offset);
-}
+{ return this->read_register(lapic::offset::id); }
 
 uint64_t
 phys_xapic::read_version() const
-{
-    constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_version::addr;
-    constexpr auto offset = lapic::offset::from_msr_addr(addr);
-
-    return this->read_register(offset);
-}
+{ return this->read_register(lapic::offset::version); }
 
 uint64_t
 phys_xapic::read_tpr() const
@@ -126,34 +116,20 @@ phys_xapic::read_tpr() const
 
 uint64_t
 phys_xapic::read_svr() const
-{
-    constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_sivr::addr;
-    constexpr auto offset = lapic::offset::from_msr_addr(addr);
-
-    return this->read_register(offset);
-}
+{ return this->read_register(lapic::offset::svr); }
 
 uint64_t
 phys_xapic::read_icr() const
 {
-    constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_icr::addr;
-    constexpr auto lo_offset = lapic::offset::from_msr_addr(addr);
-    constexpr auto hi_offset = lapic::offset::from_msr_addr(addr | 1U);
-
-    const auto lo = this->read_register(lo_offset);
-    const auto hi = this->read_register(hi_offset);
+    const auto lo = this->read_register(lapic::offset::icr0);
+    const auto hi = this->read_register(lapic::offset::icr1);
 
     return (hi << 32U) | lo;
 }
 
 void
 phys_xapic::write_eoi()
-{
-    constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_eoi::addr;
-    constexpr auto offset = lapic::offset::from_msr_addr(addr);
-
-    return this->write_register(offset, 0x0U);
-}
+{ return this->write_register(lapic::offset::eoi, 0x0U); }
 
 void
 phys_xapic::write_tpr(uint64_t tpr)
@@ -161,28 +137,13 @@ phys_xapic::write_tpr(uint64_t tpr)
 
 void
 phys_xapic::write_svr(uint64_t svr)
-{
-    constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_sivr::addr;
-    constexpr auto offset = lapic::offset::from_msr_addr(addr);
+{ this->write_register(lapic::offset::svr, svr); }
 
-    return this->write_register(offset, svr);
-}
-
-/// Note that the high 32 bits must be written first, since the interrupt
-/// is fired as soon as the lower 32 are written.
 void
 phys_xapic::write_icr(uint64_t icr)
 {
-    constexpr auto addr = ::intel_x64::msrs::ia32_x2apic_icr::addr;
-    constexpr auto lo_offset = lapic::offset::from_msr_addr(addr);
-    constexpr auto hi_offset = lapic::offset::from_msr_addr(addr | 1U);
-
-    const volatile uint32_t lo_val = gsl::narrow_cast<uint32_t>(icr & 0xFFFFFFFFU);
-    const volatile uint32_t hi_val = gsl::narrow_cast<uint32_t>(icr >> 32U);
-
-    this->write_register(hi_offset, hi_val);
-    ::intel_x64::barrier::sfence();
-    this->write_register(lo_offset, lo_val);
+    const auto addr = lapic::offset::to_mem_addr(lapic::offset::icr0, m_base);
+    ::intel_x64::xapic::write_icr(addr, icr);
 }
 
 void

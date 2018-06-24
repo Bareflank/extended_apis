@@ -18,6 +18,8 @@
 
 #include <bfdebug.h>
 #include <hve/arch/intel_x64/hve.h>
+#include <hve/arch/intel_x64/ept/helpers.h>
+#include <bfvmm/memory_manager/arch/x64/map_ptr.h>
 #include <hve/arch/intel_x64/esr.h>
 
 namespace eapis
@@ -117,12 +119,17 @@ external_interrupt::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-//    vmcs_n::vm_exit_interruption_information::dump(0);
-//    vmcs_n::exception_bitmap::dump(0);
-//    vmcs_n::guest_cr0::dump(0);
-//    vmcs_n::guest_ia32_efer::dump(0);
-//    vmcs_n::guest_idtr_base::dump(0);
-//    vmcs_n::guest_idtr_limit::dump(0);
+//    bfalert_nhex(0, "exception vector", info.vector);
+//    const auto rip = vmcs_n::guest_rip::get();
+//    const auto size = 0x1000U;
+//    const auto pat = vmcs_n::guest_ia32_pat::get();
+//    const auto cr3 = vmcs_n::guest_cr3::get();
+//    auto ump = bfvmm::x64::make_unique_map<uint8_t>(rip, ept::align_4k(cr3), size, pat);
+//    for (auto i = 0U; i < 256; ++i) {
+//        printf("%02x", ump.get()[i]);
+//    }
+
+    printf("\n");
 
     switch (info.vector) {
         case eapis::intel_x64::exception::nm:

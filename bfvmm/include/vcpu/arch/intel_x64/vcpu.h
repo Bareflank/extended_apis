@@ -106,11 +106,13 @@ private:
     bool efi_handle_vmcall(gsl::not_null<vmcs_t *> vmcs);
     bool efi_handle_init_signal(gsl::not_null<vmcs_t *> vmcs);
     bool efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs);
+    bool efi_handle_pause(gsl::not_null<vmcs_t *> vmcs);
 
     std::unique_ptr<eapis::intel_x64::ept::memory_map> m_emm;
     std::unique_ptr<eapis::intel_x64::hve> m_hve;
     std::unique_ptr<eapis::intel_x64::vic> m_vic;
 
+    uint64_t m_sipi_count{0};
 };
 
 }
