@@ -16,9 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-add_vmm_executable(
+eapis_add_vmm_executable(
     eapis_integration_intel_x64_drs_trap_dr7
     SOURCES trap_dr7.cpp
-    LIBRARIES eapis_hve
-    LIBRARIES capstone
 )
