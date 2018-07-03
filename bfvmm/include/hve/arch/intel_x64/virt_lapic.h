@@ -28,7 +28,6 @@ namespace intel_x64
 {
 
 class hve;
-class phys_xapic;
 class phys_x2apic;
 
 ///
@@ -44,10 +43,7 @@ public:
     ///
     enum class access_t : uint64_t {
         /// MSR access for x2apic mode
-        msrs,
-
-        /// MMIO access for xAPIC mode
-        mmio
+        msrs
     };
 
     /// Constructor from physical local APIC
@@ -157,11 +153,6 @@ public:
     void write_icr(uint64_t icr);
     void write_self_ipi(uint64_t vector);
     void write_svr(uint64_t svr);
-
-    void init_registers_from_phys_xapic(
-        eapis::intel_x64::phys_xapic *phys);
-
-    void reset_from_init();
 
     /// @endcond
 

@@ -19,7 +19,6 @@
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
         arch/intel_x64/apic/phys_ioapic.cpp
-        arch/intel_x64/apic/phys_xapic.cpp
         arch/intel_x64/apic/phys_x2apic.cpp
         arch/intel_x64/apic/virt_ioapic.cpp
         arch/intel_x64/apic/virt_lapic.cpp

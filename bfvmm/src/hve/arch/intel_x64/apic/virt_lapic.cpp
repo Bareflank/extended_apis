@@ -21,7 +21,6 @@
 
 #include <hve/arch/intel_x64/hve.h>
 #include <arch/intel_x64/apic/lapic.h>
-#include <hve/arch/intel_x64/phys_xapic.h>
 #include <hve/arch/intel_x64/phys_x2apic.h>
 #include <hve/arch/intel_x64/vic.h>
 #include <hve/arch/intel_x64/virt_lapic.h>
@@ -55,13 +54,6 @@ virt_lapic::virt_lapic(
         return;
     }
 
-    auto xapic = dynamic_cast<phys_xapic *>(phys);
-    if (xapic != nullptr) {
-        this->init_registers_from_phys_xapic(xapic);
-        m_access_type = access_t::mmio;
-        return;
-    }
-
     throw std::runtime_error("virt_lapic: invalid phys_lapic");
 }
 
@@ -71,18 +63,6 @@ virt_lapic::access_type() const
 
 uintptr_t virt_lapic::base()
 { return reinterpret_cast<uintptr_t>(m_reg.get()); }
-
-/// When the init is from the physical lapic, we read from every
-/// readable register, excluding unstable ones (e.g ISR and IRR). Those
-/// excluded are set to 0.
-void
-virt_lapic::init_registers_from_phys_xapic(eapis::intel_x64::phys_xapic *phys)
-{
-    for (const auto i : lapic::offset::list) {
-        const auto val = phys->read_register(i);
-        this->write_register(i, val);
-    }
-}
 
 void
 virt_lapic::init_registers_from_phys_x2apic(
@@ -359,17 +339,6 @@ virt_lapic::handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs)
 ///----------------------------------------------------------------------------
 /// Reset logic
 ///----------------------------------------------------------------------------
-
-void
-virt_lapic::reset_from_init()
-{
-    // Preserve APIC ID
-
-    const auto val = this->read_id();
-    this->reset_registers();
-    bfdebug_info(0, "reg reset");
-    this->write_register(lapic::offset::id, val);
-}
 
 void
 virt_lapic::reset_registers()

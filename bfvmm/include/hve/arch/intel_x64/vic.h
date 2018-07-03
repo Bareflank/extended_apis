@@ -25,7 +25,6 @@
 #include <bfvmm/memory_manager/arch/x64/unique_map.h>
 
 #include "hve.h"
-#include "phys_xapic.h"
 #include "phys_x2apic.h"
 #include "virt_lapic.h"
 
@@ -82,84 +81,6 @@ throw_vic_fatal(const char *msg)
     throw std::runtime_error(msg);
 }
 
-inline void verify_xapic_write(cs_insn *insn)
-{
-    expects(insn->detail != nullptr);
-    expects(insn->detail->x86.op_count == 2U);
-
-    cs_x86_op *dst = &insn->detail->x86.operands[0U];
-    cs_x86_op *src = &insn->detail->x86.operands[1U];
-
-    expects(dst->type == X86_OP_MEM);
-    expects(src->type != X86_OP_FP);
-}
-
-inline void verify_xapic_read(cs_insn *insn)
-{
-    expects(insn->detail != nullptr);
-    expects(insn->detail->x86.op_count == 2U);
-
-    cs_x86_op *dst = &insn->detail->x86.operands[0U];
-    cs_x86_op *src = &insn->detail->x86.operands[1U];
-
-    expects(dst->type == X86_OP_REG);
-    expects(src->type == X86_OP_MEM);
-}
-
-inline void disasm_xapic_access(csh *cs, cs_insn **insn, const uint8_t *rip)
-{
-    expects(cs != nullptr);
-    expects(insn != nullptr);
-    expects(rip != nullptr);
-
-    cs_err err = cs_open(CS_ARCH_X86, CS_MODE_64, cs);
-
-    if (err != CS_ERR_OK) {
-        throw_vic_fatal("cs_open failed, err = ", static_cast<uint64_t>(err));
-    }
-
-    cs_option(*cs, CS_OPT_DETAIL, CS_OPT_ON);
-
-    const auto need = 1U;
-    const auto insn_int = reinterpret_cast<uintptr_t>(rip);
-    const auto nr_bytes = vmcs_n::vm_exit_instruction_length::get();
-    const auto nr_disasm = cs_disasm(*cs, rip, nr_bytes, insn_int, need, insn);
-
-    if (nr_disasm != need) {
-        throw std::runtime_error("xapic_write: expected to disasm 1 insn");
-    }
-}
-
-inline uint32_t *get_dst_addr(
-    gsl::not_null<vmcs_t *> vmcs,
-    gsl::not_null<const uint8_t *> rip)
-{
-    csh cstone{0U};
-    cs_insn *insn{nullptr};
-    disasm_xapic_access(&cstone, &insn, rip);
-    verify_xapic_read(insn);
-    const auto op = &insn->detail->x86.operands[0];
-    uint32_t *addr = capstone::reg32_addr(vmcs->save_state(), op);
-    free(insn);
-
-    return addr;
-}
-
-inline uint32_t parse_written_val(
-    gsl::not_null<vmcs_t *> vmcs,
-    gsl::not_null<const uint8_t *> rip)
-{
-    csh cstone{0U};
-    cs_insn *insn{nullptr};
-    disasm_xapic_access(&cstone, &insn, rip);
-    verify_xapic_write(insn);
-    const auto src = 1U;
-    const auto val = capstone::read_op_val(vmcs->save_state(), insn, src);
-    free(insn);
-
-    return val;
-}
-
 /// Virtual interrupt controller (VIC)
 ///
 /// Provides an interface for managing physical and
@@ -182,11 +103,8 @@ public:
     /// @ensures
     ///
     /// @param hve the hve object for this vic.
-    /// @param emm the existing EPT memory map
     ///
-    vic(
-        gsl::not_null<eapis::intel_x64::hve *> hve,
-        gsl::not_null<eapis::intel_x64::ept::memory_map *> emm);
+    vic(gsl::not_null<eapis::intel_x64::hve *> hve);
 
     /// Destructor
     ///
@@ -248,35 +166,6 @@ public:
     /// @param virt the virtual interrupt vector to unmap
     ///
     void unmap(uint64_t virt);
-
-    ///
-    /// Send physical IPI
-    ///
-    /// Send an IPI to this physical cpu
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param icr the value to write to the ICR
-    ///
-    void send_phys_ipi(uint64_t icr);
-
-    ///
-    /// Send virtual IPI
-    ///
-    /// Queue the provided IPI for injection to this virtual cpu
-    ///
-    /// @note the interrupt specified by icr is subject to the
-    ///       prioritization algorithm of the virtual lapic. This means
-    ///       that it will not necessarily be injected on the *upcoming*
-    ///       vmentry.
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param icr the value to write to the ICR
-    ///
-    void send_virt_ipi(uint64_t icr);
 
     ///
     /// Add interrupt handler
@@ -407,30 +296,6 @@ public:
     bool handle_x2apic_eoi_write(
         gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
-    /// Handle xAPIC read exit
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param vmcs the vmcs pointer for this vmexit
-    /// @param info the info structure for this vmexit
-    /// @return true iff the exit has been handled
-    ///
-    bool handle_xapic_read(
-        gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &info);
-
-    /// Handle xAPIC write exit
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param vmcs the vmcs pointer for this vmexit
-    /// @param info the info structure for this vmexit
-    /// @return true iff the exit has been handled
-    ///
-    bool handle_xapic_write(
-        gsl::not_null<vmcs_t *> vmcs, ept_violation::info_t &info);
-
     /// Handle cr8 read exit
     ///
     /// Handle guest attempts to read cr8
@@ -487,34 +352,27 @@ private:
 
     static constexpr const auto s_num_vectors = 256ULL;
 
-    void add_exit_handlers();
     void add_cr8_handlers();
     void add_lapic_handlers();
     void add_apic_base_handlers();
     void add_external_interrupt_handlers();
-    void add_xapic_handlers();
     void add_x2apic_handlers();
     void add_x2apic_read_handler(::intel_x64::lapic::offset_t offset);
     void add_x2apic_write_handler(::intel_x64::lapic::offset_t offset);
 
     void init_idt();
     void init_lapic();
-    void init_phys_xapic();
     void init_phys_x2apic();
     void init_virt_lapic();
     void init_save_state();
     void init_interrupt_map();
 
-    bool handle_ipi(uint64_t icr);
-
     bool handle_spurious_interrupt(
         gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info);
 
+    bool m_x2apic_init;
     uint64_t m_virt_base_msr;
-    const uint64_t m_orig_base_msr;
-
     eapis::intel_x64::hve *m_hve;
-    eapis::intel_x64::ept::memory_map *m_emm;
 
     std::array<uint8_t, s_num_vectors> m_interrupt_map;
     std::array<std::list<handler_delegate_t>, s_num_vectors> m_handlers;
@@ -522,10 +380,6 @@ private:
     std::unique_ptr<gsl::byte[]> m_ist1;
     std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
     std::unique_ptr<eapis::intel_x64::phys_lapic> m_phys_lapic;
-
-    bfvmm::x64::unique_map_ptr<uint8_t> m_xapic_ump;
-    std::unordered_map<uintptr_t, bfvmm::x64::unique_map_ptr<uint8_t>> m_write_cache;
-    std::unordered_map<uintptr_t, bfvmm::x64::unique_map_ptr<uint8_t>> m_read_cache;
 
     friend class test::vcpu;
 

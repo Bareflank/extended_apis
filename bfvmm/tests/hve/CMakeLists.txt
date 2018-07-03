@@ -77,11 +77,6 @@ do_test(test_virt_ioapic
     ${ARGN}
 )
 
-do_test(test_phys_xapic
-    SOURCES arch/intel_x64/apic/test_phys_xapic.cpp
-    ${ARGN}
-)
-
 do_test(test_phys_x2apic
     SOURCES arch/intel_x64/apic/test_phys_x2apic.cpp
     ${ARGN}

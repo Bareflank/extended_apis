@@ -124,8 +124,6 @@ vcpu::efi_handle_rdmsr(gsl::not_null<vmcs_t *> vmcs)
 bool
 vcpu::efi_handle_wrmsr_efer(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
 {
-    bfignored(vmcs);
-
     if (::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::is_disabled()) {
         return true;
     }
@@ -189,7 +187,7 @@ vcpu::efi_handle_wrcr0(gsl::not_null<vmcs_t *>, control_register::info_t &info)
             return true;
 
         case access_type::lmsw: {
-            auto cur = set_bits(guest_cr0::get(), source_data::get(), ~0xFFFFULL);
+            auto cur = set_bits(::vmcs_n::guest_cr0::get(), source_data::get(), ~0xFFFFULL);
             info.val = set_bits(cur, ::intel_x64::msrs::ia32_vmx_cr0_fixed0::get(), ~0ULL);
             info.shadow = set_bits(info.shadow, source_data::get(), ~0xFFFFULL);
             return true;
@@ -248,75 +246,75 @@ vcpu::efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs)
     ::intel_x64::cr2::set(0);
 
     ::vmcs_n::value_type ds_ar = 0;
-    ::vmcs_n::guest_ds_access_rights::type::set(s_ds_ar, 0x3);
-    ::vmcs_n::guest_ds_access_rights::s::enable(s_ds_ar);
-    ::vmcs_n::guest_ds_access_rights::present::enable(s_ds_ar);
+    ::vmcs_n::guest_ds_access_rights::type::set(ds_ar, 0x3);
+    ::vmcs_n::guest_ds_access_rights::s::enable(ds_ar);
+    ::vmcs_n::guest_ds_access_rights::present::enable(ds_ar);
     ::vmcs_n::guest_ds_selector::set(0);
     ::vmcs_n::guest_ds_base::set(0);
     ::vmcs_n::guest_ds_limit::set(0xFFFF);
-    ::vmcs_n::guest_ds_access_rights::set(s_ds_ar);
+    ::vmcs_n::guest_ds_access_rights::set(ds_ar);
 
     ::vmcs_n::value_type es_ar = 0;
-    ::vmcs_n::guest_es_access_rights::type::set(s_es_ar, 0x3);
-    ::vmcs_n::guest_es_access_rights::s::enable(s_es_ar);
-    ::vmcs_n::guest_es_access_rights::present::enable(s_es_ar);
+    ::vmcs_n::guest_es_access_rights::type::set(es_ar, 0x3);
+    ::vmcs_n::guest_es_access_rights::s::enable(es_ar);
+    ::vmcs_n::guest_es_access_rights::present::enable(es_ar);
     ::vmcs_n::guest_es_selector::set(0);
     ::vmcs_n::guest_es_base::set(0);
     ::vmcs_n::guest_es_limit::set(0xFFFF);
-    ::vmcs_n::guest_es_access_rights::set(s_es_ar);
+    ::vmcs_n::guest_es_access_rights::set(es_ar);
 
     ::vmcs_n::value_type fs_ar = 0;
-    ::vmcs_n::guest_fs_access_rights::type::set(s_fs_ar, 0x3);
-    ::vmcs_n::guest_fs_access_rights::s::enable(s_fs_ar);
-    ::vmcs_n::guest_fs_access_rights::present::enable(s_fs_ar);
+    ::vmcs_n::guest_fs_access_rights::type::set(fs_ar, 0x3);
+    ::vmcs_n::guest_fs_access_rights::s::enable(fs_ar);
+    ::vmcs_n::guest_fs_access_rights::present::enable(fs_ar);
     ::vmcs_n::guest_fs_selector::set(0);
     ::vmcs_n::guest_fs_base::set(0);
     ::vmcs_n::guest_fs_limit::set(0xFFFF);
-    ::vmcs_n::guest_fs_access_rights::set(s_fs_ar);
+    ::vmcs_n::guest_fs_access_rights::set(fs_ar);
 
     ::vmcs_n::value_type gs_ar = 0;
-    ::vmcs_n::guest_gs_access_rights::type::set(s_gs_ar, 0x3);
-    ::vmcs_n::guest_gs_access_rights::s::enable(s_gs_ar);
-    ::vmcs_n::guest_gs_access_rights::present::enable(s_gs_ar);
+    ::vmcs_n::guest_gs_access_rights::type::set(gs_ar, 0x3);
+    ::vmcs_n::guest_gs_access_rights::s::enable(gs_ar);
+    ::vmcs_n::guest_gs_access_rights::present::enable(gs_ar);
     ::vmcs_n::guest_gs_selector::set(0);
     ::vmcs_n::guest_gs_base::set(0);
     ::vmcs_n::guest_gs_limit::set(0xFFFF);
-    ::vmcs_n::guest_gs_access_rights::set(s_gs_ar);
+    ::vmcs_n::guest_gs_access_rights::set(gs_ar);
 
     ::vmcs_n::value_type ss_ar = 0;
-    ::vmcs_n::guest_ss_access_rights::type::set(s_ss_ar, 0x3);
-    ::vmcs_n::guest_ss_access_rights::s::enable(s_ss_ar);
-    ::vmcs_n::guest_ss_access_rights::present::enable(s_ss_ar);
+    ::vmcs_n::guest_ss_access_rights::type::set(ss_ar, 0x3);
+    ::vmcs_n::guest_ss_access_rights::s::enable(ss_ar);
+    ::vmcs_n::guest_ss_access_rights::present::enable(ss_ar);
     ::vmcs_n::guest_ss_selector::set(0);
     ::vmcs_n::guest_ss_base::set(0);
     ::vmcs_n::guest_ss_limit::set(0xFFFF);
-    ::vmcs_n::guest_ss_access_rights::set(s_ss_ar);
+    ::vmcs_n::guest_ss_access_rights::set(ss_ar);
 
     ::vmcs_n::value_type cs_ar = 0;
-    ::vmcs_n::guest_cs_access_rights::type::set(s_cs_ar, 0xB);
-    ::vmcs_n::guest_cs_access_rights::s::enable(s_cs_ar);
-    ::vmcs_n::guest_cs_access_rights::present::enable(s_cs_ar);
+    ::vmcs_n::guest_cs_access_rights::type::set(cs_ar, 0xB);
+    ::vmcs_n::guest_cs_access_rights::s::enable(cs_ar);
+    ::vmcs_n::guest_cs_access_rights::present::enable(cs_ar);
     auto vector_segment = ::vmcs_n::exit_qualification::sipi::vector::get() << 8;
     ::vmcs_n::guest_cs_selector::set(vector_segment);
     ::vmcs_n::guest_cs_base::set(vector_segment << 4);
     ::vmcs_n::guest_cs_limit::set(0xFFFF);
-    ::vmcs_n::guest_cs_access_rights::set(s_cs_ar);
+    ::vmcs_n::guest_cs_access_rights::set(cs_ar);
 
     ::vmcs_n::value_type tr_ar = 0;
-    ::vmcs_n::guest_tr_access_rights::type::set(s_tr_ar, 0xB);
-    ::vmcs_n::guest_tr_access_rights::present::enable(s_tr_ar);
+    ::vmcs_n::guest_tr_access_rights::type::set(tr_ar, 0xB);
+    ::vmcs_n::guest_tr_access_rights::present::enable(tr_ar);
     ::vmcs_n::guest_tr_selector::set(0);
     ::vmcs_n::guest_tr_base::set(0);
     ::vmcs_n::guest_tr_limit::set(0xFFFF);
-    ::vmcs_n::guest_tr_access_rights::set(s_tr_ar);
+    ::vmcs_n::guest_tr_access_rights::set(tr_ar);
 
     ::vmcs_n::value_type ldtr_ar = 0;
-    ::vmcs_n::guest_ldtr_access_rights::type::set(s_ldtr_ar, 0x2);
-    ::vmcs_n::guest_ldtr_access_rights::present::enable(s_ldtr_ar);
+    ::vmcs_n::guest_ldtr_access_rights::type::set(ldtr_ar, 0x2);
+    ::vmcs_n::guest_ldtr_access_rights::present::enable(ldtr_ar);
     ::vmcs_n::guest_ldtr_selector::set(0);
     ::vmcs_n::guest_ldtr_base::set(0);
     ::vmcs_n::guest_ldtr_limit::set(0xFFFF);
-    ::vmcs_n::guest_ldtr_access_rights::set(s_ldtr_ar);
+    ::vmcs_n::guest_ldtr_access_rights::set(ldtr_ar);
 
     ::vmcs_n::guest_gdtr_base::set(0);
     ::vmcs_n::guest_gdtr_limit::set(0xFFFF);
@@ -393,7 +391,7 @@ vcpu::vcpu(vcpuid::type id) :
     bfvmm::intel_x64::vcpu{id},
     m_emm{std::make_unique<eapis::intel_x64::ept::memory_map>()},
     m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())},
-    m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get(), m_emm.get())}
+    m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get())}
 {
     if (get_platform_info()->efi.enabled) {
         this->add_efi_handlers();
