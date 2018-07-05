@@ -22,7 +22,7 @@
 #include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
 
 #include "../../../hve/arch/intel_x64/hve.h"
-#include "../../../hve/arch/intel_x64/vic.h"
+#include "../../../hve/arch/intel_x64/apic/vic.h"
 #include "../../../hve/arch/intel_x64/ept/memory_map.h"
 
 namespace eapis
@@ -84,20 +84,23 @@ public:
     ///
     gsl::not_null<eapis::intel_x64::ept::memory_map *> emm();
 
-    /// Add handlers for booting OS from EFI
+    /// Enable EFI
     ///
-    /// @expects
+    /// Install and enable the exit handlers required to boot
+    /// multi-core Linux
+    ///
+    /// @note enabling this will enable the vic, ept, and vpid
+    /// By default, all of guest physical memory is identity mapped.
+    ///
+    /// @expects get_platform_info()->efi.enabled == true
     /// @ensures
     ///
-    void add_efi_handlers();
+    void enable_efi();
 
 private:
 
-    /// Handlers for booting OS from EFI
-    ///
-    /// @expects
-    /// @ensures
-    ///
+    void add_efi_handlers();
+
     bool efi_handle_cpuid(gsl::not_null<vmcs_t *> vmcs);
     bool efi_handle_rdmsr(gsl::not_null<vmcs_t *> vmcs);
     bool efi_handle_wrmsr_efer(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
@@ -110,8 +113,6 @@ private:
     std::unique_ptr<eapis::intel_x64::ept::memory_map> m_emm;
     std::unique_ptr<eapis::intel_x64::hve> m_hve;
     std::unique_ptr<eapis::intel_x64::vic> m_vic;
-
-    uint64_t m_sipi_count{0};
 };
 
 }

@@ -20,7 +20,7 @@
 #include <intrinsics.h>
 
 #include <hve/arch/intel_x64/hve.h>
-#include <hve/arch/intel_x64/phys_x2apic.h>
+#include <hve/arch/intel_x64/apic/phys_x2apic.h>
 #include <support/arch/intel_x64/test_support.h>
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT

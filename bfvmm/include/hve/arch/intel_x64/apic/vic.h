@@ -24,7 +24,7 @@
 #include <arch/intel_x64/apic/lapic.h>
 #include <bfvmm/memory_manager/arch/x64/unique_map.h>
 
-#include "hve.h"
+#include "../hve.h"
 #include "phys_x2apic.h"
 #include "virt_lapic.h"
 
@@ -56,8 +56,6 @@ class memory_map;
 ///-----------------------------------------------------------------------------
 
 namespace apic_base = ::intel_x64::msrs::ia32_apic_base;
-namespace proc_ctl1 = vmcs_n::primary_processor_based_vm_execution_controls;
-namespace proc_ctl2 = vmcs_n::secondary_processor_based_vm_execution_controls;
 
 ///-----------------------------------------------------------------------------
 /// Helpers
@@ -379,7 +377,7 @@ private:
 
     std::unique_ptr<gsl::byte[]> m_ist1;
     std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
-    std::unique_ptr<eapis::intel_x64::phys_lapic> m_phys_lapic;
+    std::unique_ptr<eapis::intel_x64::phys_x2apic> m_phys_lapic;
 
     friend class test::vcpu;
 

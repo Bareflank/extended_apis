@@ -41,24 +41,24 @@ namespace intel_x64
 {
 namespace exception
 {
-    constexpr const auto de = 0U;
-    constexpr const auto db = 1U;
-    constexpr const auto bp = 3U;
-    constexpr const auto of = 4U;
-    constexpr const auto br = 5U;
-    constexpr const auto ud = 6U;
-    constexpr const auto nm = 7U;
-    constexpr const auto df = 8U;
-    constexpr const auto ts = 10U;
-    constexpr const auto np = 11U;
-    constexpr const auto ss = 12U;
-    constexpr const auto gp = 13U;
-    constexpr const auto pf = 14U;
-    constexpr const auto mf = 16U;
-    constexpr const auto ac = 17U;
-    constexpr const auto mc = 18U;
-    constexpr const auto xm = 19U;
-    constexpr const auto ve = 20U;
+constexpr const auto de = 0U;
+constexpr const auto db = 1U;
+constexpr const auto bp = 3U;
+constexpr const auto of = 4U;
+constexpr const auto br = 5U;
+constexpr const auto ud = 6U;
+constexpr const auto nm = 7U;
+constexpr const auto df = 8U;
+constexpr const auto ts = 10U;
+constexpr const auto np = 11U;
+constexpr const auto ss = 12U;
+constexpr const auto gp = 13U;
+constexpr const auto pf = 14U;
+constexpr const auto mf = 16U;
+constexpr const auto ac = 17U;
+constexpr const auto mc = 18U;
+constexpr const auto xm = 19U;
+constexpr const auto ve = 20U;
 }
 }
 }

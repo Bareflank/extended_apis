@@ -19,7 +19,7 @@
 #ifndef PHYS_X2APIC_INTEL_X64_EAPIS_H
 #define PHYS_X2APIC_INTEL_X64_EAPIS_H
 
-#include "phys_lapic.h"
+#include "../base.h"
 
 namespace eapis
 {
@@ -28,11 +28,7 @@ namespace intel_x64
 
 /// Physical x2APIC
 ///
-/// This class implements the lapic interface for x2apic
-/// mode. It is marked final because it is intended to interact
-/// directly with x2apic hardware.
-///
-class EXPORT_EAPIS_HVE phys_x2apic final : public phys_lapic
+class EXPORT_EAPIS_HVE phys_x2apic
 {
 public:
 
@@ -48,25 +44,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~phys_x2apic() override = default;
-
-    /// Base
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return 0 (doesn't apply to x2apic)
-    ///
-    uintptr_t base() override;
-
-    /// Relocate
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param base is ignored
-    ///
-    void relocate(uintptr_t base) override;
+    ~phys_x2apic() = default;
 
     /// Enable interrupts
     ///
@@ -75,7 +53,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    void enable_interrupts() override;
+    void enable_interrupts();
 
     /// Disable interrupts
     ///
@@ -84,7 +62,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    void disable_interrupts() override;
+    void disable_interrupts();
 
     /// Read Register
     ///
@@ -94,7 +72,7 @@ public:
     /// @param offset the canonical offset to read
     /// @return the value of the register at offset
     ///
-    uint64_t read_register(uint64_t offset) const override;
+    uint64_t read_register(uint64_t offset) const;
 
     /// Write Register
     ///
@@ -104,34 +82,27 @@ public:
     /// @param offset the canonical offset to write
     /// @param val the value to write
     ///
-    void write_register(uint64_t offset, uint64_t val) override;
-
-    /// Reset from INIT signal
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void reset_from_init() override;
+    void write_register(uint64_t offset, uint64_t val);
 
     /// @cond
 
     ///
     /// Register reads
     ///
-    uint64_t read_id() const override;
-    uint64_t read_version() const override;
-    uint64_t read_tpr() const override;
-    uint64_t read_svr() const override;
-    uint64_t read_icr() const override;
+    uint64_t read_id() const;
+    uint64_t read_version() const;
+    uint64_t read_tpr() const;
+    uint64_t read_svr() const;
+    uint64_t read_icr() const;
 
     ///
     /// Register writes
     ///
-    void write_eoi() override;
-    void write_tpr(uint64_t tpr) override;
-    void write_svr(uint64_t svr) override;
-    void write_icr(uint64_t icr) override;
-    void write_self_ipi(uint64_t vector) override;
+    void write_eoi();
+    void write_tpr(uint64_t tpr);
+    void write_svr(uint64_t svr);
+    void write_icr(uint64_t icr);
+    void write_self_ipi(uint64_t vector);
 
     phys_x2apic(phys_x2apic &&) = default;
     phys_x2apic &operator=(phys_x2apic &&) = default;

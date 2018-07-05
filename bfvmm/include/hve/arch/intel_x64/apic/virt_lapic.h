@@ -20,6 +20,7 @@
 #define VIRT_LAPIC_INTEL_X64_EAPIS_H
 
 #include <array>
+#include <bitset>
 #include <arch/intel_x64/apic/lapic.h>
 
 namespace eapis
@@ -37,26 +38,17 @@ class EXPORT_EAPIS_HVE virt_lapic
 {
 public:
 
-    /// Access type
-    ///
-    /// The interface used by the guest to talk to the virt_lapic
-    ///
-    enum class access_t : uint64_t {
-        /// MSR access for x2apic mode
-        msrs
-    };
-
     /// Constructor from physical local APIC
     ///
     /// @expects
     /// @ensures
     ///
     /// @param hve the hve object of the virt_lapic
-    /// @param phys the phys_lapic object for this physical core
+    /// @param phys the phys_x2apic object for this physical core
     ///
     virt_lapic(
         gsl::not_null<eapis::intel_x64::hve *> hve,
-        eapis::intel_x64::phys_lapic *phys
+        eapis::intel_x64::phys_x2apic *phys
     );
 
     /// Destructor
@@ -65,26 +57,6 @@ public:
     /// @ensures
     ///
     ~virt_lapic() = default;
-
-    /// Access Type
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return the access type for this virtual apic
-    ///
-    access_t access_type() const;
-
-    /// Base
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return the base address of the virt_lapics registers
-    /// @note the register layout is the same as the xAPIC MMIO
-    /// interface (i.e. 16-byte aligned).
-    ///
-    uintptr_t base();
 
     /// Read Register
     ///
@@ -116,7 +88,7 @@ public:
     ///
     bool handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs);
 
-    /// Queue Interrupt
+    /// Queue Injection
     ///
     /// @expects
     /// @ensures
@@ -162,6 +134,8 @@ private:
 
     /// @cond
 
+    static constexpr uint64_t s_reg_bytes = 0x1000U;
+
     void queue_interrupt(uint64_t vector);
     void inject_interrupt(uint64_t vector);
 
@@ -191,9 +165,9 @@ private:
     uint64_t top_256bit(uint64_t last);
 
     eapis::intel_x64::hve *m_hve;
-    access_t m_access_type;
     std::unique_ptr<gsl::byte[]> m_reg;
-    static constexpr uint64_t s_reg_bytes = 0x1000U;
+    std::bitset<256> m_irr;
+    std::bitset<256> m_isr;
 
     /// @endcond
 

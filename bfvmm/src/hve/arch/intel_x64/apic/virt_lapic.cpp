@@ -16,14 +16,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <cstdio>
+#include <arch/intel_x64/bit.h>
 #include <arch/intel_x64/msrs.h>
+#include <arch/intel_x64/apic/lapic.h>
 
 #include <hve/arch/intel_x64/hve.h>
-#include <arch/intel_x64/apic/lapic.h>
-#include <hve/arch/intel_x64/phys_x2apic.h>
-#include <hve/arch/intel_x64/vic.h>
-#include <hve/arch/intel_x64/virt_lapic.h>
+#include <hve/arch/intel_x64/apic/vic.h>
+#include <hve/arch/intel_x64/apic/phys_x2apic.h>
+#include <hve/arch/intel_x64/apic/virt_lapic.h>
 
 namespace eapis
 {
@@ -39,30 +39,20 @@ namespace lapic = ::intel_x64::lapic;
 
 virt_lapic::virt_lapic(
     gsl::not_null<eapis::intel_x64::hve *> hve,
-    eapis::intel_x64::phys_lapic *phys
+    eapis::intel_x64::phys_x2apic *phys
 ) :
     m_hve{hve}
 {
-    lapic::init_attributes();
-    m_reg = std::make_unique<gsl::byte[]>(s_reg_bytes);
-    this->init_interrupt_window_handler();
-
-    auto x2apic = dynamic_cast<phys_x2apic *>(phys);
-    if (x2apic != nullptr) {
-        this->init_registers_from_phys_x2apic(x2apic);
-        m_access_type = access_t::msrs;
-        return;
+    static bool need_lapic_init = true;
+    if (need_lapic_init) {
+        lapic::init_attributes();
+        need_lapic_init = false;
     }
 
-    throw std::runtime_error("virt_lapic: invalid phys_lapic");
+    m_reg = std::make_unique<gsl::byte[]>(s_reg_bytes);
+    this->init_interrupt_window_handler();
+    this->init_registers_from_phys_x2apic(phys);
 }
-
-virt_lapic::access_t
-virt_lapic::access_type() const
-{ return m_access_type; }
-
-uintptr_t virt_lapic::base()
-{ return reinterpret_cast<uintptr_t>(m_reg.get()); }
 
 void
 virt_lapic::init_registers_from_phys_x2apic(
@@ -239,27 +229,21 @@ virt_lapic::top_isr()
 uint64_t
 virt_lapic::top_256bit(uint64_t last)
 {
-    auto vector = 0ULL;
-
     for (auto i = 0ULL; i < 8ULL; ++i) {
         const auto addr = last - i;
         const auto offset = lapic::offset::from_msr_addr(addr);
         const auto reg = this->read_register(offset);
 
-        if (reg) {
-            for (auto b = 31; b >= 0; --b) {
-                const auto uint_b = gsl::narrow_cast<uint64_t>(b);
-                const auto masked_reg = (reg & (1ULL << uint_b));
-
-                if (masked_reg != 0ULL) {
-                    vector = ((7ULL - i) << 5ULL) | uint_b;
-                    return vector;
-                }
-            }
+        if (reg == 0ULL) {
+            continue;
         }
+
+        const auto msb = ::intel_x64::bit::bsr(reg);
+        const auto ipc = ((7ULL - i) << 5ULL);
+        return ipc | msb;
     }
 
-    return vector;
+    return 0U;
 }
 
 void
@@ -278,15 +262,13 @@ virt_lapic::pop_256bit(uint64_t last)
         const auto offset = lapic::offset::from_msr_addr(addr);
         const auto reg = this->read_register(offset);
 
-        if (reg) {
-            for (auto b = 31; b >= 0; --b) {
-                const auto masked_reg = (reg & (1ULL << gsl::narrow_cast<uint64_t>(b)));
-                if (masked_reg != 0ULL) {
-                    this->write_register(offset, clear_bit(reg, b));
-                    return;
-                }
-            }
+        if (reg == 0ULL) {
+            continue;
         }
+
+        const auto msb = ::intel_x64::bit::bsr(reg);
+        this->write_register(offset, clear_bit(reg, msb));
+        return;
     }
 }
 

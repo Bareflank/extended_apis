@@ -16,20 +16,45 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfcapstone.h>
 #include <bfsupport.h>
 #include <bfthreadcontext.h>
 
 #include <arch/x64/misc.h>
 #include <arch/x64/rflags.h>
 #include <arch/intel_x64/vmx.h>
+#include <arch/intel_x64/pause.h>
 
 #include <hve/arch/intel_x64/esr.h>
 #include <hve/arch/intel_x64/isr.h>
-#include <hve/arch/intel_x64/vic.h>
+#include <hve/arch/intel_x64/apic/vic.h>
 #include <hve/arch/intel_x64/ept/helpers.h>
 #include <hve/arch/intel_x64/ept/intrinsics.h>
 #include <hve/arch/intel_x64/ept/memory_map.h>
+
+/// The INIT-SIPI-SIPI sequence has to stay in sync. If the AP is not in the
+/// wait-for-SIPI state, any SIPI it receives is dropped (see section 26.6.2).
+///
+/// The sequence begins with the BSP trapping the INIT-assert IPI. The VMM then
+/// sends the IPI and waits for the AP to signal init_done from its INIT
+/// exit handler. Once the init_done signal is received, the BSP intercepts
+/// the first SIPI. It sends the SIPI and waits for the AP to signal sipi_done.
+/// Once the BSP sees sipi_done, it re-enters and eventually traps the last
+/// SIPI. It sends the SIPI and returns immediately (it doesn't wait a third
+/// time).
+///
+/// The sequence above is performed for each AP. Note that the current
+/// signalling mechanism doesn't use any locks, as Linux brings up the APs
+/// sequentially. In theory, all the APs could be brought up at once; if
+/// a guest tries to do this, this code will likely break.
+///
+/// NOTE: Only INIT *assertions* cause INIT VM-exits. INIT de-assertions
+/// used on some platforms are only used to reset the local APICs' arbitration
+/// IDs. On such platforms, Linux will write an assert, then a de-assert. In this
+/// case, the ICR write handler absorbs the de-assertions. See sections 10.4 and
+/// 10.6 for more detail.
+
+extern bool init_done;
+extern bool sipi_done;
 
 namespace eapis
 {
@@ -39,32 +64,34 @@ namespace intel_x64
 namespace lapic = ::intel_x64::lapic;
 
 vic::vic(gsl::not_null<eapis::intel_x64::hve *> hve) :
-    m_virt_base_msr{apic_base::get()},
     m_x2apic_init{false},
+    m_virt_base_msr{apic_base::get()},
     m_hve{hve}
 {
     if (!lapic::x2apic_supported()) {
         bfalert_info(
-            VIC_LOG_ALERT, "x2APIC not supported; aborting interrupt emulation"
+            VIC_LOG_ALERT, "x2APIC not supported; disabling interrupt emulation"
         );
         return;
     }
 
-    if (!get_platform_info()->efi.enabled) {
-        this->init_lapic();
-        if (!m_x2apic_init) {
-            return;
-        }
-
-        this->init_idt();
-        this->init_save_state();
-        this->init_interrupt_map();
-
-        this->add_cr8_handlers();
-        this->add_lapic_handlers();
-        this->add_external_interrupt_handlers();
+    if (get_platform_info()->efi.enabled) {
+        this->add_apic_base_handlers();
+        return;
     }
 
+    this->init_lapic();
+    if (!m_x2apic_init) {
+        return;
+    }
+
+    this->init_idt();
+    this->init_save_state();
+    this->init_interrupt_map();
+
+    this->add_cr8_handlers();
+    this->add_x2apic_handlers();
+    this->add_external_interrupt_handlers();
     this->add_apic_base_handlers();
 }
 
@@ -127,7 +154,7 @@ vic::init_lapic()
 
         case apic_base::state::xapic:
             bfalert_info(VIC_LOG_ALERT, "xAPIC state unsupported");
-            bfalert_info(VIC_LOG_ALERT, "aborting APIC virtualization");
+            bfalert_info(VIC_LOG_ALERT, "disabling APIC emulation");
             return;
 
         case apic_base::state::disabled:
@@ -177,22 +204,6 @@ vic::add_cr8_handlers()
     m_hve->add_wrcr8_handler(
         control_register::handler_delegate_t::create<vic,
         &vic::handle_wrcr8>(this));
-}
-
-void
-vic::add_lapic_handlers()
-{
-    const auto access = m_virt_lapic->access_type();
-    switch (access) {
-        case virt_lapic::access_t::msrs:
-            this->add_x2apic_handlers();
-            return;
-
-        default:
-            throw_vic_fatal(
-                "add_lapic_handler: unsupported access type",
-                static_cast<uint64_t>(access));
-    }
 }
 
 void
@@ -337,22 +348,47 @@ vic::handle_x2apic_eoi_write(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
     return true;
 }
 
+static inline void
+wait_until(const bool &done)
+{
+    while (1) {
+        if (done) {
+            return;
+        }
+        ::intel_x64::pause();
+    }
+}
+
 bool
 vic::handle_x2apic_icr_write(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
 {
-    /// TODO: poll a flag from the BSP to slow it down
     switch (lapic::icr::delivery_mode::get(info.val)) {
-        case lapic::icr::delivery_mode::init:
-        case lapic::icr::delivery_mode::sipi:
-            lapic::icr::dump(0, info.val);
-            break;
+        case lapic::icr::delivery_mode::init: {
+            /// We simply absorb INIT de-asserts. They don't cause an INIT
+            /// exit, and their only purpose is to reset the target(s)
+            /// arbitration IDs.
+            if (lapic::icr::level::is_disabled(info.val)) {
+                break;
+            }
 
+            m_virt_lapic->write_icr(info.val);
+            m_phys_lapic->write_icr(info.val);
+            wait_until(init_done);
+            init_done = false;
+            sipi_done = false;
+            break;
+        }
+        case lapic::icr::delivery_mode::sipi: {
+            m_virt_lapic->write_icr(info.val);
+            m_phys_lapic->write_icr(info.val);
+            wait_until(sipi_done);
+            break;
+        }
         default:
+            m_phys_lapic->write_icr(info.val);
+            m_virt_lapic->write_icr(info.val);
             break;
     }
-
-    m_virt_lapic->write_icr(info.val);
-    m_phys_lapic->write_icr(info.val);
 
     info.ignore_write = true;
     return true;
@@ -439,7 +475,7 @@ vic::handle_wrmsr_apic_base(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
         this->init_interrupt_map();
 
         this->add_cr8_handlers();
-        this->add_lapic_handlers();
+        this->add_x2apic_handlers();
         this->add_external_interrupt_handlers();
 
         m_x2apic_init = true;

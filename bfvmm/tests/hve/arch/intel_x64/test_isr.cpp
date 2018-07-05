@@ -20,7 +20,7 @@
 #include <intrinsics.h>
 
 #include <hve/arch/intel_x64/hve.h>
-#include <hve/arch/intel_x64/vic.h>
+#include <hve/arch/intel_x64/apic/vic.h>
 #include <hve/arch/intel_x64/isr.h>
 #include <support/arch/intel_x64/test_support.h>
 
@@ -30,11 +30,6 @@ namespace eapis
 {
 namespace intel_x64
 {
-
-namespace msrs_n = ::intel_x64::msrs;
-namespace lapic_n = ::intel_x64::lapic;
-namespace proc_ctls1 = vmcs_n::primary_processor_based_vm_execution_controls;
-namespace proc_ctls2 = vmcs_n::secondary_processor_based_vm_execution_controls;
 
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};

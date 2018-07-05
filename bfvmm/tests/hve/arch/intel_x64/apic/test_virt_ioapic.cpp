@@ -19,7 +19,8 @@
 
 #include <hve/arch/intel_x64/hve.h>
 #include <arch/intel_x64/apic/ioapic.h>
-#include <hve/arch/intel_x64/virt_ioapic.h>
+
+#include <hve/arch/intel_x64/apic/virt_ioapic.h>
 #include <support/arch/intel_x64/test_support.h>
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT

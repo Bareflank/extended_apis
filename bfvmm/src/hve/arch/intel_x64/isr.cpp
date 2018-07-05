@@ -18,7 +18,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <hve/arch/intel_x64/isr.h>
-#include <hve/arch/intel_x64/vic.h>
+#include <hve/arch/intel_x64/apic/vic.h>
 
 extern "C" EXPORT_SYM void
 default_isr(uint64_t vec, uint64_t *reg) noexcept

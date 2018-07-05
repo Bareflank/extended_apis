@@ -45,8 +45,7 @@ static constexpr uint64_t fixed_size = 0x100000U; // First 1MB
 /// Users don't need to care whether the range described by an
 /// instance of this is fixed, variable, or a combination of both
 ///
-struct range
-{
+struct range {
     /// contains
     ///
     /// @return true iff the address is in the range

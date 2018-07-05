@@ -65,16 +65,18 @@ eptp(memory_map &map)
 }
 
 void
-enable_ept(uint64_t eptp, gsl::not_null<eapis::intel_x64::hve *> hve)
+enable_ept(uint64_t eptp)
 {
     vmcs::ept_pointer::set(eptp);
     vmcs::secondary_processor_based_vm_execution_controls::enable_ept::enable();
-    hve->enable_vpid();
 }
 
 void
 disable_ept(void)
-{ vmcs::secondary_processor_based_vm_execution_controls::enable_ept::disable(); }
+{
+    vmcs::secondary_processor_based_vm_execution_controls::enable_ept::disable();
+    vmcs::ept_pointer::set(0);
+}
 
 //--------------------------------------------------------------------------
 // 1GB pages
@@ -392,12 +394,12 @@ map(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa)
     expects(align_4k(gpa_e - gpa_s) == (gpa_e - gpa_s));
     expects(align_4k(hpa) == hpa);
 
-    const auto base_range = [hpa] (const mtrr::range &range) {
+    const auto base_range = [hpa](const mtrr::range & range) {
         return range.contains(hpa);
     };
 
     const uint64_t nr_bytes = (gpa_e - gpa_s) + 0x1000U;
-    const auto last_range = [hpa, nr_bytes] (const mtrr::range &range) {
+    const auto last_range = [hpa, nr_bytes](const mtrr::range & range) {
         return range.contains(hpa + (nr_bytes - 1U));
     };
 
@@ -407,7 +409,7 @@ map(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa)
     const auto last = std::find_if(begin, end, last_range);
 
     if (GSL_UNLIKELY(base == end || last == end)) {
-        bfdebug_transaction(0, [&](std::string *msg) {
+        bfdebug_transaction(0, [&](std::string * msg) {
             bferror_info(0, "ept::map request out of range", msg);
             bferror_subnhex(0, "map hpa", hpa, msg);
             bferror_subnhex(0, "start gpa", gpa_s, msg);

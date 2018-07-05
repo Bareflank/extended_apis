@@ -16,7 +16,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfcapstone.h>
 #include <bfsupport.h>
 #include <bfthreadcontext.h>
 #include <arch/intel_x64/mtrr.h>
@@ -27,10 +26,32 @@
 #include <hve/arch/intel_x64/cpuid.h>
 #include <vcpu/arch/intel_x64/vcpu.h>
 
+bool init_done = false;
+bool sipi_done = false;
+
 namespace eapis
 {
 namespace intel_x64
 {
+
+void
+vcpu::enable_efi()
+{
+    if (m_emm == nullptr) {
+        m_emm = std::make_unique<eapis::intel_x64::ept::memory_map>();
+    }
+
+    if (m_vic == nullptr) {
+        m_vic = std::make_unique<eapis::intel_x64::vic>(m_hve.get());
+    }
+
+    this->add_efi_handlers();
+
+    ::vmcs_n::guest_ia32_perf_global_ctrl::reserved::set(0);
+    ept::identity_map(*m_emm.get(), 0, 0x900000000 - 0x1000);
+    ept::enable_ept(ept::eptp(*m_emm.get()));
+    m_hve->enable_vpid();
+}
 
 // -----------------------------------------------------------------------------
 // EFI Handlers
@@ -173,7 +194,8 @@ vcpu::efi_handle_wrcr0(gsl::not_null<vmcs_t *>, control_register::info_t &info)
                 ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::disable();
                 ::vmcs_n::guest_ia32_efer::lma::disable();
                 ::vmcs_n::guest_ia32_efer::lme::disable();
-            } else {
+            }
+            else {
                 ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::disable();
                 ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::enable();
                 ::vmcs_n::guest_ia32_efer::lma::enable();
@@ -205,8 +227,8 @@ vcpu::efi_handle_wrcr4(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &i
     bfignored(vmcs);
     info.shadow = info.val;
     info.val = set_bits(
-        info.val, ::intel_x64::msrs::ia32_vmx_cr4_fixed0::get(), ~0ULL
-    );
+                   info.val, ::intel_x64::msrs::ia32_vmx_cr4_fixed0::get(), ~0ULL
+               );
     return true;
 }
 
@@ -214,7 +236,9 @@ bool
 vcpu::efi_handle_init_signal(gsl::not_null<vmcs_t *> vmcs)
 {
     bfignored(vmcs);
+
     ::vmcs_n::guest_activity_state::set(::vmcs_n::guest_activity_state::wait_for_sipi);
+    init_done = true;
     return true;
 }
 
@@ -223,8 +247,8 @@ vcpu::efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs)
 {
     bfignored(vmcs);
 
-    if (m_sipi_count == 0) {
-        m_sipi_count++;
+    if (!sipi_done) {
+        sipi_done = true;
         return true;
     }
 
@@ -389,17 +413,8 @@ void vcpu::add_efi_handlers()
 
 vcpu::vcpu(vcpuid::type id) :
     bfvmm::intel_x64::vcpu{id},
-    m_emm{std::make_unique<eapis::intel_x64::ept::memory_map>()},
-    m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())},
-    m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get())}
-{
-    if (get_platform_info()->efi.enabled) {
-        this->add_efi_handlers();
-        ::vmcs_n::guest_ia32_perf_global_ctrl::reserved::set(0);
-        ept::identity_map(*m_emm.get(), 0, 0x900000000 - 0x1000);
-        ept::enable_ept(ept::eptp(*m_emm.get()), m_hve.get());
-    }
-}
+    m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())}
+{ }
 
 gsl::not_null<eapis::intel_x64::hve *> vcpu::hve()
 { return m_hve.get(); }

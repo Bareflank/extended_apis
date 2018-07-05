@@ -21,7 +21,8 @@
 
 #include <cstdint>
 #include <arch/intel_x64/apic/ioapic.h>
-#include "base.h"
+
+#include "../base.h"
 
 namespace eapis
 {

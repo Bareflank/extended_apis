@@ -19,7 +19,8 @@
 #include <arch/intel_x64/msrs.h>
 #include <arch/intel_x64/apic/lapic.h>
 #include <arch/intel_x64/apic/x2apic.h>
-#include <hve/arch/intel_x64/phys_x2apic.h>
+
+#include <hve/arch/intel_x64/apic/phys_x2apic.h>
 
 namespace eapis
 {
@@ -27,38 +28,6 @@ namespace intel_x64
 {
 
 namespace lapic = ::intel_x64::lapic;
-
-uintptr_t
-phys_x2apic::base()
-{ return 0U; }
-
-void
-phys_x2apic::relocate(uintptr_t base)
-{ bfignored(base); }
-
-/// Note the following registers are read-only or dont exist:
-/// ID, Version, IRR, ISR, TMR, PPR, LDR, DFR, Current count
-void
-phys_x2apic::reset_from_init()
-{
-    using namespace lapic;
-
-    ::intel_x64::cr8::set(0xF);
-    ::intel_x64::msrs::ia32_x2apic_icr::set(0);
-    ::intel_x64::msrs::ia32_x2apic_tpr::set(0);
-    ::intel_x64::msrs::ia32_x2apic_init_count::set(0);
-    ::intel_x64::msrs::ia32_x2apic_dcr::set(0);
-    ::intel_x64::msrs::ia32_x2apic_esr::set(0);
-    ::intel_x64::msrs::ia32_x2apic_lvt_cmci::set(lvt::reset_value);
-    ::intel_x64::msrs::ia32_x2apic_lvt_timer::set(lvt::reset_value);
-    ::intel_x64::msrs::ia32_x2apic_lvt_thermal::set(lvt::reset_value);
-    ::intel_x64::msrs::ia32_x2apic_lvt_pmi::set(lvt::reset_value);
-    ::intel_x64::msrs::ia32_x2apic_lvt_lint0::set(lvt::reset_value);
-    ::intel_x64::msrs::ia32_x2apic_lvt_lint1::set(lvt::reset_value);
-    ::intel_x64::msrs::ia32_x2apic_lvt_error::set(lvt::reset_value);
-    ::intel_x64::msrs::ia32_x2apic_sivr::set(svr::reset_value);
-    ::intel_x64::cr8::set(0);
-}
 
 void
 phys_x2apic::enable_interrupts()
@@ -110,7 +79,7 @@ phys_x2apic::read_icr() const
 
 void
 phys_x2apic::write_eoi()
-{ ::intel_x64::msrs::ia32_x2apic_eoi::set(0x0ULL); }
+{ ::intel_x64::msrs::ia32_x2apic_eoi::set(0U); }
 
 void
 phys_x2apic::write_tpr(uint64_t tpr)

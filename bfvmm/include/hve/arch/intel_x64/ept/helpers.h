@@ -75,15 +75,14 @@ uintptr_t align_4k(uintptr_t addr);
 ///
 uint64_t eptp(memory_map &mem_map);
 
-/// Enable EPT (and VPID if it is not enabled) using the given pointers
+/// Enable EPT using the given pointers
 ///
 /// @expects
 /// @ensures
 ///
 /// @param eptp the VMCS EPT pointer value to enable EPT with
-/// @param hve address of this vCPU's hve object
 ///
-void enable_ept(uint64_t eptp, gsl::not_null<eapis::intel_x64::hve *> hve);
+void enable_ept(uint64_t eptp);
 
 /// Disable EPT
 ///
@@ -415,7 +414,7 @@ void identity_map_bestfit_hi(ept::memory_map &mem_map, gpa_t gpa_s,
 /// @param mattr page table entry memory attributes to be applied to the mapping
 ///
 void map_bestfit_2m(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
-        hpa_t hpa, memory_attr_t mattr = epte::memory_attr::wb_pt);
+                    hpa_t hpa, memory_attr_t mattr = epte::memory_attr::wb_pt);
 
 /// Map the range of guest physical addresses from gpa_s to gpa_e
 /// (inclusive) to hpa using as few pages as possible up to a maximum 1GB
@@ -431,7 +430,7 @@ void map_bestfit_2m(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
 /// @param mattr page table entry memory attributes to be applied to the mapping
 ///
 void map_bestfit_1g(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
-        hpa_t hpa, memory_attr_t mattr = epte::memory_attr::wb_pt);
+                    hpa_t hpa, memory_attr_t mattr = epte::memory_attr::wb_pt);
 
 /// Map the range of guest physical addresses from gpa_s to gpa_e
 /// (inclusive) using as few pages as possible up to the platform's largest
@@ -447,7 +446,7 @@ void map_bestfit_1g(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
 /// @param mattr page table entry memory attributes to be applied to the mapping
 ///
 void map_bestfit(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
-        hpa_t hpa, memory_attr_t mattr = epte::memory_attr::wb_pt);
+                 hpa_t hpa, memory_attr_t mattr = epte::memory_attr::wb_pt);
 
 //--------------------------------------------------------------------------
 // High-level
@@ -457,7 +456,7 @@ void map_bestfit(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
 /// using the largest page size supported by the platform and memory types that
 /// are consistent with the platform's MTRRs.
 ///
-/// @expects 
+/// @expects
 /// @ensures
 ///
 /// @param mem_map the memory map to be modified
@@ -471,7 +470,7 @@ void map(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa);
 /// (inclusive) using the largest page size supported by the platform and memory
 /// types that are consistent with the platform's MTRRs.
 ///
-/// @expects 
+/// @expects
 /// @ensures
 ///
 /// @param mem_map the memory map to be modified

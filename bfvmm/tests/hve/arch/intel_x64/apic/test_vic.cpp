@@ -23,7 +23,7 @@
 #include <bfcapstone.h>
 
 #include <hve/arch/intel_x64/hve.h>
-#include <hve/arch/intel_x64/vic.h>
+#include <hve/arch/intel_x64/apic/vic.h>
 #include <arch/intel_x64/apic/lapic.h>
 #include <support/arch/intel_x64/test_support.h>
 
@@ -33,6 +33,8 @@ namespace eapis
 {
 namespace intel_x64
 {
+
+namespace proc_ctls1 = vmcs_n::primary_processor_based_vm_execution_controls;
 
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};

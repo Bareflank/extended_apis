@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <arch/intel_x64/apic/ioapic.h>
-#include <hve/arch/intel_x64/phys_ioapic.h>
+#include <hve/arch/intel_x64/apic/phys_ioapic.h>
 
 namespace eapis
 {

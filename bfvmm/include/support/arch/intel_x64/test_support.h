@@ -35,8 +35,6 @@ namespace lapic_n = ::intel_x64::lapic;
 namespace cpuid_n = ::intel_x64::cpuid;
 namespace pin_ctls = vmcs_n::pin_based_vm_execution_controls;
 namespace exit_ctls = vmcs_n::vm_exit_controls;
-namespace proc_ctls1 = vmcs_n::primary_processor_based_vm_execution_controls;
-namespace proc_ctls2 = vmcs_n::secondary_processor_based_vm_execution_controls;
 
 namespace intel_x64
 {
@@ -52,6 +50,17 @@ std::unique_ptr<uint32_t[]> g_vmcs_region;
 std::unique_ptr<eapis::intel_x64::ept::memory_map> g_emap;
 
 struct platform_info_t g_platform_info;
+
+extern "C" uint64_t
+_bsr(uint64_t value) noexcept
+{
+    for (size_t i = 63U; i >= 0U; --i) {
+        if (((1ULL << i) & value) != 0U) {
+            return i;
+        }
+    }
+    return ~0ULL;
+}
 
 extern "C" uint64_t
 _bsf(uint64_t value) noexcept
