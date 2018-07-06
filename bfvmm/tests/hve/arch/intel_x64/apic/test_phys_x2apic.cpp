@@ -33,20 +33,6 @@ namespace intel_x64
 namespace msrs = ::intel_x64::msrs;
 namespace lapic = ::intel_x64::lapic;
 
-/// The 'base' field is only defined in xAPIC mode;
-/// in x2APIC we just return 0
-TEST_CASE("phys_x2apic: base")
-{
-    auto apic = phys_x2apic();
-    CHECK(apic.base() == 0U);
-}
-
-TEST_CASE("phys_x2apic: relocate")
-{
-    auto apic = phys_x2apic();
-    CHECK_NOTHROW(apic.relocate(0xCAFEBABEU));
-}
-
 TEST_CASE("phys_x2apic: interrupts")
 {
     auto apic = phys_x2apic();

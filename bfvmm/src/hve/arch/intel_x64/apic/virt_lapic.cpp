@@ -33,23 +33,25 @@ namespace intel_x64
 using namespace ::intel_x64::msrs;
 namespace lapic = ::intel_x64::lapic;
 
+static uintptr_t align_4k(uintptr_t addr)
+{ return (addr & ~0xFFFULL); }
+
 ///----------------------------------------------------------------------------
 /// Initialization
 ///----------------------------------------------------------------------------
 
 virt_lapic::virt_lapic(
     gsl::not_null<eapis::intel_x64::hve *> hve,
+    uint8_t *reg,
     eapis::intel_x64::phys_x2apic *phys
 ) :
     m_hve{hve}
 {
-    static bool need_lapic_init = true;
-    if (need_lapic_init) {
-        lapic::init_attributes();
-        need_lapic_init = false;
-    }
+    expects(reg != nullptr);
+    m_reg = reinterpret_cast<uintptr_t>(reg);
+    expects(m_reg == align_4k(m_reg));
 
-    m_reg = std::make_unique<gsl::byte[]>(s_reg_bytes);
+    lapic::init_attributes();
     this->init_interrupt_window_handler();
     this->init_registers_from_phys_x2apic(phys);
 }
@@ -59,15 +61,11 @@ virt_lapic::init_registers_from_phys_x2apic(
     eapis::intel_x64::phys_x2apic *phys)
 {
     for (const auto i : lapic::offset::list) {
-        if (lapic::exists_in_x2apic(i)) {
-            if (lapic::readable_in_x2apic(i)) {
-                this->write_register(i, phys->read_register(i));
-                continue;
-            }
-            this->reset_register(i);
+        if (lapic::readable_in_x2apic(i)) {
+            this->write_register(i, phys->read_register(i));
             continue;
         }
-        this->clear_register(i);
+        this->reset_register(i);
     }
 }
 
@@ -87,9 +85,7 @@ virt_lapic::init_interrupt_window_handler()
 uint64_t
 virt_lapic::read_register(lapic::offset_t offset) const
 {
-    const uintptr_t base = reinterpret_cast<uintptr_t>(m_reg.get());
-    const uintptr_t addr = lapic::offset::to_mem_addr(offset, base);
-
+    const uintptr_t addr = lapic::offset::to_mem_addr(offset, m_reg);
     return *reinterpret_cast<uint32_t *>(addr);
 }
 
@@ -125,9 +121,7 @@ virt_lapic::read_svr() const
 void
 virt_lapic::write_register(lapic::offset_t offset, uint64_t val)
 {
-    const uintptr_t base = reinterpret_cast<uintptr_t>(m_reg.get());
-    const uintptr_t addr = lapic::offset::to_mem_addr(offset, base);
-
+    const uintptr_t addr = lapic::offset::to_mem_addr(offset, m_reg);
     *reinterpret_cast<uint32_t *>(addr) = gsl::narrow_cast<uint32_t>(val);
 }
 
@@ -322,14 +316,6 @@ virt_lapic::handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs)
 /// Reset logic
 ///----------------------------------------------------------------------------
 
-void
-virt_lapic::reset_registers()
-{
-    for (const auto i : lapic::offset::list) {
-        this->reset_register(i);
-    }
-}
-
 ///
 /// See Table 10-7 in the SDM for reference to the version reset value
 ///
@@ -384,6 +370,7 @@ virt_lapic::reset_register(lapic::offset_t offset)
 
         case lapic::offset::dfr:
             this->write_register(offset, 0xFFFFFFFF);
+            break;
 
         default:
             this->clear_register(offset);

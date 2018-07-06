@@ -196,7 +196,7 @@ inline uint32_t *reg32_addr(const save_state_t *state, const cs_x86_op *op)
 
         default:
             throw std::invalid_argument(
-            "write32_reg: invalid width " + std::to_string(reg.width));
+                "write32_reg: invalid width " + std::to_string(reg.width));
     }
 
 }

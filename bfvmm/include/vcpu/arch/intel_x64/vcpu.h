@@ -34,7 +34,7 @@ namespace intel_x64
 ///
 /// Manages the lifetime of the exit handlers created upon construction.
 /// This class serves as the root from which all other resources may be
-/// accesses, e.g. the vmcs and exit_handler.
+/// accessed, e.g. the vmcs and exit_handler.
 ///
 class vcpu : public bfvmm::intel_x64::vcpu
 {

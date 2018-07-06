@@ -44,10 +44,12 @@ public:
     /// @ensures
     ///
     /// @param hve the hve object of the virt_lapic
+    /// @param reg the register page for this virt lapic
     /// @param phys the phys_x2apic object for this physical core
     ///
     virt_lapic(
         gsl::not_null<eapis::intel_x64::hve *> hve,
+        uint8_t *reg,
         eapis::intel_x64::phys_x2apic *phys
     );
 
@@ -147,7 +149,6 @@ private:
 
     void reset_svr();
     void reset_version();
-    void reset_registers();
     void reset_register(::intel_x64::lapic::offset_t offset);
     void reset_lvt_register(::intel_x64::lapic::offset_t offset);
     void clear_register(::intel_x64::lapic::offset_t offset);
@@ -165,7 +166,7 @@ private:
     uint64_t top_256bit(uint64_t last);
 
     eapis::intel_x64::hve *m_hve;
-    std::unique_ptr<gsl::byte[]> m_reg;
+    uintptr_t m_reg;
     std::bitset<256> m_irr;
     std::bitset<256> m_isr;
 

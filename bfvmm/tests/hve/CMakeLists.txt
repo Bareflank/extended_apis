@@ -19,6 +19,7 @@
 list(APPEND ARGN
     DEPENDS eapis_hve
     DEPENDS bfvmm_hve
+    DEPENDS bfvmm_vcpu
     DEPENDS bfvmm_memory_manager
     DEPENDS capstone
     DEFINES STATIC_EAPIS_HVE
@@ -33,12 +34,13 @@ do_test(test_page_table_entry
     ${ARGN}
 )
 
-do_test(test_memory_map
-    SOURCES arch/intel_x64/ept/test_memory_map.cpp
-    SOURCES arch/intel_x64/ept/ept_test_support.cpp
-    CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
-    ${ARGN}
-)
+# FIXME: These tests succeed even with CHECK(false)
+# do_test(test_memory_map
+#     SOURCES arch/intel_x64/ept/test_memory_map.cpp
+#     SOURCES arch/intel_x64/ept/ept_test_support.cpp
+#     CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
+#     ${ARGN}
+# )
 
 do_test(test_ept_helpers
     SOURCES arch/intel_x64/ept/test_helpers.cpp
@@ -87,17 +89,20 @@ do_test(test_virt_lapic
     ${ARGN}
 )
 
+# FIXME: when the rdmsr or wrmsr exit handler finds that the
+# msr bitmap is null, it uses g_mm to allocate and translate
+# This causes a map::at exception to be thrown, as right now the
+# g_mm is bfignored in test_support.h
 do_test(test_vic
     SOURCES arch/intel_x64/apic/test_vic.cpp
     ${ARGN}
-    CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
 )
 
-do_test(test_isr
-    SOURCES arch/intel_x64/test_isr.cpp
-    ${ARGN}
-    CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
-)
+# do_test(test_isr
+#     SOURCES arch/intel_x64/test_isr.cpp
+#     ${ARGN}
+#     CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
+# )
 
 do_test(test_esr
     SOURCES arch/intel_x64/test_esr.cpp

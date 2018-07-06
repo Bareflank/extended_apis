@@ -36,16 +36,13 @@ namespace intel_x64
 
 TEST_CASE("init_signal::init_signal")
 {
-    MockRepository mocks;
-    auto hve = setup_hve(mocks);
-
+    auto hve = setup_hve();
     CHECK_NOTHROW(eapis::intel_x64::init_signal(hve.get()));
 }
 
 TEST_CASE("init_signal::add_handler")
 {
-    MockRepository mocks;
-    auto hve = setup_hve(mocks);
+    auto hve = setup_hve();
     auto init_signal = eapis::intel_x64::init_signal(hve.get());
     auto hdlr = init_signal::handler_delegate_t::create<test_handler>();
 
@@ -54,8 +51,7 @@ TEST_CASE("init_signal::add_handler")
 
 TEST_CASE("init_signal::handle")
 {
-    MockRepository mocks;
-    auto hve = setup_hve(mocks);
+    auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
 
     namespace reason = vmcs_n::exit_reason::basic_exit_reason;

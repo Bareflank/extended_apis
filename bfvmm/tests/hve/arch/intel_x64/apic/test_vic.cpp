@@ -20,7 +20,8 @@
 #include <algorithm>
 #include <intrinsics.h>
 
-#include <bfcapstone.h>
+#include <bfsupport.h>
+#include <bfvmm/memory_manager/memory_manager.h>
 
 #include <hve/arch/intel_x64/hve.h>
 #include <hve/arch/intel_x64/apic/vic.h>
@@ -29,18 +30,19 @@
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
 
+using namespace msrs_n::ia32_apic_base;
+namespace proc_ctls1 = vmcs_n::primary_processor_based_vm_execution_controls;
+
 namespace eapis
 {
 namespace intel_x64
 {
 
-namespace proc_ctls1 = vmcs_n::primary_processor_based_vm_execution_controls;
-
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};
 std::unique_ptr<eapis::intel_x64::ept::memory_map> g_emap{nullptr};
 
-std::list<std::function<void(void)>> window_closers = {
+std::array<std::function<void(void)>, 3> window_closers = {
     []() { ::x64::rflags::interrupt_enable_flag::disable(); },
     []() { vmcs_n::guest_interruptibility_state::blocking_by_sti::enable(); },
     []() { vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::enable(); }
@@ -65,6 +67,16 @@ setup_external_interrupt_exit(uint64_t vector)
     g_vmcs_fields[info::addr] = vec;
 }
 
+static auto
+setup_mm(MockRepository &mocks)
+{
+    auto mm = mocks.Mock<bfvmm::memory_manager>();
+    mocks.OnCallFunc(bfvmm::memory_manager::instance).Return(mm);
+    mocks.OnCall(mm, bfvmm::memory_manager::virtptr_to_physint).Return(0xCAFE000);
+
+    return mm;
+}
+
 static bool
 handle_external_interrupt_stub(
     gsl::not_null<vmcs_t *> vmcs,
@@ -76,47 +88,99 @@ handle_external_interrupt_stub(
     return true;
 }
 
-TEST_CASE("vic: constructor")
+TEST_CASE("vic: lapic not present")
 {
-    using namespace msrs_n::ia32_apic_base;
-
     auto hve = setup_hve();
-    auto emm = setup_ept();
-
+    get_platform_info()->efi.enabled = false;
     disable_lapic();
-    CHECK(!lapic_n::is_present());
-    CHECK_THROWS(eapis::intel_x64::vic(hve.get(), emm));
 
+    CHECK(!lapic_n::is_present());
+    CHECK_THROWS(eapis::intel_x64::vic(hve.get()));
+}
+
+TEST_CASE("vic: x2apic not supported")
+{
+    auto hve = setup_hve();
+    get_platform_info()->efi.enabled = false;
     enable_lapic();
     disable_x2apic();
+
     CHECK(lapic_n::is_present());
     CHECK(!lapic_n::x2apic_supported());
-    CHECK_THROWS(eapis::intel_x64::vic(hve.get(), emm));
+    CHECK_THROWS(eapis::intel_x64::vic(hve.get()));
+}
 
+TEST_CASE("vic: xapic mode")
+{
+    auto hve = setup_hve();
+    get_platform_info()->efi.enabled = false;
+    enable_lapic();
     enable_x2apic();
+
     msrs_n::ia32_apic_base::state::enable_xapic();
     CHECK(lapic_n::x2apic_supported());
     CHECK(state::get() == state::xapic);
-    CHECK_NOTHROW(eapis::intel_x64::vic(hve.get(), emm));
+    CHECK_NOTHROW(eapis::intel_x64::vic(hve.get()));
+}
+
+TEST_CASE("vic: lapic disabled")
+{
+    auto hve = setup_hve();
+    get_platform_info()->efi.enabled = false;
+    enable_lapic();
+    enable_x2apic();
 
     msrs_n::ia32_apic_base::state::disable();
     CHECK(state::get() == state::disabled);
-    CHECK_THROWS(eapis::intel_x64::vic(hve.get(), emm));
+    CHECK_THROWS(eapis::intel_x64::vic(hve.get()));
+}
+
+TEST_CASE("vic: lapic invalid")
+{
+    auto hve = setup_hve();
+    get_platform_info()->efi.enabled = false;
+    enable_lapic();
+    enable_x2apic();
 
     msrs_n::ia32_apic_base::state::set(msrs_n::ia32_apic_base::state::invalid);
     CHECK(state::get() == state::invalid);
-    CHECK_THROWS(eapis::intel_x64::vic(hve.get(), emm));
+    CHECK_THROWS(eapis::intel_x64::vic(hve.get()));
+}
 
-    msrs_n::ia32_apic_base::state::enable_x2apic();
+TEST_CASE("vic: success with no efi")
+{
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
+    auto hve = setup_hve();
+    get_platform_info()->efi.enabled = false;
+    setup_x2apic();
+
     CHECK(state::get() == state::x2apic);
-    CHECK_NOTHROW(eapis::intel_x64::vic(hve.get(), emm));
+    CHECK_NOTHROW(eapis::intel_x64::vic(hve.get()));
+}
+
+TEST_CASE("vic: success with efi")
+{
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
+    auto hve = setup_hve();
+    get_platform_info()->efi.enabled = true;
+    setup_x2apic();
+
+    CHECK(lapic_n::x2apic_supported());
+    CHECK(state::get() == state::x2apic);
+    CHECK_NOTHROW(eapis::intel_x64::vic(hve.get()));
 }
 
 TEST_CASE("vic: destructor")
 {
     {
+        MockRepository mocks;
+        get_platform_info()->efi.enabled = false;
+        auto mm = setup_mm(mocks);
         auto hve = setup_hve();
-        auto vic = setup_vic_x2apic(hve.get());
+        auto vic = setup_vic(hve.get());
+
         ::intel_x64::cr8::set(0U);
         CHECK(::intel_x64::cr8::get() == 0U);
     }
@@ -126,8 +190,10 @@ TEST_CASE("vic: destructor")
 
 TEST_CASE("vic: post x2apic init")
 {
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
 
     CHECK(lapic_n::is_present());
     CHECK(lapic_n::x2apic_supported());
@@ -138,8 +204,10 @@ TEST_CASE("vic: post x2apic init")
 
 TEST_CASE("vic: map n-to-1")
 {
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
     const auto virt = 42U;
 
     for (auto phys = 32U; phys < 256U; ++phys) {
@@ -159,8 +227,10 @@ TEST_CASE("vic: map n-to-1")
 
 TEST_CASE("vic: map identity")
 {
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
 
     for (auto i = 32U; i < 256U; ++i) {
         vic.map(i, i);
@@ -184,10 +254,12 @@ TEST_CASE("vic: map identity")
 
 TEST_CASE("vic: virt_to_phys")
 {
-    // When the vic in constructed, an identity map is setup from
+    // When the vic is constructed, an identity map is setup from
     // phys to virt vectors
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
     auto phys = 32U;
     auto virt = 56U;
 
@@ -201,42 +273,12 @@ TEST_CASE("vic: virt_to_phys")
     CHECK(vic.virt_to_phys(virt + 1U) == virt + 1U);
 }
 
-TEST_CASE("vic: ipi - window closed")
-{
-    auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
-    auto vec = 200U;
-
-    for (const auto &close_window : window_closers) {
-        close_window();
-
-        CHECK_NOTHROW(vic.send_phys_ipi(vec));
-        CHECK_NOTHROW(vic.send_virt_ipi(vec++));
-        CHECK(vmcs_n::vm_entry_interruption_information::valid_bit::is_disabled());
-
-        open_interrupt_window();
-    }
-}
-
-TEST_CASE("vic: ipi - window open")
-{
-    auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
-
-    open_interrupt_window();
-
-    for (auto i = 32U; i < 256U; ++i) {
-        CHECK_NOTHROW(vic.send_phys_ipi(i));
-        CHECK_NOTHROW(vic.send_virt_ipi(i));
-        CHECK(vmcs_n::vm_entry_interruption_information::vector::get() == i);
-        CHECK(vmcs_n::vm_entry_interruption_information::valid_bit::is_enabled());
-    }
-}
-
 TEST_CASE("vic: handle_interrupt - window closed")
 {
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
     auto phys = 32U;
 
     vmcs_n::vm_entry_interruption_information::valid_bit::disable();
@@ -255,8 +297,10 @@ TEST_CASE("vic: handle_interrupt - window closed")
 
 TEST_CASE("vic: handle_interrupt - window open")
 {
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
 
     vmcs_n::vm_entry_interruption_information::valid_bit::disable();
     open_interrupt_window();
@@ -275,36 +319,53 @@ TEST_CASE("vic: handle_spurious_interrupt_exit - window closed")
 {
     namespace entry_intr_info = vmcs_n::vm_entry_interruption_information;
 
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
+    get_platform_info()->efi.enabled = false;
+
     const auto spur = 0xFFU;
     msrs_n::ia32_x2apic_sivr::vector::set(spur);
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
 
     g_msrs[msrs_n::ia32_x2apic_eoi::addr] = 0xCAFEBABEU;
     setup_external_interrupt_exit(spur);
-    entry_intr_info::valid_bit::disable();
+    vmcs_n::vm_entry_interruption_information::valid_bit::disable();
 
-    for (const auto &close_window : window_closers) {
-        close_window();
+    window_closers[0]();
+    vmcs_n::guest_rflags::interrupt_enable_flag::disable();
+    ehlr->handle(ehlr);
+    CHECK(g_msrs[msrs_n::ia32_x2apic_eoi::addr] == 0xCAFEBABEU);
+    CHECK(vmcs_n::vm_entry_interruption_information::valid_bit::is_disabled());
+    open_interrupt_window();
 
-        ehlr->handle(ehlr);
-        CHECK(g_msrs[msrs_n::ia32_x2apic_eoi::addr] == 0xCAFEBABEU);
-        CHECK(entry_intr_info::valid_bit::is_disabled());
+    window_closers[1]();
+    vmcs_n::guest_rflags::interrupt_enable_flag::disable();
+    ehlr->handle(ehlr);
+    CHECK(g_msrs[msrs_n::ia32_x2apic_eoi::addr] == 0xCAFEBABEU);
+    CHECK(vmcs_n::vm_entry_interruption_information::valid_bit::is_disabled());
+    open_interrupt_window();
 
-        open_interrupt_window();
-    }
+    window_closers[2]();
+    vmcs_n::guest_rflags::interrupt_enable_flag::disable();
+    ehlr->handle(ehlr);
+    CHECK(g_msrs[msrs_n::ia32_x2apic_eoi::addr] == 0xCAFEBABEU);
+    CHECK(vmcs_n::vm_entry_interruption_information::valid_bit::is_disabled());
+    open_interrupt_window();
 }
 
 TEST_CASE("vic: handle_spurious_interrupt_exit - window open")
 {
     namespace entry_intr_info = vmcs_n::vm_entry_interruption_information;
 
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
     const auto spur = 0xFFU;
     msrs_n::ia32_x2apic_sivr::vector::set(spur);
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
 
     g_msrs[msrs_n::ia32_x2apic_eoi::addr] = 0xCAFEBABEU;
     setup_external_interrupt_exit(spur);
@@ -319,8 +380,10 @@ TEST_CASE("vic: handle_spurious_interrupt_exit - window open")
 
 TEST_CASE("vic: add_interrupt_handler")
 {
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
 
     CHECK_THROWS(vic.add_interrupt_handler(
                      0xDEADBEEFU,
@@ -332,10 +395,12 @@ TEST_CASE("vic: handle_interrupt_from_exit - window closed")
 {
     namespace entry_intr_info = vmcs_n::vm_entry_interruption_information;
 
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
     msrs_n::ia32_x2apic_sivr::vector::set(0U);
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
 
     entry_intr_info::valid_bit::disable();
     close_interrupt_window();
@@ -355,10 +420,12 @@ TEST_CASE("vic: handle_interrupt_from_exit - window open")
 {
     namespace entry_intr_info = vmcs_n::vm_entry_interruption_information;
 
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
     msrs_n::ia32_x2apic_sivr::vector::set(0U);
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
 
     entry_intr_info::valid_bit::disable();
     open_interrupt_window();
@@ -378,9 +445,11 @@ TEST_CASE("vic: handle_external_interrupt_exit - invalid vector")
 {
     namespace entry_intr_info = vmcs_n::vm_entry_interruption_information;
 
+    MockRepository mocks;
+    auto mm = setup_mm(mocks);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
 
     entry_intr_info::valid_bit::disable();
     setup_external_interrupt_exit(0x10U);
@@ -391,85 +460,97 @@ TEST_CASE("vic: handle_external_interrupt_exit - invalid vector")
     CHECK(entry_intr_info::valid_bit::is_disabled());
 }
 
-TEST_CASE("vic: handle_rdmsr_apic_base")
-{
-    auto hve = setup_hve();
-    auto ehlr = hve->exit_handler();
-    auto vic = setup_vic_x2apic(hve.get());
+//TEST_CASE("vic: handle_rdmsr_apic_base")
+//{
+//    MockRepository mocks;
+//    auto mm = setup_mm(mocks);
+//    auto hve = setup_hve();
+//    auto ehlr = hve->exit_handler();
+//    auto vic = setup_vic(hve.get());
+//
+//    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::rdmsr;
+//    g_save_state.rcx = msrs_n::ia32_apic_base::addr;
+//    CHECK_NOTHROW(ehlr->handle(ehlr));
+//}
 
-    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::rdmsr;
-    g_save_state.rcx = msrs_n::ia32_apic_base::addr;
-    CHECK_NOTHROW(ehlr->handle(ehlr));
-}
+//TEST_CASE("vic: handle_wrmsr_apic_base")
+//{
+//    MockRepository mocks;
+//    auto mm = setup_mm(mocks);
+//    auto hve = setup_hve();
+//    auto ehlr = hve->exit_handler();
+//    auto vic = setup_vic(hve.get());
+//
+//    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::wrmsr;
+//    g_save_state.rcx = msrs_n::ia32_apic_base::addr;
+//    CHECK_NOTHROW(ehlr->handle(ehlr));
+//}
 
-TEST_CASE("vic: handle_wrmsr_apic_base")
-{
-    auto hve = setup_hve();
-    auto ehlr = hve->exit_handler();
-    auto vic = setup_vic_x2apic(hve.get());
-
-    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::wrmsr;
-    g_save_state.rcx = msrs_n::ia32_apic_base::addr;
-    CHECK_NOTHROW(ehlr->handle(ehlr));
-}
-
-TEST_CASE("vic: handle_rdcr8")
-{
-    using namespace vmcs_n::exit_qualification::control_register_access;
-
-    auto hve = setup_hve();
-    auto ehlr = hve->exit_handler();
-    auto vic = setup_vic_x2apic(hve.get());
-
-    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::control_register_accesses;
-    g_vmcs_fields[vmcs_n::exit_qualification::addr] = (access_type::mov_from_cr << access_type::from);
-    CHECK_NOTHROW(ehlr->handle(ehlr));
-}
-
-TEST_CASE("vic: handle_wrcr8")
-{
-    using namespace vmcs_n::exit_qualification::control_register_access;
-
-    auto hve = setup_hve();
-    auto ehlr = hve->exit_handler();
-    auto vic = setup_vic_x2apic(hve.get());
-
-    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::control_register_accesses;
-    g_vmcs_fields[vmcs_n::exit_qualification::addr] = (access_type::mov_to_cr << access_type::from);
-    CHECK_NOTHROW(ehlr->handle(ehlr));
-}
-
-TEST_CASE("vic: handle_x2apic_read")
-{
-    auto hve = setup_hve();
-    auto ehlr = hve->exit_handler();
-    auto vic = setup_vic_x2apic(hve.get());
-
-    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::rdmsr;
-    for (auto i = 0U; i < ::intel_x64::lapic::count; ++i) {
-        auto addr = ::intel_x64::lapic::offset::to_msr_addr(i);
-        if (::intel_x64::lapic::x2apic_readable::is_enabled(addr)) {
-            g_save_state.rcx = addr;
-            CHECK_NOTHROW(ehlr->handle(ehlr));
-        }
-    }
-}
-
-TEST_CASE("vic: handle_x2apic_write")
-{
-    auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
-    auto ehlr = hve->exit_handler();
-
-    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::wrmsr;
-    for (auto i = 0U; i < ::intel_x64::lapic::count; ++i) {
-        auto addr = ::intel_x64::lapic::offset::to_msr_addr(i);
-        if (::intel_x64::lapic::x2apic_writable::is_enabled(addr)) {
-            g_save_state.rcx = addr;
-            CHECK_NOTHROW(ehlr->handle(ehlr));
-        }
-    }
-}
+//TEST_CASE("vic: handle_rdcr8")
+//{
+//    using namespace vmcs_n::exit_qualification::control_register_access;
+//
+//    MockRepository mocks;
+//    auto mm = setup_mm(mocks);
+//    auto hve = setup_hve();
+//    auto ehlr = hve->exit_handler();
+//    auto vic = setup_vic(hve.get());
+//
+//    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::control_register_accesses;
+//    g_vmcs_fields[vmcs_n::exit_qualification::addr] = (access_type::mov_from_cr << access_type::from);
+//    CHECK_NOTHROW(ehlr->handle(ehlr));
+//}
+//
+//TEST_CASE("vic: handle_wrcr8")
+//{
+//    using namespace vmcs_n::exit_qualification::control_register_access;
+//
+//    MockRepository mocks;
+//    auto mm = setup_mm(mocks);
+//    auto hve = setup_hve();
+//    auto ehlr = hve->exit_handler();
+//    auto vic = setup_vic(hve.get());
+//
+//    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::control_register_accesses;
+//    g_vmcs_fields[vmcs_n::exit_qualification::addr] = (access_type::mov_to_cr << access_type::from);
+//    CHECK_NOTHROW(ehlr->handle(ehlr));
+//}
+//
+//TEST_CASE("vic: handle_x2apic_read")
+//{
+//    MockRepository mocks;
+//    auto mm = setup_mm(mocks);
+//    auto hve = setup_hve();
+//    auto ehlr = hve->exit_handler();
+//    auto vic = setup_vic(hve.get());
+//
+//    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::rdmsr;
+//    for (const auto i : ::intel_x64::lapic::offset::list) {
+//        auto addr = ::intel_x64::lapic::offset::to_msr_addr(i);
+//        if (::intel_x64::lapic::x2apic_readable::is_enabled(i)) {
+//            g_save_state.rcx = addr;
+//            CHECK_NOTHROW(ehlr->handle(ehlr));
+//        }
+//    }
+//}
+//
+//TEST_CASE("vic: handle_x2apic_write")
+//{
+//    MockRepository mocks;
+//    auto mm = setup_mm(mocks);
+//    auto hve = setup_hve();
+//    auto vic = setup_vic(hve.get());
+//    auto ehlr = hve->exit_handler();
+//
+//    g_vmcs_fields[vmcs_n::exit_reason::addr] = vmcs_n::exit_reason::basic_exit_reason::wrmsr;
+//    for (const auto i : ::intel_x64::lapic::offset::list) {
+//        auto addr = ::intel_x64::lapic::offset::to_msr_addr(i);
+//        if (::intel_x64::lapic::x2apic_writable::is_enabled(i)) {
+//            g_save_state.rcx = addr;
+//            CHECK_NOTHROW(ehlr->handle(ehlr));
+//        }
+//    }
+//}
 
 }
 }

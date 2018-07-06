@@ -26,8 +26,9 @@
 #include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
 #include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
 #include <bfvmm/test/support.h>
+
 #include "../../../hve/arch/intel_x64/hve.h"
-#include "../../../hve/arch/intel_x64/vic.h"
+#include "../../../hve/arch/intel_x64/apic/vic.h"
 #include "../../../hve/arch/intel_x64/ept/memory_map.h"
 
 namespace msrs_n = ::intel_x64::msrs;
@@ -36,20 +37,16 @@ namespace cpuid_n = ::intel_x64::cpuid;
 namespace pin_ctls = vmcs_n::pin_based_vm_execution_controls;
 namespace exit_ctls = vmcs_n::vm_exit_controls;
 
-namespace intel_x64
-{
-namespace lapic
-{
-std::array<attr_t, count> attributes;
-}
-}
-
 ::intel_x64::vmcs::value_type g_vcpuid{0U};
 
 std::unique_ptr<uint32_t[]> g_vmcs_region;
 std::unique_ptr<eapis::intel_x64::ept::memory_map> g_emap;
 
 struct platform_info_t g_platform_info;
+
+extern "C" void
+_pause(void) noexcept
+{ }
 
 extern "C" uint64_t
 _bsr(uint64_t value) noexcept
@@ -156,22 +153,18 @@ enable_x2apic()
 }
 
 inline auto
-setup_vic_xapic(gsl::not_null<eapis::intel_x64::hve *> hve)
-{
-    enable_lapic();
-    msrs_n::ia32_apic_base::state::enable_xapic();
-
-    return eapis::intel_x64::vic(hve, g_emap.get());
-}
-
-inline auto
-setup_vic_x2apic(gsl::not_null<eapis::intel_x64::hve *> hve)
+setup_x2apic()
 {
     enable_lapic();
     enable_x2apic();
     msrs_n::ia32_apic_base::state::enable_x2apic();
+}
 
-    return eapis::intel_x64::vic(hve, g_emap.get());
+inline auto
+setup_vic(gsl::not_null<eapis::intel_x64::hve *> hve)
+{
+    setup_x2apic();
+    return eapis::intel_x64::vic(hve);
 }
 
 inline auto

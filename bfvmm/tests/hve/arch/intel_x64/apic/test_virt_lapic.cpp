@@ -38,22 +38,11 @@ namespace proc_ctls1 = vmcs_n::primary_processor_based_vm_execution_controls;
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};
 
-uint32_t g_regs[1024U] = {0U};
-
-TEST_CASE("virt_lapic::virt_lapic")
-{
-    auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
-
-    CHECK_NOTHROW(vapic);
-    CHECK(vapic.read_id() == 0);
-}
+alignas(4096) uint8_t g_regs[4096] = {0U};
 
 TEST_CASE("virt_lapic::virt_lapic(hve, phys_lapic)")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
     auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
 
     CHECK_NOTHROW(eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get()));
@@ -62,12 +51,10 @@ TEST_CASE("virt_lapic::virt_lapic(hve, phys_lapic)")
 TEST_CASE("virt_lapic::read_register")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::mmio;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
 
-    for (auto i = lapic_n::x2apic_base; i <= lapic_n::x2apic_last; ++i) {
-        auto offset = lapic_n::offset::from_msr_addr(i);
-
+    for (auto offset : lapic_n::offset::list) {
         if (lapic_n::readable_in_x2apic(offset)) {
             CHECK(lapic_n::exists_in_x2apic(offset));
             CHECK_NOTHROW(vapic.read_register(offset));
@@ -78,12 +65,10 @@ TEST_CASE("virt_lapic::read_register")
 TEST_CASE("virt_lapic::write_register")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
 
-    for (auto i = lapic_n::x2apic_base; i <= lapic_n::x2apic_last; ++i) {
-        auto offset = lapic_n::offset::from_msr_addr(i);
-
+    for (auto offset : lapic_n::offset::list) {
         if (lapic_n::writable_in_x2apic(offset)) {
             CHECK(lapic_n::exists_in_x2apic(offset));
             CHECK_NOTHROW(vapic.write_register(offset, 0x42));
@@ -94,8 +79,12 @@ TEST_CASE("virt_lapic::write_register")
 TEST_CASE("virt_lapic: reset values")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::mmio;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+
+    g_msrs[msrs_n::ia32_x2apic_version::addr] = lapic_n::version::version::reset_value;
+    g_msrs[msrs_n::ia32_x2apic_sivr::addr] = lapic_n::svr::reset_value;
+    bfdebug_nhex(0, "regs", g_regs);
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
 
     CHECK(vapic.read_id() == 0U);
     CHECK(vapic.read_icr() == 0U);
@@ -104,31 +93,15 @@ TEST_CASE("virt_lapic: reset values")
 
     uint64_t ver = 0;
     lapic_n::version::version::set(ver, lapic_n::version::version::reset_value);
-    lapic_n::version::max_lvt_entry_minus_one::set(ver, lapic_n::lvt::default_size - 1U);
-    lapic_n::version::suppress_eoi_broadcast_supported::disable(ver);
-
     CHECK(vapic.read_version() == ver);
-}
-
-TEST_CASE("virt_lapic: clear values")
-{
-    auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
-
-    for (auto i = 0U; i < lapic_n::count; ++i) {
-        if (!lapic_n::exists_in_x2apic(i)) {
-            CHECK(vapic.read_register(i) == 0U);
-        }
-    }
 }
 
 TEST_CASE("virt_lapic: tpr")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
-    auto off = lapic_n::offset::from_msr_addr(msrs_n::ia32_x2apic_sivr::addr);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
+    auto off = lapic_n::offset::tpr;
 
     vapic.write_register(off, 0xFFFFFFFF00000000U);
     CHECK(vapic.read_register(off) ==  0x0U);
@@ -140,10 +113,10 @@ TEST_CASE("virt_lapic: tpr")
 TEST_CASE("virt_lapic: icr")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
-    auto icr0 = lapic_n::offset::from_msr_addr(msrs_n::ia32_x2apic_icr::addr);
-    auto icr1 = lapic_n::offset::from_msr_addr(msrs_n::ia32_x2apic_icr::addr | 1U);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
+    auto icr0 = lapic_n::offset::icr0;
+    auto icr1 = lapic_n::offset::icr1;
 
     vapic.write_register(icr1, 0xF00DU);
     CHECK(vapic.read_register(icr1) == 0xF00DU);
@@ -163,21 +136,21 @@ TEST_CASE("virt_lapic: icr")
 TEST_CASE("virt_lapic: self_ipi")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
 
     vapic.write_self_ipi(0xFEU);
 
-    auto off = lapic_n::offset::from_msr_addr(msrs_n::ia32_x2apic_self_ipi::addr);
+    auto off = lapic_n::offset::self_ipi;
     CHECK(vapic.read_register(off) == 0xFEU);
 }
 
 TEST_CASE("virt_lapic: svr")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
-    auto off = lapic_n::offset::from_msr_addr(msrs_n::ia32_x2apic_sivr::addr);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
+    auto off = lapic_n::offset::svr;
 
     vapic.write_register(off, 0xFFFFFFFF00000000U);
     CHECK(vapic.read_register(off) ==  0x0U);
@@ -189,8 +162,8 @@ TEST_CASE("virt_lapic: svr")
 TEST_CASE("virt_lapic: queue_injection - window closed - rflags.if")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
     auto vec = 100U;
 
     CHECK(vapic.irr_is_empty());
@@ -208,8 +181,8 @@ TEST_CASE("virt_lapic: queue_injection - window closed - rflags.if")
 TEST_CASE("virt_lapic: queue_injection - window closed - blocking by sti")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
     auto vec = 32U;
 
     CHECK(vapic.irr_is_empty());
@@ -227,8 +200,8 @@ TEST_CASE("virt_lapic: queue_injection - window closed - blocking by sti")
 TEST_CASE("virt_lapic: queue_injection - window closed - blocking by mov ss")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
     auto vec = 42U;
 
     CHECK(vapic.irr_is_empty());
@@ -246,8 +219,8 @@ TEST_CASE("virt_lapic: queue_injection - window closed - blocking by mov ss")
 TEST_CASE("virt_lapic: queue_injection - window open")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
     auto vec = 99U;
 
     vmcs_n::guest_rflags::interrupt_enable_flag::enable();
@@ -263,8 +236,8 @@ TEST_CASE("virt_lapic: queue_injection - window open")
 TEST_CASE("virt_lapic: inject_spurious - window open")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
     auto spur = 0xFFU;
 
     vmcs_n::guest_rflags::interrupt_enable_flag::enable();
@@ -280,8 +253,8 @@ TEST_CASE("virt_lapic: inject_spurious - window open")
 TEST_CASE("virt_lapic: inject_spurious - window closed")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
     auto spur = 0xFFU;
 
     CHECK(vapic.irr_is_empty());
@@ -293,8 +266,8 @@ TEST_CASE("virt_lapic: inject_spurious - window closed")
 TEST_CASE("virt_lapic: top_irr")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
     std::list<uint8_t> vec = { 0x32U, 0x33U, 0x65U, 0x70U, 0xEFU, 0xF0U, 0xFFU };
     const auto max = 0xFFU;
 
@@ -319,8 +292,8 @@ TEST_CASE("virt_lapic: top_irr")
 TEST_CASE("virt_lapic: top_isr")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
     std::list<uint8_t> vec = { 0x32U, 0x33U, 0x65U, 0x70U, 0xEFU, 0xF0U, 0xFFU };
     const auto max = 0xFFU;
 
@@ -344,8 +317,8 @@ TEST_CASE("virt_lapic: top_isr")
 TEST_CASE("virt_lapic: interrupt_window_exit - single")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
     auto vec = 0x80U;
 
     CHECK(vapic.irr_is_empty());
@@ -373,8 +346,8 @@ TEST_CASE("virt_lapic: interrupt_window_exit - single")
 TEST_CASE("virt_lapic: interrupt_window_exit - permuted")
 {
     auto hve = setup_hve();
-    auto access = eapis::intel_x64::virt_lapic::access_t::msrs;
-    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, access);
+    auto phys_lapic = std::make_unique<eapis::intel_x64::phys_x2apic>();
+    auto vapic = eapis::intel_x64::virt_lapic(hve.get(), g_regs, phys_lapic.get());
     std::list<uint8_t> vec = { 0x32U, 0x33U, 0x65U, 0x66U, 0xEFU, 0xFEU, 0xFFU };
     const auto max = 0xFFU;
 

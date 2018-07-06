@@ -46,20 +46,25 @@ static constexpr uint64_t fixed_size = 0x100000U; // First 1MB
 /// instance of this is fixed, variable, or a combination of both
 ///
 struct range {
+
     /// contains
     ///
+    /// @param addr the address to check
     /// @return true iff the address is in the range
     ///
     bool contains(uintptr_t addr) const
     { return addr >= base && addr < (base + size); }
 
     /// the base address of the range
+    ///
     uintptr_t base;
 
     /// the number of bytes in the range
+    ///
     uint64_t size;
 
     /// the memory type of this range
+    ///
     uint64_t type;
 };
 

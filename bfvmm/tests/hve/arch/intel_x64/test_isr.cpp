@@ -20,8 +20,8 @@
 #include <intrinsics.h>
 
 #include <hve/arch/intel_x64/hve.h>
-#include <hve/arch/intel_x64/apic/vic.h>
 #include <hve/arch/intel_x64/isr.h>
+#include <hve/arch/intel_x64/apic/vic.h>
 #include <support/arch/intel_x64/test_support.h>
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
@@ -38,9 +38,8 @@ uint64_t reg[38] = {0};
 
 TEST_CASE("default_isr")
 {
-    setup_ept();
     auto hve = setup_hve();
-    auto vic = setup_vic_x2apic(hve.get());
+    auto vic = setup_vic(hve.get());
 
     reg[0] = reinterpret_cast<uint64_t>(&vic);
     vmcs_n::vm_entry_interruption_information::valid_bit::disable();

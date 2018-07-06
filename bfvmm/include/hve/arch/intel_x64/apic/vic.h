@@ -368,16 +368,17 @@ private:
     bool handle_spurious_interrupt(
         gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info);
 
-    bool m_x2apic_init;
-    uint64_t m_virt_base_msr;
-    eapis::intel_x64::hve *m_hve;
-
+    alignas(::x64::pt::page_size) std::array<uint8_t, ::x64::pt::page_size> m_regs;
     std::array<uint8_t, s_num_vectors> m_interrupt_map;
     std::array<std::list<handler_delegate_t>, s_num_vectors> m_handlers;
 
-    std::unique_ptr<gsl::byte[]> m_ist1;
+    std::unique_ptr<uint8_t[]> m_ist1;
     std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
     std::unique_ptr<eapis::intel_x64::phys_x2apic> m_phys_lapic;
+
+    eapis::intel_x64::hve *m_hve;
+    uint64_t m_virt_base_msr;
+    bool m_x2apic_init;
 
     friend class test::vcpu;
 

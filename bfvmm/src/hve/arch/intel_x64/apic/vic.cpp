@@ -64,16 +64,12 @@ namespace intel_x64
 namespace lapic = ::intel_x64::lapic;
 
 vic::vic(gsl::not_null<eapis::intel_x64::hve *> hve) :
-    m_x2apic_init{false},
+    m_hve{hve},
     m_virt_base_msr{apic_base::get()},
-    m_hve{hve}
+    m_x2apic_init{false}
 {
-    if (!lapic::x2apic_supported()) {
-        bfalert_info(
-            VIC_LOG_ALERT, "x2APIC not supported; disabling interrupt emulation"
-        );
-        return;
-    }
+    expects(lapic::is_present());
+    expects(lapic::x2apic_supported());
 
     if (get_platform_info()->efi.enabled) {
         this->add_apic_base_handlers();
@@ -135,7 +131,7 @@ vic::unmap(uint64_t virt)
 void
 vic::init_idt()
 {
-    m_ist1 = std::make_unique<gsl::byte[]>(STACK_SIZE << 1U);
+    m_ist1 = std::make_unique<uint8_t[]>(STACK_SIZE << 1U);
     m_hve->exit_handler()->host_tss()->ist1 = setup_stack(m_ist1.get());
 
     const auto selector = 8U;
@@ -173,7 +169,11 @@ vic::init_phys_x2apic()
 
 void
 vic::init_virt_lapic()
-{ m_virt_lapic = std::make_unique<virt_lapic>(m_hve, m_phys_lapic.get()); }
+{
+    m_virt_lapic = std::make_unique<virt_lapic>(
+        m_hve, m_regs.data(), m_phys_lapic.get()
+    );
+}
 
 void
 vic::init_save_state()
