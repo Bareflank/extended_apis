@@ -69,7 +69,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~vcpu()
+    ~vcpu() override
     {
         uint32_t addr = 0x80000800;
         uint32_t data[10] = {};
@@ -79,10 +79,19 @@ public:
         bfdebug_nhex(0, "PCI Configuration Space (data)", ::x64::portio::ind(0xCFC));
 
         ::x64::portio::outsd(0xCF8, &addr);
-        ::x64::portio::insd(0xCFC, data);
+        ::x64::portio::insd(0xCFC, &data[0]);
         bfdebug_nhex(0, "PCI Configuration Space (addr)", ::x64::portio::ind(0xCF8));
         bfdebug_nhex(0, "PCI Configuration Space (data)", data[0]);
     }
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

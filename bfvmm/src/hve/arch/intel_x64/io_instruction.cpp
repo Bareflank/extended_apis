@@ -16,6 +16,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-performance-move-const-arg
+//
+// Reason:
+//     Tidy complains that the std::move(d)'s used in the add_handler calls
+//     have no effect. Removing std::move however results in a compiler error
+//     saying the lvalue (d) can't bind to the rvalue.
+//
+
 #include <bfdebug.h>
 #include <hve/arch/intel_x64/hve.h>
 

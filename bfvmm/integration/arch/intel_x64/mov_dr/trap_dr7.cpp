@@ -61,10 +61,19 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~vcpu()
+    ~vcpu() override
     {
         ::intel_x64::dr7::set(::intel_x64::dr7::get());
     }
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

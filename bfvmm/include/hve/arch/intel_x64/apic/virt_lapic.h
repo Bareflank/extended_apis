@@ -167,8 +167,6 @@ private:
 
     eapis::intel_x64::hve *m_hve;
     uintptr_t m_reg;
-    std::bitset<256> m_irr;
-    std::bitset<256> m_isr;
 
     /// @endcond
 

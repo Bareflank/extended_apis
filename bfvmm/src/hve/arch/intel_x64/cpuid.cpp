@@ -48,7 +48,7 @@ cpuid::~cpuid()
 
 void cpuid::add_handler(
     leaf_t leaf, subleaf_t subleaf, handler_delegate_t &&d)
-{ m_handlers[ {leaf, subleaf}].push_front(std::move(d)); }
+{ m_handlers[ {leaf, subleaf}].push_front(d); }
 
 // -----------------------------------------------------------------------------
 // Debug

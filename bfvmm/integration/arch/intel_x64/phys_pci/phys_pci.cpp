@@ -48,7 +48,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~vcpu()
+    ~vcpu() override
     {
         std::vector<pci::phys_pci> devices;
         pci::phys_pci::enumerate(devices);
@@ -67,6 +67,15 @@ public:
             }
         }
     }
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

@@ -79,27 +79,27 @@ control_register::~control_register()
 
 void
 control_register::add_wrcr0_handler(handler_delegate_t &&d)
-{ m_wrcr0_handlers.push_front(std::move(d)); }
+{ m_wrcr0_handlers.push_front(d); }
 
 void
 control_register::add_rdcr3_handler(handler_delegate_t &&d)
-{ m_rdcr3_handlers.push_front(std::move(d)); }
+{ m_rdcr3_handlers.push_front(d); }
 
 void
 control_register::add_wrcr3_handler(handler_delegate_t &&d)
-{ m_wrcr3_handlers.push_front(std::move(d)); }
+{ m_wrcr3_handlers.push_front(d); }
 
 void
 control_register::add_wrcr4_handler(handler_delegate_t &&d)
-{ m_wrcr4_handlers.push_front(std::move(d)); }
+{ m_wrcr4_handlers.push_front(d); }
 
 void
 control_register::add_rdcr8_handler(handler_delegate_t &&d)
-{ m_rdcr8_handlers.push_front(std::move(d)); }
+{ m_rdcr8_handlers.push_front(d); }
 
 void
 control_register::add_wrcr8_handler(handler_delegate_t &&d)
-{ m_wrcr8_handlers.push_front(std::move(d)); }
+{ m_wrcr8_handlers.push_front(d); }
 
 void
 control_register::enable_wrcr0_exiting(

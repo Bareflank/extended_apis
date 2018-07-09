@@ -229,11 +229,11 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param v the vector to listen to
+    /// @param vector the vector to listen to
     /// @param d the delegate to call when an exit occurs with vector v
     ///
     void add_external_interrupt_handler(
-        vmcs_n::value_type v, external_interrupt::handler_delegate_t &&d);
+        vmcs_n::value_type vector, external_interrupt::handler_delegate_t &&d);
 
     //--------------------------------------------------------------------------
     // SIPI

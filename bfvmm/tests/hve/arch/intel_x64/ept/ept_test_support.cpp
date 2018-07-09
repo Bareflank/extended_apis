@@ -17,6 +17,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-cppcoreguidelines-pro-type-reinterpret-cast
+//
+// Reason:
+//     Although in general this is a good rule, for hypervisor level code that
+//     interfaces with the kernel, and raw hardware, this rule is
+//     impractical.
+//
+
+// FIXME
+// TIDY_EXCLUSION=-clang-diagnostic-self-assign
+// TIDY_EXCLUSION=-clang-analyzer-deadcode.DeadStores
+// TIDY_EXCLUSION=-readability-inconsistent-declaration-parameter-name
+// TIDY_EXCLUSION=-readability-implicit-bool-conversion
+
 #include "ept_test_support.h"
 
 namespace test_ept

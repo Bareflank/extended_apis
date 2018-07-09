@@ -38,7 +38,8 @@ namespace proc_ctls1 = vmcs_n::primary_processor_based_vm_execution_controls;
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};
 
-alignas(4096) uint8_t g_regs[4096] = {0U};
+alignas(4096) uint8_t g_reg_data[4096] = {0U};
+uint8_t *g_regs = &g_reg_data[0];
 
 TEST_CASE("virt_lapic::virt_lapic(hve, phys_lapic)")
 {
@@ -279,7 +280,7 @@ TEST_CASE("virt_lapic: top_irr")
         }
         CHECK(vapic.top_irr() == max);
 
-        for (const auto v : vec) {
+        for (uint64_t i = 0U; i < vec.size(); ++i) {
             vapic.pop_irr();
         }
         CHECK(vapic.irr_is_empty());
@@ -305,7 +306,7 @@ TEST_CASE("virt_lapic: top_isr")
         }
         CHECK(vapic.top_isr() == max);
 
-        for (const auto v : vec) {
+        for (uint64_t i = 0U; i < vec.size(); ++i) {
             vapic.write_eoi();
         }
         CHECK(vapic.isr_is_empty());
@@ -365,7 +366,7 @@ TEST_CASE("virt_lapic: interrupt_window_exit - permuted")
         CHECK(vapic.top_irr() == max);
 
         open_interrupt_window();
-        for (const auto v : vec) {
+        for (uint64_t i = 0U; i < vec.size(); ++i) {
             const auto next = vapic.top_irr();
             vapic.handle_interrupt_window_exit(hve->vmcs());
             check_vmentry_interrupt_info(next);

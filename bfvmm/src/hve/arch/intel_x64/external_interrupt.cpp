@@ -27,6 +27,8 @@ namespace intel_x64
 {
 
 external_interrupt::external_interrupt(gsl::not_null<eapis::intel_x64::hve *> hve)
+    :
+    m_log{0}
 {
     using namespace vmcs_n;
 
@@ -46,7 +48,7 @@ external_interrupt::~external_interrupt()
 void
 external_interrupt::add_handler(
     vmcs_n::value_type vector, handler_delegate_t &&d)
-{ m_handlers.at(vector).push_front(std::move(d)); }
+{ m_handlers.at(vector).push_front(d); }
 
 void
 external_interrupt::enable_exiting()
@@ -76,7 +78,7 @@ external_interrupt::dump_log()
 
         for (auto i = 0U; i < 256U; ++i) {
             if (m_log.at(i) > 0U) {
-                bfdebug_subnhex(0, std::to_string(i).c_str(), m_log[i], msg);
+                bfdebug_subnhex(0, std::to_string(i).c_str(), m_log.at(i), msg);
             }
         }
 

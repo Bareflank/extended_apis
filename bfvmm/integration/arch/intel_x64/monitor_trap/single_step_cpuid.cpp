@@ -55,7 +55,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~vcpu()
+    ~vcpu() override
     {
         ::x64::cpuid::get(42, 0, 0, 0);
     }
@@ -83,6 +83,15 @@ public:
         bfdebug_info(0, "instrution after cpuid trapped");
         return false;
     }
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

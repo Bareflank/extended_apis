@@ -16,6 +16,21 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-cppcoreguidelines-pro-type-reinterpret-cast
+//
+// Reason:
+//     Although in general this is a good rule, for hypervisor level code that
+//     interfaces with the kernel, and raw hardware, this rule is
+//     impractical.
+//
+
+// TIDY_EXCLUSION=-readability-non-const-parameter
+//
+// Reason:
+//     Callers need to be aware that the uint8_t * reg constructor argument
+//     is modified by the class, so marking it const would be misleading.
+//
+
 #include <arch/intel_x64/bit.h>
 #include <arch/intel_x64/msrs.h>
 #include <arch/intel_x64/apic/lapic.h>
@@ -194,10 +209,10 @@ virt_lapic::inject_interrupt(uint64_t vector)
 }
 
 void
-virt_lapic::inject_spurious(uint64_t viv)
+virt_lapic::inject_spurious(uint64_t vector)
 {
     if (m_hve->interrupt_window()->is_open()) {
-        m_hve->interrupt_window()->inject(viv);
+        m_hve->interrupt_window()->inject(vector);
     }
 
     bfdebug_info(VIC_LOG_ALERT, "Inject spurious denied: interrupt window closed");

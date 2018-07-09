@@ -30,7 +30,8 @@ namespace intel_x64
 std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};
 
-uint64_t reg[38] = {0};
+uint64_t reg_data[38] = {0};
+uint64_t *reg = &reg_data[0];
 
 TEST_CASE("vector_to_str")
 {

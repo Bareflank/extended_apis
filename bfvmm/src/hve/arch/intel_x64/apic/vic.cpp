@@ -16,6 +16,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-cppcoreguidelines-pro-type-reinterpret-cast
+//
+// Reason:
+//     Although in general this is a good rule, for hypervisor level code that
+//     interfaces with the kernel, and raw hardware, this rule is
+//     impractical.
+//
+
 #include <bfsupport.h>
 #include <bfthreadcontext.h>
 
@@ -64,6 +72,8 @@ namespace intel_x64
 namespace lapic = ::intel_x64::lapic;
 
 vic::vic(gsl::not_null<eapis::intel_x64::hve *> hve) :
+    m_regs{{0}},
+    m_interrupt_map{{0}},
     m_hve{hve},
     m_virt_base_msr{apic_base::get()},
     m_x2apic_init{false}
@@ -71,7 +81,7 @@ vic::vic(gsl::not_null<eapis::intel_x64::hve *> hve) :
     expects(lapic::is_present());
     expects(lapic::x2apic_supported());
 
-    if (get_platform_info()->efi.enabled) {
+    if (get_platform_info()->efi.enabled != 0U) {
         this->add_apic_base_handlers();
         return;
     }
@@ -171,8 +181,8 @@ void
 vic::init_virt_lapic()
 {
     m_virt_lapic = std::make_unique<virt_lapic>(
-        m_hve, m_regs.data(), m_phys_lapic.get()
-    );
+                       m_hve, m_regs.data(), m_phys_lapic.get()
+                   );
 }
 
 void
@@ -327,8 +337,9 @@ vic::add_external_interrupt_handlers()
 /// --------------------------------------------------------------------------
 
 bool
-vic::handle_x2apic_write(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
+vic::handle_x2apic_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
+    bfignored(vmcs);
     const auto offset = lapic::offset::from_msr_addr(info.msr);
 
     m_virt_lapic->write_register(offset, info.val);
@@ -340,8 +351,9 @@ vic::handle_x2apic_write(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
 }
 
 bool
-vic::handle_x2apic_eoi_write(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
+vic::handle_x2apic_eoi_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
+    bfignored(vmcs);
     m_virt_lapic->write_eoi();
     info.ignore_write = true;
 
@@ -351,7 +363,7 @@ vic::handle_x2apic_eoi_write(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
 static inline void
 wait_until(const bool &done)
 {
-    while (1) {
+    while (true) {
         if (done) {
             return;
         }
@@ -360,8 +372,10 @@ wait_until(const bool &done)
 }
 
 bool
-vic::handle_x2apic_icr_write(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
+vic::handle_x2apic_icr_write(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
+    bfignored(vmcs);
+
     switch (lapic::icr::delivery_mode::get(info.val)) {
         case lapic::icr::delivery_mode::init: {
             /// We simply absorb INIT de-asserts. They don't cause an INIT
@@ -395,8 +409,9 @@ vic::handle_x2apic_icr_write(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
 }
 
 bool
-vic::handle_x2apic_self_ipi(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
+vic::handle_x2apic_self_ipi(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
+    bfignored(vmcs);
     m_virt_lapic->queue_injection(info.val);
     info.ignore_write = true;
 
@@ -404,15 +419,17 @@ vic::handle_x2apic_self_ipi(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
 }
 
 bool
-vic::handle_x2apic_icr_read(gsl::not_null<vmcs_t *>, rdmsr::info_t &info)
+vic::handle_x2apic_icr_read(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
 {
+    bfignored(vmcs);
     info.val = m_virt_lapic->read_icr();
     return true;
 }
 
 bool
-vic::handle_x2apic_read(gsl::not_null<vmcs_t *>, rdmsr::info_t &info)
+vic::handle_x2apic_read(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
 {
+    bfignored(vmcs);
     const auto offset = lapic::offset::from_msr_addr(info.msr);
     info.val = m_virt_lapic->read_register(offset);
 
@@ -425,16 +442,18 @@ vic::handle_x2apic_read(gsl::not_null<vmcs_t *>, rdmsr::info_t &info)
 
 bool
 vic::handle_rdcr8(
-    gsl::not_null<vmcs_t *>, control_register::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info)
 {
+    bfignored(vmcs);
     info.val = m_virt_lapic->read_tpr() >> 4U;
     return true;
 }
 
 bool
 vic::handle_wrcr8(
-    gsl::not_null<vmcs_t *>, control_register::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info)
 {
+    bfignored(vmcs);
     m_virt_lapic->write_tpr(info.val << 4U);
     m_phys_lapic->write_tpr(info.val << 4U);
 
@@ -442,15 +461,18 @@ vic::handle_wrcr8(
 }
 
 bool
-vic::handle_rdmsr_apic_base(gsl::not_null<vmcs_t *>, rdmsr::info_t &info)
+vic::handle_rdmsr_apic_base(gsl::not_null<vmcs_t *> vmcs, rdmsr::info_t &info)
 {
+    bfignored(vmcs);
     info.val = m_virt_base_msr;
     return true;
 }
 
 bool
-vic::handle_wrmsr_apic_base(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
+vic::handle_wrmsr_apic_base(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
+    bfignored(vmcs);
+
     const auto state = apic_base::state::get(info.val);
     switch (state) {
         case apic_base::state::x2apic:
@@ -502,16 +524,18 @@ vic::handle_external_interrupt_exit(
 
 bool
 vic::handle_interrupt_from_exit(
-    gsl::not_null<vmcs_t *>, external_interrupt::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info)
 {
+    bfignored(vmcs);
     this->handle_interrupt(info.vector);
     return true;
 }
 
 bool
 vic::handle_spurious_interrupt(
-    gsl::not_null<vmcs_t *>, external_interrupt::info_t &info)
+    gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info)
 {
+    bfignored(vmcs);
     bfalert_nhex(VIC_LOG_ALERT, "Spurious interrupt handled:", info.vector);
     m_virt_lapic->inject_spurious(this->phys_to_virt(info.vector));
 
@@ -527,7 +551,7 @@ vic::handle_interrupt(uint64_t phys)
 
 void
 vic::add_interrupt_handler(uint64_t vector, handler_delegate_t &&d)
-{ m_handlers.at(vector).push_front(std::move(d)); }
+{ m_handlers.at(vector).push_front(d); }
 
 }
 }

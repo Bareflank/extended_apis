@@ -51,10 +51,10 @@ uintptr_t align_4k(uintptr_t addr)
 { return (addr & ~(ept::page_size_4k - 1U)); }
 
 uint64_t
-eptp(memory_map &map)
+eptp(memory_map &mem_map)
 {
     uint64_t val = 0;
-    auto pml4_hpa = map.hpa();
+    auto pml4_hpa = mem_map.hpa();
 
     eptp::memory_type::set(val, eptp::memory_type::write_back);
     eptp::page_walk_length_minus_one::set(val, max_page_walk_length - 1U);
@@ -72,7 +72,7 @@ enable_ept(uint64_t eptp)
 }
 
 void
-disable_ept(void)
+disable_ept()
 {
     vmcs::secondary_processor_based_vm_execution_controls::enable_ept::disable();
     vmcs::ept_pointer::set(0);
@@ -230,7 +230,7 @@ identity_map_range_4k(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, memory_attr
 //--------------------------------------------------------------------------
 
 void
-identity_map_bestfit_lo(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
+identity_map_bestfit_lo(ept::memory_map &mem_map, uintptr_t gpa_s, uintptr_t gpa_e,
                         memory_attr_t mattr)
 {
     expects(gpa_s == align_1g(gpa_s));
@@ -243,20 +243,20 @@ identity_map_bestfit_lo(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
     auto i = gpa_s;
 
     for (; i < end_1g; i += ept::page_size_1g) {
-        ept::identity_map_1g(emm, i, mattr);
+        ept::identity_map_1g(mem_map, i, mattr);
     }
 
     for (; i < end_2m; i += ept::page_size_2m) {
-        ept::identity_map_2m(emm, i, mattr);
+        ept::identity_map_2m(mem_map, i, mattr);
     }
 
     for (; i <= end_4k; i += ept::page_size_4k) {
-        ept::identity_map_4k(emm, i, mattr);
+        ept::identity_map_4k(mem_map, i, mattr);
     }
 }
 
 void
-identity_map_bestfit_hi(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
+identity_map_bestfit_hi(ept::memory_map &mem_map, uintptr_t gpa_s, uintptr_t gpa_e,
                         memory_attr_t mattr)
 {
     expects(align_4k(gpa_s) == gpa_s);
@@ -269,15 +269,15 @@ identity_map_bestfit_hi(ept::memory_map &emm, uintptr_t gpa_s, uintptr_t gpa_e,
     auto i = gpa_s;
 
     for (; i < end_4k; i += ept::page_size_4k) {
-        ept::identity_map_4k(emm, i, mattr);
+        ept::identity_map_4k(mem_map, i, mattr);
     }
 
     for (; i < end_2m; i += ept::page_size_2m) {
-        ept::identity_map_2m(emm, i, mattr);
+        ept::identity_map_2m(mem_map, i, mattr);
     }
 
     for (; i <= end_1g; i += ept::page_size_1g) {
-        ept::identity_map_1g(emm, i, mattr);
+        ept::identity_map_1g(mem_map, i, mattr);
     }
 }
 

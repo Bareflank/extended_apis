@@ -184,9 +184,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vector the interrupt vector to handle
+    /// @param phys the physical interrupt vector to handle
     ///
-    void handle_interrupt(uint64_t vector);
+    void handle_interrupt(uint64_t phys);
 
     /// Handle external interrupt exit
     ///

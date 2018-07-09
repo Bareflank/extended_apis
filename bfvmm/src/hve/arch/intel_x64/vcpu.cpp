@@ -48,8 +48,8 @@ vcpu::enable_efi()
     this->add_efi_handlers();
 
     ::vmcs_n::guest_ia32_perf_global_ctrl::reserved::set(0);
-    ept::identity_map(*m_emm.get(), 0, 0x900000000 - 0x1000);
-    ept::enable_ept(ept::eptp(*m_emm.get()));
+    ept::identity_map(*m_emm, 0, 0x900000000 - 0x1000);
+    ept::enable_ept(ept::eptp(*m_emm));
     m_hve->enable_vpid();
 }
 
@@ -130,26 +130,25 @@ vcpu::efi_handle_rdmsr(gsl::not_null<vmcs_t *> vmcs)
 
     const auto msr = vmcs->save_state()->rcx;
 
-    switch (msr) {
-        case pkg_perf_status:
-        case dram_energy_status:
-            vmcs->save_state()->rax = 0;
-            vmcs->save_state()->rdx = 0;
-            return advance(vmcs);
-
-        default:
-            return false;
+    if (msr == pkg_perf_status || msr == dram_energy_status) {
+        vmcs->save_state()->rax = 0;
+        vmcs->save_state()->rdx = 0;
+        return advance(vmcs);
     }
+
+    return false;
 }
 
 bool
-vcpu::efi_handle_wrmsr_efer(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
+vcpu::efi_handle_wrmsr_efer(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
+    bfignored(vmcs);
+
     if (::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::is_disabled()) {
         return true;
     }
 
-    if (get_bit(info.val, ::intel_x64::msrs::ia32_efer::lme::from)) {
+    if (get_bit(info.val, ::intel_x64::msrs::ia32_efer::lme::from) != 0U) {
         uint64_t s_cr0 = 0;
         ::vmcs_n::guest_cr0::protection_enable::enable(s_cr0);
         ::vmcs_n::guest_cr0::extension_type::enable(s_cr0);
@@ -169,15 +168,17 @@ vcpu::efi_handle_wrmsr_efer(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
 }
 
 bool
-vcpu::efi_handle_wrmsr_perf_global_ctrl(gsl::not_null<vmcs_t *>, wrmsr::info_t &info)
+vcpu::efi_handle_wrmsr_perf_global_ctrl(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
 {
+    bfignored(vmcs);
     ::vmcs_n::guest_ia32_perf_global_ctrl::reserved::set(info.val, 0);
     return true;
 }
 
 bool
-vcpu::efi_handle_wrcr0(gsl::not_null<vmcs_t *>, control_register::info_t &info)
+vcpu::efi_handle_wrcr0(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info)
 {
+    bfignored(vmcs);
     using namespace ::vmcs_n::exit_qualification::control_register_access;
 
     // only need access type 0 but eapis doesn't handle
@@ -236,7 +237,6 @@ bool
 vcpu::efi_handle_init_signal(gsl::not_null<vmcs_t *> vmcs)
 {
     bfignored(vmcs);
-
     ::vmcs_n::guest_activity_state::set(::vmcs_n::guest_activity_state::wait_for_sipi);
     init_done = true;
     return true;

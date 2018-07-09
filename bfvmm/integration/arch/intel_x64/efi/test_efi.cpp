@@ -37,10 +37,10 @@ public:
     /// @expects
     /// @ensures
     ///
-    vcpu(vcpuid::type id) :
+    explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        if (!get_platform_info()->efi.enabled) {
+        if (get_platform_info()->efi.enabled == 0U) {
             bferror_info(0, "EFI not enabled");
             return;
         }
@@ -48,12 +48,15 @@ public:
         this->enable_efi();
     }
 
-    /// Destructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    ~vcpu() = default;
+    /// @cond
+
+    ~vcpu() override = default;
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

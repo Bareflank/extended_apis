@@ -36,7 +36,7 @@ init_signal::init_signal(gsl::not_null<eapis::intel_x64::hve *> hve)
 
 void
 init_signal::add_handler(handler_delegate_t &&d)
-{ m_handlers.push_front(std::move(d)); }
+{ m_handlers.push_front(d); }
 
 // -----------------------------------------------------------------------------
 // Debug

@@ -32,7 +32,7 @@ namespace pci
 TEST_CASE("Empty device_allocator")
 {
     std::vector<device_id> enumerated;
-    device_allocator alloc;
+    device_allocator alloc{};
 
     CHECK_NOTHROW(alloc.enumerate(enumerated));
     CHECK(enumerated.empty());
@@ -41,7 +41,7 @@ TEST_CASE("Empty device_allocator")
 TEST_CASE("device_allocator::add,contains,deallocate,clear")
 {
     device_id device = { 1, 2, 3, 0 };
-    device_allocator alloc;
+    device_allocator alloc{};
 
     CHECK(!alloc.contains(device));
     CHECK(alloc.add(device) == device_allocator::alloc_status::success);
@@ -61,7 +61,8 @@ TEST_CASE("device_allocator::add,contains,deallocate,clear")
 TEST_CASE("device_allocator::populate_from")
 {
     device_id device = { 1, 2, 3, 0 };
-    device_allocator alloc1, alloc2;
+    device_allocator alloc1{};
+    device_allocator alloc2{};
 
     CHECK(alloc1.add(device) == device_allocator::alloc_status::success);
     CHECK(alloc2.populate_from(alloc1) == device_allocator::alloc_status::success);
@@ -74,8 +75,9 @@ TEST_CASE("device_allocator::populate_from")
 
 TEST_CASE("device_allocator::allocate(device_id &),allocate_bridge(device_id &)")
 {
-    device_id device1, device2;
-    device_allocator alloc;
+    device_id device1{};
+    device_id device2{};
+    device_allocator alloc{};
 
     CHECK(alloc.allocate(device1) == device_allocator::alloc_status::success);
     CHECK(device1.bus == 0);
@@ -100,7 +102,7 @@ TEST_CASE("device_allocator::allocate(device_id &),allocate_bridge(device_id &)"
 
     CHECK(alloc.allocate(device1) == device_allocator::alloc_status::bus_almost_full);
 
-    device_id bridge;
+    device_id bridge{};
     CHECK(alloc.allocate_bridge(bridge) == device_allocator::alloc_status::success);
     CHECK(alloc.contains(bridge));
     CHECK(bridge.bus == 0);
@@ -115,8 +117,8 @@ TEST_CASE("device_allocator::allocate(device_id &),allocate_bridge(device_id &)"
 
 TEST_CASE("device_allocator::allocate(bus_type, device_id &)")
 {
-    device_id device;
-    device_allocator alloc;
+    device_id device{};
+    device_allocator alloc{};
 
     for (int i = 0; i <= 30; ++i) {
         CHECK(alloc.allocate(0, device) == device_allocator::alloc_status::success);
@@ -124,7 +126,7 @@ TEST_CASE("device_allocator::allocate(bus_type, device_id &)")
         CHECK(device.device == i);
     }
 
-    device_id bridge;
+    device_id bridge{};
     CHECK(alloc.allocate_bridge(bridge) == device_allocator::alloc_status::success);
 
     CHECK(alloc.allocate(0, device) == device_allocator::alloc_status::bus_full);
@@ -136,8 +138,8 @@ TEST_CASE("device_allocator::allocate(bus_type, device_id &)")
 
 TEST_CASE("device_allocator::allocate_bridge(bus_type, device_id &)")
 {
-    device_id device;
-    device_allocator alloc;
+    device_id device{};
+    device_allocator alloc{};
 
     for (int i = 0; i <= 30; ++i) {
         CHECK(alloc.allocate(0, device) == device_allocator::alloc_status::success);
@@ -145,7 +147,8 @@ TEST_CASE("device_allocator::allocate_bridge(bus_type, device_id &)")
         CHECK(device.device == i);
     }
 
-    device_id bridge1, bridge2;
+    device_id bridge1{};
+    device_id bridge2{};
     CHECK(alloc.allocate_bridge(bridge1) == device_allocator::alloc_status::success);
 
     CHECK(alloc.allocate_bridge(0, bridge2) == device_allocator::alloc_status::bus_full);
@@ -160,11 +163,11 @@ TEST_CASE("device_allocator::enumerate")
 {
     std::vector<device_id> devices_in;
     std::vector<device_id> devices_out;
-    device_id bridge;
-    device_allocator alloc;
+    device_id bridge{};
+    device_allocator alloc{};
 
     for (size_t i = 0; i < 10; ++i) {
-        device_id device;
+        device_id device{};
         CHECK(alloc.allocate(device) == device_allocator::alloc_status::success);
         devices_in.push_back(device);
     }
@@ -206,7 +209,7 @@ TEST_CASE("device_allocator::populate_physical")
     write_register(1, 0, 0, 0x08, 0x00000000);  // class
     write_register(1, 0, 0, 0x0C, 0x00000000);  // header type
 
-    device_allocator alloc;
+    device_allocator alloc{};
     std::vector<device_id> devices;
 
     CHECK_NOTHROW(alloc.populate_physical());

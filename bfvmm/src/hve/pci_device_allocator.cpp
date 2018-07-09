@@ -138,9 +138,8 @@ device_allocator::allocate_nonrecursive(bus_type bus, device_id &device, device_
     if (top == 31 || (((1u << (top + 1)) - 1u) | m_buses[bus]) == 0xFFFFFFFFu) {
         return alloc_status::bus_full;
     }
-    else {
-        return alloc_status::bus_almost_full;
-    }
+
+    return alloc_status::bus_almost_full;
 }
 
 device_allocator::alloc_status
@@ -165,9 +164,8 @@ device_allocator::allocate_recursive(bus_type bus, device_id &device, device_typ
     if (top == 31 || (((1u << (top + 1)) - 1u) | m_buses[bus]) == 0xFFFFFFFFu) {
         return alloc_status::bus_full;
     }
-    else {
-        return alloc_status::bus_almost_full;
-    }
+
+    return alloc_status::bus_almost_full;
 }
 
 device_allocator::alloc_status
@@ -224,7 +222,6 @@ bool
 device_allocator::contains(device_id device) const
 {
     check_device(device.device);
-
     return (m_buses[device.bus] & (1u << device.device)) != 0;
 }
 
@@ -232,7 +229,6 @@ void
 device_allocator::deallocate(device_id device)
 {
     check_device(device.device);
-
     bus_type &secbus = secondary_bus_element(device.bus, device.device);
 
     if (secbus != 0) {
@@ -261,7 +257,7 @@ device_allocator::enumerate(std::vector<device_id> &devices) const
     for (size_t bus = 0; bus <= 255; ++bus) {
         for (device_type dev = 0; dev <= 31; ++dev) {
             if ((m_buses[bus] & (1u << dev)) != 0) {
-                device_id device;
+                device_id device{};
                 device.bus = gsl::narrow_cast<bus_type>(bus);
                 device.device = dev;
                 device.func = 0;
@@ -277,8 +273,8 @@ device_allocator::secondary_bus_element(bus_type bus, device_type device)
 {
     check_device(device);
 
-    size_t bus_extended = static_cast<size_t>(bus);
-    size_t dev_extended = static_cast<size_t>(device);
+    auto bus_extended = static_cast<size_t>(bus);
+    auto dev_extended = static_cast<size_t>(device);
 
     return m_bridges_allocated[(dev_extended << 8) | bus_extended];
 }
@@ -288,8 +284,8 @@ device_allocator::secondary_bus_element(bus_type bus, device_type device) const
 {
     check_device(device);
 
-    size_t bus_extended = static_cast<size_t>(bus);
-    size_t dev_extended = static_cast<size_t>(device);
+    auto bus_extended = static_cast<size_t>(bus);
+    auto dev_extended = static_cast<size_t>(device);
 
     return m_bridges_allocated[(dev_extended << 8) | bus_extended];
 }

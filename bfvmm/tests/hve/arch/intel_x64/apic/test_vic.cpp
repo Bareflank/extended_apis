@@ -42,10 +42,18 @@ std::unique_ptr<bfvmm::intel_x64::vmcs> g_vmcs{nullptr};
 std::unique_ptr<bfvmm::intel_x64::exit_handler> g_ehlr{nullptr};
 std::unique_ptr<eapis::intel_x64::ept::memory_map> g_emap{nullptr};
 
-std::array<std::function<void(void)>, 3> window_closers = {
-    []() { ::x64::rflags::interrupt_enable_flag::disable(); },
-    []() { vmcs_n::guest_interruptibility_state::blocking_by_sti::enable(); },
-    []() { vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::enable(); }
+using closer_t = void(*)();
+static void close_ief()
+{ ::x64::rflags::interrupt_enable_flag::disable(); }
+
+static void close_sti()
+{ vmcs_n::guest_interruptibility_state::blocking_by_sti::enable(); }
+
+static void close_mov_ss()
+{ vmcs_n::guest_interruptibility_state::blocking_by_mov_ss::enable(); }
+
+std::array<closer_t, 3> window_closers = {
+    close_ief, close_sti, close_mov_ss
 };
 
 static auto
@@ -91,7 +99,7 @@ handle_external_interrupt_stub(
 TEST_CASE("vic: lapic not present")
 {
     auto hve = setup_hve();
-    get_platform_info()->efi.enabled = false;
+    get_platform_info()->efi.enabled = 0;
     disable_lapic();
 
     CHECK(!lapic_n::is_present());
@@ -101,7 +109,6 @@ TEST_CASE("vic: lapic not present")
 TEST_CASE("vic: x2apic not supported")
 {
     auto hve = setup_hve();
-    get_platform_info()->efi.enabled = false;
     enable_lapic();
     disable_x2apic();
 
@@ -113,7 +120,6 @@ TEST_CASE("vic: x2apic not supported")
 TEST_CASE("vic: xapic mode")
 {
     auto hve = setup_hve();
-    get_platform_info()->efi.enabled = false;
     enable_lapic();
     enable_x2apic();
 
@@ -126,7 +132,6 @@ TEST_CASE("vic: xapic mode")
 TEST_CASE("vic: lapic disabled")
 {
     auto hve = setup_hve();
-    get_platform_info()->efi.enabled = false;
     enable_lapic();
     enable_x2apic();
 
@@ -138,7 +143,6 @@ TEST_CASE("vic: lapic disabled")
 TEST_CASE("vic: lapic invalid")
 {
     auto hve = setup_hve();
-    get_platform_info()->efi.enabled = false;
     enable_lapic();
     enable_x2apic();
 
@@ -151,8 +155,8 @@ TEST_CASE("vic: success with no efi")
 {
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
-    get_platform_info()->efi.enabled = false;
     setup_x2apic();
 
     CHECK(state::get() == state::x2apic);
@@ -163,8 +167,9 @@ TEST_CASE("vic: success with efi")
 {
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
-    get_platform_info()->efi.enabled = true;
+    get_platform_info()->efi.enabled = 1;
     setup_x2apic();
 
     CHECK(lapic_n::x2apic_supported());
@@ -176,8 +181,9 @@ TEST_CASE("vic: destructor")
 {
     {
         MockRepository mocks;
-        get_platform_info()->efi.enabled = false;
+        get_platform_info()->efi.enabled = 0;
         auto mm = setup_mm(mocks);
+        bfignored(mm);
         auto hve = setup_hve();
         auto vic = setup_vic(hve.get());
 
@@ -192,6 +198,7 @@ TEST_CASE("vic: post x2apic init")
 {
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto vic = setup_vic(hve.get());
 
@@ -206,6 +213,7 @@ TEST_CASE("vic: map n-to-1")
 {
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto vic = setup_vic(hve.get());
     const auto virt = 42U;
@@ -229,6 +237,7 @@ TEST_CASE("vic: map identity")
 {
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto vic = setup_vic(hve.get());
 
@@ -258,6 +267,7 @@ TEST_CASE("vic: virt_to_phys")
     // phys to virt vectors
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto vic = setup_vic(hve.get());
     auto phys = 32U;
@@ -277,6 +287,7 @@ TEST_CASE("vic: handle_interrupt - window closed")
 {
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto vic = setup_vic(hve.get());
     auto phys = 32U;
@@ -299,6 +310,7 @@ TEST_CASE("vic: handle_interrupt - window open")
 {
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto vic = setup_vic(hve.get());
 
@@ -317,13 +329,12 @@ TEST_CASE("vic: handle_interrupt - window open")
 
 TEST_CASE("vic: handle_spurious_interrupt_exit - window closed")
 {
-    namespace entry_intr_info = vmcs_n::vm_entry_interruption_information;
-
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
-    get_platform_info()->efi.enabled = false;
+    get_platform_info()->efi.enabled = 0;
 
     const auto spur = 0xFFU;
     msrs_n::ia32_x2apic_sivr::vector::set(spur);
@@ -361,6 +372,7 @@ TEST_CASE("vic: handle_spurious_interrupt_exit - window open")
 
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
     const auto spur = 0xFFU;
@@ -382,6 +394,7 @@ TEST_CASE("vic: add_interrupt_handler")
 {
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto vic = setup_vic(hve.get());
 
@@ -397,6 +410,7 @@ TEST_CASE("vic: handle_interrupt_from_exit - window closed")
 
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
     msrs_n::ia32_x2apic_sivr::vector::set(0U);
@@ -422,6 +436,7 @@ TEST_CASE("vic: handle_interrupt_from_exit - window open")
 
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
     msrs_n::ia32_x2apic_sivr::vector::set(0U);
@@ -447,6 +462,7 @@ TEST_CASE("vic: handle_external_interrupt_exit - invalid vector")
 
     MockRepository mocks;
     auto mm = setup_mm(mocks);
+    bfignored(mm);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
     auto vic = setup_vic(hve.get());
@@ -464,6 +480,7 @@ TEST_CASE("vic: handle_external_interrupt_exit - invalid vector")
 //{
 //    MockRepository mocks;
 //    auto mm = setup_mm(mocks);
+//    bfignored(mm);
 //    auto hve = setup_hve();
 //    auto ehlr = hve->exit_handler();
 //    auto vic = setup_vic(hve.get());
@@ -477,6 +494,7 @@ TEST_CASE("vic: handle_external_interrupt_exit - invalid vector")
 //{
 //    MockRepository mocks;
 //    auto mm = setup_mm(mocks);
+//    bfignored(mm);
 //    auto hve = setup_hve();
 //    auto ehlr = hve->exit_handler();
 //    auto vic = setup_vic(hve.get());
@@ -492,6 +510,7 @@ TEST_CASE("vic: handle_external_interrupt_exit - invalid vector")
 //
 //    MockRepository mocks;
 //    auto mm = setup_mm(mocks);
+//    bfignored(mm);
 //    auto hve = setup_hve();
 //    auto ehlr = hve->exit_handler();
 //    auto vic = setup_vic(hve.get());
@@ -507,6 +526,7 @@ TEST_CASE("vic: handle_external_interrupt_exit - invalid vector")
 //
 //    MockRepository mocks;
 //    auto mm = setup_mm(mocks);
+//    bfignored(mm);
 //    auto hve = setup_hve();
 //    auto ehlr = hve->exit_handler();
 //    auto vic = setup_vic(hve.get());
@@ -520,6 +540,7 @@ TEST_CASE("vic: handle_external_interrupt_exit - invalid vector")
 //{
 //    MockRepository mocks;
 //    auto mm = setup_mm(mocks);
+//    bfignored(mm);
 //    auto hve = setup_hve();
 //    auto ehlr = hve->exit_handler();
 //    auto vic = setup_vic(hve.get());
@@ -538,6 +559,7 @@ TEST_CASE("vic: handle_external_interrupt_exit - invalid vector")
 //{
 //    MockRepository mocks;
 //    auto mm = setup_mm(mocks);
+//    bfignored(mm);
 //    auto hve = setup_hve();
 //    auto vic = setup_vic(hve.get());
 //    auto ehlr = hve->exit_handler();

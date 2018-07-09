@@ -17,6 +17,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-performance-move-const-arg
+//
+// Reason:
+//     Tidy complains that the std::move(d)'s used in the add_handler calls
+//     have no effect. Removing std::move however results in a compiler error
+//     saying the lvalue (d) can't bind to the rvalue.
+//
+
+// TIDY_EXCLUSION=-cppcoreguidelines-pro-bounds-pointer-arithmetic
+//
+// Reason:
+//     The correctness of the pointer arith
+//
+
 #include <array>
 #include <algorithm>
 
@@ -106,11 +120,12 @@ static void init_multi_fixed()
 }
 
 static bool
-check_fixed_ranges(phys_mtrr &&mtrr, uint64_t *base, size_t regs, size_t size)
+check_fixed_ranges(
+    phys_mtrr &&mtrr, const std::vector<uint64_t> &base, size_t size)
 {
-    for (uint64_t b = 0U; b < regs; ++b) {
-        for (auto i = 0U; i < 8U; ++i) {
-            auto addr = base[b] + (i * size);
+    for (auto b : base) {
+        for (uint64_t i = 0U; i < 8U; ++i) {
+            uint64_t addr = b + (i * size);
             if (i < 5U) {
                 if (mtrr.mem_type(addr) != mtrr_type.at(i)) {
                     return false;
@@ -129,32 +144,29 @@ check_fixed_ranges(phys_mtrr &&mtrr, uint64_t *base, size_t regs, size_t size)
 
 static bool check_64kb_ranges(phys_mtrr &&mtrr)
 {
-    constexpr auto regs = 1U;
     constexpr auto size = (1U << 16U);
-    std::array<uint64_t, regs> base = {0x00000U};
+    std::vector<uint64_t> base = {0x00000U};
 
-    return check_fixed_ranges(std::move(mtrr), base.data(), regs, size);
+    return check_fixed_ranges(std::move(mtrr), base, size);
 }
 
 static bool check_16kb_ranges(phys_mtrr &&mtrr)
 {
-    constexpr auto regs = 2U;
     constexpr auto size = (1U << 14U);
-    std::array<uint64_t, regs> base = {0x80000U, 0xA0000U};
+    std::vector<uint64_t> base = {0x80000U, 0xA0000U};
 
-    return check_fixed_ranges(std::move(mtrr), base.data(), regs, size);
+    return check_fixed_ranges(std::move(mtrr), base, size);
 }
 
 static bool check_4kb_ranges(phys_mtrr &&mtrr)
 {
-    constexpr auto regs = 8U;
     constexpr auto size = (1U << 12U);
-    std::array<uint64_t, regs> base = {
+    std::vector<uint64_t> base = {
         0xC0000U, 0xC8000U, 0xD0000U, 0xD8000U,
         0xE0000U, 0xE8000U, 0xF0000U, 0xF8000U
     };
 
-    return check_fixed_ranges(std::move(mtrr), base.data(), regs, size);
+    return check_fixed_ranges(std::move(mtrr), base, size);
 }
 
 TEST_CASE("phys_mtrr: constructor")

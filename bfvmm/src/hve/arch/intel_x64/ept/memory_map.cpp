@@ -17,6 +17,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-cppcoreguidelines-pro-type-reinterpret-cast
+//
+// Reason:
+//     Although in general this is a good rule, for hypervisor level code that
+//     interfaces with the kernel, and raw hardware, this rule is
+//     impractical.
+//
+
+// FIXME
+// TIDY_EXCLUSION=-cppcoreguidelines-owning-memory
+//
+// Reason:
+//     This triggers during the allocation which is part of the test harness
+//     so this can be safely ignored.
+//
+
 #include <arch/intel_x64/msrs.h>
 #include <bfvmm/memory_manager/memory_manager.h>
 #include "hve/arch/intel_x64/ept/memory_map.h"

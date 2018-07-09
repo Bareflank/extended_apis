@@ -42,12 +42,11 @@ public:
         vic()->m_virt_lapic->inject_spurious(viv);
     }
 
-    /// Destructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    ~vcpu() = default;
+    ~vcpu() override = default;
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
 };
 
 }
