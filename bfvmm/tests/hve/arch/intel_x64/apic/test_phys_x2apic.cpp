@@ -20,7 +20,7 @@
 #include <intrinsics.h>
 
 #include <hve/arch/intel_x64/hve.h>
-#include <hve/arch/intel_x64/phys_x2apic.h>
+#include <hve/arch/intel_x64/apic/phys_x2apic.h>
 #include <support/arch/intel_x64/test_support.h>
 
 #ifdef _HIPPOMOCKS__ENABLE_CFUNC_MOCKING_SUPPORT
@@ -32,20 +32,6 @@ namespace intel_x64
 
 namespace msrs = ::intel_x64::msrs;
 namespace lapic = ::intel_x64::lapic;
-
-/// The 'base' field is only defined in xAPIC mode;
-/// in x2APIC we just return 0
-TEST_CASE("phys_x2apic: base")
-{
-    auto apic = phys_x2apic();
-    CHECK(apic.base() == 0U);
-}
-
-TEST_CASE("phys_x2apic: relocate")
-{
-    auto apic = phys_x2apic();
-    CHECK_NOTHROW(apic.relocate(0xCAFEBABEU));
-}
 
 TEST_CASE("phys_x2apic: interrupts")
 {
@@ -64,7 +50,7 @@ TEST_CASE("phys_x2apic: read_register")
 {
     auto apic = phys_x2apic();
     auto addr = msrs::ia32_x2apic_apicid::addr;
-    auto off = lapic::msr_addr_to_offset(addr);
+    auto off = lapic::offset::from_msr_addr(addr);
 
     g_msrs[addr] = 0xEEU;
     CHECK(apic.read_register(off) == 0xEEU);
@@ -74,7 +60,7 @@ TEST_CASE("phys_x2apic: write_register")
 {
     auto apic = phys_x2apic();
     auto addr = msrs::ia32_x2apic_eoi::addr;
-    auto off = lapic::msr_addr_to_offset(addr);
+    auto off = lapic::offset::from_msr_addr(addr);
 
     g_msrs[addr] = 0xFFFFU;
     apic.write_register(off, 0U);

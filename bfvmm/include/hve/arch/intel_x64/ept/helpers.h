@@ -75,15 +75,14 @@ uintptr_t align_4k(uintptr_t addr);
 ///
 uint64_t eptp(memory_map &mem_map);
 
-/// Enable EPT (and VPID if it is not enabled) using the given pointers
+/// Enable EPT using the given pointers
 ///
 /// @expects
 /// @ensures
 ///
 /// @param eptp the VMCS EPT pointer value to enable EPT with
-/// @param hve address of this vCPU's hve object
 ///
-void enable_ept(uint64_t eptp, gsl::not_null<eapis::intel_x64::hve *> hve);
+void enable_ept(uint64_t eptp);
 
 /// Disable EPT
 ///
@@ -362,6 +361,10 @@ void identity_map_n_contig_4k(memory_map &mem_map, gpa_t gpa, uint64_t n,
 void identity_map_range_4k(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
                            memory_attr_t mattr = epte::memory_attr::wb_pt);
 
+//--------------------------------------------------------------------------
+// Best fit
+//--------------------------------------------------------------------------
+
 /// Identity map the range of guest physical addresses from gpa_s to gpa_e
 /// (inclusive) using as few pages as possible. This means that 1G pages
 /// will be mapped from gpa_s to align_1g(gpa_e), 2M pages mapped
@@ -382,7 +385,7 @@ void identity_map_bestfit_lo(ept::memory_map &mem_map, gpa_t gpa_s,
 
 /// Identity map the range of guest physical addresses from gpa_s to gpa_e
 /// (inclusive) using as few pages as possible. This means that 4K pages
-/// will be mapped from gpa_s untile the next 2M boundary, then 2M pages
+/// will be mapped from gpa_s until the next 2M boundary, then 2M pages
 /// until the next 1G boundary, then 1G pages until gpa_e
 ///
 /// @expects align_1g(gpa_e) == gpa_e
@@ -396,6 +399,85 @@ void identity_map_bestfit_lo(ept::memory_map &mem_map, gpa_t gpa_s,
 ///
 void identity_map_bestfit_hi(ept::memory_map &mem_map, gpa_t gpa_s,
                              gpa_t gpa_e, memory_attr_t mattr = epte::memory_attr::wb_pt);
+
+/// Map the range of guest physical addresses from gpa_s to gpa_e
+/// (inclusive) to hpa using as few pages as possible up to a maximum 2MB
+/// granularity.
+///
+/// @expects
+/// @ensures
+///
+/// @param mem_map the memory map to be modified
+/// @param gpa_s the guest physical address to start mapping from
+/// @param gpa_e the guest physical address to end mapping to
+/// @param hpa the host physical address to map to
+/// @param mattr page table entry memory attributes to be applied to the mapping
+///
+void map_bestfit_2m(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
+                    hpa_t hpa, memory_attr_t mattr = epte::memory_attr::wb_pt);
+
+/// Map the range of guest physical addresses from gpa_s to gpa_e
+/// (inclusive) to hpa using as few pages as possible up to a maximum 1GB
+/// granularity.
+///
+/// @expects
+/// @ensures
+///
+/// @param mem_map the memory map to be modified
+/// @param gpa_s the guest physical address to start mapping from
+/// @param gpa_e the guest physical address to end mapping to
+/// @param hpa the host physical address to map to
+/// @param mattr page table entry memory attributes to be applied to the mapping
+///
+void map_bestfit_1g(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
+                    hpa_t hpa, memory_attr_t mattr = epte::memory_attr::wb_pt);
+
+/// Map the range of guest physical addresses from gpa_s to gpa_e
+/// (inclusive) using as few pages as possible up to the platform's largest
+/// supported page size.
+///
+/// @expects
+/// @ensures
+///
+/// @param mem_map the memory map to be modified
+/// @param gpa_s the guest physical address to start mapping from
+/// @param gpa_e the guest physical address to end mapping to
+/// @param hpa the host physical address to map to
+/// @param mattr page table entry memory attributes to be applied to the mapping
+///
+void map_bestfit(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e,
+                 hpa_t hpa, memory_attr_t mattr = epte::memory_attr::wb_pt);
+
+//--------------------------------------------------------------------------
+// High-level
+//--------------------------------------------------------------------------
+
+/// Map the range of guest physical addresses from gpa_s to gpa_e (inclusive)
+/// using the largest page size supported by the platform and memory types that
+/// are consistent with the platform's MTRRs.
+///
+/// @expects
+/// @ensures
+///
+/// @param mem_map the memory map to be modified
+/// @param gpa_s the guest physical address to start mapping from
+/// @param gpa_e the guest physical address to end mapping to
+/// @param hpa the host physical address to map to
+///
+void map(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa);
+
+/// Identity map the range of guest physical addresses from gpa_s to gpa_e
+/// (inclusive) using the largest page size supported by the platform and memory
+/// types that are consistent with the platform's MTRRs.
+///
+/// @expects
+/// @ensures
+///
+/// @param mem_map the memory map to be modified
+/// @param gpa_s the guest physical address to start mapping from
+/// @param gpa_e the guest physical address to end mapping to
+///
+void identity_map(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e);
 
 //--------------------------------------------------------------------------
 // Unmapping

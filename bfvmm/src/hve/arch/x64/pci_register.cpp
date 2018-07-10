@@ -99,12 +99,12 @@ void
 rmw_register_u8(bus_type bus, device_type device, func_type func, register_type reg,
                 uint8_t value)
 {
-    const register_type addr32 = gsl::narrow_cast<register_type>(reg & ~0x3u);
+    const auto addr32 = gsl::narrow_cast<register_type>(reg & ~0x3u);
     const uint32_t offset = 8 * (reg & 0x3u);
     const uint32_t mask = 0xFFu << offset;
 
     const uint32_t full_reg = read_register_u32(bus, device, func, addr32);
-    const uint32_t full_value = static_cast<uint32_t>(value);
+    const auto full_value = static_cast<uint32_t>(value);
     const uint32_t masked_reg = full_reg & ~mask;
     const uint32_t with_new_value = masked_reg | (full_value << offset);
 
@@ -115,12 +115,12 @@ void
 rmw_register_u16(bus_type bus, device_type device, func_type func, register_type reg,
                  uint16_t value)
 {
-    const register_type addr32 = gsl::narrow_cast<register_type>(reg & ~0x2u);
+    const auto addr32 = gsl::narrow_cast<register_type>(reg & ~0x2u);
     const uint32_t offset = 8 * (reg & 0x2u);
     const uint32_t mask = 0xFFFFu << offset;
 
     const uint32_t full_reg = read_register_u32(bus, device, func, addr32);
-    const uint32_t full_value = static_cast<uint32_t>(value);
+    const auto full_value = static_cast<uint32_t>(value);
     const uint32_t masked_reg = full_reg & ~mask;
     const uint32_t with_new_value = masked_reg | (full_value << offset);
 

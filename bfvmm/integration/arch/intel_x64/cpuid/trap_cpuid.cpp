@@ -70,7 +70,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~vcpu()
+    ~vcpu() override
     {
         auto ret =
             ::x64::cpuid::get(
@@ -82,6 +82,15 @@ public:
         bfdebug_nhex(0, "ret.rcx", ret.rcx);
         bfdebug_nhex(0, "ret.rdx", ret.rdx);
     }
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

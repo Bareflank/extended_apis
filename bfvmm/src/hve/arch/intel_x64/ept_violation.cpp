@@ -46,15 +46,15 @@ ept_violation::~ept_violation()
 
 void
 ept_violation::add_read_handler(handler_delegate_t &&d)
-{ m_read_handlers.push_front(std::move(d)); }
+{ m_read_handlers.push_front(d); }
 
 void
 ept_violation::add_write_handler(handler_delegate_t &&d)
-{ m_write_handlers.push_front(std::move(d)); }
+{ m_write_handlers.push_front(d); }
 
 void
 ept_violation::add_execute_handler(handler_delegate_t &&d)
-{ m_execute_handlers.push_front(std::move(d)); }
+{ m_execute_handlers.push_front(d); }
 
 void
 ept_violation::dump_log()

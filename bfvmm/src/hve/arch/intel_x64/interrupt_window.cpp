@@ -36,7 +36,7 @@ interrupt_window::interrupt_window(gsl::not_null<eapis::intel_x64::hve *> hve)
 
 void
 interrupt_window::add_handler(handler_delegate_t &&d)
-{ m_handlers.push_front(std::move(d)); }
+{ m_handlers.push_front(d); }
 
 void
 interrupt_window::enable_exiting()
@@ -97,8 +97,6 @@ interrupt_window::inject(uint64_t vector)
     valid_bit::enable(info);
 
     vmcs_n::vm_entry_interruption_information::set(info);
-
-    return;
 }
 
 // -----------------------------------------------------------------------------

@@ -16,6 +16,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-readability-function-size
+//
+// Reason:
+//     The function is long, but is dirt simple too
+
 #include <support/arch/intel_x64/test_support.h>
 
 TEST_CASE("support")

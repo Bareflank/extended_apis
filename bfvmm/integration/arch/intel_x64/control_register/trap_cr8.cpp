@@ -53,13 +53,6 @@ public:
         hve()->control_register()->enable_log();
     }
 
-    /// Destructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    ~vcpu() = default;
-
     /// Read CR8
     ///
     /// @expects
@@ -89,6 +82,16 @@ public:
         m_tpr_shadow = info.val;
         return false;
     }
+
+    /// @cond
+
+    ~vcpu() override = default;
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 
 private:
 

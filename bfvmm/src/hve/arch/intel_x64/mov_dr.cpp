@@ -51,7 +51,7 @@ mov_dr::~mov_dr()
 
 void
 mov_dr::add_handler(handler_delegate_t &&d)
-{ m_handlers.push_front(std::move(d)); }
+{ m_handlers.push_front(d); }
 
 // -----------------------------------------------------------------------------
 // Debug

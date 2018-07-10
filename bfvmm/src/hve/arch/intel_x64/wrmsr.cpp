@@ -54,7 +54,7 @@ wrmsr::add_handler(
 #ifndef DISABLE_AUTO_TRAP_ON_ACCESS
     this->trap_on_access(msr);
 #endif
-    m_handlers[msr].push_front(std::move(d));
+    m_handlers[msr].push_front(d);
 }
 
 void

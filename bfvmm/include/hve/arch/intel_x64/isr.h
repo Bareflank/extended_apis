@@ -25,7 +25,7 @@
 /// @cond
 
 extern "C" EXPORT_SYM void
-default_isr(uint64_t vector, uint64_t *regs) noexcept;
+default_isr(uint64_t vector, const uint64_t *regs) noexcept;
 
 extern "C" void
 set_default_isrs(

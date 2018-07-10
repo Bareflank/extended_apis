@@ -46,7 +46,7 @@ ept_misconfiguration::~ept_misconfiguration()
 
 void
 ept_misconfiguration::add_handler(handler_delegate_t &&d)
-{ m_handlers.push_front(std::move(d)); }
+{ m_handlers.push_front(d); }
 
 void
 ept_misconfiguration::dump_log()

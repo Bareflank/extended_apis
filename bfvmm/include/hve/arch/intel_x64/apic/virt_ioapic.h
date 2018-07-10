@@ -97,7 +97,7 @@ private:
     /// @cond
 
     ::intel_x64::ioapic::offset_t m_select;
-    std::array<::intel_x64::ioapic::value_t, ::intel_x64::ioapic::rte_end> m_reg;
+    std::array<::intel_x64::ioapic::value_t, ::intel_x64::ioapic::rte_end> m_reg{0};
 
     /// @endcond
 

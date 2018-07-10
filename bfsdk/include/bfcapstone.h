@@ -16,6 +16,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-cppcoreguidelines-pro-type-reinterpret-cast
+//
+// Reason:
+//     Although in general this is a good rule, for hypervisor level code that
+//     interfaces with the kernel, and raw hardware, this rule is
+//     impractical.
+//
+
 #ifndef BFCAPSTONE_INTEL_X64_H
 #define BFCAPSTONE_INTEL_X64_H
 
@@ -182,6 +190,23 @@ inline uint64_t read64(const save_state_t *state, uint64_t byte_offset)
     expects(byte_offset <= 0x80U);
     auto addr = reinterpret_cast<const uintptr_t>(state) + byte_offset;
     return *reinterpret_cast<const uint64_t *>(addr);
+}
+
+inline uint32_t *reg32_addr(const save_state_t *state, const cs_x86_op *op)
+{
+    const auto reg = reg_map.at(op->reg);
+
+    switch (reg.width) {
+        case dword: {
+            auto addr = reinterpret_cast<uintptr_t>(state) + reg.byte_offset;
+            return reinterpret_cast<uint32_t *>(addr);
+        }
+
+        default:
+            throw std::invalid_argument(
+                "write32_reg: invalid width " + std::to_string(reg.width));
+    }
+
 }
 
 /// We return unsigned here because this function is intended

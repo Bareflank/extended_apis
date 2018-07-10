@@ -16,19 +16,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <bfsupport.h>
 #include <bfvmm/vcpu/vcpu_factory.h>
 #include <eapis/vcpu/arch/intel_x64/vcpu.h>
-
-using namespace eapis::intel_x64;
-
-// -----------------------------------------------------------------------------
-// Handlers
-// -----------------------------------------------------------------------------
-
-bool
-test_handler(
-    gsl::not_null<vmcs_t *> vmcs, io_instruction::info_t &info)
-{ bfignored(vmcs); bfignored(info); return true; }
+#include <eapis/hve/arch/intel_x64/ept.h>
 
 // -----------------------------------------------------------------------------
 // vCPU
@@ -49,43 +40,17 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        hve()->add_io_instruction_handler(
-            0xCF8,
-            io_instruction::handler_delegate_t::create<test_handler>(),
-            io_instruction::handler_delegate_t::create<test_handler>()
-        );
+        if (get_platform_info()->efi.enabled == 0U) {
+            bferror_info(0, "EFI not enabled");
+            return;
+        }
 
-        hve()->add_io_instruction_handler(
-            0xCFC,
-            io_instruction::handler_delegate_t::create<test_handler>(),
-            io_instruction::handler_delegate_t::create<test_handler>()
-        );
-
-        hve()->io_instruction()->enable_log();
-    }
-
-    /// Destructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    ~vcpu() override
-    {
-        uint32_t addr = 0x80000800;
-        uint32_t data[10] = {};
-
-        ::x64::portio::outd(0xCF8, 0x80000000);
-        bfdebug_nhex(0, "PCI Configuration Space (addr)", ::x64::portio::ind(0xCF8));
-        bfdebug_nhex(0, "PCI Configuration Space (data)", ::x64::portio::ind(0xCFC));
-
-        ::x64::portio::outsd(0xCF8, &addr);
-        ::x64::portio::insd(0xCFC, &data[0]);
-        bfdebug_nhex(0, "PCI Configuration Space (addr)", ::x64::portio::ind(0xCF8));
-        bfdebug_nhex(0, "PCI Configuration Space (data)", data[0]);
+        this->enable_efi();
     }
 
     /// @cond
 
+    ~vcpu() override = default;
     vcpu(vcpu &&) = delete;
     vcpu &operator=(vcpu &&) = delete;
     vcpu(const vcpu &) = delete;

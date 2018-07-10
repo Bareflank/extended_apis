@@ -16,8 +16,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <intrinsics.h>
-#include <hve/arch/intel_x64/phys_x2apic.h>
+#include <arch/intel_x64/msrs.h>
+#include <arch/intel_x64/apic/lapic.h>
+#include <arch/intel_x64/apic/x2apic.h>
+
+#include <hve/arch/intel_x64/apic/phys_x2apic.h>
 
 namespace eapis
 {
@@ -25,14 +28,6 @@ namespace intel_x64
 {
 
 namespace lapic = ::intel_x64::lapic;
-
-uintptr_t
-phys_x2apic::base()
-{ return 0U; }
-
-void
-phys_x2apic::relocate(uintptr_t base)
-{ bfignored(base); }
 
 void
 phys_x2apic::enable_interrupts()
@@ -46,7 +41,7 @@ uint64_t
 phys_x2apic::read_register(lapic::offset_t offset) const
 {
     const auto addr = gsl::narrow_cast<::intel_x64::msrs::field_type>(
-                          lapic::offset_to_msr_addr(offset)
+                          lapic::offset::to_msr_addr(offset)
                       );
 
     return ::intel_x64::msrs::get(addr);
@@ -56,7 +51,7 @@ void
 phys_x2apic::write_register(lapic::offset_t offset, uint64_t val)
 {
     const auto addr = gsl::narrow_cast<::intel_x64::msrs::field_type>(
-                          lapic::offset_to_msr_addr(offset)
+                          lapic::offset::to_msr_addr(offset)
                       );
 
     return ::intel_x64::msrs::set(addr, val);
@@ -84,7 +79,7 @@ phys_x2apic::read_icr() const
 
 void
 phys_x2apic::write_eoi()
-{ ::intel_x64::msrs::ia32_x2apic_eoi::set(0x0ULL); }
+{ ::intel_x64::msrs::ia32_x2apic_eoi::set(0U); }
 
 void
 phys_x2apic::write_tpr(uint64_t tpr)

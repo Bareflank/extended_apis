@@ -67,12 +67,15 @@ public:
         hve()->control_register()->enable_log();
     }
 
-    /// Destructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    ~vcpu() = default;
+    /// @cond
+
+    ~vcpu() override = default;
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

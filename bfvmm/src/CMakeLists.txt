@@ -32,4 +32,4 @@ add_subdirectory(hve)
 # -----------------------------------------------------------------------------
 
 install(DIRECTORY ../include/ DESTINATION include/eapis)
-install(DIRECTORY ../../bfsdk/include/ DESTINATION include/)
+install(DIRECTORY ../../bfsdk/include/ DESTINATION include)

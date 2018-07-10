@@ -24,56 +24,42 @@ namespace eapis
 namespace intel_x64
 {
 
-monitor_trap::monitor_trap(gsl::not_null<eapis::intel_x64::hve *> hve) :
-    m_exit_handler{hve->exit_handler()}
+init_signal::init_signal(gsl::not_null<eapis::intel_x64::hve *> hve)
 {
     using namespace vmcs_n;
 
-    m_exit_handler->add_handler(
-        exit_reason::basic_exit_reason::monitor_trap_flag,
-        ::handler_delegate_t::create<monitor_trap, &monitor_trap::handle>(this)
+    hve->exit_handler()->add_handler(
+        exit_reason::basic_exit_reason::init_signal,
+        ::handler_delegate_t::create<init_signal, &init_signal::handle>(this)
     );
 }
 
-// -----------------------------------------------------------------------------
-// Monitor Trap
-// -----------------------------------------------------------------------------
-
 void
-monitor_trap::add_handler(handler_delegate_t &&d)
+init_signal::add_handler(handler_delegate_t &&d)
 { m_handlers.push_front(d); }
 
+// -----------------------------------------------------------------------------
+// Debug
+// -----------------------------------------------------------------------------
+
 void
-monitor_trap::enable()
-{
-    using namespace vmcs_n;
-    primary_processor_based_vm_execution_controls::monitor_trap_flag::enable();
-}
+init_signal::dump_log()
+{ }
 
 // -----------------------------------------------------------------------------
-// Handlers
+// Handle
 // -----------------------------------------------------------------------------
 
 bool
-monitor_trap::handle(gsl::not_null<vmcs_t *> vmcs)
+init_signal::handle(gsl::not_null<vmcs_t *> vmcs)
 {
-    using namespace vmcs_n;
-
-    struct info_t info = {
-        false
-    };
-
     for (const auto &d : m_handlers) {
-        if (d(vmcs, info)) {
-            break;
+        if (d(vmcs)) {
+            return true;
         }
     }
 
-    if (!info.ignore_clear) {
-        primary_processor_based_vm_execution_controls::monitor_trap_flag::disable();
-    }
-
-    return true;
+    return false;
 }
 
 }

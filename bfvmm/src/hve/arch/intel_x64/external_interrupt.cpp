@@ -18,6 +18,8 @@
 
 #include <bfdebug.h>
 #include <hve/arch/intel_x64/hve.h>
+#include <hve/arch/intel_x64/ept/helpers.h>
+#include <hve/arch/intel_x64/esr.h>
 
 namespace eapis
 {
@@ -25,6 +27,8 @@ namespace intel_x64
 {
 
 external_interrupt::external_interrupt(gsl::not_null<eapis::intel_x64::hve *> hve)
+    :
+    m_log{0}
 {
     using namespace vmcs_n;
 
@@ -44,7 +48,7 @@ external_interrupt::~external_interrupt()
 void
 external_interrupt::add_handler(
     vmcs_n::value_type vector, handler_delegate_t &&d)
-{ m_handlers.at(vector).push_front(std::move(d)); }
+{ m_handlers.at(vector).push_front(d); }
 
 void
 external_interrupt::enable_exiting()
@@ -74,7 +78,7 @@ external_interrupt::dump_log()
 
         for (auto i = 0U; i < 256U; ++i) {
             if (m_log.at(i) > 0U) {
-                bfdebug_subnhex(0, std::to_string(i).c_str(), m_log[i], msg);
+                bfdebug_subnhex(0, std::to_string(i).c_str(), m_log.at(i), msg);
             }
         }
 
@@ -85,6 +89,19 @@ external_interrupt::dump_log()
 // -----------------------------------------------------------------------------
 // Handle
 // -----------------------------------------------------------------------------
+
+//static void inject_exception(uint64_t vector)
+//{
+//    using namespace vmcs_n::vm_entry_interruption_information;
+//
+//    uint64_t info = 0;
+//    vector::set(info, vector);
+//    interruption_type::set(info, interruption_type::hardware_exception);
+//    valid_bit::enable(info);
+//    vmcs_n::vm_entry_interruption_information::set(info);
+//
+//    return;
+//}
 
 bool
 external_interrupt::handle(gsl::not_null<vmcs_t *> vmcs)
@@ -102,6 +119,17 @@ external_interrupt::handle(gsl::not_null<vmcs_t *> vmcs)
             return true;
         }
     }
+
+    //switch (info.vector) {
+    //    case eapis::intel_x64::exception::nm:
+    //        bfalert_info(0, "Received #NM as external interrupt...advancing");
+    //        return advance(vmcs);
+    //    case eapis::intel_x64::exception::de:
+    //        bfalert_info(0, "Received #DE as external interrupt...returning");
+    //        //return advance(vmcs);
+    //        //inject_exception(info.vector);
+    //        return true;
+    //}
 
     throw std::runtime_error("Unhandled interrupt vector: "
                              + std::to_string(info.vector));

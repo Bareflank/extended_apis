@@ -20,6 +20,7 @@
 #define VIRT_LAPIC_INTEL_X64_EAPIS_H
 
 #include <array>
+#include <bitset>
 #include <arch/intel_x64/apic/lapic.h>
 
 namespace eapis
@@ -28,7 +29,6 @@ namespace intel_x64
 {
 
 class hve;
-class phys_xapic;
 class phys_x2apic;
 
 ///
@@ -38,46 +38,19 @@ class EXPORT_EAPIS_HVE virt_lapic
 {
 public:
 
-    /// Access type
-    ///
-    /// The interface used by the guest to talk to the virt_lapic
-    ///
-    enum class access_t : uint64_t {
-        /// MSR access for x2apic mode
-        msrs,
-
-        /// MMIO access for xAPIC mode
-        mmio
-    };
-
-    /// Constructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param hve the hve object of the virt_lapic
-    /// @param register_page the base address of this' registers
-    /// @param access the access_t for this virt_lapic
-    ///
-    virt_lapic(
-        gsl::not_null<eapis::intel_x64::hve *> hve,
-        gsl::not_null<uint32_t *> register_page,
-        access_t access
-    );
-
     /// Constructor from physical local APIC
     ///
     /// @expects
     /// @ensures
     ///
     /// @param hve the hve object of the virt_lapic
-    /// @param register_page the base address of this' registers
-    /// @param phys the phys_lapic object for this physical core
+    /// @param reg the register page for this virt lapic
+    /// @param phys the phys_x2apic object for this physical core
     ///
     virt_lapic(
         gsl::not_null<eapis::intel_x64::hve *> hve,
-        gsl::not_null<uint32_t *> register_page,
-        eapis::intel_x64::phys_lapic *phys
+        uint8_t *reg,
+        eapis::intel_x64::phys_x2apic *phys
     );
 
     /// Destructor
@@ -86,15 +59,6 @@ public:
     /// @ensures
     ///
     ~virt_lapic() = default;
-
-    /// Access Type
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return the access type for this virtual apic
-    ///
-    access_t access_type() const;
 
     /// Read Register
     ///
@@ -126,7 +90,7 @@ public:
     ///
     bool handle_interrupt_window_exit(gsl::not_null<vmcs_t *> vmcs);
 
-    /// Queue Interrupt
+    /// Queue Injection
     ///
     /// @expects
     /// @ensures
@@ -164,9 +128,6 @@ public:
     void write_self_ipi(uint64_t vector);
     void write_svr(uint64_t svr);
 
-    void init_registers_from_phys_xapic(
-        eapis::intel_x64::phys_xapic *phys);
-
     /// @endcond
 
 #ifndef ENABLE_BUILD_TEST
@@ -174,6 +135,8 @@ private:
 #endif
 
     /// @cond
+
+    static constexpr uint64_t s_reg_bytes = 0x1000U;
 
     void queue_interrupt(uint64_t vector);
     void inject_interrupt(uint64_t vector);
@@ -186,7 +149,6 @@ private:
 
     void reset_svr();
     void reset_version();
-    void reset_registers();
     void reset_register(::intel_x64::lapic::offset_t offset);
     void reset_lvt_register(::intel_x64::lapic::offset_t offset);
     void clear_register(::intel_x64::lapic::offset_t offset);
@@ -204,8 +166,7 @@ private:
     uint64_t top_256bit(uint64_t last);
 
     eapis::intel_x64::hve *m_hve;
-    uint32_t *m_reg;
-    access_t m_access_type;
+    uintptr_t m_reg;
 
     /// @endcond
 

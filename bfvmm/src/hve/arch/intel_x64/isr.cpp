@@ -17,14 +17,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-cppcoreguidelines-pro-type-reinterpret-cast
+//
+// Reason:
+//     Although in general this is a good rule, for hypervisor level code that
+//     interfaces with the kernel, and raw hardware, this rule is
+//     impractical.
+//
+
 #include <hve/arch/intel_x64/isr.h>
-#include <hve/arch/intel_x64/vic.h>
+#include <hve/arch/intel_x64/apic/vic.h>
 
 extern "C" EXPORT_SYM void
-default_isr(uint64_t vec, uint64_t *reg) noexcept
+default_isr(uint64_t vector, const uint64_t *regs) noexcept
 {
-    auto vic = reinterpret_cast<eapis::intel_x64::vic *>(*reg);
-    vic->handle_interrupt(vec);
+    auto vic = reinterpret_cast<eapis::intel_x64::vic *>(*regs);
+    vic->handle_interrupt(vector);
 }
 
 // -----------------------------------------------------------------------------

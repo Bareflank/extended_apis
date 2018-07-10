@@ -55,7 +55,7 @@ vector_to_str(uint64_t vec) noexcept
 }
 
 extern "C" EXPORT_SYM void
-default_esr(uint64_t vec, uint64_t ec, bool ec_valid, uint64_t *reg) noexcept
+default_esr(uint64_t vector, uint64_t ec, bool ec_valid, uint64_t *regs) noexcept
 {
     // NOTE:
     //
@@ -74,11 +74,11 @@ default_esr(uint64_t vec, uint64_t ec, bool ec_valid, uint64_t *reg) noexcept
         bferror_info(0, "VMM Panic!!!", msg);
         bferror_brk1(0, msg);
 
-        if (vec == 0x0E && ::intel_x64::cr2::get() == 0) {
+        if (vector == 0x0E && ::intel_x64::cr2::get() == 0) {
             bferror_info(0, "fault: null dereference", msg);
         }
         else {
-            bferror_info(0, vector_to_str(vec), msg);
+            bferror_info(0, vector_to_str(vector), msg);
         }
 
         bferror_lnbr(0, msg);
@@ -87,7 +87,7 @@ default_esr(uint64_t vec, uint64_t ec, bool ec_valid, uint64_t *reg) noexcept
             bferror_subnhex(0, "error code", ec, msg);
         }
 
-        auto view = gsl::span<uint64_t>(reg, 38);
+        auto view = gsl::span<uint64_t>(regs, 38);
 
         bferror_subnhex(0, "ss    ", view[37], msg);
         bferror_subnhex(0, "rsp   ", view[36], msg);

@@ -22,7 +22,7 @@
 #include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
 
 #include "../../../hve/arch/intel_x64/hve.h"
-#include "../../../hve/arch/intel_x64/vic.h"
+#include "../../../hve/arch/intel_x64/apic/vic.h"
 #include "../../../hve/arch/intel_x64/ept/memory_map.h"
 
 namespace eapis
@@ -34,7 +34,7 @@ namespace intel_x64
 ///
 /// Manages the lifetime of the exit handlers created upon construction.
 /// This class serves as the root from which all other resources may be
-/// accesses, e.g. the vmcs and exit_handler.
+/// accessed, e.g. the vmcs and exit_handler.
 ///
 class vcpu : public bfvmm::intel_x64::vcpu
 {
@@ -48,12 +48,7 @@ public:
     ///
     /// @param id the id of this vcpu
     ///
-    vcpu(vcpuid::type id) :
-        bfvmm::intel_x64::vcpu{id},
-        m_emm{std::make_unique<eapis::intel_x64::ept::memory_map>()},
-        m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())},
-        m_vic{std::make_unique<eapis::intel_x64::vic>(m_hve.get(), m_emm.get())}
-    { }
+    vcpu(vcpuid::type id);
 
     /// Destructor
     ///
@@ -69,8 +64,7 @@ public:
     ///
     /// @return Returns the hve object stored in this vCPU
     ///
-    gsl::not_null<eapis::intel_x64::hve *> hve()
-    { return m_hve.get(); }
+    gsl::not_null<eapis::intel_x64::hve *> hve();
 
     /// Get VIC (virtual interrupt controller)
     ///
@@ -79,8 +73,7 @@ public:
     ///
     /// @return Returns the vic object stored in this vCPU
     ///
-    gsl::not_null<eapis::intel_x64::vic *> vic()
-    { return m_vic.get(); }
+    gsl::not_null<eapis::intel_x64::vic *> vic();
 
     /// Get EMM (EPT memory map)
     ///
@@ -89,18 +82,37 @@ public:
     ///
     /// @return Returns the emm object stored in this vCPU
     ///
-    gsl::not_null<eapis::intel_x64::ept::memory_map *> emm()
-    { return m_emm.get(); }
+    gsl::not_null<eapis::intel_x64::ept::memory_map *> emm();
+
+    /// Enable EFI
+    ///
+    /// Install and enable the exit handlers required to boot
+    /// multi-core Linux
+    ///
+    /// @note enabling this will enable the vic, ept, and vpid
+    /// By default, all of guest physical memory is identity mapped.
+    ///
+    /// @expects get_platform_info()->efi.enabled == true
+    /// @ensures
+    ///
+    void enable_efi();
 
 private:
 
-    /// @cond
+    void add_efi_handlers();
+
+    bool efi_handle_cpuid(gsl::not_null<vmcs_t *> vmcs);
+    bool efi_handle_rdmsr(gsl::not_null<vmcs_t *> vmcs);
+    bool efi_handle_wrmsr_efer(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
+    bool efi_handle_wrmsr_perf_global_ctrl(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
+    bool efi_handle_wrcr0(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info);
+    bool efi_handle_wrcr4(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info);
+    bool efi_handle_init_signal(gsl::not_null<vmcs_t *> vmcs);
+    bool efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs);
 
     std::unique_ptr<eapis::intel_x64::ept::memory_map> m_emm;
     std::unique_ptr<eapis::intel_x64::hve> m_hve;
     std::unique_ptr<eapis::intel_x64::vic> m_vic;
-
-    /// @endcond
 };
 
 }

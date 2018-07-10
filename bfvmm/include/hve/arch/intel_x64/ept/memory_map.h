@@ -145,6 +145,15 @@ public:
     ///
     hpa_t hpa() const;
 
+    /// Max page size
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return The maximum number of bytes in a page
+    ///
+    uint64_t max_page_size() const;
+
 #ifndef ENABLE_BUILD_TEST
 private:
 #endif
@@ -153,6 +162,8 @@ private:
 
     hva_t m_pml4_hva{0};
     hpa_t m_pml4_hpa{0};
+    uint64_t m_cap{0};
+    uint64_t m_max_page_size{0};
 
     hpa_t allocate_page_table();
     void allocate_page_table(epte_t &entry);

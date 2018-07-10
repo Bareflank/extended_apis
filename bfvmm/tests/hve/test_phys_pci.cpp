@@ -428,7 +428,7 @@ TEST_CASE("enumeration")
                 descriptor.device,
                 descriptor.func,
                 reg,
-                descriptor.data[reg / 4]);
+                gsl::at(descriptor.data, reg >> 2));
         }
     }
 

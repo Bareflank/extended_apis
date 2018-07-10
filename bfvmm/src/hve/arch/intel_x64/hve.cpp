@@ -16,8 +16,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfvmm/memory_manager/memory_manager.h>
+// TIDY_EXCLUSION=-performance-move-const-arg
+//
+// Reason:
+//     Tidy complains that the std::move(d)'s used in the add_handler calls
+//     have no effect. Removing std::move however results in a compiler error
+//     saying the lvalue (d) can't bind to the rvalue.
+//
 
+#include <bfvmm/memory_manager/memory_manager.h>
 #include <hve/arch/intel_x64/hve.h>
 
 namespace eapis
@@ -131,6 +138,38 @@ void hve::add_external_interrupt_handler(
     }
 
     m_external_interrupt->add_handler(vector, std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// INIT Signal
+//--------------------------------------------------------------------------
+
+gsl::not_null<init_signal *> hve::init_signal()
+{ return m_init_signal.get(); }
+
+void hve::add_init_signal_handler(init_signal::handler_delegate_t &&d)
+{
+    if (!m_init_signal) {
+        m_init_signal = std::make_unique<eapis::intel_x64::init_signal>(this);
+    }
+
+    m_init_signal->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// SIPI
+//--------------------------------------------------------------------------
+
+gsl::not_null<sipi *> hve::sipi()
+{ return m_sipi.get(); }
+
+void hve::add_sipi_handler(sipi::handler_delegate_t &&d)
+{
+    if (!m_sipi) {
+        m_sipi = std::make_unique<eapis::intel_x64::sipi>(this);
+    }
+
+    m_sipi->add_handler(std::move(d));
 }
 
 //--------------------------------------------------------------------------
