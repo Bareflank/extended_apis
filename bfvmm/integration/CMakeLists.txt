@@ -20,10 +20,7 @@ cmake_minimum_required(VERSION 3.6)
 project(eapis_integration C CXX)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project(
-    INCLUDES ../include
-    INCLUDES ../../bfsdk/include
-)
+init_project()
 
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     add_subdirectory(arch/intel_x64)

@@ -16,7 +16,33 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-eapis_add_vmm_executable(
-    eapis_integration_intel_x64_vic_injection
-    SOURCES test_injection.cpp
-)
+# ------------------------------------------------------------------------------
+# eapis_vmm_extension
+# ------------------------------------------------------------------------------
+
+function(eapis_add_vmm_executable NAME)
+    list(APPEND ARGN
+        LIBRARIES eapis_hve
+        LIBRARIES capstone
+    )
+
+    add_vmm_executable(
+        ${NAME}
+        ${ARGN}
+    )
+endfunction(eapis_add_vmm_executable)
+
+# ------------------------------------------------------------------------------
+# Extensions
+# ------------------------------------------------------------------------------
+
+function(eapis_vmm_extension NAME)
+    list(APPEND ARGN
+        DEPENDS eapis_bfvmm
+    )
+
+    vmm_extension(
+        ${NAME}
+        ${ARGN}
+    )
+endfunction(eapis_vmm_extension)

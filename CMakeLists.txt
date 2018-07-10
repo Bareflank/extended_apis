@@ -16,40 +16,64 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+# ------------------------------------------------------------------------------
+# Config
+# ------------------------------------------------------------------------------
+
 include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/config/default.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/depends/capstone.cmake)
+
+# ------------------------------------------------------------------------------
+# Project File
+# ------------------------------------------------------------------------------
+
+add_project_include(${EAPIS_SOURCE_CMAKE_DIR}/macros.cmake)
+
+# ------------------------------------------------------------------------------
+# General Dependencies
+# ------------------------------------------------------------------------------
+
+include_dependency(EAPIS_SOURCE_DEPENDS_DIR capstone)
+
+# ------------------------------------------------------------------------------
+# VMM Components
+# ------------------------------------------------------------------------------
 
 if(ENABLE_BUILD_VMM)
-    vmm_extension(
-        eapis
+    add_subproject(
+        eapis_bfvmm vmm
+        DEPENDS bfvmm
+        DEPENDS bfintrinsics
         DEPENDS capstone
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src
     )
 
-    vmm_extension(
-        eapis_main
-        DEPENDS eapis
-        DEPENDS capstone
+    add_subproject(
+        eapis_bfvmm_main vmm
+        DEPENDS eapis_bfvmm
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src/main
     )
 
-    vmm_extension(
-        eapis_integration
-        DEPENDS eapis
+    add_subproject(
+        eapis_integration vmm
+        DEPENDS eapis_bfvmm
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/
     )
 endif()
 
+# ------------------------------------------------------------------------------
+# Unit Tests
+# ------------------------------------------------------------------------------
+
 if(ENABLE_BUILD_TEST)
-    test_extension(
-        eapis
+    add_subproject(
+        eapis_bfvmm test
         DEPENDS bfvmm
         DEPENDS capstone
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
     )
 
-    test_extension(
-        eapis_bfsdk
+    add_subproject(
+        eapis_bfsdk test
         DEPENDS bfvmm
         DEPENDS capstone
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfsdk/tests/
