@@ -16,417 +16,852 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfsupport.h>
-#include <bfthreadcontext.h>
-#include <bfvmm/memory_manager/arch/x64/unique_map.h>
-
-#include <hve/arch/intel_x64/ept/helpers.h>
-#include <hve/arch/intel_x64/ept/intrinsics.h>
-#include <hve/arch/intel_x64/cpuid.h>
-#include <vcpu/arch/intel_x64/vcpu.h>
-
-bool init_done = false;
-bool sipi_done = false;
+#include <hve/arch/intel_x64/vcpu.h>
 
 namespace eapis
 {
 namespace intel_x64
 {
 
-void
-vcpu::enable_efi()
-{
-    if (m_emm == nullptr) {
-        m_emm = std::make_unique<eapis::intel_x64::ept::memory_map>();
-    }
-
-    if (m_vic == nullptr) {
-        m_vic = std::make_unique<eapis::intel_x64::vic>(m_hve.get());
-    }
-
-    this->add_efi_handlers();
-
-    ::vmcs_n::guest_ia32_perf_global_ctrl::reserved::set(0);
-    ept::identity_map(*m_emm, 0, 0x900000000 - 0x1000);
-    ept::enable_ept(ept::eptp(*m_emm));
-    m_hve->enable_vpid();
-}
-
-// -----------------------------------------------------------------------------
-// EFI Handlers
-// -----------------------------------------------------------------------------
-
-/// This has to be registered through the base exit_handler because the EAPIs
-/// cpuid handlers are keyed off of {leaf, subleaf}, but in practice, when
-/// firmware calls cpuid, it may not clear out rcx, resulting in random
-/// subleaf values. Until the EAPIs can account for this scenario, this
-/// function will need bypass the EAPIs cpuid interface.
-
-bool
-vcpu::efi_handle_cpuid(gsl::not_null<vmcs_t *> vmcs)
-{
-    static constexpr uint32_t centaur_base = 0xC0000000;
-
-    if (vmcs->save_state()->rax == 0xBF01 || vmcs->save_state()->rax == 0xBF00) {
-        return false;
-    }
-
-    auto leaf = vmcs->save_state()->rax;
-    auto ret =
-        ::x64::cpuid::get(
-            gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rax),
-            gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rbx),
-            gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rcx),
-            gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rdx)
-        );
-
-    vmcs->save_state()->rax = ret.rax;
-    vmcs->save_state()->rbx = ret.rbx;
-    vmcs->save_state()->rdx = ret.rdx;
-
-    if (leaf == ::intel_x64::cpuid::feature_information::addr) {
-        uint64_t setter = ret.rcx;
-        setter = clear_bit(setter, ::intel_x64::cpuid::feature_information::ecx::xsave::from);
-        setter = clear_bit(setter, ::intel_x64::cpuid::feature_information::ecx::osxsave::from);
-        setter = clear_bit(setter, ::intel_x64::cpuid::feature_information::ecx::vmx::from);
-        vmcs->save_state()->rcx = setter;
-
-        //TODO: handle MTRR writes
-        setter = clear_bit(ret.rdx, ::intel_x64::cpuid::feature_information::edx::mtrr::from);
-        vmcs->save_state()->rdx = setter;
-    }
-    else if ((leaf & centaur_base) == centaur_base) {
-        bfalert_nhex(0, "centaur leaf", leaf);
-        bfalert_nhex(0, "centaur subleaf", vmcs->save_state()->rcx);
-        vmcs->save_state()->rax = 0;
-        vmcs->save_state()->rcx = 0;
-        vmcs->save_state()->rdx = 0;
-    }
-    else if (leaf == ::intel_x64::cpuid::arch_perf_monitoring::addr) {
-        vmcs->save_state()->rax = 0;
-        vmcs->save_state()->rcx = 0;
-    }
-    else {
-        vmcs->save_state()->rcx = ret.rcx;
-    }
-
-    return advance(vmcs);
-}
-
-/// This handler has to bypass the EAPIs' rdmsr interface because once
-/// you register to handle an msr with the rdmsr class, it reads at the
-/// given address. But an MSR may or may not be implemented on a
-/// given system and if it's not, a GP will be raised.
-///
-/// It may be reasonable to add these two addresses to the QUIRK'd out ones in
-/// emulate_rdmsr since they aren't architectural.
-///
-bool
-vcpu::efi_handle_rdmsr(gsl::not_null<vmcs_t *> vmcs)
-{
-    static constexpr uint32_t pkg_perf_status = 0x613;
-    static constexpr uint32_t dram_energy_status = 0x619;
-
-    const auto msr = vmcs->save_state()->rcx;
-
-    if (msr == pkg_perf_status || msr == dram_energy_status) {
-        vmcs->save_state()->rax = 0;
-        vmcs->save_state()->rdx = 0;
-        return advance(vmcs);
-    }
-
-    return false;
-}
-
-bool
-vcpu::efi_handle_wrmsr_efer(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
-{
-    bfignored(vmcs);
-
-    if (::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::is_disabled()) {
-        return true;
-    }
-
-    if (get_bit(info.val, ::intel_x64::msrs::ia32_efer::lme::from) != 0U) {
-        uint64_t s_cr0 = 0;
-        ::vmcs_n::guest_cr0::protection_enable::enable(s_cr0);
-        ::vmcs_n::guest_cr0::extension_type::enable(s_cr0);
-        ::vmcs_n::guest_cr0::numeric_error::enable(s_cr0);
-        ::vmcs_n::guest_cr0::write_protect::enable(s_cr0);
-        ::vmcs_n::guest_cr0::not_write_through::enable(s_cr0);
-        ::vmcs_n::guest_cr0::cache_disable::enable(s_cr0);
-        ::vmcs_n::guest_cr0::paging::enable(s_cr0);
-        ::vmcs_n::guest_cr0::set(s_cr0);
-
-        ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::enable();
-        ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::disable();
-        info.val |= ::intel_x64::msrs::ia32_efer::lma::mask;
-    }
-
-    return true;
-}
-
-bool
-vcpu::efi_handle_wrmsr_perf_global_ctrl(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info)
-{
-    bfignored(vmcs);
-    ::vmcs_n::guest_ia32_perf_global_ctrl::reserved::set(info.val, 0);
-    return true;
-}
-
-bool
-vcpu::efi_handle_wrcr0(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info)
-{
-    bfignored(vmcs);
-    using namespace ::vmcs_n::exit_qualification::control_register_access;
-
-    // only need access type 0 but eapis doesn't handle
-    // these other access types properly when cr0 is emulated
-    auto access_type = access_type::get();
-    switch (access_type) {
-        case access_type::mov_to_cr:
-            info.shadow = info.val;
-            ::vmcs_n::guest_cr0::extension_type::enable(info.val);
-            ::vmcs_n::guest_cr0::numeric_error::enable(info.val);
-
-            if (vmcs_n::guest_cr0::paging::is_disabled(info.val)) {
-                ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::enable();
-                ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::disable();
-                ::vmcs_n::guest_ia32_efer::lma::disable();
-                ::vmcs_n::guest_ia32_efer::lme::disable();
-            }
-            else {
-                ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::disable();
-                ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::enable();
-                ::vmcs_n::guest_ia32_efer::lma::enable();
-                ::vmcs_n::guest_ia32_efer::lme::enable();
-            }
-            return true;
-
-        case access_type::clts:
-            ::vmcs_n::guest_cr0::task_switched::disable(info.shadow);
-            ::vmcs_n::guest_cr0::task_switched::disable(info.val);
-            return true;
-
-        case access_type::lmsw: {
-            auto cur = set_bits(::vmcs_n::guest_cr0::get(), source_data::get(), ~0xFFFFULL);
-            info.val = set_bits(cur, ::intel_x64::msrs::ia32_vmx_cr0_fixed0::get(), ~0ULL);
-            info.shadow = set_bits(info.shadow, source_data::get(), ~0xFFFFULL);
-            return true;
-        }
-
-        case access_type::mov_from_cr:
-        default:
-            throw std::runtime_error("efi_handle_wrcr0 invalid access_type " + std::to_string(access_type));
-    }
-}
-
-bool
-vcpu::efi_handle_wrcr4(gsl::not_null<vmcs_t *> vmcs, control_register::info_t &info)
-{
-    bfignored(vmcs);
-    info.shadow = info.val;
-    info.val = set_bits(
-                   info.val, ::intel_x64::msrs::ia32_vmx_cr4_fixed0::get(), ~0ULL
-               );
-    return true;
-}
-
-bool
-vcpu::efi_handle_init_signal(gsl::not_null<vmcs_t *> vmcs)
-{
-    bfignored(vmcs);
-    ::vmcs_n::guest_activity_state::set(::vmcs_n::guest_activity_state::wait_for_sipi);
-    init_done = true;
-    return true;
-}
-
-bool
-vcpu::efi_handle_sipi(gsl::not_null<vmcs_t *> vmcs)
-{
-    bfignored(vmcs);
-
-    if (!sipi_done) {
-        sipi_done = true;
-        return true;
-    }
-
-    ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::enable();
-    ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::disable();
-
-    ::vmcs_n::value_type cr0 = 0;
-    ::vmcs_n::guest_cr0::extension_type::enable(cr0);
-    ::vmcs_n::guest_cr0::numeric_error::enable(cr0);
-    ::vmcs_n::guest_cr0::not_write_through::enable(cr0);
-    ::vmcs_n::guest_cr0::cache_disable::enable(cr0);
-    ::vmcs_n::guest_cr0::set(cr0);
-
-    ::vmcs_n::value_type cr4 = 0;
-    ::vmcs_n::guest_cr4::vmx_enable_bit::enable(cr4);
-    ::vmcs_n::guest_cr4::set(cr4);
-
-    ::vmcs_n::guest_cr3::set(0);
-    ::intel_x64::cr2::set(0);
-
-    ::vmcs_n::value_type ds_ar = 0;
-    ::vmcs_n::guest_ds_access_rights::type::set(ds_ar, 0x3);
-    ::vmcs_n::guest_ds_access_rights::s::enable(ds_ar);
-    ::vmcs_n::guest_ds_access_rights::present::enable(ds_ar);
-    ::vmcs_n::guest_ds_selector::set(0);
-    ::vmcs_n::guest_ds_base::set(0);
-    ::vmcs_n::guest_ds_limit::set(0xFFFF);
-    ::vmcs_n::guest_ds_access_rights::set(ds_ar);
-
-    ::vmcs_n::value_type es_ar = 0;
-    ::vmcs_n::guest_es_access_rights::type::set(es_ar, 0x3);
-    ::vmcs_n::guest_es_access_rights::s::enable(es_ar);
-    ::vmcs_n::guest_es_access_rights::present::enable(es_ar);
-    ::vmcs_n::guest_es_selector::set(0);
-    ::vmcs_n::guest_es_base::set(0);
-    ::vmcs_n::guest_es_limit::set(0xFFFF);
-    ::vmcs_n::guest_es_access_rights::set(es_ar);
-
-    ::vmcs_n::value_type fs_ar = 0;
-    ::vmcs_n::guest_fs_access_rights::type::set(fs_ar, 0x3);
-    ::vmcs_n::guest_fs_access_rights::s::enable(fs_ar);
-    ::vmcs_n::guest_fs_access_rights::present::enable(fs_ar);
-    ::vmcs_n::guest_fs_selector::set(0);
-    ::vmcs_n::guest_fs_base::set(0);
-    ::vmcs_n::guest_fs_limit::set(0xFFFF);
-    ::vmcs_n::guest_fs_access_rights::set(fs_ar);
-
-    ::vmcs_n::value_type gs_ar = 0;
-    ::vmcs_n::guest_gs_access_rights::type::set(gs_ar, 0x3);
-    ::vmcs_n::guest_gs_access_rights::s::enable(gs_ar);
-    ::vmcs_n::guest_gs_access_rights::present::enable(gs_ar);
-    ::vmcs_n::guest_gs_selector::set(0);
-    ::vmcs_n::guest_gs_base::set(0);
-    ::vmcs_n::guest_gs_limit::set(0xFFFF);
-    ::vmcs_n::guest_gs_access_rights::set(gs_ar);
-
-    ::vmcs_n::value_type ss_ar = 0;
-    ::vmcs_n::guest_ss_access_rights::type::set(ss_ar, 0x3);
-    ::vmcs_n::guest_ss_access_rights::s::enable(ss_ar);
-    ::vmcs_n::guest_ss_access_rights::present::enable(ss_ar);
-    ::vmcs_n::guest_ss_selector::set(0);
-    ::vmcs_n::guest_ss_base::set(0);
-    ::vmcs_n::guest_ss_limit::set(0xFFFF);
-    ::vmcs_n::guest_ss_access_rights::set(ss_ar);
-
-    ::vmcs_n::value_type cs_ar = 0;
-    ::vmcs_n::guest_cs_access_rights::type::set(cs_ar, 0xB);
-    ::vmcs_n::guest_cs_access_rights::s::enable(cs_ar);
-    ::vmcs_n::guest_cs_access_rights::present::enable(cs_ar);
-    auto vector_segment = ::vmcs_n::exit_qualification::sipi::vector::get() << 8;
-    ::vmcs_n::guest_cs_selector::set(vector_segment);
-    ::vmcs_n::guest_cs_base::set(vector_segment << 4);
-    ::vmcs_n::guest_cs_limit::set(0xFFFF);
-    ::vmcs_n::guest_cs_access_rights::set(cs_ar);
-
-    ::vmcs_n::value_type tr_ar = 0;
-    ::vmcs_n::guest_tr_access_rights::type::set(tr_ar, 0xB);
-    ::vmcs_n::guest_tr_access_rights::present::enable(tr_ar);
-    ::vmcs_n::guest_tr_selector::set(0);
-    ::vmcs_n::guest_tr_base::set(0);
-    ::vmcs_n::guest_tr_limit::set(0xFFFF);
-    ::vmcs_n::guest_tr_access_rights::set(tr_ar);
-
-    ::vmcs_n::value_type ldtr_ar = 0;
-    ::vmcs_n::guest_ldtr_access_rights::type::set(ldtr_ar, 0x2);
-    ::vmcs_n::guest_ldtr_access_rights::present::enable(ldtr_ar);
-    ::vmcs_n::guest_ldtr_selector::set(0);
-    ::vmcs_n::guest_ldtr_base::set(0);
-    ::vmcs_n::guest_ldtr_limit::set(0xFFFF);
-    ::vmcs_n::guest_ldtr_access_rights::set(ldtr_ar);
-
-    ::vmcs_n::guest_gdtr_base::set(0);
-    ::vmcs_n::guest_gdtr_limit::set(0xFFFF);
-
-    ::vmcs_n::guest_idtr_base::set(0);
-    ::vmcs_n::guest_idtr_limit::set(0xFFFF);
-
-    vmcs->save_state()->rax = 0;
-    vmcs->save_state()->rbx = 0;
-    vmcs->save_state()->rcx = 0;
-    vmcs->save_state()->rdx = 0xF00;
-    vmcs->save_state()->rdi = 0;
-    vmcs->save_state()->rsi = 0;
-    vmcs->save_state()->rbp = 0;
-    vmcs->save_state()->rsp = 0;
-    vmcs->save_state()->rip = 0;
-
-    ::vmcs_n::guest_rflags::set(0x2);
-    ::vmcs_n::guest_ia32_efer::set(0);
-
-    ::vmcs_n::guest_activity_state::set(::vmcs_n::guest_activity_state::active);
-
-    return true;
-}
-
-void vcpu::add_efi_handlers()
-{
-    hve()->enable_wrcr0_exiting(
-        0xFFFFFFFFFFFFFFFF, ::intel_x64::vmcs::guest_cr0::get()
-    );
-
-    hve()->add_wrcr0_handler(
-        control_register::handler_delegate_t::create<vcpu, &vcpu::efi_handle_wrcr0>(this)
-    );
-
-    hve()->enable_wrcr4_exiting(
-        ::intel_x64::cr4::vmx_enable_bit::mask, ::intel_x64::vmcs::guest_cr4::get()
-    );
-
-    hve()->add_wrcr4_handler(
-        control_register::handler_delegate_t::create<vcpu, &vcpu::efi_handle_wrcr4>(this)
-    );
-
-    exit_handler()->add_handler(
-        ::intel_x64::vmcs::exit_reason::basic_exit_reason::cpuid,
-        ::handler_delegate_t::create<vcpu, &vcpu::efi_handle_cpuid>(this)
-    );
-
-    exit_handler()->add_handler(
-        ::intel_x64::vmcs::exit_reason::basic_exit_reason::rdmsr,
-        ::handler_delegate_t::create<vcpu, &vcpu::efi_handle_rdmsr>(this)
-    );
-
-    hve()->add_wrmsr_handler(
-        ::intel_x64::msrs::ia32_efer::addr,
-        wrmsr::handler_delegate_t::create<vcpu, &vcpu::efi_handle_wrmsr_efer>(this)
-    );
-
-    hve()->add_wrmsr_handler(
-        ::intel_x64::msrs::ia32_perf_global_ctrl::addr,
-        wrmsr::handler_delegate_t::create<vcpu, &vcpu::efi_handle_wrmsr_perf_global_ctrl>(this)
-    );
-
-    hve()->add_init_signal_handler(
-        init_signal::handler_delegate_t::create<vcpu, &vcpu::efi_handle_init_signal>(this)
-    );
-
-    hve()->add_sipi_handler(
-        sipi::handler_delegate_t::create<vcpu, &vcpu::efi_handle_sipi>(this)
-    );
-}
-
 vcpu::vcpu(vcpuid::type id) :
-    bfvmm::intel_x64::vcpu{id},
-    m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())}
+    bfvmm::intel_x64::vcpu{id}
+{ }
+
+//==========================================================================
+// MISC
+//==========================================================================
+
+//--------------------------------------------------------------------------
+// EPT
+//--------------------------------------------------------------------------
+
+gsl::not_null<ept_handler *> vcpu::ept()
+{ return m_ept_handler.get(); }
+
+void vcpu::set_eptp(ept::mmap *map)
 {
-    //    if (m_vic == nullptr) {
-    //        m_vic = std::make_unique<eapis::intel_x64::vic>(m_hve.get());
-    //    }
+    if (!m_ept_handler) {
+        m_ept_handler = std::make_unique<eapis::intel_x64::ept_handler>();
+    }
+
+    m_ept_handler->set_eptp(map);
 }
 
-gsl::not_null<eapis::intel_x64::hve *> vcpu::hve()
-{ return m_hve.get(); }
+void vcpu::set_eptp(ept::mmap &map)
+{ this->set_eptp(&map); }
 
-gsl::not_null<eapis::intel_x64::vic *> vcpu::vic()
-{ return m_vic.get(); }
+void vcpu::disable_ept()
+{
+    if (m_ept_handler) {
+        m_ept_handler->set_eptp(nullptr);
+    }
+}
 
-gsl::not_null<eapis::intel_x64::ept::memory_map *> vcpu::emm()
-{ return m_emm.get(); }
+//--------------------------------------------------------------------------
+// VPID
+//--------------------------------------------------------------------------
+
+gsl::not_null<vpid_handler *> vcpu::vpid()
+{ return m_vpid_handler.get(); }
+
+void vcpu::enable_vpid()
+{
+    if (!m_vpid_handler) {
+        m_vpid_handler = std::make_unique<eapis::intel_x64::vpid_handler>();
+    }
+
+    m_vpid_handler->enable();
+}
+
+void vcpu::disable_vpid()
+{
+    if (m_vpid_handler) {
+        m_vpid_handler->disable();
+    }
+}
+
+//==========================================================================
+// VMExit
+//==========================================================================
+
+//--------------------------------------------------------------------------
+// Control Register
+//--------------------------------------------------------------------------
+
+gsl::not_null<control_register_handler *> vcpu::control_register()
+{ return m_control_register_handler.get(); }
+
+void vcpu::enable_wrcr0_exiting(
+    vmcs_n::value_type mask, vmcs_n::value_type shadow)
+{
+    check_crall();
+    m_control_register_handler->enable_wrcr0_exiting(mask, shadow);
+}
+
+void vcpu::enable_wrcr4_exiting(
+    vmcs_n::value_type mask, vmcs_n::value_type shadow)
+{
+    check_crall();
+    m_control_register_handler->enable_wrcr4_exiting(mask, shadow);
+}
+
+void vcpu::add_wrcr0_handler(control_register_handler::handler_delegate_t &&d)
+{
+    check_crall();
+    m_control_register_handler->add_wrcr0_handler(std::move(d));
+}
+
+void vcpu::add_rdcr3_handler(control_register_handler::handler_delegate_t &&d)
+{
+    check_rdcr3();
+    m_control_register_handler->add_rdcr3_handler(std::move(d));
+}
+
+void vcpu::add_wrcr3_handler(control_register_handler::handler_delegate_t &&d)
+{
+    check_wrcr3();
+    m_control_register_handler->add_wrcr3_handler(std::move(d));
+}
+
+void vcpu::add_wrcr4_handler(control_register_handler::handler_delegate_t &&d)
+{
+    check_crall();
+    m_control_register_handler->add_wrcr4_handler(std::move(d));
+}
+
+void vcpu::add_rdcr8_handler(control_register_handler::handler_delegate_t &&d)
+{
+    check_rdcr8();
+    m_control_register_handler->add_rdcr8_handler(std::move(d));
+}
+
+void vcpu::add_wrcr8_handler(control_register_handler::handler_delegate_t &&d)
+{
+    check_wrcr8();
+    m_control_register_handler->add_wrcr8_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// CPUID
+//--------------------------------------------------------------------------
+
+gsl::not_null<cpuid_handler *> vcpu::cpuid()
+{ return m_cpuid_handler.get(); }
+
+void vcpu::add_cpuid_handler(
+    cpuid_handler::leaf_t leaf, cpuid_handler::handler_delegate_t &&d)
+{
+    if (!m_cpuid_handler) {
+        m_cpuid_handler = std::make_unique<eapis::intel_x64::cpuid_handler>(this);
+    }
+
+    m_cpuid_handler->add_handler(leaf, std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// EPT Misconfiguration
+//--------------------------------------------------------------------------
+
+gsl::not_null<eapis::intel_x64::ept_misconfiguration_handler *> vcpu::ept_misconfiguration()
+{ return m_ept_misconfiguration_handler.get(); }
+
+void vcpu::add_ept_misconfiguration_handler(
+    ept_misconfiguration_handler::handler_delegate_t &&d)
+{
+    if (!m_ept_misconfiguration_handler) {
+        m_ept_misconfiguration_handler = std::make_unique<eapis::intel_x64::ept_misconfiguration_handler>(this);
+    }
+
+    m_ept_misconfiguration_handler->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// EPT Violation
+//--------------------------------------------------------------------------
+
+gsl::not_null<eapis::intel_x64::ept_violation_handler *> vcpu::ept_violation()
+{ return m_ept_violation_handler.get(); }
+
+void vcpu::add_ept_read_violation_handler(
+    ept_violation_handler::handler_delegate_t &&d)
+{
+    if (!m_ept_violation_handler) {
+        m_ept_violation_handler = std::make_unique<eapis::intel_x64::ept_violation_handler>(this);
+    }
+
+    m_ept_violation_handler->add_read_handler(std::move(d));
+}
+
+void vcpu::add_ept_write_violation_handler(
+    ept_violation_handler::handler_delegate_t &&d)
+{
+    if (!m_ept_violation_handler) {
+        m_ept_violation_handler = std::make_unique<eapis::intel_x64::ept_violation_handler>(this);
+    }
+
+    m_ept_violation_handler->add_write_handler(std::move(d));
+}
+
+void vcpu::add_ept_execute_violation_handler(
+    ept_violation_handler::handler_delegate_t &&d)
+{
+    if (!m_ept_violation_handler) {
+        m_ept_violation_handler = std::make_unique<eapis::intel_x64::ept_violation_handler>(this);
+    }
+
+    m_ept_violation_handler->add_execute_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// External Interrupt
+//--------------------------------------------------------------------------
+
+gsl::not_null<external_interrupt_handler *> vcpu::external_interrupt()
+{ return m_external_interrupt_handler.get(); }
+
+void vcpu::add_external_interrupt_handler(
+    vmcs_n::value_type vector, external_interrupt_handler::handler_delegate_t &&d)
+{
+    if (!m_external_interrupt_handler) {
+        m_external_interrupt_handler = std::make_unique<eapis::intel_x64::external_interrupt_handler>(this);
+    }
+
+    m_external_interrupt_handler->add_handler(vector, std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// INIT Signal
+//--------------------------------------------------------------------------
+
+gsl::not_null<init_signal_handler *> vcpu::init_signal()
+{ return m_init_signal_handler.get(); }
+
+void vcpu::add_init_signal_handler(init_signal_handler::handler_delegate_t &&d)
+{
+    if (!m_init_signal_handler) {
+        m_init_signal_handler = std::make_unique<eapis::intel_x64::init_signal_handler>(this);
+    }
+
+    m_init_signal_handler->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// Interrupt Window
+//--------------------------------------------------------------------------
+
+gsl::not_null<interrupt_window_handler *> vcpu::interrupt_window()
+{ return m_interrupt_window_handler.get(); }
+
+void vcpu::add_interrupt_window_handler(interrupt_window_handler::handler_delegate_t &&d)
+{
+    if (!m_interrupt_window_handler) {
+        m_interrupt_window_handler =
+            std::make_unique<eapis::intel_x64::interrupt_window_handler>(this);
+    }
+
+    m_interrupt_window_handler->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// IO Instruction
+//--------------------------------------------------------------------------
+
+gsl::not_null<io_instruction_handler *> vcpu::io_instruction()
+{ return m_io_instruction_handler.get(); }
+
+void vcpu::add_io_instruction_handler(
+    vmcs_n::value_type port,
+    io_instruction_handler::handler_delegate_t &&in_d,
+    io_instruction_handler::handler_delegate_t &&out_d)
+{
+    check_io_bitmaps();
+
+    if (!m_io_instruction_handler) {
+        m_io_instruction_handler = std::make_unique<eapis::intel_x64::io_instruction_handler>(this);
+    }
+
+    m_io_instruction_handler->add_handler(port, std::move(in_d), std::move(out_d));
+}
+
+//--------------------------------------------------------------------------
+// Monitor Trap
+//--------------------------------------------------------------------------
+
+gsl::not_null<monitor_trap_handler *> vcpu::monitor_trap()
+{ return m_monitor_trap_handler.get(); }
+
+void vcpu::add_monitor_trap_handler(monitor_trap_handler::handler_delegate_t &&d)
+{
+    check_monitor_trap_handler();
+    m_monitor_trap_handler->add_handler(std::move(d));
+}
+
+void vcpu::enable_monitor_trap_flag()
+{
+    check_monitor_trap_handler();
+    m_monitor_trap_handler->enable();
+}
+
+//--------------------------------------------------------------------------
+// Move DR
+//--------------------------------------------------------------------------
+
+gsl::not_null<mov_dr_handler *> vcpu::mov_dr()
+{ return m_mov_dr_handler.get(); }
+
+void vcpu::add_mov_dr_handler(mov_dr_handler::handler_delegate_t &&d)
+{
+    if (!m_mov_dr_handler) {
+        m_mov_dr_handler = std::make_unique<eapis::intel_x64::mov_dr_handler>(this);
+    }
+
+    m_mov_dr_handler->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// Read MSR
+//--------------------------------------------------------------------------
+
+gsl::not_null<rdmsr_handler *> vcpu::rdmsr()
+{ return m_rdmsr_handler.get(); }
+
+void vcpu::pass_through_all_rdmsr_handler_accesses()
+{ check_rdmsr_handler(); }
+
+void vcpu::add_rdmsr_handler(
+    vmcs_n::value_type msr, rdmsr_handler::handler_delegate_t &&d)
+{
+    check_rdmsr_handler();
+    m_rdmsr_handler->add_handler(msr, std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// SIPI
+//--------------------------------------------------------------------------
+
+gsl::not_null<sipi_handler *> vcpu::sipi()
+{ return m_sipi_handler.get(); }
+
+void vcpu::add_sipi_handler(sipi_handler::handler_delegate_t &&d)
+{
+    if (!m_sipi_handler) {
+        m_sipi_handler = std::make_unique<eapis::intel_x64::sipi_handler>(this);
+    }
+
+    m_sipi_handler->add_handler(std::move(d));
+}
+
+//--------------------------------------------------------------------------
+// Write MSR
+//--------------------------------------------------------------------------
+
+gsl::not_null<wrmsr_handler *> vcpu::wrmsr()
+{ return m_wrmsr_handler.get(); }
+
+void vcpu::pass_through_all_wrmsr_handler_accesses()
+{ check_wrmsr_handler(); }
+
+void vcpu::add_wrmsr_handler(
+    vmcs_n::value_type msr, wrmsr_handler::handler_delegate_t &&d)
+{
+    check_wrmsr_handler();
+    m_wrmsr_handler->add_handler(msr, std::move(d));
+}
+
+//==========================================================================
+// Bitmaps
+//==========================================================================
+
+gsl::span<uint8_t> vcpu::msr_bitmap()
+{ return gsl::make_span(m_msr_bitmap.get(), ::x64::pt::page_size); }
+
+gsl::span<uint8_t> vcpu::io_bitmaps()
+{ return gsl::make_span(m_io_bitmaps.get(), ::x64::pt::page_size * 2); }
+
+//==========================================================================
+// Private
+//==========================================================================
+
+void vcpu::check_crall()
+{
+    if (!m_control_register_handler) {
+        m_control_register_handler = std::make_unique<eapis::intel_x64::control_register_handler>(this);
+    }
+}
+
+void vcpu::check_rdcr3()
+{
+    check_crall();
+
+    if (!m_is_rdcr3_enabled) {
+        m_is_rdcr3_enabled = true;
+        m_control_register_handler->enable_rdcr3_exiting();
+    }
+}
+
+void vcpu::check_wrcr3()
+{
+    check_crall();
+
+    if (!m_is_wrcr3_enabled) {
+        m_is_wrcr3_enabled = true;
+        m_control_register_handler->enable_wrcr3_exiting();
+    }
+}
+
+void vcpu::check_rdcr8()
+{
+    check_crall();
+
+    if (!m_is_rdcr8_enabled) {
+        m_is_rdcr8_enabled = true;
+        m_control_register_handler->enable_rdcr8_exiting();
+    }
+}
+
+void vcpu::check_wrcr8()
+{
+    check_crall();
+
+    if (!m_is_wrcr8_enabled) {
+        m_is_wrcr8_enabled = true;
+        m_control_register_handler->enable_wrcr8_exiting();
+    }
+}
+
+void vcpu::check_io_bitmaps()
+{
+    using namespace vmcs_n;
+
+    if (!m_io_bitmaps) {
+        m_io_bitmaps = std::make_unique<uint8_t[]>(::x64::pt::page_size * 2);
+
+        address_of_io_bitmap_a::set(g_mm->virtptr_to_physint(&m_io_bitmaps[0x0000]));
+        address_of_io_bitmap_b::set(g_mm->virtptr_to_physint(&m_io_bitmaps[010000]));
+
+        primary_processor_based_vm_execution_controls::use_io_bitmaps::enable();
+    }
+}
+
+void vcpu::check_monitor_trap_handler()
+{
+    if (!m_monitor_trap_handler) {
+        m_monitor_trap_handler = std::make_unique<eapis::intel_x64::monitor_trap_handler>(this);
+    }
+}
+
+void vcpu::check_msr_bitmap()
+{
+    using namespace vmcs_n;
+
+    if (!m_msr_bitmap) {
+        m_msr_bitmap = std::make_unique<uint8_t[]>(::x64::pt::page_size);
+
+        address_of_msr_bitmap::set(g_mm->virtptr_to_physint(m_msr_bitmap.get()));
+        primary_processor_based_vm_execution_controls::use_msr_bitmap::enable();
+    }
+}
+
+void vcpu::check_rdmsr_handler()
+{
+    check_msr_bitmap();
+
+    if (!m_rdmsr_handler) {
+        m_rdmsr_handler = std::make_unique<eapis::intel_x64::rdmsr_handler>(this);
+    }
+}
+
+void vcpu::check_wrmsr_handler()
+{
+    check_msr_bitmap();
+
+    if (!m_wrmsr_handler) {
+        m_wrmsr_handler = std::make_unique<eapis::intel_x64::wrmsr_handler>(this);
+    }
+}
 
 }
 }
+
+
+
+
+// bool init_done = false;
+// bool sipi_handler_done = false;
+
+// void
+// vcpu::enable_efi()
+// {
+//     // if (m_emm == nullptr) {
+//     //     m_emm = std::make_unique<eapis::intel_x64::ept::memory_map>();
+//     // }
+
+//     // if (m_vic == nullptr) {
+//     //     m_vic = std::make_unique<eapis::intel_x64::vic>(m_hve.get());
+//     // }
+
+//     // this->add_efi_handlers();
+
+//     // ::vmcs_n::guest_ia32_perf_global_ctrl::reserved::set(0);
+//     // ept::identity_map(*m_emm, 0, 0x900000000 - 0x1000);
+//     // ept::enable_ept(ept::eptp(*m_emm));
+//     // m_hve->enable_vpid();
+// }
+
+// // -----------------------------------------------------------------------------
+// // EFI Handlers
+// // -----------------------------------------------------------------------------
+
+// /// This has to be registered through the base exit_handler because the EAPIs
+// /// cpuid handlers are keyed off of {leaf, subleaf}, but in practice, when
+// /// firmware calls cpuid, it may not clear out rcx, resulting in random
+// /// subleaf values. Until the EAPIs can account for this scenario, this
+// /// function will need bypass the EAPIs cpuid interface.
+
+// bool
+// vcpu::efi_handle_cpuid(gsl::not_null<vmcs_t *> vmcs)
+// {
+//     static constexpr uint32_t centaur_base = 0xC0000000;
+
+//     if (vmcs->save_state()->rax == 0xBF01 || vmcs->save_state()->rax == 0xBF00) {
+//         return false;
+//     }
+
+//     auto leaf = vmcs->save_state()->rax;
+//     auto ret =
+//         ::x64::cpuid_handler::get(
+//             gsl::narrow_cast<::x64::cpuid_handler::field_type>(vmcs->save_state()->rax),
+//             gsl::narrow_cast<::x64::cpuid_handler::field_type>(vmcs->save_state()->rbx),
+//             gsl::narrow_cast<::x64::cpuid_handler::field_type>(vmcs->save_state()->rcx),
+//             gsl::narrow_cast<::x64::cpuid_handler::field_type>(vmcs->save_state()->rdx)
+//         );
+
+//     vmcs->save_state()->rax = ret.rax;
+//     vmcs->save_state()->rbx = ret.rbx;
+//     vmcs->save_state()->rdx = ret.rdx;
+
+//     if (leaf == ::intel_x64::cpuid_handler::feature_information::addr) {
+//         uint64_t setter = ret.rcx;
+//         setter = clear_bit(setter, ::intel_x64::cpuid_handler::feature_information::ecx::xsave::from);
+//         setter = clear_bit(setter, ::intel_x64::cpuid_handler::feature_information::ecx::osxsave::from);
+//         setter = clear_bit(setter, ::intel_x64::cpuid_handler::feature_information::ecx::vmx::from);
+//         vmcs->save_state()->rcx = setter;
+
+//         //TODO: handle MTRR writes
+//         setter = clear_bit(ret.rdx, ::intel_x64::cpuid_handler::feature_information::edx::mtrr::from);
+//         vmcs->save_state()->rdx = setter;
+//     }
+//     else if ((leaf & centaur_base) == centaur_base) {
+//         bfalert_nhex(0, "centaur leaf", leaf);
+//         bfalert_nhex(0, "centaur subleaf", vmcs->save_state()->rcx);
+//         vmcs->save_state()->rax = 0;
+//         vmcs->save_state()->rcx = 0;
+//         vmcs->save_state()->rdx = 0;
+//     }
+//     else if (leaf == ::intel_x64::cpuid_handler::arch_perf_monitoring::addr) {
+//         vmcs->save_state()->rax = 0;
+//         vmcs->save_state()->rcx = 0;
+//     }
+//     else {
+//         vmcs->save_state()->rcx = ret.rcx;
+//     }
+
+//     return advance(vmcs);
+// }
+
+// /// This handler has to bypass the EAPIs' rdmsr_handler interface because once
+// /// you register to handle an msr with the rdmsr_handler class, it reads at the
+// /// given address. But an MSR may or may not be implemented on a
+// /// given system and if it's not, a GP will be raised.
+// ///
+// /// It may be reasonable to add these two addresses to the QUIRK'd out ones in
+// /// emulate_rdmsr_handler since they aren't architectural.
+// ///
+// bool
+// vcpu::efi_handle_rdmsr_handler(gsl::not_null<vmcs_t *> vmcs)
+// {
+//     static constexpr uint32_t pkg_perf_status = 0x613;
+//     static constexpr uint32_t dram_energy_status = 0x619;
+
+//     const auto msr = vmcs->save_state()->rcx;
+
+//     if (msr == pkg_perf_status || msr == dram_energy_status) {
+//         vmcs->save_state()->rax = 0;
+//         vmcs->save_state()->rdx = 0;
+//         return advance(vmcs);
+//     }
+
+//     return false;
+// }
+
+// bool
+// vcpu::efi_handle_wrmsr_handler_efer(gsl::not_null<vmcs_t *> vmcs, wrmsr_handler::info_t &info)
+// {
+//     bfignored(vmcs);
+
+//     if (::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::is_disabled()) {
+//         return true;
+//     }
+
+//     if (get_bit(info.val, ::intel_x64::msrs::ia32_efer::lme::from) != 0U) {
+//         uint64_t s_cr0 = 0;
+//         ::vmcs_n::guest_cr0::protection_enable::enable(s_cr0);
+//         ::vmcs_n::guest_cr0::extension_type::enable(s_cr0);
+//         ::vmcs_n::guest_cr0::numeric_error::enable(s_cr0);
+//         ::vmcs_n::guest_cr0::write_protect::enable(s_cr0);
+//         ::vmcs_n::guest_cr0::not_write_through::enable(s_cr0);
+//         ::vmcs_n::guest_cr0::cache_disable::enable(s_cr0);
+//         ::vmcs_n::guest_cr0::paging::enable(s_cr0);
+//         ::vmcs_n::guest_cr0::set(s_cr0);
+
+//         ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::enable();
+//         ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::disable();
+//         info.val |= ::intel_x64::msrs::ia32_efer::lma::mask;
+//     }
+
+//     return true;
+// }
+
+// bool
+// vcpu::efi_handle_wrmsr_handler_perf_global_ctrl(gsl::not_null<vmcs_t *> vmcs, wrmsr_handler::info_t &info)
+// {
+//     bfignored(vmcs);
+//     ::vmcs_n::guest_ia32_perf_global_ctrl::reserved::set(info.val, 0);
+//     return true;
+// }
+
+// bool
+// vcpu::efi_handle_wrcr0(gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
+// {
+//     bfignored(vmcs);
+//     using namespace ::vmcs_n::exit_qualification::control_register_access;
+
+//     // only need access type 0 but eapis doesn't handle
+//     // these other access types properly when cr0 is emulated
+//     auto access_type = access_type::get();
+//     switch (access_type) {
+//         case access_type::mov_to_cr:
+//             info.shadow = info.val;
+//             ::vmcs_n::guest_cr0::extension_type::enable(info.val);
+//             ::vmcs_n::guest_cr0::numeric_error::enable(info.val);
+
+//             if (vmcs_n::guest_cr0::paging::is_disabled(info.val)) {
+//                 ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::enable();
+//                 ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::disable();
+//                 ::vmcs_n::guest_ia32_efer::lma::disable();
+//                 ::vmcs_n::guest_ia32_efer::lme::disable();
+//             }
+//             else {
+//                 ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::disable();
+//                 ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::enable();
+//                 ::vmcs_n::guest_ia32_efer::lma::enable();
+//                 ::vmcs_n::guest_ia32_efer::lme::enable();
+//             }
+//             return true;
+
+//         case access_type::clts:
+//             ::vmcs_n::guest_cr0::task_switched::disable(info.shadow);
+//             ::vmcs_n::guest_cr0::task_switched::disable(info.val);
+//             return true;
+
+//         case access_type::lmsw: {
+//             auto cur = set_bits(::vmcs_n::guest_cr0::get(), source_data::get(), ~0xFFFFULL);
+//             info.val = set_bits(cur, ::intel_x64::msrs::ia32_vmx_cr0_fixed0::get(), ~0ULL);
+//             info.shadow = set_bits(info.shadow, source_data::get(), ~0xFFFFULL);
+//             return true;
+//         }
+
+//         case access_type::mov_from_cr:
+//         default:
+//             throw std::runtime_error("efi_handle_wrcr0 invalid access_type " + std::to_string(access_type));
+//     }
+// }
+
+// bool
+// vcpu::efi_handle_wrcr4(gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
+// {
+//     bfignored(vmcs);
+//     info.shadow = info.val;
+//     info.val = set_bits(
+//                    info.val, ::intel_x64::msrs::ia32_vmx_cr4_fixed0::get(), ~0ULL
+//                );
+//     return true;
+// }
+
+// bool
+// vcpu::efi_handle_init_signal_handler(gsl::not_null<vmcs_t *> vmcs)
+// {
+//     bfignored(vmcs);
+//     ::vmcs_n::guest_activity_state::set(::vmcs_n::guest_activity_state::wait_for_sipi_handler);
+//     init_done = true;
+//     return true;
+// }
+
+// bool
+// vcpu::efi_handle_sipi_handler(gsl::not_null<vmcs_t *> vmcs)
+// {
+//     bfignored(vmcs);
+
+//     if (!sipi_handler_done) {
+//         sipi_handler_done = true;
+//         return true;
+//     }
+
+//     ::vmcs_n::secondary_processor_based_vm_execution_controls::unrestricted_guest::enable();
+//     ::vmcs_n::vm_entry_controls::ia_32e_mode_guest::disable();
+
+//     ::vmcs_n::value_type cr0 = 0;
+//     ::vmcs_n::guest_cr0::extension_type::enable(cr0);
+//     ::vmcs_n::guest_cr0::numeric_error::enable(cr0);
+//     ::vmcs_n::guest_cr0::not_write_through::enable(cr0);
+//     ::vmcs_n::guest_cr0::cache_disable::enable(cr0);
+//     ::vmcs_n::guest_cr0::set(cr0);
+
+//     ::vmcs_n::value_type cr4 = 0;
+//     ::vmcs_n::guest_cr4::vmx_enable_bit::enable(cr4);
+//     ::vmcs_n::guest_cr4::set(cr4);
+
+//     ::vmcs_n::guest_cr3::set(0);
+//     ::intel_x64::cr2::set(0);
+
+//     ::vmcs_n::value_type ds_ar = 0;
+//     ::vmcs_n::guest_ds_access_rights::type::set(ds_ar, 0x3);
+//     ::vmcs_n::guest_ds_access_rights::s::enable(ds_ar);
+//     ::vmcs_n::guest_ds_access_rights::present::enable(ds_ar);
+//     ::vmcs_n::guest_ds_selector::set(0);
+//     ::vmcs_n::guest_ds_base::set(0);
+//     ::vmcs_n::guest_ds_limit::set(0xFFFF);
+//     ::vmcs_n::guest_ds_access_rights::set(ds_ar);
+
+//     ::vmcs_n::value_type es_ar = 0;
+//     ::vmcs_n::guest_es_access_rights::type::set(es_ar, 0x3);
+//     ::vmcs_n::guest_es_access_rights::s::enable(es_ar);
+//     ::vmcs_n::guest_es_access_rights::present::enable(es_ar);
+//     ::vmcs_n::guest_es_selector::set(0);
+//     ::vmcs_n::guest_es_base::set(0);
+//     ::vmcs_n::guest_es_limit::set(0xFFFF);
+//     ::vmcs_n::guest_es_access_rights::set(es_ar);
+
+//     ::vmcs_n::value_type fs_ar = 0;
+//     ::vmcs_n::guest_fs_access_rights::type::set(fs_ar, 0x3);
+//     ::vmcs_n::guest_fs_access_rights::s::enable(fs_ar);
+//     ::vmcs_n::guest_fs_access_rights::present::enable(fs_ar);
+//     ::vmcs_n::guest_fs_selector::set(0);
+//     ::vmcs_n::guest_fs_base::set(0);
+//     ::vmcs_n::guest_fs_limit::set(0xFFFF);
+//     ::vmcs_n::guest_fs_access_rights::set(fs_ar);
+
+//     ::vmcs_n::value_type gs_ar = 0;
+//     ::vmcs_n::guest_gs_access_rights::type::set(gs_ar, 0x3);
+//     ::vmcs_n::guest_gs_access_rights::s::enable(gs_ar);
+//     ::vmcs_n::guest_gs_access_rights::present::enable(gs_ar);
+//     ::vmcs_n::guest_gs_selector::set(0);
+//     ::vmcs_n::guest_gs_base::set(0);
+//     ::vmcs_n::guest_gs_limit::set(0xFFFF);
+//     ::vmcs_n::guest_gs_access_rights::set(gs_ar);
+
+//     ::vmcs_n::value_type ss_ar = 0;
+//     ::vmcs_n::guest_ss_access_rights::type::set(ss_ar, 0x3);
+//     ::vmcs_n::guest_ss_access_rights::s::enable(ss_ar);
+//     ::vmcs_n::guest_ss_access_rights::present::enable(ss_ar);
+//     ::vmcs_n::guest_ss_selector::set(0);
+//     ::vmcs_n::guest_ss_base::set(0);
+//     ::vmcs_n::guest_ss_limit::set(0xFFFF);
+//     ::vmcs_n::guest_ss_access_rights::set(ss_ar);
+
+//     ::vmcs_n::value_type cs_ar = 0;
+//     ::vmcs_n::guest_cs_access_rights::type::set(cs_ar, 0xB);
+//     ::vmcs_n::guest_cs_access_rights::s::enable(cs_ar);
+//     ::vmcs_n::guest_cs_access_rights::present::enable(cs_ar);
+//     auto vector_segment = ::vmcs_n::exit_qualification::sipi_handler::vector::get() << 8;
+//     ::vmcs_n::guest_cs_selector::set(vector_segment);
+//     ::vmcs_n::guest_cs_base::set(vector_segment << 4);
+//     ::vmcs_n::guest_cs_limit::set(0xFFFF);
+//     ::vmcs_n::guest_cs_access_rights::set(cs_ar);
+
+//     ::vmcs_n::value_type tr_ar = 0;
+//     ::vmcs_n::guest_tr_access_rights::type::set(tr_ar, 0xB);
+//     ::vmcs_n::guest_tr_access_rights::present::enable(tr_ar);
+//     ::vmcs_n::guest_tr_selector::set(0);
+//     ::vmcs_n::guest_tr_base::set(0);
+//     ::vmcs_n::guest_tr_limit::set(0xFFFF);
+//     ::vmcs_n::guest_tr_access_rights::set(tr_ar);
+
+//     ::vmcs_n::value_type ldtr_ar = 0;
+//     ::vmcs_n::guest_ldtr_access_rights::type::set(ldtr_ar, 0x2);
+//     ::vmcs_n::guest_ldtr_access_rights::present::enable(ldtr_ar);
+//     ::vmcs_n::guest_ldtr_selector::set(0);
+//     ::vmcs_n::guest_ldtr_base::set(0);
+//     ::vmcs_n::guest_ldtr_limit::set(0xFFFF);
+//     ::vmcs_n::guest_ldtr_access_rights::set(ldtr_ar);
+
+//     ::vmcs_n::guest_gdtr_base::set(0);
+//     ::vmcs_n::guest_gdtr_limit::set(0xFFFF);
+
+//     ::vmcs_n::guest_idtr_base::set(0);
+//     ::vmcs_n::guest_idtr_limit::set(0xFFFF);
+
+//     vmcs->save_state()->rax = 0;
+//     vmcs->save_state()->rbx = 0;
+//     vmcs->save_state()->rcx = 0;
+//     vmcs->save_state()->rdx = 0xF00;
+//     vmcs->save_state()->rdi = 0;
+//     vmcs->save_state()->rsi = 0;
+//     vmcs->save_state()->rbp = 0;
+//     vmcs->save_state()->rsp = 0;
+//     vmcs->save_state()->rip = 0;
+
+//     ::vmcs_n::guest_rflags::set(0x2);
+//     ::vmcs_n::guest_ia32_efer::set(0);
+
+//     ::vmcs_n::guest_activity_state::set(::vmcs_n::guest_activity_state::active);
+
+//     return true;
+// }
+
+// void vcpu::add_efi_handlers()
+// {
+//     hve()->enable_wrcr0_exiting(
+//         0xFFFFFFFFFFFFFFFF, ::intel_x64::vmcs::guest_cr0::get()
+//     );
+
+//     hve()->add_wrcr0_handler(
+//         control_register_handler::handler_delegate_t::create<vcpu, &vcpu::efi_handle_wrcr0>(this)
+//     );
+
+//     hve()->enable_wrcr4_exiting(
+//         ::intel_x64::cr4::vmx_enable_bit::mask, ::intel_x64::vmcs::guest_cr4::get()
+//     );
+
+//     hve()->add_wrcr4_handler(
+//         control_register_handler::handler_delegate_t::create<vcpu, &vcpu::efi_handle_wrcr4>(this)
+//     );
+
+//     exit_handler()->add_handler(
+//         ::intel_x64::vmcs::exit_reason::basic_exit_reason::cpuid,
+//         ::handler_delegate_t::create<vcpu, &vcpu::efi_handle_cpuid>(this)
+//     );
+
+//     exit_handler()->add_handler(
+//         ::intel_x64::vmcs::exit_reason::basic_exit_reason::rdmsr_handler,
+//         ::handler_delegate_t::create<vcpu, &vcpu::efi_handle_rdmsr_handler>(this)
+//     );
+
+//     hve()->add_wrmsr_handler(
+//         ::intel_x64::msrs::ia32_efer::addr,
+//         wrmsr_handler::handler_delegate_t::create<vcpu, &vcpu::efi_handle_wrmsr_handler_efer>(this)
+//     );
+
+//     hve()->add_wrmsr_handler(
+//         ::intel_x64::msrs::ia32_perf_global_ctrl::addr,
+//         wrmsr_handler::handler_delegate_t::create<vcpu, &vcpu::efi_handle_wrmsr_handler_perf_global_ctrl>(this)
+//     );
+
+//     hve()->add_init_signal_handler(
+//         init_signal_handler::handler_delegate_t::create<vcpu, &vcpu::efi_handle_init_signal_handler>(this)
+//     );
+
+//     hve()->add_sipi_handler(
+//         sipi_handler::handler_delegate_t::create<vcpu, &vcpu::efi_handle_sipi_handler>(this)
+//     );
+// }

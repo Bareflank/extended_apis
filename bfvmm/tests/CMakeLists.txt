@@ -28,7 +28,6 @@ init_project(
 add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
 
 add_subdirectory(hve)
-add_subdirectory(support)
 
 # -----------------------------------------------------------------------------
 # Install
