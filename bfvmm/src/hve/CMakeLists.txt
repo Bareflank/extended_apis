@@ -20,9 +20,10 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
         arch/intel_x64/apic/phys_ioapic.cpp
         arch/intel_x64/apic/phys_x2apic.cpp
+        arch/intel_x64/apic/virt_x2apic.cpp
         arch/intel_x64/apic/virt_ioapic.cpp
-        arch/intel_x64/apic/virt_lapic.cpp
         arch/intel_x64/apic/vic.cpp
+        arch/intel_x64/apic/isr.cpp
 
         arch/intel_x64/ept/helpers.cpp
         arch/intel_x64/ept/memory_map.cpp
@@ -36,9 +37,7 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/init_signal.cpp
         arch/intel_x64/interrupt_window.cpp
         arch/intel_x64/io_instruction.cpp
-        arch/intel_x64/esr.cpp
-        arch/intel_x64/isr.cpp
-        arch/intel_x64/phys_mtrr.cpp
+        #        arch/intel_x64/phys_mtrr.cpp
         arch/intel_x64/monitor_trap.cpp
         arch/intel_x64/mov_dr.cpp
         arch/intel_x64/rdmsr.cpp
@@ -52,8 +51,7 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
 
     if (NOT WIN32 AND NOT ENABLE_MOCKING)
         list(APPEND SOURCES
-            arch/intel_x64/esr.asm
-            arch/intel_x64/isr.asm
+            arch/intel_x64/apic/isr.asm
         )
     endif()
 

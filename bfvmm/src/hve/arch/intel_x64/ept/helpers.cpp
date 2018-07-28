@@ -22,7 +22,6 @@
 #include "hve/arch/intel_x64/ept/helpers.h"
 #include "hve/arch/intel_x64/ept/memory_map.h"
 #include "hve/arch/intel_x64/ept/intrinsics.h"
-#include "hve/arch/intel_x64/phys_mtrr.h"
 
 namespace vmcs = intel_x64::vmcs;
 namespace eptp = intel_x64::vmcs::ept_pointer;
@@ -34,12 +33,12 @@ namespace intel_x64
 namespace ept
 {
 
-static const eapis::intel_x64::phys_mtrr *
-g_mtrr()
-{
-    static auto g_mtrr = std::make_unique<eapis::intel_x64::phys_mtrr>();
-    return g_mtrr.get();
-}
+//static const eapis::intel_x64::phys_mtrr *
+//g_mtrr()
+//{
+//    static auto g_mtrr = std::make_unique<eapis::intel_x64::phys_mtrr>();
+//    return g_mtrr.get();
+//}
 
 uintptr_t align_1g(uintptr_t addr)
 { return (addr & ~(ept::page_size_1g - 1U)); }
@@ -390,64 +389,69 @@ map_bestfit(ept::memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa,
 void
 map(memory_map &mem_map, gpa_t gpa_s, gpa_t gpa_e, hpa_t hpa)
 {
-    expects(gpa_e >= gpa_s);
-    expects(align_4k(gpa_e - gpa_s) == (gpa_e - gpa_s));
-    expects(align_4k(hpa) == hpa);
+    bfignored(mem_map);
+    bfignored(gpa_s);
+    bfignored(gpa_e);
+    bfignored(hpa);
 
-    const auto base_range = [hpa](const mtrr::range & range) {
-        return range.contains(hpa);
-    };
-
-    const uint64_t nr_bytes = (gpa_e - gpa_s) + 0x1000U;
-    const auto last_range = [hpa, nr_bytes](const mtrr::range & range) {
-        return range.contains(hpa + (nr_bytes - 1U));
-    };
-
-    const auto begin = g_mtrr()->range_list()->cbegin();
-    const auto end = g_mtrr()->range_list()->cend();
-    const auto base = std::find_if(begin, end, base_range);
-    const auto last = std::find_if(begin, end, last_range);
-
-    if (GSL_UNLIKELY(base == end || last == end)) {
-        bfdebug_transaction(0, [&](std::string * msg) {
-            bferror_info(0, "ept::map request out of range", msg);
-            bferror_subnhex(0, "map hpa", hpa, msg);
-            bferror_subnhex(0, "start gpa", gpa_s, msg);
-            bferror_subnhex(0, "end gpa", gpa_e, msg);
-        });
-        throw std::out_of_range("ept::map request out of range");
-    }
-
-    const int64_t range_count = std::distance(base, last) + 1;
-    if (GSL_UNLIKELY(range_count <= 0)) {
-        bferror_info(0, "negative distance, base reachable from last");
-        throw std::runtime_error("negative distance, base reachable from last");
-    }
-
-    uint64_t gpa = gpa_s;
-
-    for (int64_t i = 0; i < range_count; ++i) {
-        const auto range = std::next(base, i);
-        const auto last_4k = align_4k(range->base + (range->size - 1U));
-        const auto end_gpa = std::min(gpa_e, last_4k);
-
-        ept::memory_attr_t attr = ept::epte::memory_attr::wb_pt;
-        ept::epte::memory_type::set(attr, range->type);
-        map_bestfit(mem_map, gpa, end_gpa, hpa, attr);
-
-        gpa += range->size;
-        hpa += range->size;
-
-        if (range == base) {
-            gpa -= (gpa_s - range->base);
-            hpa -= (gpa_s - range->base);
-        }
-
-        if (range == last) {
-            gpa -= (last_4k - end_gpa);
-            hpa -= (last_4k - end_gpa);
-        }
-    }
+    //    expects(gpa_e >= gpa_s);
+    //    expects(align_4k(gpa_e - gpa_s) == (gpa_e - gpa_s));
+    //    expects(align_4k(hpa) == hpa);
+    //
+    //    const auto base_range = [hpa](const mtrr::range & range) {
+    //        return range.contains(hpa);
+    //    };
+    //
+    //    const uint64_t nr_bytes = (gpa_e - gpa_s) + 0x1000U;
+    //    const auto last_range = [hpa, nr_bytes](const mtrr::range & range) {
+    //        return range.contains(hpa + (nr_bytes - 1U));
+    //    };
+    //
+    //    const auto begin = g_mtrr()->range_list()->cbegin();
+    //    const auto end = g_mtrr()->range_list()->cend();
+    //    const auto base = std::find_if(begin, end, base_range);
+    //    const auto last = std::find_if(begin, end, last_range);
+    //
+    //    if (GSL_UNLIKELY(base == end || last == end)) {
+    //        bfdebug_transaction(0, [&](std::string * msg) {
+    //            bferror_info(0, "ept::map request out of range", msg);
+    //            bferror_subnhex(0, "map hpa", hpa, msg);
+    //            bferror_subnhex(0, "start gpa", gpa_s, msg);
+    //            bferror_subnhex(0, "end gpa", gpa_e, msg);
+    //        });
+    //        throw std::out_of_range("ept::map request out of range");
+    //    }
+    //
+    //    const int64_t range_count = std::distance(base, last) + 1;
+    //    if (GSL_UNLIKELY(range_count <= 0)) {
+    //        bferror_info(0, "negative distance, base reachable from last");
+    //        throw std::runtime_error("negative distance, base reachable from last");
+    //    }
+    //
+    //    uint64_t gpa = gpa_s;
+    //
+    //    for (int64_t i = 0; i < range_count; ++i) {
+    //        const auto range = std::next(base, i);
+    //        const auto last_4k = align_4k(range->base + (range->size - 1U));
+    //        const auto end_gpa = std::min(gpa_e, last_4k);
+    //
+    //        ept::memory_attr_t attr = ept::epte::memory_attr::wb_pt;
+    //        ept::epte::memory_type::set(attr, range->type);
+    //        map_bestfit(mem_map, gpa, end_gpa, hpa, attr);
+    //
+    //        gpa += range->size;
+    //        hpa += range->size;
+    //
+    //        if (range == base) {
+    //            gpa -= (gpa_s - range->base);
+    //            hpa -= (gpa_s - range->base);
+    //        }
+    //
+    //        if (range == last) {
+    //            gpa -= (last_4k - end_gpa);
+    //            hpa -= (last_4k - end_gpa);
+    //        }
+    //    }
 }
 
 void

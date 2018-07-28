@@ -50,20 +50,18 @@ TEST_CASE("phys_x2apic: read_register")
 {
     auto apic = phys_x2apic();
     auto addr = msrs::ia32_x2apic_apicid::addr;
-    auto off = lapic::offset::from_msr_addr(addr);
 
     g_msrs[addr] = 0xEEU;
-    CHECK(apic.read_register(off) == 0xEEU);
+    CHECK(apic.read_register(addr) == 0xEEU);
 }
 
 TEST_CASE("phys_x2apic: write_register")
 {
     auto apic = phys_x2apic();
     auto addr = msrs::ia32_x2apic_eoi::addr;
-    auto off = lapic::offset::from_msr_addr(addr);
 
     g_msrs[addr] = 0xFFFFU;
-    apic.write_register(off, 0U);
+    apic.write_register(addr, 0U);
     CHECK(g_msrs[addr] == 0U);
 }
 
@@ -96,7 +94,7 @@ TEST_CASE("phys_x2apic::read_tpr")
 TEST_CASE("phys_x2apic::read_svr")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs::ia32_x2apic_sivr::addr;
+    auto addr = msrs::ia32_x2apic_svr::addr;
 
     g_msrs[addr] = 0xF00DU;
     CHECK(apic.read_svr() == 0xF00DU);
@@ -133,7 +131,7 @@ TEST_CASE("phys_x2apic::write_tpr")
 TEST_CASE("phys_x2apic::write_svr")
 {
     auto apic = phys_x2apic();
-    auto addr = msrs::ia32_x2apic_sivr::addr;
+    auto addr = msrs::ia32_x2apic_svr::addr;
 
     g_msrs[addr] = 0xFFFFU;
     apic.write_svr(0U);

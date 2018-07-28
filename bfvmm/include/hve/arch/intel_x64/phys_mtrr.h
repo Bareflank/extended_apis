@@ -19,7 +19,7 @@
 #ifndef PHYS_MTRR_INTEL_X64_EAPIS_H
 #define PHYS_MTRR_INTEL_X64_EAPIS_H
 
-#include <arch/intel_x64/mtrr.h>
+//#include <arch/intel_x64/mtrr.h>
 #include "../../../hve/arch/intel_x64/mtrr.h"
 #include "../../../hve/arch/intel_x64/base.h"
 

@@ -20,7 +20,7 @@
 #ifndef ISR_INTEL_X64_EAPIS_H
 #define ISR_INTEL_X64_EAPIS_H
 
-#include "base.h"
+#include "../base.h"
 
 /// @cond
 

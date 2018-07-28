@@ -25,7 +25,7 @@
 //     impractical.
 //
 
-#include <hve/arch/intel_x64/isr.h>
+#include <hve/arch/intel_x64/apic/isr.h>
 #include <hve/arch/intel_x64/apic/vic.h>
 
 extern "C" EXPORT_SYM void

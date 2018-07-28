@@ -19,14 +19,11 @@
 #ifndef VIC_INTEL_X64_EAPIS_H
 #define VIC_INTEL_X64_EAPIS_H
 
-#include <bfcapstone.h>
-
 #include <arch/intel_x64/apic/lapic.h>
-#include <bfvmm/memory_manager/arch/x64/unique_map.h>
 
 #include "../hve.h"
 #include "phys_x2apic.h"
-#include "virt_lapic.h"
+#include "virt_x2apic.h"
 
 #ifndef VIC_LOG_LEVELS
 #define VIC_LOG_FATAL 0U
@@ -45,11 +42,6 @@ namespace eapis
 {
 namespace intel_x64
 {
-
-namespace ept
-{
-class memory_map;
-}
 
 ///-----------------------------------------------------------------------------
 /// Namespace aliases
@@ -266,7 +258,6 @@ public:
     ///
     bool handle_x2apic_self_ipi(gsl::not_null<vmcs_t *> vmcs, wrmsr::info_t &info);
 
-
     /// Handle x2apic ICR read
     ///
     /// Handle guest attempts to read the ICR
@@ -355,26 +346,25 @@ private:
     void add_apic_base_handlers();
     void add_external_interrupt_handlers();
     void add_x2apic_handlers();
-    void add_x2apic_read_handler(::intel_x64::lapic::offset_t offset);
-    void add_x2apic_write_handler(::intel_x64::lapic::offset_t offset);
+    void add_x2apic_read_handler(uint32_t addr);
+    void add_x2apic_write_handler(uint32_t addr);
 
     void init_idt();
     void init_lapic();
     void init_phys_x2apic();
-    void init_virt_lapic();
+    void init_virt_x2apic();
     void init_save_state();
     void init_interrupt_map();
 
     bool handle_spurious_interrupt(
         gsl::not_null<vmcs_t *> vmcs, external_interrupt::info_t &info);
 
-    alignas(::x64::pt::page_size) std::array<uint8_t, ::x64::pt::page_size> m_regs;
     std::array<uint8_t, s_num_vectors> m_interrupt_map;
     std::array<std::list<handler_delegate_t>, s_num_vectors> m_handlers;
 
     std::unique_ptr<uint8_t[]> m_ist1;
-    std::unique_ptr<eapis::intel_x64::virt_lapic> m_virt_lapic;
-    std::unique_ptr<eapis::intel_x64::phys_x2apic> m_phys_lapic;
+    std::unique_ptr<eapis::intel_x64::virt_x2apic> m_virt_x2apic;
+    std::unique_ptr<eapis::intel_x64::phys_x2apic> m_phys_x2apic;
 
     eapis::intel_x64::hve *m_hve;
     uint64_t m_virt_base_msr;

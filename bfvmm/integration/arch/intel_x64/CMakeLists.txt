@@ -19,7 +19,7 @@
 add_subdirectory(control_register)
 add_subdirectory(cpuid)
 add_subdirectory(efi)
-add_subdirectory(ept)
+#add_subdirectory(ept)
 add_subdirectory(io_instruction)
 add_subdirectory(monitor_trap)
 add_subdirectory(mov_dr)
