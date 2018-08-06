@@ -18,7 +18,6 @@
 
 #include <bfsupport.h>
 #include <bfthreadcontext.h>
-#include <arch/intel_x64/mtrr.h>
 #include <bfvmm/memory_manager/arch/x64/unique_map.h>
 
 #include <hve/arch/intel_x64/ept/helpers.h>
@@ -414,7 +413,11 @@ void vcpu::add_efi_handlers()
 vcpu::vcpu(vcpuid::type id) :
     bfvmm::intel_x64::vcpu{id},
     m_hve{std::make_unique<eapis::intel_x64::hve>(exit_handler(), vmcs())}
-{ }
+{
+    //    if (m_vic == nullptr) {
+    //        m_vic = std::make_unique<eapis::intel_x64::vic>(m_hve.get());
+    //    }
+}
 
 gsl::not_null<eapis::intel_x64::hve *> vcpu::hve()
 { return m_hve.get(); }

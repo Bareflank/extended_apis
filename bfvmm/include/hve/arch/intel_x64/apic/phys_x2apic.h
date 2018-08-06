@@ -69,20 +69,20 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param offset the canonical offset to read
-    /// @return the value of the register at offset
+    /// @param addr the register to read
+    /// @return the value of the register
     ///
-    uint64_t read_register(uint64_t offset) const;
+    uint64_t read_register(uint64_t addr) const;
 
     /// Write Register
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param offset the canonical offset to write
+    /// @param addr the register to read
     /// @param val the value to write
     ///
-    void write_register(uint64_t offset, uint64_t val);
+    void write_register(uint64_t addr, uint64_t val);
 
     /// @cond
 

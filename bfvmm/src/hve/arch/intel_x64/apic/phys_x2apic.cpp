@@ -17,17 +17,13 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <arch/intel_x64/msrs.h>
-#include <arch/intel_x64/apic/lapic.h>
 #include <arch/intel_x64/apic/x2apic.h>
-
 #include <hve/arch/intel_x64/apic/phys_x2apic.h>
 
 namespace eapis
 {
 namespace intel_x64
 {
-
-namespace lapic = ::intel_x64::lapic;
 
 void
 phys_x2apic::enable_interrupts()
@@ -38,24 +34,12 @@ phys_x2apic::disable_interrupts()
 { ::x64::rflags::interrupt_enable_flag::disable(); }
 
 uint64_t
-phys_x2apic::read_register(lapic::offset_t offset) const
-{
-    const auto addr = gsl::narrow_cast<::intel_x64::msrs::field_type>(
-                          lapic::offset::to_msr_addr(offset)
-                      );
-
-    return ::intel_x64::msrs::get(addr);
-}
+phys_x2apic::read_register(uint64_t addr) const
+{ return ::intel_x64::msrs::get(gsl::narrow_cast<uint32_t>(addr)); }
 
 void
-phys_x2apic::write_register(lapic::offset_t offset, uint64_t val)
-{
-    const auto addr = gsl::narrow_cast<::intel_x64::msrs::field_type>(
-                          lapic::offset::to_msr_addr(offset)
-                      );
-
-    return ::intel_x64::msrs::set(addr, val);
-}
+phys_x2apic::write_register(uint64_t addr, uint64_t val)
+{ return ::intel_x64::msrs::set(gsl::narrow_cast<uint32_t>(addr), val); }
 
 uint64_t
 phys_x2apic::read_id() const
@@ -71,7 +55,7 @@ phys_x2apic::read_tpr() const
 
 uint64_t
 phys_x2apic::read_svr() const
-{ return ::intel_x64::msrs::ia32_x2apic_sivr::get(); }
+{ return ::intel_x64::msrs::ia32_x2apic_svr::get(); }
 
 uint64_t
 phys_x2apic::read_icr() const
@@ -87,7 +71,7 @@ phys_x2apic::write_tpr(uint64_t tpr)
 
 void
 phys_x2apic::write_svr(uint64_t svr)
-{ ::intel_x64::msrs::ia32_x2apic_sivr::set(svr); }
+{ ::intel_x64::msrs::ia32_x2apic_svr::set(svr); }
 
 void
 phys_x2apic::write_icr(uint64_t icr)

@@ -28,7 +28,7 @@
 #include <intrinsics.h>
 
 #include <hve/arch/intel_x64/hve.h>
-#include <hve/arch/intel_x64/isr.h>
+#include <hve/arch/intel_x64/apic/isr.h>
 #include <hve/arch/intel_x64/apic/vic.h>
 #include <support/arch/intel_x64/test_support.h>
 

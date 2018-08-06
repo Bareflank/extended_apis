@@ -337,7 +337,7 @@ TEST_CASE("vic: handle_spurious_interrupt_exit - window closed")
     get_platform_info()->efi.enabled = 0;
 
     const auto spur = 0xFFU;
-    msrs_n::ia32_x2apic_sivr::vector::set(spur);
+    msrs_n::ia32_x2apic_svr::vector::set(spur);
     auto vic = setup_vic(hve.get());
 
     g_msrs[msrs_n::ia32_x2apic_eoi::addr] = 0xCAFEBABEU;
@@ -376,7 +376,7 @@ TEST_CASE("vic: handle_spurious_interrupt_exit - window open")
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
     const auto spur = 0xFFU;
-    msrs_n::ia32_x2apic_sivr::vector::set(spur);
+    msrs_n::ia32_x2apic_svr::vector::set(spur);
     auto vic = setup_vic(hve.get());
 
     g_msrs[msrs_n::ia32_x2apic_eoi::addr] = 0xCAFEBABEU;
@@ -413,7 +413,7 @@ TEST_CASE("vic: handle_interrupt_from_exit - window closed")
     bfignored(mm);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
-    msrs_n::ia32_x2apic_sivr::vector::set(0U);
+    msrs_n::ia32_x2apic_svr::vector::set(0U);
     auto vic = setup_vic(hve.get());
 
     entry_intr_info::valid_bit::disable();
@@ -439,7 +439,7 @@ TEST_CASE("vic: handle_interrupt_from_exit - window open")
     bfignored(mm);
     auto hve = setup_hve();
     auto ehlr = hve->exit_handler();
-    msrs_n::ia32_x2apic_sivr::vector::set(0U);
+    msrs_n::ia32_x2apic_svr::vector::set(0U);
     auto vic = setup_vic(hve.get());
 
     entry_intr_info::valid_bit::disable();
