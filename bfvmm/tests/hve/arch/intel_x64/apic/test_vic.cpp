@@ -177,23 +177,6 @@ TEST_CASE("vic: success with efi")
     CHECK_NOTHROW(eapis::intel_x64::vic(hve.get()));
 }
 
-TEST_CASE("vic: destructor")
-{
-    {
-        MockRepository mocks;
-        get_platform_info()->efi.enabled = 0;
-        auto mm = setup_mm(mocks);
-        bfignored(mm);
-        auto hve = setup_hve();
-        auto vic = setup_vic(hve.get());
-
-        ::intel_x64::cr8::set(0U);
-        CHECK(::intel_x64::cr8::get() == 0U);
-    }
-
-    CHECK(::intel_x64::cr8::get() == 0xFU);
-}
-
 TEST_CASE("vic: post x2apic init")
 {
     MockRepository mocks;

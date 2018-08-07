@@ -101,7 +101,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~vic();
+    ~vic() = default;
 
     ///
     /// Physical vector to virtual vector

@@ -97,9 +97,6 @@ m_hve{hve},
     this->add_apic_base_handlers();
 }
 
-vic::~vic()
-{ ::intel_x64::cr8::set(0xFULL); }
-
 uint64_t
 vic::phys_to_virt(uint64_t phys)
 { return m_interrupt_map.at(phys); }
