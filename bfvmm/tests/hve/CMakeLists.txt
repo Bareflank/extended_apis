@@ -89,10 +89,10 @@ do_test(test_virt_x2apic
     ${ARGN}
 )
 
-do_test(test_vic
-    SOURCES arch/intel_x64/apic/test_vic.cpp
-    ${ARGN}
-)
+#do_test(test_vic
+#    SOURCES arch/intel_x64/apic/test_vic.cpp
+#    ${ARGN}
+#)
 
 do_test(test_phys_pci
     SOURCES test_phys_pci.cpp
