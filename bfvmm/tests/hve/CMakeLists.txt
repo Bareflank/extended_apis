@@ -29,82 +29,97 @@ list(APPEND ARGN
     DEFINES STATIC_DEBUG
 )
 
-#do_test(test_page_table_entry
-#    SOURCES arch/intel_x64/ept/test_intrinsics.cpp
-#    ${ARGN}
-#)
+do_test(test_helpers
+    SOURCES arch/intel_x64/misc/ept/test_helpers.cpp
+    ${ARGN}
+)
 
-# FIXME: These tests succeed even with CHECK(false)
-# do_test(test_memory_map
-#     SOURCES arch/intel_x64/ept/test_memory_map.cpp
-#     SOURCES arch/intel_x64/ept/ept_test_support.cpp
-#     CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
+do_test(test_mmap
+    SOURCES arch/intel_x64/misc/ept/test_mmap.cpp
+    ${ARGN}
+)
+
+do_test(test_ept
+    SOURCES arch/intel_x64/misc/test_ept.cpp
+    ${ARGN}
+)
+
+do_test(test_mtrrs
+    SOURCES arch/intel_x64/misc/test_mtrrs.cpp
+    ${ARGN}
+)
+
+do_test(test_vpid
+    SOURCES arch/intel_x64/misc/test_vpid.cpp
+    ${ARGN}
+)
+
+# do_test(test_sipi
+#     SOURCES arch/intel_x64/test_sipi.cpp
 #     ${ARGN}
 # )
 
-#do_test(test_ept_helpers
-#    SOURCES arch/intel_x64/ept/test_helpers.cpp
-#    SOURCES arch/intel_x64/ept/ept_test_support.cpp
-#    CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
-#    ${ARGN}
-#)
+# do_test(test_init_signal
+#     SOURCES arch/intel_x64/test_init_signal.cpp
+#     ${ARGN}
+# )
 
-do_test(test_vpid
-    SOURCES arch/intel_x64/test_vpid.cpp
-    ${ARGN}
-)
+# do_test(test_phys_ioapic
+#     SOURCES arch/intel_x64/apic/test_phys_ioapic.cpp
+#     ${ARGN}
+# )
 
-do_test(test_sipi
-    SOURCES arch/intel_x64/test_sipi.cpp
-    ${ARGN}
-)
+# do_test(test_phys_mtrr
+#     SOURCES arch/intel_x64/test_phys_mtrr.cpp
+#     ${ARGN}
+# )
 
-do_test(test_init_signal
-    SOURCES arch/intel_x64/test_init_signal.cpp
-    ${ARGN}
-)
+# do_test(test_virt_ioapic
+#     SOURCES arch/intel_x64/apic/test_virt_ioapic.cpp
+#     ${ARGN}
+# )
 
-do_test(test_phys_ioapic
-    SOURCES arch/intel_x64/apic/test_phys_ioapic.cpp
-    ${ARGN}
-)
+# do_test(test_phys_x2apic
+#     SOURCES arch/intel_x64/apic/test_phys_x2apic.cpp
+#     ${ARGN}
+# )
 
-#do_test(test_phys_mtrr
-#    SOURCES arch/intel_x64/test_phys_mtrr.cpp
-#    ${ARGN}
-#)
+# do_test(test_virt_lapic
+#     SOURCES arch/intel_x64/apic/test_virt_lapic.cpp
+#     ${ARGN}
+# )
 
-do_test(test_virt_ioapic
-    SOURCES arch/intel_x64/apic/test_virt_ioapic.cpp
-    ${ARGN}
-)
+# FIXME: when the rdmsr or wrmsr exit handler finds that the
+# msr bitmap is null, it uses g_mm to allocate and translate
+# This causes a map::at exception to be thrown, as right now the
+# g_mm is bfignored in test_support.h
+# do_test(test_vic
+#     SOURCES arch/intel_x64/apic/test_vic.cpp
+#     ${ARGN}
+# )
 
-do_test(test_phys_x2apic
-    SOURCES arch/intel_x64/apic/test_phys_x2apic.cpp
-    ${ARGN}
-)
+# do_test(test_isr
+#     SOURCES arch/intel_x64/test_isr.cpp
+#     ${ARGN}
+#     CMD_LINE_ARGS ASAN_OPTIONS=detect_leaks=0
+# )
 
-do_test(test_virt_x2apic
-    SOURCES arch/intel_x64/apic/test_virt_x2apic.cpp
-    ${ARGN}
-)
+# do_test(test_esr
+#     SOURCES arch/intel_x64/test_esr.cpp
+#     ${ARGN}
+# )
 
-#do_test(test_vic
-#    SOURCES arch/intel_x64/apic/test_vic.cpp
-#    ${ARGN}
-#)
+# do_test(test_phys_pci
+#     SOURCES test_phys_pci.cpp
+#     ${ARGN}
+# )
 
-do_test(test_phys_pci
-    SOURCES test_phys_pci.cpp
-    ${ARGN}
-)
+# do_test(test_pci_register
+#     SOURCES arch/x64/test_pci_register.cpp
+#     ${ARGN}
+# )
 
-do_test(test_pci_register
-    SOURCES arch/x64/test_pci_register.cpp
-    ${ARGN}
-)
-
-do_test(test_pci_device_allocator
-    SOURCES test_pci_device_allocator.cpp
-    ${ARGN}
-)
+# do_test(test_pci_device_allocator
+#     SOURCES test_pci_device_allocator.cpp
+#     ${ARGN}
+# )

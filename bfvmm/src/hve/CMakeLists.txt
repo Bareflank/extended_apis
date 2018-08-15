@@ -18,42 +18,37 @@
 
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
-        arch/intel_x64/apic/phys_ioapic.cpp
-        arch/intel_x64/apic/phys_x2apic.cpp
-        arch/intel_x64/apic/virt_x2apic.cpp
-        arch/intel_x64/apic/virt_ioapic.cpp
-        arch/intel_x64/apic/vic.cpp
-        arch/intel_x64/apic/isr.cpp
-
-        arch/intel_x64/ept/helpers.cpp
-        arch/intel_x64/ept/memory_map.cpp
-
-        arch/intel_x64/control_register.cpp
-        arch/intel_x64/cpuid.cpp
-        arch/intel_x64/ept_misconfiguration.cpp
-        arch/intel_x64/ept_violation.cpp
-        arch/intel_x64/external_interrupt.cpp
-        arch/intel_x64/hve.cpp
-        arch/intel_x64/init_signal.cpp
-        arch/intel_x64/interrupt_window.cpp
-        arch/intel_x64/io_instruction.cpp
-        #        arch/intel_x64/phys_mtrr.cpp
-        arch/intel_x64/monitor_trap.cpp
-        arch/intel_x64/mov_dr.cpp
-        arch/intel_x64/rdmsr.cpp
-        arch/intel_x64/sipi.cpp
+        # arch/intel_x64/apic/esr.cpp
+        # arch/intel_x64/apic/isr.cpp
+        # arch/intel_x64/apic/phys_x2apic.cpp
+        # arch/intel_x64/apic/vic.cpp
+        # arch/intel_x64/apic/virt_x2apic.cpp
+        arch/intel_x64/misc/ept.cpp
+        arch/intel_x64/misc/mtrrs.cpp
+        arch/intel_x64/misc/vpid.cpp
+        arch/intel_x64/vmexit/control_register.cpp
+        arch/intel_x64/vmexit/cpuid.cpp
+        arch/intel_x64/vmexit/ept_misconfiguration.cpp
+        arch/intel_x64/vmexit/ept_violation.cpp
+        arch/intel_x64/vmexit/external_interrupt.cpp
+        arch/intel_x64/vmexit/init_signal.cpp
+        arch/intel_x64/vmexit/interrupt_window.cpp
+        arch/intel_x64/vmexit/io_instruction.cpp
+        arch/intel_x64/vmexit/monitor_trap.cpp
+        arch/intel_x64/vmexit/mov_dr.cpp
+        arch/intel_x64/vmexit/rdmsr.cpp
+        arch/intel_x64/vmexit/sipi.cpp
+        arch/intel_x64/vmexit/wrmsr.cpp
         arch/intel_x64/vcpu.cpp
-        arch/intel_x64/vpid.cpp
-        arch/intel_x64/wrmsr.cpp
-        arch/intel_x64/hve.cpp
-        arch/x64/pci_register.cpp
+        # arch/x64/pci/pci_register.cpp
     )
 
-    if (NOT WIN32 AND NOT ENABLE_MOCKING)
-        list(APPEND SOURCES
-            arch/intel_x64/apic/isr.asm
-        )
-    endif()
+    # if (NOT WIN32 AND NOT ENABLE_MOCKING)
+    #     list(APPEND SOURCES
+    #         arch/intel_x64/apic/esr.asm
+    #         arch/intel_x64/apic/isr.asm
+    #     )
+    # endif()
 
 elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
     message(WARNING "Unimplemented")
@@ -61,10 +56,10 @@ else()
     message(FATAL_ERROR "Unsupported architecture")
 endif()
 
-list(APPEND SOURCES
-    phys_pci.cpp
-    pci_device_allocator.cpp
-)
+# list(APPEND SOURCES
+#     pci/phys_pci.cpp
+#     pci/pci_device_allocator.cpp
+# )
 
 add_shared_library(
     eapis_hve
