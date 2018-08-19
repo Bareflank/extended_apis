@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
 
 /// MOV DR
 ///
@@ -91,9 +91,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this mov-dr handler
+    /// @param apis the apis object for this mov-dr handler
     ///
-    mov_dr_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    mov_dr_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -111,7 +111,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_handler(handler_delegate_t &&d);
+    void add_handler(const handler_delegate_t &d);
 
 public:
 
@@ -137,16 +137,15 @@ public:
 
 private:
 
-    gsl::not_null<exit_handler_t *> m_exit_handler;
     std::list<handler_delegate_t> m_handlers;
 
 private:
 
-    struct dr_record_t {
+    struct record_t {
         uint64_t val;
     };
 
-    std::list<dr_record_t> m_log;
+    std::list<record_t> m_log;
 
 public:
 

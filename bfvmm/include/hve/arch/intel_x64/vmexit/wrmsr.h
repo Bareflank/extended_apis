@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
 
 /// WRMSR
 ///
@@ -96,9 +96,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu pointer for this wrmsr handler
+    /// @param apis the apis pointer for this wrmsr handler
     ///
-    wrmsr_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    wrmsr_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -118,7 +118,7 @@ public:
     /// @param d the handler to call when an exit occurs
     ///
     void add_handler(
-        vmcs_n::value_type msr, handler_delegate_t &&d);
+        vmcs_n::value_type msr, const handler_delegate_t &d);
 
     /// Trap On Access
     ///
@@ -213,18 +213,16 @@ public:
 private:
 
     gsl::span<uint8_t> m_msr_bitmap;
-    gsl::not_null<exit_handler_t *> m_exit_handler;
-
     std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_handlers;
 
 private:
 
-    struct msr_record_t {
+    struct record_t {
         uint64_t msr;
         uint64_t val;
     };
 
-    std::list<msr_record_t> m_log;
+    std::list<record_t> m_log;
 
 public:
 

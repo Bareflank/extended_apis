@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
 
 /// Monitor Trap
 ///
@@ -71,9 +71,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this monitor trap handler
+    /// @param apis the apis object for this monitor trap handler
     ///
-    monitor_trap_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    monitor_trap_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -91,7 +91,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_handler(handler_delegate_t &&d);
+    void add_handler(const handler_delegate_t &d);
 
     /// Enable
     ///
@@ -130,7 +130,6 @@ public:
 
 private:
 
-    gsl::not_null<exit_handler_t *> m_exit_handler;
     std::list<handler_delegate_t> m_handlers;
 
 public:

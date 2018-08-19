@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/vcpu.h>
+#include <hve/arch/intel_x64/apis.h>
 
 namespace eapis
 {
@@ -25,13 +25,11 @@ namespace intel_x64
 {
 
 external_interrupt_handler::external_interrupt_handler(
-    gsl::not_null<eapis::intel_x64::vcpu *> vcpu
-) :
-    m_exit_handler{vcpu->exit_handler()}
+    gsl::not_null<apis *> apis)
 {
     using namespace vmcs_n;
 
-    vcpu->exit_handler()->add_handler(
+    apis->add_handler(
         exit_reason::basic_exit_reason::external_interrupt,
         ::handler_delegate_t::create<external_interrupt_handler, &external_interrupt_handler::handle>(this)
     );
@@ -44,9 +42,13 @@ external_interrupt_handler::~external_interrupt_handler()
     }
 }
 
+// -----------------------------------------------------------------------------
+// Add Handler / Enablers
+// -----------------------------------------------------------------------------
+
 void
 external_interrupt_handler::add_handler(
-    vmcs_n::value_type vector, handler_delegate_t &&d)
+    vmcs_n::value_type vector, const handler_delegate_t &d)
 { m_handlers.at(vector).push_front(d); }
 
 void
@@ -86,7 +88,7 @@ external_interrupt_handler::dump_log()
 }
 
 // -----------------------------------------------------------------------------
-// Handle
+// Handlers
 // -----------------------------------------------------------------------------
 
 bool

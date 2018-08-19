@@ -49,12 +49,12 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->add_wrmsr_handler(
+        eapis()->add_wrmsr_handler(
             0x000000000000080B,
             wrmsr_handler::handler_delegate_t::create<test_handler>()
         );
 
-        this->wrmsr()->enable_log();
+        eapis()->wrmsr()->enable_log();
     }
 
     /// @cond

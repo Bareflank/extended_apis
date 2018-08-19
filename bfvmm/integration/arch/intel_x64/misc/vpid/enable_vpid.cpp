@@ -40,8 +40,8 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_vpid();
-        bfdebug_nhex(0, "vpid", this->vpid()->id());
+        eapis()->enable_vpid();
+        bfdebug_nhex(0, "vpid", eapis()->vpid()->id());
     }
 
     /// @cond

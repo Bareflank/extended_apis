@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
 
 /// Interrupt window
 ///
@@ -45,16 +45,17 @@ public:
     /// The type of delegate clients must use when registering
     /// handlers
     ///
-    using handler_delegate_t = delegate<bool(gsl::not_null<vmcs_t *>)>;
+    using handler_delegate_t =
+        delegate<bool(gsl::not_null<vmcs_t *>)>;
 
     /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this interrupt window handler
+    /// @param apis the apis object for this interrupt window handler
     ///
-    interrupt_window_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    interrupt_window_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -72,7 +73,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_handler(handler_delegate_t &&d);
+    void add_handler(const handler_delegate_t &d);
 
     /// Enable exiting
     ///
@@ -123,6 +124,8 @@ public:
     ///
     void dump_log() final;
 
+public:
+
     /// @cond
 
     bool handle(gsl::not_null<vmcs_t *> vmcs);
@@ -131,7 +134,6 @@ public:
 
 private:
 
-    gsl::not_null<exit_handler_t *> m_exit_handler;
     std::list<handler_delegate_t> m_handlers;
 
 public:

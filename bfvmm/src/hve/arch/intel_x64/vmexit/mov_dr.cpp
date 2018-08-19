@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/vcpu.h>
+#include <hve/arch/intel_x64/apis.h>
 
 namespace eapis
 {
@@ -25,13 +25,11 @@ namespace intel_x64
 {
 
 mov_dr_handler::mov_dr_handler(
-    gsl::not_null<eapis::intel_x64::vcpu *> vcpu
-) :
-    m_exit_handler{vcpu->exit_handler()}
+    gsl::not_null<apis *> apis)
 {
     using namespace vmcs_n;
 
-    m_exit_handler->add_handler(
+    apis->add_handler(
         exit_reason::basic_exit_reason::mov_dr,
         ::handler_delegate_t::create<mov_dr_handler, &mov_dr_handler::handle>(this)
     );
@@ -48,11 +46,11 @@ mov_dr_handler::~mov_dr_handler()
 }
 
 // -----------------------------------------------------------------------------
-// DR7
+// Add Handler / Enablers
 // -----------------------------------------------------------------------------
 
 void
-mov_dr_handler::add_handler(handler_delegate_t &&d)
+mov_dr_handler::add_handler(const handler_delegate_t &d)
 { m_handlers.push_front(d); }
 
 // -----------------------------------------------------------------------------

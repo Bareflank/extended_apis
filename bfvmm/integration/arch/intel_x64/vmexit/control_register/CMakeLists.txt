@@ -30,8 +30,3 @@ eapis_add_vmm_executable(
     eapis_integration_intel_x64_control_register_trap_cr4
     SOURCES trap_cr4.cpp
 )
-
-eapis_add_vmm_executable(
-    eapis_integration_intel_x64_control_register_trap_cr8
-    SOURCES trap_cr8.cpp
-)

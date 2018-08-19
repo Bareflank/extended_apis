@@ -25,10 +25,43 @@ using namespace eapis::intel_x64;
 // Handlers
 // -----------------------------------------------------------------------------
 
+auto rdcr3_called = false;
+auto wrcr3_called = false;
+
 bool
-test_handler(
+test_rdcr3_handler(
     gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
-{ bfignored(vmcs); bfignored(info); return false; }
+{
+    bfignored(vmcs);
+    bfignored(info);
+
+    rdcr3_called = true;
+    return false;
+}
+
+bool
+test_wrcr3_handler(
+    gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
+{
+    bfignored(vmcs);
+    bfignored(info);
+
+    wrcr3_called = true;
+    return false;
+}
+
+void
+test_hlt_delegate(bfobject *obj)
+{
+    bfignored(obj);
+
+    auto cr3 = ::intel_x64::cr3::get();
+    ::intel_x64::cr3::set(cr3);
+
+    if (rdcr3_called && wrcr3_called) {
+        bfdebug_pass(0, "test");
+    }
+}
 
 // -----------------------------------------------------------------------------
 // vCPU
@@ -49,15 +82,19 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->add_rdcr3_handler(
-            control_register_handler::handler_delegate_t::create<test_handler>()
+        this->add_hlt_delegate(
+            hlt_delegate_t::create<test_hlt_delegate>()
         );
 
-        this->add_wrcr3_handler(
-            control_register_handler::handler_delegate_t::create<test_handler>()
+        eapis()->add_rdcr3_handler(
+            control_register_handler::handler_delegate_t::create<test_rdcr3_handler>()
         );
 
-        this->control_register()->enable_log();
+        eapis()->add_wrcr3_handler(
+            control_register_handler::handler_delegate_t::create<test_wrcr3_handler>()
+        );
+
+        eapis()->control_register()->enable_log();
     }
 
     /// @cond

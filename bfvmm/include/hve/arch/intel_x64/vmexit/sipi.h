@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
 
 /// SIPI handler
 ///
@@ -52,9 +52,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this sipi handler
+    /// @param apis the apis object for this sipi handler
     ///
-    sipi_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    sipi_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -63,6 +63,8 @@ public:
     ///
     ~sipi_handler() = default;
 
+public:
+
     /// Add Handler
     ///
     /// @expects
@@ -70,14 +72,23 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_handler(handler_delegate_t &&d);
+    void add_handler(const handler_delegate_t &d);
+
+public:
 
     /// Dump Log
+    ///
+    /// Example:
+    /// @code
+    /// this->dump_log();
+    /// @endcode
     ///
     /// @expects
     /// @ensures
     ///
     void dump_log() final;
+
+public:
 
     /// @cond
 
@@ -87,7 +98,6 @@ public:
 
 private:
 
-    gsl::not_null<exit_handler_t *> m_exit_handler;
     std::list<handler_delegate_t> m_handlers;
 
 public:

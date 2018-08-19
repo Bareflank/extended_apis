@@ -49,12 +49,12 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->add_rdmsr_handler(
+        eapis()->add_rdmsr_handler(
             0x000000000000003B,
             rdmsr_handler::handler_delegate_t::create<test_handler>()
         );
 
-        this->rdmsr()->enable_log();
+        eapis()->rdmsr()->enable_log();
     }
 
     /// @cond

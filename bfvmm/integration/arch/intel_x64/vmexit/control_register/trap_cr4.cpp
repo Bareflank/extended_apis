@@ -25,16 +25,33 @@ using namespace eapis::intel_x64;
 // Handlers
 // -----------------------------------------------------------------------------
 
+uint64_t g_cr4;
+uint64_t g_cr4_handler;
+
 bool
 test_handler(
     gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
 {
     bfignored(vmcs);
+    bfignored(info);
 
-    info.shadow = info.val;
-    info.val |= ::intel_x64::cr4::vmx_enable_bit::mask;
+    info.val = g_cr4;
+    g_cr4_handler = g_cr4;
 
-    return true;
+    return false;
+}
+
+void
+test_hlt_delegate(bfobject *obj)
+{
+    bfignored(obj);
+
+    g_cr4 = ::intel_x64::cr4::get();
+    ::intel_x64::cr4::set(0);
+
+    if (::intel_x64::cr4::get() == g_cr4_handler) {
+        bfdebug_pass(0, "test");
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -56,15 +73,19 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->enable_wrcr4_exiting(
+        this->add_hlt_delegate(
+            hlt_delegate_t::create<test_hlt_delegate>()
+        );
+
+        eapis()->enable_wrcr4_exiting(
             0xFFFFFFFFFFFFFFFF, ::intel_x64::vmcs::guest_cr4::get()
         );
 
-        this->add_wrcr4_handler(
+        eapis()->add_wrcr4_handler(
             control_register_handler::handler_delegate_t::create<test_handler>()
         );
 
-        this->control_register()->enable_log();
+        eapis()->control_register()->enable_log();
     }
 
     /// @cond

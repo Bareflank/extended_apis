@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/vcpu.h>
+#include <hve/arch/intel_x64/apis.h>
 
 namespace eapis
 {
@@ -25,20 +25,22 @@ namespace intel_x64
 {
 
 interrupt_window_handler::interrupt_window_handler(
-    gsl::not_null<eapis::intel_x64::vcpu *> vcpu
-) :
-    m_exit_handler{vcpu->exit_handler()}
+    gsl::not_null<apis *> apis)
 {
     using namespace vmcs_n;
 
-    vcpu->exit_handler()->add_handler(
+    apis->add_handler(
         exit_reason::basic_exit_reason::interrupt_window,
         ::handler_delegate_t::create<interrupt_window_handler, &interrupt_window_handler::handle>(this)
     );
 }
 
+// -----------------------------------------------------------------------------
+// Add Handler / Enablers
+// -----------------------------------------------------------------------------
+
 void
-interrupt_window_handler::add_handler(handler_delegate_t &&d)
+interrupt_window_handler::add_handler(const handler_delegate_t &d)
 { m_handlers.push_front(d); }
 
 void
@@ -92,9 +94,9 @@ interrupt_window_handler::is_open()
 void
 interrupt_window_handler::inject(uint64_t vector)
 {
+    uint64_t info = 0;
     using namespace vmcs_n::vm_entry_interruption_information;
 
-    uint64_t info = 0;
     vector::set(info, vector);
     interruption_type::set(info, interruption_type::external_interrupt);
     valid_bit::enable(info);
@@ -111,7 +113,7 @@ interrupt_window_handler::dump_log()
 { }
 
 // -----------------------------------------------------------------------------
-// Handle
+// Handlers
 // -----------------------------------------------------------------------------
 
 bool

@@ -25,7 +25,7 @@
 //
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/vcpu.h>
+#include <hve/arch/intel_x64/apis.h>
 
 #include <bfvmm/memory_manager/arch/x64/unique_map.h>
 
@@ -35,14 +35,13 @@ namespace intel_x64
 {
 
 io_instruction_handler::io_instruction_handler(
-    gsl::not_null<eapis::intel_x64::vcpu *> vcpu
+    gsl::not_null<apis *> apis
 ) :
-    m_io_bitmaps{vcpu->io_bitmaps()},
-    m_exit_handler{vcpu->exit_handler()}
+    m_io_bitmaps{apis->io_bitmaps()}
 {
     using namespace vmcs_n;
 
-    m_exit_handler->add_handler(
+    apis->add_handler(
         exit_reason::basic_exit_reason::io_instruction,
         ::handler_delegate_t::create<io_instruction_handler, &io_instruction_handler::handle>(this)
     );
@@ -56,12 +55,14 @@ io_instruction_handler::~io_instruction_handler()
 }
 
 // -----------------------------------------------------------------------------
-// RDMSR
+// Add Handler / Enablers
 // -----------------------------------------------------------------------------
 
 void
 io_instruction_handler::add_handler(
-    vmcs_n::value_type port, handler_delegate_t &&in_d, handler_delegate_t &&out_d)
+    vmcs_n::value_type port,
+    const handler_delegate_t &in_d,
+    const handler_delegate_t &out_d)
 {
     trap_on_access(port);
 
@@ -420,18 +421,18 @@ io_instruction_handler::store_operand(
     else {
         switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte:
-                vmcs->save_state()->rax = set_bits(
-                                              vmcs->save_state()->rax, 0x00000000000000FFULL, info.val);
+                vmcs->save_state()->rax =
+                    set_bits(vmcs->save_state()->rax, 0x00000000000000FFULL, info.val);
                 break;
 
             case io_instruction::size_of_access::two_byte:
-                vmcs->save_state()->rax = set_bits(
-                                              vmcs->save_state()->rax, 0x000000000000FFFFULL, info.val);
+                vmcs->save_state()->rax =
+                    set_bits(vmcs->save_state()->rax, 0x000000000000FFFFULL, info.val);
                 break;
 
             default:
-                vmcs->save_state()->rax = set_bits(
-                                              vmcs->save_state()->rax, 0x00000000FFFFFFFFULL, info.val);
+                vmcs->save_state()->rax =
+                    set_bits(vmcs->save_state()->rax, 0x00000000FFFFFFFFULL, info.val);
                 break;
         }
     }

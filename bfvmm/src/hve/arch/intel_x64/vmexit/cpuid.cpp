@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/vcpu.h>
+#include <hve/arch/intel_x64/apis.h>
 
 namespace eapis
 {
@@ -25,13 +25,11 @@ namespace intel_x64
 {
 
 cpuid_handler::cpuid_handler(
-    gsl::not_null<eapis::intel_x64::vcpu *> vcpu
-) :
-    m_exit_handler{vcpu->exit_handler()}
+    gsl::not_null<apis *> apis)
 {
     using namespace vmcs_n;
 
-    m_exit_handler->add_handler(
+    apis->add_handler(
         exit_reason::basic_exit_reason::cpuid,
         ::handler_delegate_t::create<cpuid_handler, &cpuid_handler::handle>(this)
     );
@@ -45,11 +43,11 @@ cpuid_handler::~cpuid_handler()
 }
 
 // -----------------------------------------------------------------------------
-// CR0
+// Add Handler / Enablers
 // -----------------------------------------------------------------------------
 
 void cpuid_handler::add_handler(
-    leaf_t leaf, handler_delegate_t &&d)
+    leaf_t leaf, const handler_delegate_t &d)
 { m_handlers[leaf].push_front(d); }
 
 // -----------------------------------------------------------------------------

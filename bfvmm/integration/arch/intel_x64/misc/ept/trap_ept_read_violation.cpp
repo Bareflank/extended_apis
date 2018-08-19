@@ -61,19 +61,20 @@ public:
             hlt_delegate_t::create<test_hlt_delegate>()
         );
 
-        this->add_ept_read_violation_handler(
+        eapis()->add_ept_read_violation_handler(
             ept_violation_handler::handler_delegate_t::create<vcpu, &vcpu::test_read_violation_handler>(this)
         );
 
-        auto &pte = g_guest_map.entry(
-                        g_mm->virtptr_to_physint(buffer.data())
-                    );
+        auto &pte =
+            g_guest_map.entry(
+                g_mm->virtptr_to_physint(buffer.data())
+            );
 
         ::intel_x64::ept::pd::entry::read_access::disable(pte);
         ::intel_x64::ept::pd::entry::write_access::disable(pte);
         ::intel_x64::ept::pd::entry::execute_access::disable(pte);
 
-        this->set_eptp(g_guest_map);
+        eapis()->set_eptp(g_guest_map);
     }
 
     bool
@@ -84,7 +85,7 @@ public:
         bfignored(info);
 
         bfdebug_info(0, "disabling EPT");
-        this->disable_ept();
+        eapis()->disable_ept();
 
         return true;
     }
