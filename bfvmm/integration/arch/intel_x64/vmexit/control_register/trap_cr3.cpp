@@ -73,12 +73,6 @@ namespace test
 class vcpu : public eapis::intel_x64::vcpu
 {
 public:
-
-    /// Default Constructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
@@ -96,16 +90,6 @@ public:
 
         eapis()->control_register()->enable_log();
     }
-
-    /// @cond
-
-    ~vcpu() override = default;
-    vcpu(vcpu &&) = delete;
-    vcpu &operator=(vcpu &&) = delete;
-    vcpu(const vcpu &) = delete;
-    vcpu &operator=(const vcpu &) = delete;
-
-    /// @endcond
 };
 
 }

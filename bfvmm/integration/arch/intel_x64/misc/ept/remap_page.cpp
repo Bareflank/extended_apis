@@ -16,12 +16,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <mutex>
+#include <bfcallonce.h>
 
 #include <bfvmm/vcpu/vcpu_factory.h>
+#include <eapis/hve/arch/intel_x64/vcpu.h>
 #include <bfvmm/memory_manager/arch/x64/unique_map.h>
 
-#include <eapis/hve/arch/intel_x64/vcpu.h>
 using namespace eapis::intel_x64;
 
 // -----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ using namespace eapis::intel_x64;
 namespace test
 {
 
-std::once_flag flag;
+bfn::once_flag flag;
 ept::mmap g_guest_map;
 
 alignas(0x1000) std::array<uint8_t, 0x1000> buffer1;
@@ -53,7 +53,6 @@ test_hlt_delegate(bfobject *obj)
 class vcpu : public eapis::intel_x64::vcpu
 {
 public:
-
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
@@ -84,7 +83,7 @@ public:
         bfignored(vmcs);
         bfignored(info);
 
-        std::call_once(flag, [&] {
+        bfn::call_once(flag, [&] {
             auto cr3 = intel_x64::vmcs::guest_cr3::get();
             auto gpa1 = bfvmm::x64::virt_to_phys_with_cr3(buffer1.data(), cr3);
             auto gpa2 = bfvmm::x64::virt_to_phys_with_cr3(buffer2.data(), cr3);
@@ -111,11 +110,6 @@ public:
 
         return true;
     }
-
-    vcpu(vcpu &&) = delete;
-    vcpu &operator=(vcpu &&) = delete;
-    vcpu(const vcpu &) = delete;
-    vcpu &operator=(const vcpu &) = delete;
 };
 
 }

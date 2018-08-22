@@ -1,6 +1,6 @@
 #
 # Bareflank Hypervisor
-# Copyright (C) 2018 Assured Information Security, Inc.
+# Copyright (C) 2015 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,14 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-add_subdirectory(misc/efi)
-add_subdirectory(misc/ept)
-add_subdirectory(misc/vpid)
-add_subdirectory(vmexit/control_register)
-add_subdirectory(vmexit/cpuid)
-add_subdirectory(vmexit/ept_misconfiguration)
-add_subdirectory(vmexit/io_instruction)
-add_subdirectory(vmexit/monitor_trap)
-add_subdirectory(vmexit/mov_dr)
-add_subdirectory(vmexit/rdmsr)
-add_subdirectory(vmexit/wrmsr)
+eapis_add_vmm_executable(
+    eapis_integration_intel_x64_vmexit_trap_ept_misconfiguration
+    SOURCES trap_ept_misconfiguration.cpp
+)

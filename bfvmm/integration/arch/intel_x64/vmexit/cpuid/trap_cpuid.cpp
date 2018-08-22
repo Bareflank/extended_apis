@@ -32,9 +32,7 @@ test_cpuid_handler(
     bfignored(vmcs);
 
     info.rax = 42;
-    info.rbx = 42;
     info.rcx = 42;
-    info.rdx = 42;
 
     return true;
 }
@@ -44,15 +42,17 @@ test_hlt_delegate(bfobject *obj)
 {
     bfignored(obj);
 
-    auto ret =
+    auto [rax, rbx, rcx, rdx] =
         ::x64::cpuid::get(
             42, 0, 0, 0
         );
 
-    bfdebug_nhex(0, "ret.rax", ret.rax);
-    bfdebug_nhex(0, "ret.rbx", ret.rbx);
-    bfdebug_nhex(0, "ret.rcx", ret.rcx);
-    bfdebug_nhex(0, "ret.rdx", ret.rdx);
+    bfignored(rbx);
+    bfignored(rdx);
+
+    if (rax == 42 && rcx == 42) {
+        bfdebug_pass(0, "test");
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -65,12 +65,6 @@ namespace test
 class vcpu : public eapis::intel_x64::vcpu
 {
 public:
-
-    /// Default Constructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
@@ -84,15 +78,6 @@ public:
 
         eapis()->cpuid()->enable_log();
     }
-
-    /// @cond
-
-    vcpu(vcpu &&) = delete;
-    vcpu &operator=(vcpu &&) = delete;
-    vcpu(const vcpu &) = delete;
-    vcpu &operator=(const vcpu &) = delete;
-
-    /// @endcond
 };
 
 }

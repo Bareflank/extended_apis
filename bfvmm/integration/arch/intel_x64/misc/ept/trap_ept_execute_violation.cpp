@@ -16,12 +16,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <mutex>
+#include <bfcallonce.h>
 
 #include <bfvmm/vcpu/vcpu_factory.h>
-#include <bfvmm/memory_manager/arch/x64/unique_map.h>
-
 #include <eapis/hve/arch/intel_x64/vcpu.h>
+
 using namespace eapis::intel_x64;
 
 // -----------------------------------------------------------------------------
@@ -31,7 +30,7 @@ using namespace eapis::intel_x64;
 namespace test
 {
 
-std::once_flag flag;
+bfn::once_flag flag;
 ept::mmap g_guest_map;
 
 void
@@ -43,11 +42,10 @@ test_hlt_delegate(bfobject *obj)
 class vcpu : public eapis::intel_x64::vcpu
 {
 public:
-
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        std::call_once(flag, [&] {
+        bfn::call_once(flag, [&] {
             ept::identity_map(
                 g_guest_map,
                 MAX_PHYS_ADDR,
@@ -73,16 +71,11 @@ public:
         bfignored(vmcs);
         bfignored(info);
 
-        bfdebug_info(0, "disabling EPT");
+        bfdebug_pass(0, "test");
         eapis()->disable_ept();
 
         return true;
     }
-
-    vcpu(vcpu &&) = delete;
-    vcpu &operator=(vcpu &&) = delete;
-    vcpu(const vcpu &) = delete;
-    vcpu &operator=(const vcpu &) = delete;
 };
 
 }

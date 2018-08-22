@@ -63,15 +63,6 @@ TEST_CASE("constructor/destruction")
     CHECK_NOTHROW(control_register_handler(eapis));
 }
 
-TEST_CASE("debugging enabled")
-{
-    MockRepository mocks;
-    auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
-
-    CHECK_NOTHROW(handler.enable_log());
-}
-
 TEST_CASE("add handlers")
 {
     MockRepository mocks;
@@ -123,24 +114,26 @@ TEST_CASE("enable exiting")
     CHECK_NOTHROW(handler.enable_wrcr3_exiting());
 }
 
-bfvmm::intel_x64::vmcs *
-setup_vmcs(MockRepository &mocks)
+TEST_CASE("wrcr0 log")
 {
-    using namespace bfvmm::intel_x64;
-    auto vmcs = mocks.Mock<bfvmm::intel_x64::vmcs>();
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
 
-    mocks.OnCall(vmcs, vmcs::launch);
-    mocks.OnCall(vmcs, vmcs::resume);
-    mocks.OnCall(vmcs, vmcs::promote);
-    mocks.OnCall(vmcs, vmcs::load);
-
-    mocks.OnCall(vmcs, vmcs::save_state).Return(
-        &g_save_state
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000000ULL
     );
 
-    g_save_state.rax = 42;
+    handler.add_wrcr0_handler(
+        control_register_handler::handler_delegate_t::create<test_handler>()
+    );
 
-    return vmcs;
+    handler.enable_log();
+
+    CHECK(handler.handle(vmcs) == true);
+    CHECK_NOTHROW(handler.dump_log());
 }
 
 TEST_CASE("wrcr0 exit")
@@ -150,6 +143,7 @@ TEST_CASE("wrcr0 exit")
     auto eapis = setup_eapis(mocks);
     auto handler = control_register_handler(eapis);
 
+    g_save_state.rax = 42;
     vmcs_n::guest_cr0::set(0);
     vmcs_n::cr0_read_shadow::set(0);
 
@@ -162,13 +156,9 @@ TEST_CASE("wrcr0 exit")
         control_register_handler::handler_delegate_t::create<test_handler>()
     );
 
-    handler.enable_log();
-
     CHECK(handler.handle(vmcs) == true);
     CHECK(vmcs_n::guest_cr0::get() == 42);
     CHECK(vmcs_n::cr0_read_shadow::get() == 42);
-
-    handler.dump_log();
 }
 
 TEST_CASE("wrcr0 exit, ignore write")
@@ -178,6 +168,7 @@ TEST_CASE("wrcr0 exit, ignore write")
     auto eapis = setup_eapis(mocks);
     auto handler = control_register_handler(eapis);
 
+    g_save_state.rax = 42;
     vmcs_n::guest_cr0::set(0);
     vmcs_n::cr0_read_shadow::set(0);
 
@@ -190,11 +181,9 @@ TEST_CASE("wrcr0 exit, ignore write")
         control_register_handler::handler_delegate_t::create<test_handler_ignore_write>()
     );
 
-    handler.enable_log();
-
     CHECK(handler.handle(vmcs) == true);
-    CHECK(vmcs_n::guest_cr0::get() != 42);
-    CHECK(vmcs_n::cr0_read_shadow::get() != 42);
+    CHECK(vmcs_n::guest_cr0::get() == 0);
+    CHECK(vmcs_n::cr0_read_shadow::get() == 0);
 }
 
 TEST_CASE("wrcr0 exit, ignore advance")
@@ -204,33 +193,76 @@ TEST_CASE("wrcr0 exit, ignore advance")
     auto eapis = setup_eapis(mocks);
     auto handler = control_register_handler(eapis);
 
-    vmcs_n::guest_cr0::set(0);
-    vmcs_n::cr0_read_shadow::set(0);
+    g_save_state.rip = 0;
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
         0x0000000000000000ULL
     );
 
+    ::intel_x64::vm::write(
+        vmcs_n::vm_exit_instruction_length::addr, 42
+    );
+
     handler.add_wrcr0_handler(
         control_register_handler::handler_delegate_t::create<test_handler_ignore_advance>()
     );
 
-    handler.enable_log();
-
     CHECK(handler.handle(vmcs) == true);
-    CHECK(vmcs_n::guest_cr0::get() == 42);
-    CHECK(vmcs_n::cr0_read_shadow::get() == 42);
+    CHECK(g_save_state.rip == 0);
 }
 
-TEST_CASE("wrcr3 exit")
+TEST_CASE("cr0 mov_from_cr not supported")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
     auto handler = control_register_handler(eapis);
 
-    vmcs_n::guest_cr3::set(0);
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000010ULL
+    );
+
+    CHECK_THROWS(handler.handle(vmcs));
+}
+
+TEST_CASE("cr0 clts not supported")
+{
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
+
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000020ULL
+    );
+
+    CHECK_THROWS(handler.handle(vmcs));
+}
+
+TEST_CASE("cr0 lmsw not supported")
+{
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
+
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000030ULL
+    );
+
+    CHECK_THROWS(handler.handle(vmcs));
+}
+
+TEST_CASE("wrcr3 log")
+{
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -244,9 +276,30 @@ TEST_CASE("wrcr3 exit")
     handler.enable_log();
 
     CHECK(handler.handle(vmcs) == true);
-    CHECK(vmcs_n::guest_cr3::get() == 42);
+    CHECK_NOTHROW(handler.dump_log());
+}
 
-    handler.dump_log();
+TEST_CASE("wrcr3 exit")
+{
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
+
+    g_save_state.rax = 42;
+    vmcs_n::guest_cr3::set(0);
+
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000003ULL
+    );
+
+    handler.add_wrcr3_handler(
+        control_register_handler::handler_delegate_t::create<test_handler>()
+    );
+
+    CHECK(handler.handle(vmcs) == true);
+    CHECK(vmcs_n::guest_cr3::get() == 42);
 }
 
 TEST_CASE("wrcr3 exit, ignore write")
@@ -256,6 +309,7 @@ TEST_CASE("wrcr3 exit, ignore write")
     auto eapis = setup_eapis(mocks);
     auto handler = control_register_handler(eapis);
 
+    g_save_state.rax = 42;
     vmcs_n::guest_cr3::set(0);
 
     ::intel_x64::vm::write(
@@ -267,10 +321,8 @@ TEST_CASE("wrcr3 exit, ignore write")
         control_register_handler::handler_delegate_t::create<test_handler_ignore_write>()
     );
 
-    handler.enable_log();
-
     CHECK(handler.handle(vmcs) == true);
-    CHECK(vmcs_n::guest_cr3::get() != 42);
+    CHECK(vmcs_n::guest_cr3::get() == 0);
 }
 
 TEST_CASE("wrcr3 exit, ignore advance")
@@ -280,21 +332,45 @@ TEST_CASE("wrcr3 exit, ignore advance")
     auto eapis = setup_eapis(mocks);
     auto handler = control_register_handler(eapis);
 
-    vmcs_n::guest_cr3::set(0);
+    g_save_state.rip = 0;
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
         0x0000000000000003ULL
     );
 
+    ::intel_x64::vm::write(
+        vmcs_n::vm_exit_instruction_length::addr, 42
+    );
+
     handler.add_wrcr3_handler(
         control_register_handler::handler_delegate_t::create<test_handler_ignore_advance>()
+    );
+
+    CHECK(handler.handle(vmcs) == true);
+    CHECK(g_save_state.rip == 0);
+}
+
+TEST_CASE("rdcr3 log")
+{
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
+
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000013ULL
+    );
+
+    handler.add_rdcr3_handler(
+        control_register_handler::handler_delegate_t::create<test_handler>()
     );
 
     handler.enable_log();
 
     CHECK(handler.handle(vmcs) == true);
-    CHECK(vmcs_n::guest_cr3::get() == 42);
+    CHECK_NOTHROW(handler.dump_log());
 }
 
 TEST_CASE("rdcr3 exit")
@@ -316,12 +392,8 @@ TEST_CASE("rdcr3 exit")
         control_register_handler::handler_delegate_t::create<test_handler>()
     );
 
-    handler.enable_log();
-
     CHECK(handler.handle(vmcs) == true);
     CHECK(g_save_state.rax == 42);
-
-    handler.dump_log();
 }
 
 TEST_CASE("rdcr3 exit, ignore write")
@@ -343,10 +415,8 @@ TEST_CASE("rdcr3 exit, ignore write")
         control_register_handler::handler_delegate_t::create<test_handler_ignore_write>()
     );
 
-    handler.enable_log();
-
     CHECK(handler.handle(vmcs) == true);
-    CHECK(g_save_state.rax != 42);
+    CHECK(g_save_state.rax == 0);
 }
 
 TEST_CASE("rdcr3 exit, ignore advance")
@@ -356,25 +426,26 @@ TEST_CASE("rdcr3 exit, ignore advance")
     auto eapis = setup_eapis(mocks);
     auto handler = control_register_handler(eapis);
 
-    g_save_state.rax = 0;
-    vmcs_n::guest_cr3::set(42);
+    g_save_state.rip = 0;
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
         0x0000000000000013ULL
     );
 
+    ::intel_x64::vm::write(
+        vmcs_n::vm_exit_instruction_length::addr, 42
+    );
+
     handler.add_rdcr3_handler(
         control_register_handler::handler_delegate_t::create<test_handler_ignore_advance>()
     );
 
-    handler.enable_log();
-
     CHECK(handler.handle(vmcs) == true);
-    CHECK(g_save_state.rax == 42);
+    CHECK(g_save_state.rip == 0);
 }
 
-TEST_CASE("invalid cr3 access")
+TEST_CASE("cr3 clts not supported")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
@@ -389,15 +460,27 @@ TEST_CASE("invalid cr3 access")
     CHECK_THROWS(handler.handle(vmcs));
 }
 
-TEST_CASE("wrcr4 exit")
+TEST_CASE("cr3 lmsw not supported")
 {
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
     auto handler = control_register_handler(eapis);
 
-    vmcs_n::guest_cr4::set(0);
-    vmcs_n::cr4_read_shadow::set(0);
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000033ULL
+    );
+
+    CHECK_THROWS(handler.handle(vmcs));
+}
+
+TEST_CASE("wrcr4 log")
+{
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -411,10 +494,32 @@ TEST_CASE("wrcr4 exit")
     handler.enable_log();
 
     CHECK(handler.handle(vmcs) == true);
+    CHECK_NOTHROW(handler.dump_log());
+}
+
+TEST_CASE("wrcr4 exit")
+{
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
+
+    g_save_state.rax = 42;
+    vmcs_n::guest_cr4::set(0);
+    vmcs_n::cr4_read_shadow::set(0);
+
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000004ULL
+    );
+
+    handler.add_wrcr4_handler(
+        control_register_handler::handler_delegate_t::create<test_handler>()
+    );
+
+    CHECK(handler.handle(vmcs) == true);
     CHECK(vmcs_n::guest_cr4::get() == 0x202a);
     CHECK(vmcs_n::cr4_read_shadow::get() == 42);
-
-    handler.dump_log();
 }
 
 TEST_CASE("wrcr4 exit, ignore write")
@@ -424,6 +529,7 @@ TEST_CASE("wrcr4 exit, ignore write")
     auto eapis = setup_eapis(mocks);
     auto handler = control_register_handler(eapis);
 
+    g_save_state.rax = 42;
     vmcs_n::guest_cr4::set(0);
     vmcs_n::cr4_read_shadow::set(0);
 
@@ -436,11 +542,9 @@ TEST_CASE("wrcr4 exit, ignore write")
         control_register_handler::handler_delegate_t::create<test_handler_ignore_write>()
     );
 
-    handler.enable_log();
-
     CHECK(handler.handle(vmcs) == true);
-    CHECK(vmcs_n::guest_cr4::get() != 42);
-    CHECK(vmcs_n::cr4_read_shadow::get() != 42);
+    CHECK(vmcs_n::guest_cr4::get() == 0);
+    CHECK(vmcs_n::cr4_read_shadow::get() == 0);
 }
 
 TEST_CASE("wrcr4 exit, ignore advance")
@@ -450,23 +554,68 @@ TEST_CASE("wrcr4 exit, ignore advance")
     auto eapis = setup_eapis(mocks);
     auto handler = control_register_handler(eapis);
 
-    vmcs_n::guest_cr4::set(0);
-    vmcs_n::cr4_read_shadow::set(0);
+    g_save_state.rip = 0;
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
         0x0000000000000004ULL
     );
 
+    ::intel_x64::vm::write(
+        vmcs_n::vm_exit_instruction_length::addr, 42
+    );
+
     handler.add_wrcr4_handler(
         control_register_handler::handler_delegate_t::create<test_handler_ignore_advance>()
     );
 
-    handler.enable_log();
-
     CHECK(handler.handle(vmcs) == true);
-    CHECK(vmcs_n::guest_cr4::get() == 0x202a);
-    CHECK(vmcs_n::cr4_read_shadow::get() == 42);
+    CHECK(g_save_state.rip == 0);
+}
+
+TEST_CASE("cr4 mov_from_cr not supported")
+{
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
+
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000014ULL
+    );
+
+    CHECK_THROWS(handler.handle(vmcs));
+}
+
+TEST_CASE("cr4 clts not supported")
+{
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
+
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000024ULL
+    );
+
+    CHECK_THROWS(handler.handle(vmcs));
+}
+
+TEST_CASE("cr4 lmsw not supported")
+{
+    MockRepository mocks;
+    auto vmcs = setup_vmcs(mocks);
+    auto eapis = setup_eapis(mocks);
+    auto handler = control_register_handler(eapis);
+
+    ::intel_x64::vm::write(
+        vmcs_n::exit_qualification::addr,
+        0x0000000000000034ULL
+    );
+
+    CHECK_THROWS(handler.handle(vmcs));
 }
 
 TEST_CASE("invalid cr")

@@ -246,7 +246,9 @@ public:
 
 private:
 
+    bool handle_cr0(gsl::not_null<vmcs_t *> vmcs);
     bool handle_cr3(gsl::not_null<vmcs_t *> vmcs);
+    bool handle_cr4(gsl::not_null<vmcs_t *> vmcs);
 
     bool handle_wrcr0(gsl::not_null<vmcs_t *> vmcs);
     bool handle_rdcr3(gsl::not_null<vmcs_t *> vmcs);

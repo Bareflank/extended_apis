@@ -1,4 +1,5 @@
-![Extended APIs](https://github.com/Bareflank/extended_apis/raw/master/doc/images/bareflank_extended_apis_logo.jpg)
+![Extended APIs](https://github.com/Bareflank/extended_apis/raw/v1.1.0/doc/images/bareflank_extended_apis_logo.jpg)
+
 <br>
 <br>
 <br>
@@ -10,23 +11,12 @@
 
 ## Description
 
-The [Bareflank Hypervisor](https://github.com/Bareflank/hypervisor)'s main
-goal is to provide the "bare" minimum hypervisor. Since Bareflank supports
-C++ 11/14, multiple operating systems, and a full toolstack, it's not as
-simple as say [SimpleVisor](https://github.com/ionescu007/SimpleVisor),
-but still adheres to the same basic principles of leaving out the complexity
-of a full blown hypervisor in favor of an implementation that is simple to
-read and follow.
-
-It is our goal to provide a hypervisor that others can extend to create
-their own hypervisors. To this end, it is likely that when creating your
-own hypervisor, some tasks will be redundant. For example, Windows
-makes a lot of MSR accesses. When running Bareflank this is obvious as
-Windows takes a significant performance penalty
-since all MSR accesses are emulated. The first step most people will take
-on an Intel platform is to enable VPID and MSR bitmaps to increase
-performance. The process of setting up these resources is the same,
-regardless of what type of hypervisor you might be creating.
+The [Bareflank Hypervisor](https://github.com/Bareflank/hypervisor) is an
+open source, hypervisor Software Development Toolkit (SDK), led by
+Assured Information Security, Inc. (AIS), that provides a set of APIs needed to
+rapidly prototype and create new hypervisors. To ease development, Bareflank
+is written in C/C++, and includes support for C++ exceptions, JSON, the GSL
+and the C++ Standard Template Library (STL).
 
 The purpose of this repository, is to provide an extended set of APIs to
 build your hypervisors from. Some of these APIs include:
@@ -35,74 +25,38 @@ build your hypervisors from. Some of these APIs include:
 - VPID / Extended Page Tables (EPT)
 - Monitor Traps
 - Virtual APIC / Interrupt Management
-- ACPI / Timers
+- Improved UEFI support
 
 ## Compilation / Usage
 
-To setup the extended_apis, we must clone the extension into the Bareflank
-root folder and run make (the following assumes this is running on Linux).
+To setup our extension, run the following:
 
 ```
-cd ~/
-git clone https://github.com/Bareflank/hypervisor.git
-cd ~/hypervisor
-git clone https://github.com/Bareflank/extended_apis.git
-
-./tools/scripts/setup-<xxx>.sh --no-configure
-sudo reboot
-
-cd ~/hypervisor
-./configure -m ./extended_apis/bin/extended_apis.modules
-
-make
-make test
+git clone https://github.com/Bareflank/hypervisor
+git clone https://github.com/Bareflank/extended_apis
+mkdir build; cd build
+cmake ../hypervisor -DDEFAULT_VMM=eapis_vmm -DEXTENSION=../extended_apis
+make -j<# cores + 1>
 ```
 
-To test out the extended version of Bareflank, all we need to do is run the
-make shortcuts as usual:
+To test out our extended version of Bareflank, run the following commands:
 
 ```
-make driver_load
+make driver_quick
 make quick
+```
 
-make status
-make dump
+to reverse this:
 
-make stop
+```
+make unload
 make driver_unload
-```
-
-There are also a number of tests that can be run that demonstrate the various
-different vmcalls that are provided. For example:
-
-```
-cd ~/hypervisor
-./extended_apis/tests/test_vpid.sh
-```
-
-The `test_vpid.sh` enables / disables VPID using JSON based vmcalls on
-all of the cores as follows
-
-```
-run_on_all_cores() {
-    for (( core=0; core<$NUM_CORES; core++ ))
-    do
-        ARGS="--cpuid $core string json $1" make vmcall > /dev/null
-    done
-}
-
-run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": false}'"
-run_on_all_cores "'{\"command\":\"enable_vpid\", \"enabled\": true}'"
 ```
 
 ## Links
 
 [Bareflank Hypervisor Website](http://bareflank.github.io/hypervisor/) <br>
 [Bareflank Hypervisor API Documentation](http://bareflank.github.io/hypervisor/html/)
-
-## Roadmap
-
-The project roadmap can be located [here](https://github.com/Bareflank/hypervisor/projects)
 
 ## License
 
