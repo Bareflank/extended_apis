@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
 
 /// EPT Misconfiguration
 ///
@@ -85,9 +85,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this EPT misconfiguration handler
+    /// @param apis the apis object for this EPT misconfiguration handler
     ///
-    ept_misconfiguration_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    ept_misconfiguration_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -105,7 +105,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_handler(handler_delegate_t &&d);
+    void add_handler(const handler_delegate_t &d);
 
     /// Dump Log
     ///
@@ -119,13 +119,16 @@ public:
     ///
     void dump_log() final;
 
-private:
+public:
+
+    /// @cond
 
     bool handle(gsl::not_null<vmcs_t *> vmcs);
 
+    /// @endcond
+
 private:
 
-    gsl::not_null<exit_handler_t *> m_exit_handler;
     std::list<handler_delegate_t> m_handlers;
 
 private:

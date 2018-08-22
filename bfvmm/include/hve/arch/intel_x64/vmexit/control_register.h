@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
 
 /// Control Register
 ///
@@ -57,10 +57,8 @@ public:
         /// - handle_wrcr0: base::emulate_rdgpr
         /// - handle_wrcr3: base::emulate_rdgpr
         /// - handle_wrcr4: base::emulate_rdgpr
-        /// - handle_wrcr8: base::emulate_rdgpr
         ///
         /// - handle_rdcr3: vmcs_n::guest_cr3
-        /// - handle_rdcr8: 0
         ///
         /// If needed, registered handlers can override the default value
         /// by modifying this field before returning.
@@ -74,10 +72,8 @@ public:
         /// - handle_wrcr0: vmcs_n::cr0_read_shadow
         /// - handle_wrcr3: 0
         /// - handle_wrcr4: vmcs_n::cr4_read_shadow
-        /// - handle_wrcr8: 0
         ///
         /// - handle_rdcr3: 0
-        /// - handle_rdcr8: 0
         ///
         /// If needed, registered handlers can override the default value
         /// by modifying this field before returning.
@@ -119,9 +115,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this control register handler
+    /// @param apis the apis object for this control register handler
     ///
-    control_register_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    control_register_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -139,7 +135,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_wrcr0_handler(handler_delegate_t &&d);
+    void add_wrcr0_handler(const handler_delegate_t &d);
 
     /// Add Read CR3 Handler
     ///
@@ -148,7 +144,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_rdcr3_handler(handler_delegate_t &&d);
+    void add_rdcr3_handler(const handler_delegate_t &d);
 
     /// Add Write CR3 Handler
     ///
@@ -157,7 +153,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_wrcr3_handler(handler_delegate_t &&d);
+    void add_wrcr3_handler(const handler_delegate_t &d);
 
     /// Add Write CR4 Handler
     ///
@@ -166,25 +162,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_wrcr4_handler(handler_delegate_t &&d);
-
-    /// Add Read CR8 Handler
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param d the handler to call when an exit occurs
-    ///
-    void add_rdcr8_handler(handler_delegate_t &&d);
-
-    /// Add Write CR8 Handler
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param d the handler to call when an exit occurs
-    ///
-    void add_wrcr8_handler(handler_delegate_t &&d);
+    void add_wrcr4_handler(const handler_delegate_t &d);
 
 public:
 
@@ -244,30 +222,6 @@ public:
     void enable_wrcr4_exiting(
         vmcs_n::value_type mask, vmcs_n::value_type shadow);
 
-    /// Enable Read CR8 Exiting
-    ///
-    /// Example:
-    /// @code
-    /// this->enable_rdcr8_exiting();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void enable_rdcr8_exiting();
-
-    /// Enable Write CR8 Exiting
-    ///
-    /// Example:
-    /// @code
-    /// this->enable_wrcr8_exiting();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void enable_wrcr8_exiting();
-
 public:
 
     /// Dump Log
@@ -293,25 +247,18 @@ public:
 private:
 
     bool handle_cr3(gsl::not_null<vmcs_t *> vmcs);
-    bool handle_cr8(gsl::not_null<vmcs_t *> vmcs);
 
     bool handle_wrcr0(gsl::not_null<vmcs_t *> vmcs);
     bool handle_rdcr3(gsl::not_null<vmcs_t *> vmcs);
     bool handle_wrcr3(gsl::not_null<vmcs_t *> vmcs);
     bool handle_wrcr4(gsl::not_null<vmcs_t *> vmcs);
-    bool handle_rdcr8(gsl::not_null<vmcs_t *> vmcs);
-    bool handle_wrcr8(gsl::not_null<vmcs_t *> vmcs);
 
 private:
-
-    gsl::not_null<exit_handler_t *> m_exit_handler;
 
     std::list<handler_delegate_t> m_wrcr0_handlers;
     std::list<handler_delegate_t> m_rdcr3_handlers;
     std::list<handler_delegate_t> m_wrcr3_handlers;
     std::list<handler_delegate_t> m_wrcr4_handlers;
-    std::list<handler_delegate_t> m_rdcr8_handlers;
-    std::list<handler_delegate_t> m_wrcr8_handlers;
 
 private:
 
@@ -323,7 +270,6 @@ private:
     std::list<record_t> m_cr0_log;
     std::list<record_t> m_cr3_log;
     std::list<record_t> m_cr4_log;
-    std::list<record_t> m_cr8_log;
 
 public:
 

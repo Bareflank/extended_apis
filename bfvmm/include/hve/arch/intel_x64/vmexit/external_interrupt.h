@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
 
 /// External interrupt
 ///
@@ -71,9 +71,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this external-interrupt handler
+    /// @param apis the apis object for this external-interrupt handler
     ///
-    external_interrupt_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    external_interrupt_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -93,19 +93,7 @@ public:
     /// @param d the handler to call when an exit occurs
     ///
     void add_handler(
-        vmcs_n::value_type vector, handler_delegate_t &&d);
-
-    /// Dump Log
-    ///
-    /// Example:
-    /// @code
-    /// this->dump_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void dump_log() final;
+        vmcs_n::value_type vector, const handler_delegate_t &d);
 
     /// Enable exiting
     ///
@@ -133,6 +121,20 @@ public:
 
 public:
 
+    /// Dump Log
+    ///
+    /// Example:
+    /// @code
+    /// this->dump_log();
+    /// @endcode
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void dump_log() final;
+
+public:
+
     /// @cond
 
     bool handle(gsl::not_null<vmcs_t *> vmcs);
@@ -141,8 +143,9 @@ public:
 
 private:
 
-    gsl::not_null<exit_handler_t *> m_exit_handler;
     std::array<std::list<handler_delegate_t>, 256> m_handlers;
+
+private:
 
     std::array<uint64_t, 256> m_log;
 

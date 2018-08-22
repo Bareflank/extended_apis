@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
 
 /// IO instruction
 ///
@@ -123,9 +123,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this io instruction handler
+    /// @param apis the apis object for this io instruction handler
     ///
-    io_instruction_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    io_instruction_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -147,8 +147,8 @@ public:
     ///
     void add_handler(
         vmcs_n::value_type port,
-        handler_delegate_t &&in_d,
-        handler_delegate_t &&out_d
+        const handler_delegate_t &in_d,
+        const handler_delegate_t &out_d
     );
 
     /// Trap On Access
@@ -253,14 +253,13 @@ private:
     void store_operand(gsl::not_null<vmcs_t *> vmcs, info_t &info);
 
     gsl::span<uint8_t> m_io_bitmaps;
-    gsl::not_null<exit_handler_t *> m_exit_handler;
 
     std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_in_handlers;
     std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_out_handlers;
 
 private:
 
-    struct port_record_t {
+    struct record_t {
         uint64_t port_number;
         uint64_t size_of_access;
         uint64_t direction_of_access;
@@ -268,7 +267,7 @@ private:
         uint64_t val;
     };
 
-    std::list<port_record_t> m_log;
+    std::list<record_t> m_log;
 
 public:
 

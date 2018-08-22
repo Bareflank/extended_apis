@@ -18,7 +18,6 @@
 
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
     list(APPEND SOURCES
-        # arch/intel_x64/apic/esr.cpp
         # arch/intel_x64/apic/isr.cpp
         # arch/intel_x64/apic/phys_x2apic.cpp
         # arch/intel_x64/apic/vic.cpp
@@ -39,13 +38,12 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/vmexit/rdmsr.cpp
         arch/intel_x64/vmexit/sipi.cpp
         arch/intel_x64/vmexit/wrmsr.cpp
-        arch/intel_x64/vcpu.cpp
+        arch/intel_x64/apis.cpp
         # arch/x64/pci/pci_register.cpp
     )
 
     # if (NOT WIN32 AND NOT ENABLE_MOCKING)
     #     list(APPEND SOURCES
-    #         arch/intel_x64/apic/esr.asm
     #         arch/intel_x64/apic/isr.asm
     #     )
     # endif()

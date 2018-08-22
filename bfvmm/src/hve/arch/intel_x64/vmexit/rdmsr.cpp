@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/vcpu.h>
+#include <hve/arch/intel_x64/apis.h>
 
 namespace eapis
 {
@@ -25,14 +25,13 @@ namespace intel_x64
 {
 
 rdmsr_handler::rdmsr_handler(
-    gsl::not_null<eapis::intel_x64::vcpu *> vcpu
+    gsl::not_null<apis *> apis
 ) :
-    m_msr_bitmap{vcpu->msr_bitmap()},
-    m_exit_handler{vcpu->exit_handler()}
+    m_msr_bitmap{apis->msr_bitmap()}
 {
     using namespace vmcs_n;
 
-    m_exit_handler->add_handler(
+    apis->add_handler(
         exit_reason::basic_exit_reason::rdmsr,
         ::handler_delegate_t::create<rdmsr_handler, &rdmsr_handler::handle>(this)
     );
@@ -46,12 +45,12 @@ rdmsr_handler::~rdmsr_handler()
 }
 
 // -----------------------------------------------------------------------------
-// RDMSR
+// Add Handler / Enablers
 // -----------------------------------------------------------------------------
 
 void
 rdmsr_handler::add_handler(
-    vmcs_n::value_type msr, handler_delegate_t &&d)
+    vmcs_n::value_type msr, const handler_delegate_t &d)
 {
 #ifndef DISABLE_AUTO_TRAP_ON_ACCESS
     this->trap_on_access(msr);

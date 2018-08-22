@@ -54,6 +54,11 @@ do_test(test_vpid
     ${ARGN}
 )
 
+do_test(test_control_register
+    SOURCES arch/intel_x64/vmexit/test_control_register.cpp
+    ${ARGN}
+)
+
 # do_test(test_sipi
 #     SOURCES arch/intel_x64/test_sipi.cpp
 #     ${ARGN}

@@ -30,7 +30,7 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
 
 /// EPT Violation
 ///
@@ -91,9 +91,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this EPT violation handler
+    /// @param apis the apis object for this EPT violation handler
     ///
-    ept_violation_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    ept_violation_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -111,7 +111,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_read_handler(handler_delegate_t &&d);
+    void add_read_handler(const handler_delegate_t &d);
 
     /// Add Write EPT Violation Handler
     ///
@@ -120,7 +120,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_write_handler(handler_delegate_t &&d);
+    void add_write_handler(const handler_delegate_t &d);
 
     /// Add Execute EPT Violation Handler
     ///
@@ -129,7 +129,7 @@ public:
     ///
     /// @param d the handler to call when an exit occurs
     ///
-    void add_execute_handler(handler_delegate_t &&d);
+    void add_execute_handler(const handler_delegate_t &d);
 
     /// Dump Log
     ///
@@ -156,8 +156,6 @@ private:
     /// @endcond
 
 private:
-
-    gsl::not_null<exit_handler_t *> m_exit_handler;
 
     std::list<handler_delegate_t> m_read_handlers;
     std::list<handler_delegate_t> m_write_handlers;

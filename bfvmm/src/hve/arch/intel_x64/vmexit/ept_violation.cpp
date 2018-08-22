@@ -17,7 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 #include <bfdebug.h>
-#include <hve/arch/intel_x64/vcpu.h>
+#include <hve/arch/intel_x64/apis.h>
 
 namespace eapis
 {
@@ -25,13 +25,11 @@ namespace intel_x64
 {
 
 ept_violation_handler::ept_violation_handler(
-    gsl::not_null<eapis::intel_x64::vcpu *> vcpu
-) :
-    m_exit_handler{vcpu->exit_handler()}
+    gsl::not_null<apis *> apis)
 {
     using namespace vmcs_n;
 
-    m_exit_handler->add_handler(
+    apis->add_handler(
         exit_reason::basic_exit_reason::ept_violation,
         ::handler_delegate_t::create<ept_violation_handler, &ept_violation_handler::handle>(this)
     );
@@ -44,17 +42,28 @@ ept_violation_handler::~ept_violation_handler()
     }
 }
 
+// -----------------------------------------------------------------------------
+// Add Handler / Enablers
+// -----------------------------------------------------------------------------
+
 void
-ept_violation_handler::add_read_handler(handler_delegate_t &&d)
+ept_violation_handler::add_read_handler(
+    const handler_delegate_t &d)
 { m_read_handlers.push_front(d); }
 
 void
-ept_violation_handler::add_write_handler(handler_delegate_t &&d)
+ept_violation_handler::add_write_handler(
+    const handler_delegate_t &d)
 { m_write_handlers.push_front(d); }
 
 void
-ept_violation_handler::add_execute_handler(handler_delegate_t &&d)
+ept_violation_handler::add_execute_handler(
+    const handler_delegate_t &d)
 { m_execute_handlers.push_front(d); }
+
+// -----------------------------------------------------------------------------
+// Debug
+// -----------------------------------------------------------------------------
 
 void
 ept_violation_handler::dump_log()
@@ -74,6 +83,10 @@ ept_violation_handler::dump_log()
         bfdebug_lnbr(0, msg);
     });
 }
+
+// -----------------------------------------------------------------------------
+// Handlers
+// -----------------------------------------------------------------------------
 
 bool
 ept_violation_handler::handle(gsl::not_null<vmcs_t *> vmcs)

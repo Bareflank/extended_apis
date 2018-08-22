@@ -103,9 +103,9 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this cpuid_handler
+    /// @param apis the apis object for this cpuid_handler
     ///
-    cpuid_handler(gsl::not_null<eapis::intel_x64::vcpu *> vcpu);
+    cpuid_handler(gsl::not_null<apis *> apis);
 
     /// Destructor
     ///
@@ -129,7 +129,7 @@ public:
     /// @param leaf the cpuid leaf to call d
     /// @param d the handler to call when an exit occurs
     ///
-    void add_handler(leaf_t leaf, handler_delegate_t &&d);
+    void add_handler(leaf_t leaf, const handler_delegate_t &d);
 
 public:
 
@@ -155,12 +155,11 @@ public:
 
 private:
 
-    gsl::not_null<exit_handler_t *> m_exit_handler;
     std::unordered_map<leaf_t, std::list<handler_delegate_t>> m_handlers;
 
 private:
 
-    struct cpuid_handler_record_t {
+    struct record_t {
         uint64_t rax_in;
         uint64_t rbx_in;
         uint64_t rcx_in;
@@ -171,7 +170,7 @@ private:
         uint64_t rdx_out;
     };
 
-    std::list<cpuid_handler_record_t> m_log;
+    std::list<record_t> m_log;
 
 public:
 

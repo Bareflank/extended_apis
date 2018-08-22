@@ -49,11 +49,11 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->add_mov_dr_handler(
+        eapis()->add_mov_dr_handler(
             mov_dr_handler::handler_delegate_t::create<test_handler>()
         );
 
-        this->mov_dr()->enable_log();
+        eapis()->mov_dr()->enable_log();
     }
 
     /// Destructor

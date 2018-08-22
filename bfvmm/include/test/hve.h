@@ -18,6 +18,7 @@
 
 #ifdef BF_INTEL_X64
 
+#include "../hve/arch/intel_x64/apis.h"
 #include "../hve/arch/intel_x64/misc/mtrrs.h"
 using namespace eapis::intel_x64;
 
@@ -101,6 +102,43 @@ add_variable_range(uint8_t vnum, mtrrs::range_t range, bool disabled = false)
 
     ::intel_x64::msrs::set(ia32_mtrr_physbase::addr + (vnum * 2), ia32_mtrr_physbase);
     ::intel_x64::msrs::set(ia32_mtrr_physmask::addr + (vnum * 2), ia32_mtrr_physmask);
+}
+
+apis *
+setup_eapis(MockRepository &mocks)
+{
+    auto eapis = mocks.Mock<apis>();
+
+    mocks.OnCall(eapis, apis::set_eptp);
+    mocks.OnCall(eapis, apis::disable_ept);
+    mocks.OnCall(eapis, apis::enable_vpid);
+    mocks.OnCall(eapis, apis::disable_vpid);
+    mocks.OnCall(eapis, apis::enable_wrcr0_exiting);
+    mocks.OnCall(eapis, apis::enable_wrcr4_exiting);
+    mocks.OnCall(eapis, apis::add_wrcr0_handler);
+    mocks.OnCall(eapis, apis::add_rdcr3_handler);
+    mocks.OnCall(eapis, apis::add_wrcr3_handler);
+    mocks.OnCall(eapis, apis::add_wrcr4_handler);
+    mocks.OnCall(eapis, apis::add_cpuid_handler);
+    mocks.OnCall(eapis, apis::add_ept_misconfiguration_handler);
+    mocks.OnCall(eapis, apis::add_ept_read_violation_handler);
+    mocks.OnCall(eapis, apis::add_ept_write_violation_handler);
+    mocks.OnCall(eapis, apis::add_ept_execute_violation_handler);
+    mocks.OnCall(eapis, apis::add_external_interrupt_handler);
+    mocks.OnCall(eapis, apis::add_init_signal_handler);
+    mocks.OnCall(eapis, apis::add_interrupt_window_handler);
+    mocks.OnCall(eapis, apis::add_io_instruction_handler);
+    mocks.OnCall(eapis, apis::add_monitor_trap_handler);
+    mocks.OnCall(eapis, apis::enable_monitor_trap_flag);
+    mocks.OnCall(eapis, apis::add_mov_dr_handler);
+    mocks.OnCall(eapis, apis::pass_through_all_rdmsr_handler_accesses);
+    mocks.OnCall(eapis, apis::add_rdmsr_handler);
+    mocks.OnCall(eapis, apis::add_sipi_handler);
+    mocks.OnCall(eapis, apis::pass_through_all_wrmsr_handler_accesses);
+    mocks.OnCall(eapis, apis::add_wrmsr_handler);
+    mocks.OnCall(eapis, apis::add_handler);
+
+    return eapis;
 }
 
 #endif

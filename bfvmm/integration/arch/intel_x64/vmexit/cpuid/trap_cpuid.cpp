@@ -74,15 +74,15 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->add_cpuid_handler(
-            42, cpuid_handler::handler_delegate_t::create<test_cpuid_handler>()
-        );
-
         this->add_hlt_delegate(
             hlt_delegate_t::create<test_hlt_delegate>()
         );
 
-        this->cpuid()->enable_log();
+        eapis()->add_cpuid_handler(
+            42, cpuid_handler::handler_delegate_t::create<test_cpuid_handler>()
+        );
+
+        eapis()->cpuid()->enable_log();
     }
 
     /// @cond
