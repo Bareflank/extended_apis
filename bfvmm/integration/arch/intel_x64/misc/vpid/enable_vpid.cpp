@@ -28,14 +28,24 @@ using namespace eapis::intel_x64;
 namespace test
 {
 
+void
+test_hlt_delegate(bfobject *obj)
+{
+    bfignored(obj);
+    bfdebug_pass(0, "test");
+}
+
 class vcpu : public eapis::intel_x64::vcpu
 {
 public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
+        this->add_hlt_delegate(
+            hlt_delegate_t::create<test_hlt_delegate>()
+        );
+
         eapis()->enable_vpid();
-        bfdebug_nhex(0, "vpid", eapis()->vpid()->id());
     }
 };
 

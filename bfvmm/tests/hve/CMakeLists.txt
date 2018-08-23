@@ -69,6 +69,11 @@ do_test(test_ept_misconfiguration
     ${ARGN}
 )
 
+do_test(test_ept_violation
+    SOURCES arch/intel_x64/vmexit/test_ept_violation.cpp
+    ${ARGN}
+)
+
 # do_test(test_sipi
 #     SOURCES arch/intel_x64/test_sipi.cpp
 #     ${ARGN}

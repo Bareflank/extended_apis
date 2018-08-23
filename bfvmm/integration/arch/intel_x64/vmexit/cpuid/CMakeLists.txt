@@ -17,6 +17,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 eapis_add_vmm_executable(
-    eapis_integration_intel_x64_cpuid_trap
+    eapis_integration_intel_x64_vmexit_cpuid_trap
     SOURCES trap_cpuid.cpp
 )
