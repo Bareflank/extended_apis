@@ -59,6 +59,16 @@ do_test(test_control_register
     ${ARGN}
 )
 
+do_test(test_cpuid
+    SOURCES arch/intel_x64/vmexit/test_cpuid.cpp
+    ${ARGN}
+)
+
+do_test(test_ept_misconfiguration
+    SOURCES arch/intel_x64/vmexit/test_ept_misconfiguration.cpp
+    ${ARGN}
+)
+
 # do_test(test_sipi
 #     SOURCES arch/intel_x64/test_sipi.cpp
 #     ${ARGN}

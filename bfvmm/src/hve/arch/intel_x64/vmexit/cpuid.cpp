@@ -85,11 +85,10 @@ cpuid_handler::dump_log()
 bool
 cpuid_handler::handle(gsl::not_null<vmcs_t *> vmcs)
 {
-    const auto &hdlrs = m_handlers.find(
-                            vmcs->save_state()->rax
-                        );
+    const auto &hdlrs =
+        m_handlers.find(vmcs->save_state()->rax);
 
-    if (GSL_LIKELY(hdlrs != m_handlers.end())) {
+    if (hdlrs != m_handlers.end()) {
 
         auto ret =
             ::x64::cpuid::get(
@@ -137,16 +136,7 @@ cpuid_handler::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-#ifndef SECURE_MODE
     return false;
-#endif
-
-    vmcs->save_state()->rax = 0;
-    vmcs->save_state()->rbx = 0;
-    vmcs->save_state()->rcx = 0;
-    vmcs->save_state()->rdx = 0;
-
-    return advance(vmcs);
 }
 
 }

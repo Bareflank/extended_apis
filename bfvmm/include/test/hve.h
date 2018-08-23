@@ -38,7 +38,7 @@ size_to_physmask(uint64_t size)
     return ~(~((1ULL << addr_size) - 1U) | (size - 1U)) >> 12;
 }
 
-static void
+static inline void
 enable_mtrrs(uint8_t vcnt)
 {
     ::x64::msrs::ia32_mtrrcap::vcnt::set(vcnt);
@@ -48,7 +48,7 @@ enable_mtrrs(uint8_t vcnt)
     g_eax_cpuid[::x64::cpuid::addr_size::addr] = 43U;
 }
 
-static void
+static inline void
 add_variable_range(uint8_t vnum, mtrrs::range_t range, bool disabled = false)
 {
     using namespace ::intel_x64::msrs;
@@ -104,7 +104,7 @@ add_variable_range(uint8_t vnum, mtrrs::range_t range, bool disabled = false)
     ::intel_x64::msrs::set(ia32_mtrr_physmask::addr + (vnum * 2), ia32_mtrr_physmask);
 }
 
-apis *
+inline apis *
 setup_eapis(MockRepository &mocks)
 {
     auto eapis = mocks.Mock<apis>();
@@ -141,4 +141,21 @@ setup_eapis(MockRepository &mocks)
     return eapis;
 }
 
+inline bfvmm::intel_x64::vmcs *
+setup_vmcs(MockRepository &mocks)
+{
+    using namespace bfvmm::intel_x64;
+    auto vmcs = mocks.Mock<bfvmm::intel_x64::vmcs>();
+
+    mocks.OnCall(vmcs, vmcs::launch);
+    mocks.OnCall(vmcs, vmcs::resume);
+    mocks.OnCall(vmcs, vmcs::promote);
+    mocks.OnCall(vmcs, vmcs::load);
+
+    mocks.OnCall(vmcs, vmcs::save_state).Return(
+        &g_save_state
+    );
+
+    return vmcs;
+}
 #endif

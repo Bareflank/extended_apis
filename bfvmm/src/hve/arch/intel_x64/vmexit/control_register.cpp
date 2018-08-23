@@ -227,16 +227,44 @@ control_register_handler::handle(gsl::not_null<vmcs_t *> vmcs)
 
     switch (control_register_number::get()) {
         case 0:
-            return handle_wrcr0(vmcs);
+            return handle_cr0(vmcs);
 
         case 3:
             return handle_cr3(vmcs);
 
         case 4:
-            return handle_wrcr4(vmcs);
+            return handle_cr4(vmcs);
 
         default:
-            throw std::runtime_error("control_register_handler::handle: invalid cr number");
+            throw std::runtime_error(
+                "control_register_handler::handle: invalid cr number"
+            );
+    }
+}
+
+bool
+control_register_handler::handle_cr0(gsl::not_null<vmcs_t *> vmcs)
+{
+    using namespace vmcs_n::exit_qualification::control_register_access;
+
+    switch (access_type::get()) {
+        case access_type::mov_to_cr:
+            return handle_wrcr0(vmcs);
+
+        case access_type::mov_from_cr:
+            throw std::runtime_error(
+                "control_register_handler::handle_cr0: mov_from_cr not supported"
+            );
+
+        case access_type::clts:
+            throw std::runtime_error(
+                "control_register_handler::handle_cr0: clts not supported"
+            );
+
+        default:
+            throw std::runtime_error(
+                "control_register_handler::handle_cr0: lmsw not supported"
+            );
     }
 }
 
@@ -246,14 +274,47 @@ control_register_handler::handle_cr3(gsl::not_null<vmcs_t *> vmcs)
     using namespace vmcs_n::exit_qualification::control_register_access;
 
     switch (access_type::get()) {
-        case access_type::mov_from_cr:
-            return handle_rdcr3(vmcs);
-
         case access_type::mov_to_cr:
             return handle_wrcr3(vmcs);
 
+        case access_type::mov_from_cr:
+            return handle_rdcr3(vmcs);
+
+        case access_type::clts:
+            throw std::runtime_error(
+                "control_register_handler::handle_cr3: clts not supported"
+            );
+
         default:
-            throw std::runtime_error("control_register_handler::handle_cr3: invalid access type");
+            throw std::runtime_error(
+                "control_register_handler::handle_cr3: lmsw not supported"
+            );
+    }
+}
+
+bool
+control_register_handler::handle_cr4(gsl::not_null<vmcs_t *> vmcs)
+{
+    using namespace vmcs_n::exit_qualification::control_register_access;
+
+    switch (access_type::get()) {
+        case access_type::mov_to_cr:
+            return handle_wrcr4(vmcs);
+
+        case access_type::mov_from_cr:
+            throw std::runtime_error(
+                "control_register_handler::handle_cr4: mov_from_cr not supported"
+            );
+
+        case access_type::clts:
+            throw std::runtime_error(
+                "control_register_handler::handle_cr4: clts not supported"
+            );
+
+        default:
+            throw std::runtime_error(
+                "control_register_handler::handle_cr4: lmsw not supported"
+            );
     }
 }
 

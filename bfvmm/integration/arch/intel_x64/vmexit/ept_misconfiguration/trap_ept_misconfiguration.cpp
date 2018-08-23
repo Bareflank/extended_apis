@@ -16,43 +16,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <bfcallonce.h>
+
 #include <bfvmm/vcpu/vcpu_factory.h>
 #include <eapis/hve/arch/intel_x64/vcpu.h>
 
 using namespace eapis::intel_x64;
-
-// -----------------------------------------------------------------------------
-// Handlers
-// -----------------------------------------------------------------------------
-
-uint64_t g_cr4;
-uint64_t g_cr4_handler;
-
-bool
-test_handler(
-    gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
-{
-    bfignored(vmcs);
-    bfignored(info);
-
-    info.val = g_cr4;
-    g_cr4_handler = g_cr4;
-
-    return false;
-}
-
-void
-test_hlt_delegate(bfobject *obj)
-{
-    bfignored(obj);
-
-    g_cr4 = ::intel_x64::cr4::get();
-    ::intel_x64::cr4::set(0);
-
-    if (::intel_x64::cr4::get() == g_cr4_handler) {
-        bfdebug_pass(0, "test");
-    }
-}
 
 // -----------------------------------------------------------------------------
 // vCPU
@@ -61,25 +30,42 @@ test_hlt_delegate(bfobject *obj)
 namespace test
 {
 
+bfn::once_flag flag;
+ept::mmap g_guest_map;
+
 class vcpu : public eapis::intel_x64::vcpu
 {
 public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->add_hlt_delegate(
-            hlt_delegate_t::create<test_hlt_delegate>()
+        bfn::call_once(flag, [&] {
+            ept::identity_map(
+                g_guest_map,
+                MAX_PHYS_ADDR,
+                ept::mmap::attr_type::write_only
+            );
+        });
+
+        eapis()->add_ept_misconfiguration_handler(
+            ept_misconfiguration_handler::handler_delegate_t::create<vcpu, &vcpu::test_misconfiguration_handler>(this)
         );
 
-        eapis()->enable_wrcr4_exiting(
-            0xFFFFFFFFFFFFFFFF, ::intel_x64::vmcs::guest_cr4::get()
-        );
+        eapis()->set_eptp(g_guest_map);
+        eapis()->ept_misconfiguration()->enable_log();
+    }
 
-        eapis()->add_wrcr4_handler(
-            control_register_handler::handler_delegate_t::create<test_handler>()
-        );
+    bool
+    test_misconfiguration_handler(
+        gsl::not_null<vmcs_t *> vmcs, ept_misconfiguration_handler::info_t &info)
+    {
+        bfignored(vmcs);
+        bfignored(info);
 
-        eapis()->control_register()->enable_log();
+        bfdebug_pass(0, "test");
+        eapis()->disable_ept();
+
+        return true;
     }
 };
 
