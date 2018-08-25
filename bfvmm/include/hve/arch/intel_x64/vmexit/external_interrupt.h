@@ -55,7 +55,7 @@ public:
         ///
         /// default: vmcs_n::vm_exit_interruption_information::vector
         ///
-        uint64_t vector;
+        uint64_t vector{0};
     };
 
     /// Handler delegate type
@@ -92,8 +92,9 @@ public:
     /// @param vector the vector to listen to
     /// @param d the handler to call when an exit occurs
     ///
-    void add_handler(
-        vmcs_n::value_type vector, const handler_delegate_t &d);
+    void add_handler(const handler_delegate_t &d);
+
+public:
 
     /// Enable exiting
     ///
@@ -143,11 +144,11 @@ public:
 
 private:
 
-    std::array<std::list<handler_delegate_t>, 256> m_handlers;
+    std::list<handler_delegate_t> m_handlers;
 
 private:
 
-    std::array<uint64_t, 256> m_log;
+    std::array<uint64_t, 256> m_log{};
 
 public:
 

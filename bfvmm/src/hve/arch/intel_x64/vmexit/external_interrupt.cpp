@@ -48,8 +48,8 @@ external_interrupt_handler::~external_interrupt_handler()
 
 void
 external_interrupt_handler::add_handler(
-    vmcs_n::value_type vector, const handler_delegate_t &d)
-{ m_handlers.at(vector).push_front(d); }
+    const handler_delegate_t &d)
+{ m_handlers.push_front(d); }
 
 void
 external_interrupt_handler::enable_exiting()
@@ -102,14 +102,15 @@ external_interrupt_handler::handle(gsl::not_null<vmcs_t *> vmcs)
         m_log.at(info.vector)++;
     }
 
-    for (const auto &d : m_handlers.at(info.vector)) {
+    for (const auto &d : m_handlers) {
         if (d(vmcs, info)) {
             return true;
         }
     }
 
-    throw std::runtime_error("Unhandled interrupt vector: "
-                             + std::to_string(info.vector));
+    throw std::runtime_error(
+        "Unhandled interrupt vector: " + std::to_string(info.vector)
+    );
 }
 
 }

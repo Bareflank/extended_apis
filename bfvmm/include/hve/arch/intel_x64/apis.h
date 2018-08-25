@@ -337,14 +337,23 @@ public:
 
     /// Add External Interrupt Handler
     ///
+    /// Turns on external interrupt handling and adds an external interrupt
+    /// handler to handle external interrupts
+    ///
     /// @expects
     /// @ensures
     ///
-    /// @param vector the vector to listen to
-    /// @param d the delegate to call when an exit occurs with vector v
+    /// @param d the delegate to call when an exit occurs
     ///
     VIRTUAL void add_external_interrupt_handler(
-        vmcs_n::value_type vector, const external_interrupt_handler::handler_delegate_t &d);
+        const external_interrupt_handler::handler_delegate_t &d);
+
+    /// Disable External Interrupt Support
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    VIRTUAL void disable_external_interrupts();
 
     //--------------------------------------------------------------------------
     // INIT Signal
@@ -382,6 +391,23 @@ public:
     ///
     gsl::not_null<interrupt_window_handler *> interrupt_window();
 
+    /// Trap on the Next Interrupt Window
+    ///
+    /// When this function is called, the next time an interrupt can be
+    /// safely injected into the vCPU, a VM exit will occur.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void trap_on_next_interrupt_window();
+
+    /// Disable Interrupt Window
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    void disable_interrupt_window();
+
     /// Add Interrupt Window Handler
     ///
     /// @expects
@@ -391,6 +417,25 @@ public:
     ///
     VIRTUAL void add_interrupt_window_handler(
         const interrupt_window_handler::handler_delegate_t &d);
+
+    /// Is Interrupt Window Open
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return returns true if an interrupt can be injected, false otherwise.
+    ///
+    VIRTUAL bool is_interrupt_window_open();
+
+    /// Inject External Interrupt
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param injects an external interrupt into the vCPU with the provided
+    ///     vector
+    ///
+    VIRTUAL void inject_external_interrupt(uint64_t vector);
 
     //--------------------------------------------------------------------------
     // IO Instruction

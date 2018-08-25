@@ -27,7 +27,10 @@
 void setup_eapis_test_support()
 {
 #ifdef BF_INTEL_X64
+    g_msrs[::intel_x64::msrs::ia32_vmx_true_pinbased_ctls::addr] = 0xFFFFFFFF00000000;
     g_msrs[::intel_x64::msrs::ia32_vmx_true_procbased_ctls::addr] = 0xFFFFFFFF00000000;
+    g_msrs[::intel_x64::msrs::ia32_vmx_true_entry_ctls::addr] = 0xFFFFFFFF00000000;
+    g_msrs[::intel_x64::msrs::ia32_vmx_true_exit_ctls::addr] = 0xFFFFFFFF00000000;
     g_msrs[::intel_x64::msrs::ia32_vmx_procbased_ctls2::addr] = 0xFFFFFFFF00000000;
 #endif
 }

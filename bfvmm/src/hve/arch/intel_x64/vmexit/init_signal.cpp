@@ -35,9 +35,6 @@ init_signal_handler::init_signal_handler(
     );
 }
 
-init_signal_handler::~init_signal_handler()
-{ }
-
 // -----------------------------------------------------------------------------
 // Add Handler / Enablers
 // -----------------------------------------------------------------------------
@@ -45,14 +42,6 @@ init_signal_handler::~init_signal_handler()
 void
 init_signal_handler::add_handler(const handler_delegate_t &d)
 { m_handlers.push_front(d); }
-
-// -----------------------------------------------------------------------------
-// Debug
-// -----------------------------------------------------------------------------
-
-void
-init_signal_handler::dump_log()
-{ }
 
 // -----------------------------------------------------------------------------
 // Handlers
