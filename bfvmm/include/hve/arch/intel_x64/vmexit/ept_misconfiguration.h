@@ -31,6 +31,7 @@ namespace intel_x64
 {
 
 class apis;
+class eapis_vcpu_global_state_t;
 
 /// EPT Misconfiguration
 ///
@@ -86,8 +87,11 @@ public:
     /// @ensures
     ///
     /// @param apis the apis object for this EPT misconfiguration handler
+    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
     ///
-    ept_misconfiguration_handler(gsl::not_null<apis *> apis);
+    ept_misconfiguration_handler(
+        gsl::not_null<apis *> apis,
+        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
 
     /// Destructor
     ///

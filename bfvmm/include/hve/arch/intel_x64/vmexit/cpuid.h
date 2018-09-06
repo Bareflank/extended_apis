@@ -30,7 +30,8 @@ namespace eapis
 namespace intel_x64
 {
 
-class vcpu;
+class apis;
+class eapis_vcpu_global_state_t;
 
 /// CPUID
 ///
@@ -104,8 +105,11 @@ public:
     /// @ensures
     ///
     /// @param apis the apis object for this cpuid_handler
+    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
     ///
-    cpuid_handler(gsl::not_null<apis *> apis);
+    cpuid_handler(
+        gsl::not_null<apis *> apis,
+        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
 
     /// Destructor
     ///

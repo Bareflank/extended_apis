@@ -74,14 +74,14 @@ TEST_CASE("constructor/destruction")
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
 
-    CHECK_NOTHROW(cpuid_handler(eapis));
+    CHECK_NOTHROW(cpuid_handler(eapis, &g_eapis_vcpu_global_state));
 }
 
 TEST_CASE("add handlers")
 {
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = cpuid_handler(eapis);
+    auto handler = cpuid_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_NOTHROW(
         handler.add_handler(
@@ -95,7 +95,7 @@ TEST_CASE("cpuid log")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = cpuid_handler(eapis);
+    auto handler = cpuid_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 42;
 
@@ -114,7 +114,7 @@ TEST_CASE("cpuid exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = cpuid_handler(eapis);
+    auto handler = cpuid_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 42;
     g_save_state.rbx = 0;
@@ -137,7 +137,7 @@ TEST_CASE("cpuid exit, ignore write")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = cpuid_handler(eapis);
+    auto handler = cpuid_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 42;
     g_save_state.rbx = 0;
@@ -160,7 +160,7 @@ TEST_CASE("cpuid exit, ignore advance")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = cpuid_handler(eapis);
+    auto handler = cpuid_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rip = 0;
     g_save_state.rax = 42;
@@ -182,7 +182,7 @@ TEST_CASE("cpuid exit, no handler")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = cpuid_handler(eapis);
+    auto handler = cpuid_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 0;
     CHECK(handler.handle(vmcs) == false);
@@ -193,7 +193,7 @@ TEST_CASE("cpuid exit, returns false")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = cpuid_handler(eapis);
+    auto handler = cpuid_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 42;
 

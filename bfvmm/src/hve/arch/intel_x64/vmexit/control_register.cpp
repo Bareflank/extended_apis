@@ -25,13 +25,43 @@ namespace intel_x64
 {
 
 static bool
+emulate_ia_32e_mode_switch(
+    control_register_handler::info_t &info)
+{
+    using namespace vmcs_n::guest_cr0;
+    using namespace vmcs_n::guest_ia32_efer;
+    using namespace vmcs_n::vm_entry_controls;
+    using namespace vmcs_n::secondary_processor_based_vm_execution_controls;
+
+    if (unrestricted_guest::is_disabled() || lme::is_disabled()) {
+        return true;
+    }
+
+    if (paging::is_enabled(info.val)) {
+        lma::enable();
+        ia_32e_mode_guest::enable();
+        ::intel_x64::vmx::invept_global();
+    }
+    else {
+        lma::disable();
+        ia_32e_mode_guest::disable();
+        ::intel_x64::vmx::invept_global();
+    }
+
+    return true;
+}
+
+static bool
 default_wrcr0_handler(
     gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
 {
+    using namespace vmcs_n::guest_cr0;
     bfignored(vmcs);
-    bfignored(info);
 
-    info.shadow = info.val;
+    if (paging::is_enabled() != paging::is_enabled(info.val)) {
+        return emulate_ia_32e_mode_switch(info);
+    }
+
     return true;
 }
 
@@ -52,6 +82,7 @@ default_wrcr3_handler(
     bfignored(vmcs);
     bfignored(info);
 
+    ::intel_x64::vmx::invept_global();
     return true;
 }
 
@@ -62,14 +93,14 @@ default_wrcr4_handler(
     bfignored(vmcs);
     bfignored(info);
 
-    info.shadow = info.val;
-    info.val |= ::intel_x64::cr4::vmx_enable_bit::mask;
-
     return true;
 }
 
 control_register_handler::control_register_handler(
-    gsl::not_null<apis *> apis)
+    gsl::not_null<apis *> apis,
+    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state
+) :
+    m_eapis_vcpu_global_state{eapis_vcpu_global_state}
 {
     using namespace vmcs_n;
 
@@ -93,6 +124,9 @@ control_register_handler::control_register_handler(
     this->add_wrcr4_handler(
         handler_delegate_t::create<default_wrcr4_handler>()
     );
+
+    this->enable_wrcr0_exiting(0);
+    this->enable_wrcr4_exiting(0);
 }
 
 control_register_handler::~control_register_handler()
@@ -128,12 +162,13 @@ control_register_handler::add_wrcr4_handler(
 
 void
 control_register_handler::enable_wrcr0_exiting(
-    vmcs_n::value_type mask, vmcs_n::value_type shadow)
+    vmcs_n::value_type mask)
 {
     using namespace vmcs_n;
+    mask |= m_eapis_vcpu_global_state->ia32_vmx_cr0_fixed0;
 
     cr0_guest_host_mask::set(mask);
-    cr0_read_shadow::set(shadow);
+    cr0_read_shadow::set(guest_cr0::get());
 }
 
 void
@@ -152,12 +187,13 @@ control_register_handler::enable_wrcr3_exiting()
 
 void
 control_register_handler::enable_wrcr4_exiting(
-    vmcs_n::value_type mask, vmcs_n::value_type shadow)
+    vmcs_n::value_type mask)
 {
     using namespace vmcs_n;
+    mask |= m_eapis_vcpu_global_state->ia32_vmx_cr4_fixed0;
 
     cr4_guest_host_mask::set(mask);
-    cr4_read_shadow::set(shadow);
+    cr4_read_shadow::set(guest_cr4::get());
 }
 
 // -----------------------------------------------------------------------------
@@ -322,7 +358,7 @@ bool
 control_register_handler::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
-        this->emulate_rdgpr(vmcs),
+        emulate_rdgpr(vmcs),
         vmcs_n::cr0_read_shadow::get(),
         false,
         false
@@ -334,11 +370,20 @@ control_register_handler::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
         });
     }
 
+    info.shadow = info.val;
+    info.val |= m_eapis_vcpu_global_state->ia32_vmx_cr0_fixed0;
+
     for (const auto &d : m_wrcr0_handlers) {
         if (d(vmcs, info)) {
             break;
         }
     }
+
+    // bfdebug_transaction(0, [&](std::string * msg) {
+    //     bfdebug_info(0, "handle_wrcr0", msg);
+    //     bfdebug_subnhex(0, "val", info.val, msg);
+    //     bfdebug_subnhex(0, "shadow", info.shadow, msg);
+    // });
 
     if (!info.ignore_write) {
         vmcs_n::guest_cr0::set(info.val);
@@ -375,7 +420,7 @@ control_register_handler::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
     }
 
     if (!info.ignore_write) {
-        this->emulate_wrgpr(vmcs, info.val);
+        emulate_wrgpr(vmcs, info.val);
     }
 
     if (!info.ignore_advance) {
@@ -389,7 +434,7 @@ bool
 control_register_handler::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
-        this->emulate_rdgpr(vmcs),
+        emulate_rdgpr(vmcs),
         0,
         false,
         false
@@ -422,7 +467,7 @@ bool
 control_register_handler::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
-        this->emulate_rdgpr(vmcs),
+        emulate_rdgpr(vmcs),
         vmcs_n::cr4_read_shadow::get(),
         false,
         false
@@ -434,11 +479,20 @@ control_register_handler::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
         });
     }
 
+    info.shadow = info.val;
+    info.val |= m_eapis_vcpu_global_state->ia32_vmx_cr4_fixed0;
+
     for (const auto &d : m_wrcr4_handlers) {
         if (d(vmcs, info)) {
             break;
         }
     }
+
+    // bfdebug_transaction(0, [&](std::string * msg) {
+    //     bfdebug_info(0, "handle_wrcr4", msg);
+    //     bfdebug_subnhex(0, "val", info.val, msg);
+    //     bfdebug_subnhex(0, "shadow", info.shadow, msg);
+    // });
 
     if (!info.ignore_write) {
         vmcs_n::guest_cr4::set(info.val);

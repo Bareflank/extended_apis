@@ -19,7 +19,7 @@
 #ifdef BF_INTEL_X64
 
 #include "../hve/arch/intel_x64/apis.h"
-#include "../hve/arch/intel_x64/misc/mtrrs.h"
+#include "../hve/arch/intel_x64/mtrrs.h"
 using namespace eapis::intel_x64;
 
 constexpr auto uc = ept::mmap::memory_type::uncacheable;
@@ -113,8 +113,6 @@ setup_eapis(MockRepository &mocks)
     mocks.OnCall(eapis, apis::disable_ept);
     mocks.OnCall(eapis, apis::enable_vpid);
     mocks.OnCall(eapis, apis::disable_vpid);
-    mocks.OnCall(eapis, apis::enable_wrcr0_exiting);
-    mocks.OnCall(eapis, apis::enable_wrcr4_exiting);
     mocks.OnCall(eapis, apis::add_wrcr0_handler);
     mocks.OnCall(eapis, apis::add_rdcr3_handler);
     mocks.OnCall(eapis, apis::add_wrcr3_handler);
@@ -125,17 +123,25 @@ setup_eapis(MockRepository &mocks)
     mocks.OnCall(eapis, apis::add_ept_write_violation_handler);
     mocks.OnCall(eapis, apis::add_ept_execute_violation_handler);
     mocks.OnCall(eapis, apis::add_external_interrupt_handler);
-    mocks.OnCall(eapis, apis::add_init_signal_handler);
+    mocks.OnCall(eapis, apis::disable_external_interrupts);
+    mocks.OnCall(eapis, apis::trap_on_next_interrupt_window);
+    mocks.OnCall(eapis, apis::disable_interrupt_window);
     mocks.OnCall(eapis, apis::add_interrupt_window_handler);
+    mocks.OnCall(eapis, apis::is_interrupt_window_open);
+    mocks.OnCall(eapis, apis::inject_external_interrupt);
     mocks.OnCall(eapis, apis::add_io_instruction_handler);
+    mocks.OnCall(eapis, apis::trap_all_io_instruction_accesses);
+    mocks.OnCall(eapis, apis::pass_through_all_io_instruction_accesses);
     mocks.OnCall(eapis, apis::add_monitor_trap_handler);
     mocks.OnCall(eapis, apis::enable_monitor_trap_flag);
     mocks.OnCall(eapis, apis::add_mov_dr_handler);
-    mocks.OnCall(eapis, apis::pass_through_all_rdmsr_handler_accesses);
+    mocks.OnCall(eapis, apis::trap_all_rdmsr_accesses);
+    mocks.OnCall(eapis, apis::pass_through_all_rdmsr_accesses);
     mocks.OnCall(eapis, apis::add_rdmsr_handler);
-    mocks.OnCall(eapis, apis::add_sipi_handler);
-    mocks.OnCall(eapis, apis::pass_through_all_wrmsr_handler_accesses);
+    mocks.OnCall(eapis, apis::trap_all_wrmsr_accesses);
+    mocks.OnCall(eapis, apis::pass_through_all_wrmsr_accesses);
     mocks.OnCall(eapis, apis::add_wrmsr_handler);
+    mocks.OnCall(eapis, apis::add_xsetbv_handler);
     mocks.OnCall(eapis, apis::add_handler);
 
     return eapis;

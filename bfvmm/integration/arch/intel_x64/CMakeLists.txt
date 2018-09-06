@@ -21,9 +21,8 @@ eapis_add_vmm_executable(
     SOURCES test_all.cpp
 )
 
-add_subdirectory(misc/efi)
-add_subdirectory(misc/ept)
-add_subdirectory(misc/vpid)
+add_subdirectory(efi)
+add_subdirectory(ept)
 add_subdirectory(vmexit/control_register)
 add_subdirectory(vmexit/cpuid)
 add_subdirectory(vmexit/ept_misconfiguration)
@@ -34,3 +33,4 @@ add_subdirectory(vmexit/monitor_trap)
 add_subdirectory(vmexit/mov_dr)
 add_subdirectory(vmexit/rdmsr)
 add_subdirectory(vmexit/wrmsr)
+add_subdirectory(vpid)

@@ -25,11 +25,13 @@ namespace intel_x64
 {
 
 wrmsr_handler::wrmsr_handler(
-    gsl::not_null<apis *> apis
+    gsl::not_null<apis *> apis,
+    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state
 ) :
-    m_msr_bitmap{apis->msr_bitmap()}
+    m_msr_bitmap{apis->m_msr_bitmap.get(), ::x64::pt::page_size}
 {
     using namespace vmcs_n;
+    bfignored(eapis_vcpu_global_state);
 
     apis->add_handler(
         exit_reason::basic_exit_reason::wrmsr,
@@ -51,12 +53,7 @@ wrmsr_handler::~wrmsr_handler()
 void
 wrmsr_handler::add_handler(
     vmcs_n::value_type msr, const handler_delegate_t &d)
-{
-#ifndef DISABLE_AUTO_TRAP_ON_ACCESS
-    this->trap_on_access(msr);
-#endif
-    m_handlers[msr].push_front(d);
-}
+{ m_handlers[msr].push_front(d); }
 
 void
 wrmsr_handler::trap_on_access(vmcs_n::value_type msr)
@@ -180,11 +177,7 @@ wrmsr_handler::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
-#ifndef SECURE_MODE
     return false;
-#endif
-
-    return advance(vmcs);
 }
 
 }

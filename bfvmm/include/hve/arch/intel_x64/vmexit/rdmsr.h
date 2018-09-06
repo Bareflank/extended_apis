@@ -31,6 +31,7 @@ namespace intel_x64
 {
 
 class apis;
+class eapis_vcpu_global_state_t;
 
 /// RDMSR
 ///
@@ -96,8 +97,11 @@ public:
     /// @ensures
     ///
     /// @param apis the apis object for this rdmsr handler
+    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
     ///
-    rdmsr_handler(gsl::not_null<apis *> apis);
+    rdmsr_handler(
+        gsl::not_null<apis *> apis,
+        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
 
     /// Destructor
     ///

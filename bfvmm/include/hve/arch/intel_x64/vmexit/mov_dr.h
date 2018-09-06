@@ -31,6 +31,7 @@ namespace intel_x64
 {
 
 class apis;
+class eapis_vcpu_global_state_t;
 
 /// MOV DR
 ///
@@ -43,7 +44,7 @@ public:
     ///
     /// Info
     ///
-    /// This struct is created by control_register::handle before being
+    /// This struct is created by handle() before being
     /// passed to each registered handler.
     ///
     struct info_t {
@@ -92,8 +93,11 @@ public:
     /// @ensures
     ///
     /// @param apis the apis object for this mov-dr handler
+    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
     ///
-    mov_dr_handler(gsl::not_null<apis *> apis);
+    mov_dr_handler(
+        gsl::not_null<apis *> apis,
+        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
 
     /// Destructor
     ///

@@ -25,17 +25,19 @@ namespace intel_x64
 {
 
 mov_dr_handler::mov_dr_handler(
-    gsl::not_null<apis *> apis)
+    gsl::not_null<apis *> apis,
+    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state)
 {
     using namespace vmcs_n;
+    bfignored(eapis_vcpu_global_state);
 
     apis->add_handler(
         exit_reason::basic_exit_reason::mov_dr,
         ::handler_delegate_t::create<mov_dr_handler, &mov_dr_handler::handle>(this)
     );
 
-    using namespace vmcs_n;
-    primary_processor_based_vm_execution_controls::mov_dr_exiting::enable();
+    // using namespace vmcs_n;
+    // primary_processor_based_vm_execution_controls::mov_dr_exiting::enable();
 }
 
 mov_dr_handler::~mov_dr_handler()
@@ -82,7 +84,7 @@ bool
 mov_dr_handler::handle(gsl::not_null<vmcs_t *> vmcs)
 {
     struct info_t info = {
-        this->emulate_rdgpr(vmcs),
+        emulate_rdgpr(vmcs),
         false,
         false
     };

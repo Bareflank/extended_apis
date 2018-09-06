@@ -31,6 +31,7 @@ namespace intel_x64
 {
 
 class apis;
+class eapis_vcpu_global_state_t;
 
 /// EPT Violation
 ///
@@ -92,8 +93,11 @@ public:
     /// @ensures
     ///
     /// @param apis the apis object for this EPT violation handler
+    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
     ///
-    ept_violation_handler(gsl::not_null<apis *> apis);
+    ept_violation_handler(
+        gsl::not_null<apis *> apis,
+        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
 
     /// Destructor
     ///

@@ -79,3 +79,29 @@ if(ENABLE_BUILD_TEST)
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfsdk/tests/
     )
 endif()
+
+# ------------------------------------------------------------------------------
+# Extensions
+# ------------------------------------------------------------------------------
+
+userspace_extension(
+    ack
+    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfack
+    DEPENDS bfintrinsics
+)
+
+# ------------------------------------------------------------------------------
+# Custom Target
+# ------------------------------------------------------------------------------
+
+add_custom_target_category("EAPI Commands")
+
+add_custom_target(ack
+    COMMAND ${USERSPACE_PREFIX_PATH}/bin/ack
+    USES_TERMINAL
+)
+
+add_custom_target_info(
+    TARGET ack
+    COMMENT "Ack the hypervisor"
+)
