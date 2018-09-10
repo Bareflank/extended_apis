@@ -143,17 +143,19 @@ public:
     ///
     void dump_log() final;
 
-private:
+public:
 
     /// @cond
 
     bool handle(gsl::not_null<vmcs_t *> vmcs);
 
+    /// @endcond
+
+private:
+
     bool handle_read(gsl::not_null<vmcs_t *> vmcs, info_t &info);
     bool handle_write(gsl::not_null<vmcs_t *> vmcs, info_t &info);
     bool handle_execute(gsl::not_null<vmcs_t *> vmcs, info_t &info);
-
-    /// @endcond
 
 private:
 

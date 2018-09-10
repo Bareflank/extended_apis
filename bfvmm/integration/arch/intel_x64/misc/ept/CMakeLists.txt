@@ -17,21 +17,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 eapis_add_vmm_executable(
-    eapis_integration_intel_x64_ept_remap_page
+    eapis_integration_intel_x64_misc_ept_enable_ept
+    SOURCES enable_ept.cpp
+)
+
+eapis_add_vmm_executable(
+    eapis_integration_intel_x64_misc_ept_remap_page
     SOURCES remap_page.cpp
-)
-
-eapis_add_vmm_executable(
-    eapis_integration_intel_x64_ept_trap_ept_read_violation
-    SOURCES trap_ept_read_violation.cpp
-)
-
-eapis_add_vmm_executable(
-    eapis_integration_intel_x64_ept_trap_ept_write_violation
-    SOURCES trap_ept_write_violation.cpp
-)
-
-eapis_add_vmm_executable(
-    eapis_integration_intel_x64_ept_trap_ept_execute_violation
-    SOURCES trap_ept_execute_violation.cpp
 )
