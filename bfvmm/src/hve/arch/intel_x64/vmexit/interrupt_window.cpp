@@ -40,7 +40,8 @@ interrupt_window_handler::interrupt_window_handler(
 // -----------------------------------------------------------------------------
 
 void
-interrupt_window_handler::add_handler(const handler_delegate_t &d)
+interrupt_window_handler::add_handler(
+    const handler_delegate_t &d)
 { m_handlers.push_front(d); }
 
 void
@@ -105,27 +106,28 @@ interrupt_window_handler::inject(uint64_t vector)
 }
 
 // -----------------------------------------------------------------------------
-// Debug
-// -----------------------------------------------------------------------------
-
-void
-interrupt_window_handler::dump_log()
-{ }
-
-// -----------------------------------------------------------------------------
 // Handlers
 // -----------------------------------------------------------------------------
 
 bool
 interrupt_window_handler::handle(gsl::not_null<vmcs_t *> vmcs)
 {
+    struct info_t info {};
+
     for (const auto &d : m_handlers) {
-        if (d(vmcs)) {
+        if (d(vmcs, info)) {
+
+            if (!info.ignore_disable) {
+                this->disable_exiting();
+            }
+
             return true;
         }
     }
 
-    return false;
+    throw std::runtime_error(
+        "Unhandled interrupt window"
+    );
 }
 
 }

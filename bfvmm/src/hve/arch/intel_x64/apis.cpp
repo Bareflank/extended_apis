@@ -120,7 +120,7 @@ apis::add_wrcr0_handler(
     const control_register_handler::handler_delegate_t &d)
 {
     check_crall();
-    m_control_register_handler->add_wrcr0_handler(std::move(d));
+    m_control_register_handler->add_wrcr0_handler(d);
 }
 
 void
@@ -128,7 +128,7 @@ apis::add_rdcr3_handler(
     const control_register_handler::handler_delegate_t &d)
 {
     check_rdcr3();
-    m_control_register_handler->add_rdcr3_handler(std::move(d));
+    m_control_register_handler->add_rdcr3_handler(d);
 }
 
 void
@@ -136,7 +136,7 @@ apis::add_wrcr3_handler(
     const control_register_handler::handler_delegate_t &d)
 {
     check_wrcr3();
-    m_control_register_handler->add_wrcr3_handler(std::move(d));
+    m_control_register_handler->add_wrcr3_handler(d);
 }
 
 void
@@ -144,7 +144,7 @@ apis::add_wrcr4_handler(
     const control_register_handler::handler_delegate_t &d)
 {
     check_crall();
-    m_control_register_handler->add_wrcr4_handler(std::move(d));
+    m_control_register_handler->add_wrcr4_handler(d);
 }
 
 //--------------------------------------------------------------------------
@@ -163,7 +163,7 @@ apis::add_cpuid_handler(
         m_cpuid_handler = std::make_unique<cpuid_handler>(this);
     }
 
-    m_cpuid_handler->add_handler(leaf, std::move(d));
+    m_cpuid_handler->add_handler(leaf, d);
 }
 
 //--------------------------------------------------------------------------
@@ -182,7 +182,7 @@ apis::add_ept_misconfiguration_handler(
         m_ept_misconfiguration_handler = std::make_unique<ept_misconfiguration_handler>(this);
     }
 
-    m_ept_misconfiguration_handler->add_handler(std::move(d));
+    m_ept_misconfiguration_handler->add_handler(d);
 }
 
 //--------------------------------------------------------------------------
@@ -201,7 +201,7 @@ apis::add_ept_read_violation_handler(
         m_ept_violation_handler = std::make_unique<ept_violation_handler>(this);
     }
 
-    m_ept_violation_handler->add_read_handler(std::move(d));
+    m_ept_violation_handler->add_read_handler(d);
 }
 
 void
@@ -212,7 +212,7 @@ apis::add_ept_write_violation_handler(
         m_ept_violation_handler = std::make_unique<ept_violation_handler>(this);
     }
 
-    m_ept_violation_handler->add_write_handler(std::move(d));
+    m_ept_violation_handler->add_write_handler(d);
 }
 
 void
@@ -223,7 +223,7 @@ apis::add_ept_execute_violation_handler(
         m_ept_violation_handler = std::make_unique<ept_violation_handler>(this);
     }
 
-    m_ept_violation_handler->add_execute_handler(std::move(d));
+    m_ept_violation_handler->add_execute_handler(d);
 }
 
 //--------------------------------------------------------------------------
@@ -236,13 +236,22 @@ apis::external_interrupt()
 
 void
 apis::add_external_interrupt_handler(
-    vmcs_n::value_type vector, const external_interrupt_handler::handler_delegate_t &d)
+    const external_interrupt_handler::handler_delegate_t &d)
 {
     if (!m_external_interrupt_handler) {
         m_external_interrupt_handler = std::make_unique<external_interrupt_handler>(this);
+        m_external_interrupt_handler->enable_exiting();
     }
 
-    m_external_interrupt_handler->add_handler(vector, std::move(d));
+    m_external_interrupt_handler->add_handler(d);
+}
+
+void
+apis::disable_external_interrupts()
+{
+    if (m_external_interrupt_handler) {
+        m_external_interrupt_handler->disable_exiting();
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -261,7 +270,7 @@ apis::add_init_signal_handler(
         m_init_signal_handler = std::make_unique<init_signal_handler>(this);
     }
 
-    m_init_signal_handler->add_handler(std::move(d));
+    m_init_signal_handler->add_handler(d);
 }
 
 //--------------------------------------------------------------------------
@@ -273,15 +282,54 @@ apis::interrupt_window()
 { return m_interrupt_window_handler.get(); }
 
 void
+apis::trap_on_next_interrupt_window()
+{
+    if (!m_interrupt_window_handler) {
+        m_interrupt_window_handler = std::make_unique<interrupt_window_handler>(this);
+    }
+
+    m_interrupt_window_handler->enable_exiting();
+}
+
+void
+apis::disable_interrupt_window()
+{
+    if (!m_interrupt_window_handler) {
+        m_interrupt_window_handler = std::make_unique<interrupt_window_handler>(this);
+    }
+
+    m_interrupt_window_handler->disable_exiting();
+}
+
+void
 apis::add_interrupt_window_handler(
     const interrupt_window_handler::handler_delegate_t &d)
 {
     if (!m_interrupt_window_handler) {
-        m_interrupt_window_handler =
-            std::make_unique<interrupt_window_handler>(this);
+        m_interrupt_window_handler = std::make_unique<interrupt_window_handler>(this);
     }
 
-    m_interrupt_window_handler->add_handler(std::move(d));
+    m_interrupt_window_handler->add_handler(d);
+}
+
+bool
+apis::is_interrupt_window_open()
+{
+    if (GSL_UNLIKELY(!m_interrupt_window_handler)) {
+        m_interrupt_window_handler = std::make_unique<interrupt_window_handler>(this);
+    }
+
+    return m_interrupt_window_handler->is_open();
+}
+
+void
+apis::inject_external_interrupt(uint64_t vector)
+{
+    if (GSL_UNLIKELY(!m_interrupt_window_handler)) {
+        m_interrupt_window_handler = std::make_unique<interrupt_window_handler>(this);
+    }
+
+    return m_interrupt_window_handler->inject(vector);
 }
 
 //--------------------------------------------------------------------------
@@ -304,7 +352,7 @@ apis::add_io_instruction_handler(
         m_io_instruction_handler = std::make_unique<io_instruction_handler>(this);
     }
 
-    m_io_instruction_handler->add_handler(port, std::move(in_d), std::move(out_d));
+    m_io_instruction_handler->add_handler(port, in_d, out_d);
 }
 
 //--------------------------------------------------------------------------
@@ -323,7 +371,7 @@ apis::add_monitor_trap_handler(
         m_monitor_trap_handler = std::make_unique<monitor_trap_handler>(this);
     }
 
-    m_monitor_trap_handler->add_handler(std::move(d));
+    m_monitor_trap_handler->add_handler(d);
 }
 
 void
@@ -352,7 +400,7 @@ apis::add_mov_dr_handler(
         m_mov_dr_handler = std::make_unique<mov_dr_handler>(this);
     }
 
-    m_mov_dr_handler->add_handler(std::move(d));
+    m_mov_dr_handler->add_handler(d);
 }
 
 //--------------------------------------------------------------------------
@@ -372,7 +420,7 @@ apis::add_rdmsr_handler(
     vmcs_n::value_type msr, const rdmsr_handler::handler_delegate_t &d)
 {
     check_rdmsr_handler();
-    m_rdmsr_handler->add_handler(msr, std::move(d));
+    m_rdmsr_handler->add_handler(msr, d);
 }
 
 //--------------------------------------------------------------------------
@@ -390,7 +438,7 @@ apis::add_sipi_handler(const sipi_handler::handler_delegate_t &d)
         m_sipi_handler = std::make_unique<sipi_handler>(this);
     }
 
-    m_sipi_handler->add_handler(std::move(d));
+    m_sipi_handler->add_handler(d);
 }
 
 //--------------------------------------------------------------------------
@@ -410,7 +458,7 @@ apis::add_wrmsr_handler(
     vmcs_n::value_type msr, const wrmsr_handler::handler_delegate_t &d)
 {
     check_wrmsr_handler();
-    m_wrmsr_handler->add_handler(msr, std::move(d));
+    m_wrmsr_handler->add_handler(msr, d);
 }
 
 //==========================================================================
@@ -433,7 +481,7 @@ void
 apis::add_handler(
     ::intel_x64::vmcs::value_type reason,
     const handler_delegate_t &d)
-{ m_exit_handler->add_handler(reason, std::move(d)); }
+{ m_exit_handler->add_handler(reason, d); }
 
 //==========================================================================
 // Private

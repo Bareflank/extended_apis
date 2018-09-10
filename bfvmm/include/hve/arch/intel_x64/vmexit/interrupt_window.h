@@ -40,13 +40,33 @@ class EXPORT_EAPIS_HVE interrupt_window_handler : public base
 {
 public:
 
+    ///
+    /// Info
+    ///
+    /// This struct is created by external_interrupt_handler::handle before being
+    /// passed to each registered handler.
+    ///
+    struct info_t {
+
+        /// Ignore disable (out)
+        ///
+        /// If true, do not update the guest's register state with the value
+        /// from the default base::emulation_wrgpr. Set this to true if your
+        /// handler returns true and has already update the guest register
+        /// state.
+        ///
+        /// default: false
+        ///
+        bool ignore_disable{false};
+    };
+
     /// Handler delegate type
     ///
     /// The type of delegate clients must use when registering
     /// handlers
     ///
     using handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>)>;
+        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     /// Constructor
     ///
@@ -62,7 +82,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~interrupt_window_handler() = default;
+    ~interrupt_window_handler() final = default;
 
 public:
 
@@ -74,6 +94,8 @@ public:
     /// @param d the handler to call when an exit occurs
     ///
     void add_handler(const handler_delegate_t &d);
+
+public:
 
     /// Enable exiting
     ///
@@ -122,7 +144,8 @@ public:
     /// @expects
     /// @ensures
     ///
-    void dump_log() final;
+    void dump_log() final
+    { }
 
 public:
 

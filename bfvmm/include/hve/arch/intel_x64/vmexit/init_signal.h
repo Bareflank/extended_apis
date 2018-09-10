@@ -62,7 +62,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    ~init_signal_handler() final;
+    ~init_signal_handler() final = default;
 
 public:
 
@@ -87,7 +87,8 @@ public:
     /// @expects
     /// @ensures
     ///
-    void dump_log() final;
+    void dump_log() final
+    { }
 
 public:
 

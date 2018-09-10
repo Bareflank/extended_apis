@@ -16,6 +16,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+eapis_add_vmm_executable(
+    eapis_integration_intel_x64_test_all
+    SOURCES test_all.cpp
+)
+
 add_subdirectory(misc/efi)
 add_subdirectory(misc/ept)
 add_subdirectory(misc/vpid)
@@ -23,6 +28,7 @@ add_subdirectory(vmexit/control_register)
 add_subdirectory(vmexit/cpuid)
 add_subdirectory(vmexit/ept_misconfiguration)
 add_subdirectory(vmexit/ept_violation)
+add_subdirectory(vmexit/external_interrupt)
 add_subdirectory(vmexit/io_instruction)
 add_subdirectory(vmexit/monitor_trap)
 add_subdirectory(vmexit/mov_dr)
