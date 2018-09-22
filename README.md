@@ -1,9 +1,5 @@
 ![Extended APIs](https://github.com/Bareflank/extended_apis/raw/v1.1.0/doc/images/bareflank_extended_apis_logo.jpg)
 
-<br>
-<br>
-<br>
-
 [![GitHub Version](https://badge.fury.io/gh/bareflank%2Fextended_apis.svg)](https://badge.fury.io/gh/bareflank%2Fextended_apis)
 [![Build Status](https://travis-ci.org/Bareflank/extended_apis.svg?branch=master)](https://travis-ci.org/Bareflank/extended_apis)
 [![Build status](https://ci.appveyor.com/api/projects/status/xhnjkb9lh97tjagt?svg=true)](https://ci.appveyor.com/project/rianquinn/extended-apis)
