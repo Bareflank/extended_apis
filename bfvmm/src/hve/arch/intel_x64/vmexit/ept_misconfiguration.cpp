@@ -25,9 +25,11 @@ namespace intel_x64
 {
 
 ept_misconfiguration_handler::ept_misconfiguration_handler(
-    gsl::not_null<apis *> apis)
+    gsl::not_null<apis *> apis,
+    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state)
 {
     using namespace vmcs_n;
+    bfignored(eapis_vcpu_global_state);
 
     apis->add_handler(
         exit_reason::basic_exit_reason::ept_misconfiguration,

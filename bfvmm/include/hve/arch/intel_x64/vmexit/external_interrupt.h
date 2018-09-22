@@ -31,6 +31,7 @@ namespace intel_x64
 {
 
 class apis;
+class eapis_vcpu_global_state_t;
 
 /// External interrupt
 ///
@@ -72,8 +73,11 @@ public:
     /// @ensures
     ///
     /// @param apis the apis object for this external-interrupt handler
+    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
     ///
-    external_interrupt_handler(gsl::not_null<apis *> apis);
+    external_interrupt_handler(
+        gsl::not_null<apis *> apis,
+        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
 
     /// Destructor
     ///
@@ -89,7 +93,6 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param vector the vector to listen to
     /// @param d the handler to call when an exit occurs
     ///
     void add_handler(const handler_delegate_t &d);

@@ -62,7 +62,7 @@ TEST_CASE("constructor/destruction")
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
 
-    CHECK_NOTHROW(ept_misconfiguration_handler(eapis));
+    CHECK_NOTHROW(ept_misconfiguration_handler(eapis, &g_eapis_vcpu_global_state));
 }
 
 TEST_CASE("add handlers")
@@ -71,7 +71,7 @@ TEST_CASE("add handlers")
 
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_misconfiguration_handler(eapis);
+    auto handler = ept_misconfiguration_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_NOTHROW(
         handler.add_handler(
@@ -87,7 +87,7 @@ TEST_CASE("ept misconfiguration log")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_misconfiguration_handler(eapis);
+    auto handler = ept_misconfiguration_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.add_handler(
         ept_misconfiguration_handler::handler_delegate_t::create<test_handler>()
@@ -106,7 +106,7 @@ TEST_CASE("ept misconfiguration exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_misconfiguration_handler(eapis);
+    auto handler = ept_misconfiguration_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.add_handler(
         ept_misconfiguration_handler::handler_delegate_t::create<test_handler>()
@@ -122,7 +122,7 @@ TEST_CASE("ept misconfiguration exit, ignore advance")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_misconfiguration_handler(eapis);
+    auto handler = ept_misconfiguration_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rip = 0;
 
@@ -145,7 +145,7 @@ TEST_CASE("ept misconfiguration exit, no handler")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_misconfiguration_handler(eapis);
+    auto handler = ept_misconfiguration_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_THROWS(handler.handle(vmcs));
 }
@@ -157,7 +157,7 @@ TEST_CASE("ept misconfiguration exit, returns false")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_misconfiguration_handler(eapis);
+    auto handler = ept_misconfiguration_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.add_handler(
         ept_misconfiguration_handler::handler_delegate_t::create<test_handler_returns_false>()

@@ -30,27 +30,27 @@ list(APPEND ARGN
 )
 
 do_test(test_helpers
-    SOURCES arch/intel_x64/misc/ept/test_helpers.cpp
+    SOURCES arch/intel_x64/ept/test_helpers.cpp
     ${ARGN}
 )
 
 do_test(test_mmap
-    SOURCES arch/intel_x64/misc/ept/test_mmap.cpp
+    SOURCES arch/intel_x64/ept/test_mmap.cpp
     ${ARGN}
 )
 
 do_test(test_ept
-    SOURCES arch/intel_x64/misc/test_ept.cpp
+    SOURCES arch/intel_x64/test_ept.cpp
     ${ARGN}
 )
 
 do_test(test_mtrrs
-    SOURCES arch/intel_x64/misc/test_mtrrs.cpp
+    SOURCES arch/intel_x64/test_mtrrs.cpp
     ${ARGN}
 )
 
 do_test(test_vpid
-    SOURCES arch/intel_x64/misc/test_vpid.cpp
+    SOURCES arch/intel_x64/test_vpid.cpp
     ${ARGN}
 )
 

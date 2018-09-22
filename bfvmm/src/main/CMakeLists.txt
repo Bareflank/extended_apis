@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
 cmake_minimum_required(VERSION 3.6)
-project(eapis_main C CXX)
+project(eapis_bfvmm_main C CXX)
 
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
@@ -36,7 +36,7 @@ else()
 endif()
 
 add_vmm_executable(
-    eapis_vmm
+    eapis_bfvmm
     SOURCES ${SOURCES}
     LIBRARIES eapis_hve
     LIBRARIES capstone

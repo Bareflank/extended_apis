@@ -31,6 +31,7 @@ namespace intel_x64
 {
 
 class apis;
+class eapis_vcpu_global_state_t;
 
 /// Control Register
 ///
@@ -52,40 +53,24 @@ public:
 
         /// Value (in/out)
         ///
-        /// This class's handlers initialize this field as follows:
-        //
-        /// - handle_wrcr0: base::emulate_rdgpr
-        /// - handle_wrcr3: base::emulate_rdgpr
-        /// - handle_wrcr4: base::emulate_rdgpr
-        ///
-        /// - handle_rdcr3: vmcs_n::guest_cr3
-        ///
-        /// If needed, registered handlers can override the default value
-        /// by modifying this field before returning.
+        /// The value the guest VM would like the CR to be, or'd with the
+        /// fixed0 bits which the CR must be. This is the value that will be
+        /// writen to the CR
         ///
         uint64_t val;
 
         /// Shadow (out)
         ///
-        /// This class's handlers initialize this field as follows:
+        /// The value the guest VM would like the CR to be. This is the value
+        /// that will be written to the shadow
         ///
-        /// - handle_wrcr0: vmcs_n::cr0_read_shadow
-        /// - handle_wrcr3: 0
-        /// - handle_wrcr4: vmcs_n::cr4_read_shadow
-        ///
-        /// - handle_rdcr3: 0
-        ///
-        /// If needed, registered handlers can override the default value
-        /// by modifying this field before returning.
         ///
         uint64_t shadow;
 
         /// Ignore write (out)
         ///
-        /// If true, do not update the guest's register state with the value
-        /// from the default base::emulation_wrgpr. Set this to true if your
-        /// handler returns true and has already update the guest register
-        /// state.
+        /// If true, do not update the guest's register state. It is assumed
+        /// the handler has already done this.
         ///
         /// default: false
         ///
@@ -116,8 +101,11 @@ public:
     /// @ensures
     ///
     /// @param apis the apis object for this control register handler
+    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
     ///
-    control_register_handler(gsl::not_null<apis *> apis);
+    control_register_handler(
+        gsl::not_null<apis *> apis,
+        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
 
     /// Destructor
     ///
@@ -177,10 +165,8 @@ public:
     /// @ensures
     ///
     /// @param mask the value of the cr0 guest/host mask to set in the vmcs
-    /// @param shadow the value of the cr0 read shadow to set in the vmcs
     ///
-    void enable_wrcr0_exiting(
-        vmcs_n::value_type mask, vmcs_n::value_type shadow);
+    void enable_wrcr0_exiting(vmcs_n::value_type mask);
 
     /// Enable Read CR3 Exiting
     ///
@@ -217,10 +203,8 @@ public:
     /// @ensures
     ///
     /// @param mask the value of the cr4 guest/host mask to set in the vmcs
-    /// @param shadow the value of the cr4 read shadow to set in the vmcs
     ///
-    void enable_wrcr4_exiting(
-        vmcs_n::value_type mask, vmcs_n::value_type shadow);
+    void enable_wrcr4_exiting(vmcs_n::value_type mask);
 
 public:
 
@@ -256,6 +240,8 @@ private:
     bool handle_wrcr4(gsl::not_null<vmcs_t *> vmcs);
 
 private:
+
+    gsl::not_null<eapis_vcpu_global_state_t *> m_eapis_vcpu_global_state;
 
     std::list<handler_delegate_t> m_wrcr0_handlers;
     std::list<handler_delegate_t> m_rdcr3_handlers;

@@ -60,14 +60,14 @@ TEST_CASE("constructor/destruction")
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
 
-    CHECK_NOTHROW(control_register_handler(eapis));
+    CHECK_NOTHROW(control_register_handler(eapis, &g_eapis_vcpu_global_state));
 }
 
 TEST_CASE("add handlers")
 {
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_NOTHROW(
         handler.add_wrcr0_handler(
@@ -100,14 +100,14 @@ TEST_CASE("enable exiting")
 
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_NOTHROW(
-        handler.enable_wrcr0_exiting(0xFFFFFFFFFFFFFFFF, 0)
+        handler.enable_wrcr0_exiting(0xFFFFFFFFFFFFFFFF)
     );
 
     CHECK_NOTHROW(
-        handler.enable_wrcr4_exiting(0xFFFFFFFFFFFFFFFF, 0)
+        handler.enable_wrcr4_exiting(0xFFFFFFFFFFFFFFFF)
     );
 
     CHECK_NOTHROW(handler.enable_rdcr3_exiting());
@@ -119,7 +119,7 @@ TEST_CASE("wrcr0 log")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -141,7 +141,7 @@ TEST_CASE("wrcr0 exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 42;
     vmcs_n::guest_cr0::set(0);
@@ -166,7 +166,7 @@ TEST_CASE("wrcr0 exit, ignore write")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 42;
     vmcs_n::guest_cr0::set(0);
@@ -191,7 +191,7 @@ TEST_CASE("wrcr0 exit, ignore advance")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rip = 0;
 
@@ -217,7 +217,7 @@ TEST_CASE("cr0 mov_from_cr not supported")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -232,7 +232,7 @@ TEST_CASE("cr0 clts not supported")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -247,7 +247,7 @@ TEST_CASE("cr0 lmsw not supported")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -262,7 +262,7 @@ TEST_CASE("wrcr3 log")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -284,7 +284,7 @@ TEST_CASE("wrcr3 exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 42;
     vmcs_n::guest_cr3::set(0);
@@ -307,7 +307,7 @@ TEST_CASE("wrcr3 exit, ignore write")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 42;
     vmcs_n::guest_cr3::set(0);
@@ -330,7 +330,7 @@ TEST_CASE("wrcr3 exit, ignore advance")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rip = 0;
 
@@ -356,7 +356,7 @@ TEST_CASE("rdcr3 log")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -378,7 +378,7 @@ TEST_CASE("rdcr3 exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 0;
     vmcs_n::guest_cr3::set(42);
@@ -401,7 +401,7 @@ TEST_CASE("rdcr3 exit, ignore write")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 0;
     vmcs_n::guest_cr3::set(42);
@@ -424,7 +424,7 @@ TEST_CASE("rdcr3 exit, ignore advance")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rip = 0;
 
@@ -450,7 +450,7 @@ TEST_CASE("cr3 clts not supported")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -465,7 +465,7 @@ TEST_CASE("cr3 lmsw not supported")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -480,7 +480,7 @@ TEST_CASE("wrcr4 log")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -502,7 +502,7 @@ TEST_CASE("wrcr4 exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 42;
     vmcs_n::guest_cr4::set(0);
@@ -518,7 +518,7 @@ TEST_CASE("wrcr4 exit")
     );
 
     CHECK(handler.handle(vmcs) == true);
-    CHECK(vmcs_n::guest_cr4::get() == 0x202a);
+    CHECK(vmcs_n::guest_cr4::get() == 42);
     CHECK(vmcs_n::cr4_read_shadow::get() == 42);
 }
 
@@ -527,7 +527,7 @@ TEST_CASE("wrcr4 exit, ignore write")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rax = 42;
     vmcs_n::guest_cr4::set(0);
@@ -552,7 +552,7 @@ TEST_CASE("wrcr4 exit, ignore advance")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rip = 0;
 
@@ -578,7 +578,7 @@ TEST_CASE("cr4 mov_from_cr not supported")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -593,7 +593,7 @@ TEST_CASE("cr4 clts not supported")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -608,7 +608,7 @@ TEST_CASE("cr4 lmsw not supported")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,
@@ -623,7 +623,7 @@ TEST_CASE("invalid cr")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = control_register_handler(eapis);
+    auto handler = control_register_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr,

@@ -30,11 +30,13 @@
 #include "vmexit/monitor_trap.h"
 #include "vmexit/mov_dr.h"
 #include "vmexit/rdmsr.h"
-#include "vmexit/sipi.h"
+#include "vmexit/sipi_signal.h"
 #include "vmexit/wrmsr.h"
+#include "vmexit/xsetbv.h"
 
-#include "misc/ept.h"
-#include "misc/vpid.h"
+#include "ept.h"
+#include "microcode.h"
+#include "vpid.h"
 
 #include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
 
@@ -43,9 +45,96 @@ namespace eapis
 namespace intel_x64
 {
 
+/// VM Global State
+///
+/// The APIs require global variables that "group" up vcpus into VMs.
+/// This allows vcpus to be grouped up into logical VMs that share a
+/// common global state.
+///
+struct eapis_vcpu_global_state_t {
+
+    /// Init Called
+    ///
+    /// Synchronization flag used during the INIT/SIPI process. Specifically
+    /// this is used to ensure SIPI is not sent before INIT is finished.
+    ///
+    std::atomic<bool> init_called{false};
+
+    /// CR0 Fixed Bits
+    ///
+    /// Defines the bits that must be fixed to 1. Note that these could change
+    /// depending on how the system is configured.
+    ///
+    uint64_t ia32_vmx_cr0_fixed0 {
+        ::intel_x64::msrs::ia32_vmx_cr0_fixed0::get()
+    };
+
+    /// CR4 Fixed Bits
+    ///
+    /// Defines the bits that must be fixed to 1. Note that these could change
+    /// depending on how the system is configured.
+    ///
+    uint64_t ia32_vmx_cr4_fixed0 {
+        ::intel_x64::msrs::ia32_vmx_cr4_fixed0::get()
+    };
+};
+
+/// EAPIs Object
+///
+/// This is a generic bfobject specific to the EAPIs that is used for
+/// constructing a vCPU. The only data the EAPIs needs is global state
+/// information, which is used to group vCPUs as needed.
+///
+/// NOTE: Do not store a reference to this object. This is only used to pass
+///     around construction information, and a pointer to a global state
+///     object (which can be stored). It is assumed that once construction
+///     is complete, all references to this object will be deleted or removed.
+///     This is needed to simplify the implementation of the vCPU factory as
+///     no memory management is needed.
+///
+/// NOTE: It is also expected that extensions will subclass this object to
+///     add additional instructions for construction as needed, but the same
+///     rule above applies (references should not be stored).
+///
+class eapis_vcpu_state_t : public bfobject
+{
+    /// Global CPU State
+    ///
+    /// This is state that is shared between all of the vCPU in the same
+    /// vCPU group. If no guest support is needed, this would be the global
+    /// state for all of the vCPUs.
+    ///
+    eapis_vcpu_global_state_t *m_eapis_vcpu_global_state;
+
+public:
+
+    /// Constructor
+    ///
+    /// @param eapis_vcpu_global_state a pointer to a global state struct
+    ///
+    eapis_vcpu_state_t(
+        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state
+    ) :
+        m_eapis_vcpu_global_state{eapis_vcpu_global_state}
+    { }
+
+    /// Get Global State
+    ///
+    /// @return returns a pointer to the global state for this vCPU
+    ///
+    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state()
+    { return m_eapis_vcpu_global_state; }
+};
+
+inline eapis_vcpu_global_state_t g_eapis_vcpu_global_state;                     ///< Default global vcpu state
+inline eapis_vcpu_state_t g_eapis_vcpu_state{&g_eapis_vcpu_global_state};       ///< Default vcpu state
+
 /// APIs
 ///
-/// This class encapsulates the APIs into a single object that can be
+/// Implements the APIs associated with the Extended APIs, specifically
+/// implementing Intel's VT-x and VT-d without the need for guest support.
+///
+/// This class encapsulates the Extended APIs into a single object that can be
 /// referenced by the other APIs as needed. The Intel APIs are circular by
 /// design, and as such, some APIs need to be able to use others to complete
 /// their job. The class provides a simple way to solve this issue. It should
@@ -67,10 +156,12 @@ public:
     ///     this set of APIs.
     /// @param exit_handler the exit_handler object associated with the vCPU
     ///     associated with this set of APIs.
+    /// @param eapis_vcpu_state the vCPU's state information
     ///
     apis(
         gsl::not_null<bfvmm::intel_x64::vmcs *> vmcs,
-        gsl::not_null<bfvmm::intel_x64::exit_handler *> exit_handler
+        gsl::not_null<bfvmm::intel_x64::exit_handler *> exit_handler,
+        gsl::not_null<eapis_vcpu_state_t *> eapis_vcpu_state
     );
 
     /// Destructor
@@ -164,36 +255,16 @@ public:
     ///
     gsl::not_null<control_register_handler *> control_register();
 
-    /// Enable Write CR0 Exiting
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param mask the cr0 guest/host mask to set in the vmcs
-    /// @param shadow the cr0 read shadow to set in the vmcs
-    ///
-    VIRTUAL void enable_wrcr0_exiting(
-        vmcs_n::value_type mask, vmcs_n::value_type shadow);
-
-    /// Enable Write CR4 Exiting
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param mask the cr4 guest/host mask to set in the vmcs
-    /// @param shadow the cr4 read shadow to set in the vmcs
-    ///
-    VIRTUAL void enable_wrcr4_exiting(
-        vmcs_n::value_type mask, vmcs_n::value_type shadow);
-
     /// Add Write CR0 Handler
     ///
     /// @expects
     /// @ensures
     ///
+    /// @param mask the CR0 enable/disable mask
     /// @param d the delegate to call when a mov-to-cr0 exit occurs
     ///
     VIRTUAL void add_wrcr0_handler(
+        vmcs_n::value_type mask,
         const control_register_handler::handler_delegate_t &d);
 
     /// Add Read CR3 Handler
@@ -221,9 +292,11 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param mask the CR0 enable/disable mask
     /// @param d the delegate to call when a mov-to-cr4 exit occurs
     ///
     VIRTUAL void add_wrcr4_handler(
+        vmcs_n::value_type mask,
         const control_register_handler::handler_delegate_t &d);
 
     //--------------------------------------------------------------------------
@@ -356,29 +429,6 @@ public:
     VIRTUAL void disable_external_interrupts();
 
     //--------------------------------------------------------------------------
-    // INIT Signal
-    //--------------------------------------------------------------------------
-
-    /// Get INIT Signal Object
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return Returns the INIT signal handler stored in the hve
-    ///
-    gsl::not_null<init_signal_handler *> init_signal();
-
-    /// Add INIT Signal Handler
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param d the delegate to call when an INIT signal exit occurs
-    ///
-    VIRTUAL void add_init_signal_handler(
-        const init_signal_handler::handler_delegate_t &d);
-
-    //--------------------------------------------------------------------------
     // Interrupt Window
     //--------------------------------------------------------------------------
 
@@ -399,14 +449,14 @@ public:
     /// @expects
     /// @ensures
     ///
-    void trap_on_next_interrupt_window();
+    VIRTUAL void trap_on_next_interrupt_window();
 
     /// Disable Interrupt Window
     ///
     /// @expects
     /// @ensures
     ///
-    void disable_interrupt_window();
+    VIRTUAL void disable_interrupt_window();
 
     /// Add Interrupt Window Handler
     ///
@@ -432,8 +482,8 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param injects an external interrupt into the vCPU with the provided
-    ///     vector
+    /// @param vector injects an external interrupt into the vCPU with the
+    ///     provided vector
     ///
     VIRTUAL void inject_external_interrupt(uint64_t vector);
 
@@ -446,10 +496,24 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the IO Instruction handler stored in the apis if IO
+    /// @return returns the IO Instruction handler stored in the apis if IO
     ///     Instruction trapping is enabled, otherwise an exception is thrown
     ///
     gsl::not_null<io_instruction_handler *> io_instruction();
+
+    /// Trap All IO Instruction Accesses
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    VIRTUAL void trap_all_io_instruction_accesses();
+
+    /// Pass Through All IO Instruction Accesses
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    VIRTUAL void pass_through_all_io_instruction_accesses();
 
     /// Add IO Instruction Handler
     ///
@@ -535,12 +599,19 @@ public:
     ///
     gsl::not_null<rdmsr_handler *> rdmsr();
 
+    /// Trap All Read MSR Accesses
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    VIRTUAL void trap_all_rdmsr_accesses();
+
     /// Pass Through All Read MSR Accesses
     ///
     /// @expects
     /// @ensures
     ///
-    VIRTUAL void pass_through_all_rdmsr_handler_accesses();
+    VIRTUAL void pass_through_all_rdmsr_accesses();
 
     /// Add Read MSR Handler
     ///
@@ -552,29 +623,6 @@ public:
     ///
     VIRTUAL void add_rdmsr_handler(
         vmcs_n::value_type msr, const rdmsr_handler::handler_delegate_t &d);
-
-    //--------------------------------------------------------------------------
-    // SIPI
-    //--------------------------------------------------------------------------
-
-    /// Get SIPI Object
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return Returns the sipi handler stored in the hve
-    ///
-    gsl::not_null<sipi_handler *> sipi();
-
-    /// Add SIPI Handler
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param d the delegate to call when a SIPI exit occurs
-    ///
-    VIRTUAL void add_sipi_handler(
-        const sipi_handler::handler_delegate_t &d);
 
     //--------------------------------------------------------------------------
     // Write MSR
@@ -590,12 +638,19 @@ public:
     ///
     gsl::not_null<wrmsr_handler *> wrmsr();
 
+    /// Trap All Write MSR Accesses
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    VIRTUAL void trap_all_wrmsr_accesses();
+
     /// Pass Through All Write MSR Accesses
     ///
     /// @expects
     /// @ensures
     ///
-    VIRTUAL void pass_through_all_wrmsr_handler_accesses();
+    VIRTUAL void pass_through_all_wrmsr_accesses();
 
     /// Add Write MSR Handler
     ///
@@ -608,27 +663,29 @@ public:
     VIRTUAL void add_wrmsr_handler(
         vmcs_n::value_type msr, const wrmsr_handler::handler_delegate_t &d);
 
-    //==========================================================================
-    // Bitmaps
-    //==========================================================================
+    //--------------------------------------------------------------------------
+    // XSetBV
+    //--------------------------------------------------------------------------
 
-    /// MSR bitmap
+    /// Get XSetBV Object
     ///
     /// @expects
     /// @ensures
     ///
-    /// @return A span of the msr_bitmap
+    /// @return Returns the XSetBV handler stored in the apis if XSetBV
+    ///     trapping is enabled, otherwise an exception is thrown
     ///
-    gsl::span<uint8_t> msr_bitmap();
+    gsl::not_null<xsetbv_handler *> xsetbv();
 
-    /// IO bitmaps
+    /// Add XSetBV Handler
     ///
     /// @expects
     /// @ensures
     ///
-    /// @return A span of the io_bitmaps
+    /// @param d the delegate to call when a xsetbv exit occurs
     ///
-    gsl::span<uint8_t> io_bitmaps();
+    VIRTUAL void add_xsetbv_handler(
+        const xsetbv_handler::handler_delegate_t &d);
 
     //==========================================================================
     // Resources
@@ -658,42 +715,42 @@ public:
 
 private:
 
-    void check_crall();
-    void check_rdcr3();
-    void check_wrcr3();
-    void check_io_bitmaps();
-    void check_monitor_trap_handler();
-    void check_msr_bitmap();
-    void check_rdmsr_handler();
-    void check_wrmsr_handler();
+    bfvmm::intel_x64::vmcs *m_vmcs;
+    bfvmm::intel_x64::exit_handler *m_exit_handler;
 
 private:
 
-    bool m_is_rdcr3_enabled{false};
-    bool m_is_wrcr3_enabled{false};
+    std::unique_ptr<uint8_t, void(*)(void *)> m_msr_bitmap;
+    std::unique_ptr<uint8_t, void(*)(void *)> m_io_bitmap_a;
+    std::unique_ptr<uint8_t, void(*)(void *)> m_io_bitmap_b;
 
-    std::unique_ptr<uint8_t[]> m_msr_bitmap;
-    std::unique_ptr<uint8_t[]> m_io_bitmaps;
+private:
 
-    std::unique_ptr<ept_handler> m_ept_handler;
-    std::unique_ptr<vpid_handler> m_vpid_handler;
+    control_register_handler m_control_register_handler;
+    cpuid_handler m_cpuid_handler;
+    io_instruction_handler m_io_instruction_handler;
+    monitor_trap_handler m_monitor_trap_handler;
+    mov_dr_handler m_mov_dr_handler;
+    rdmsr_handler m_rdmsr_handler;
+    wrmsr_handler m_wrmsr_handler;
+    xsetbv_handler m_xsetbv_handler;
 
-    std::unique_ptr<control_register_handler> m_control_register_handler;
-    std::unique_ptr<cpuid_handler> m_cpuid_handler;
-    std::unique_ptr<ept_misconfiguration_handler> m_ept_misconfiguration_handler;
-    std::unique_ptr<ept_violation_handler> m_ept_violation_handler;
-    std::unique_ptr<external_interrupt_handler> m_external_interrupt_handler;
-    std::unique_ptr<init_signal_handler> m_init_signal_handler;
-    std::unique_ptr<interrupt_window_handler> m_interrupt_window_handler;
-    std::unique_ptr<io_instruction_handler> m_io_instruction_handler;
-    std::unique_ptr<monitor_trap_handler> m_monitor_trap_handler;
-    std::unique_ptr<mov_dr_handler> m_mov_dr_handler;
-    std::unique_ptr<rdmsr_handler> m_rdmsr_handler;
-    std::unique_ptr<sipi_handler> m_sipi_handler;
-    std::unique_ptr<wrmsr_handler> m_wrmsr_handler;
+    ept_misconfiguration_handler m_ept_misconfiguration_handler;
+    ept_violation_handler m_ept_violation_handler;
+    external_interrupt_handler m_external_interrupt_handler;
+    init_signal_handler m_init_signal_handler;
+    interrupt_window_handler m_interrupt_window_handler;
+    sipi_signal_handler m_sipi_signal_handler;
 
-    bfvmm::intel_x64::vmcs *m_vmcs;
-    bfvmm::intel_x64::exit_handler *m_exit_handler;
+    ept_handler m_ept_handler;
+    microcode_handler m_microcode_handler;
+    vpid_handler m_vpid_handler;
+
+private:
+
+    friend class io_instruction_handler;
+    friend class rdmsr_handler;
+    friend class wrmsr_handler;
 };
 
 }

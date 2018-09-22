@@ -50,7 +50,7 @@ TEST_CASE("constructor/destruction")
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
 
-    CHECK_NOTHROW(external_interrupt_handler(eapis));
+    CHECK_NOTHROW(external_interrupt_handler(eapis, &g_eapis_vcpu_global_state));
 }
 
 TEST_CASE("add handlers")
@@ -59,7 +59,7 @@ TEST_CASE("add handlers")
 
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = external_interrupt_handler(eapis);
+    auto handler = external_interrupt_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_NOTHROW(
         handler.add_handler(
@@ -77,7 +77,7 @@ TEST_CASE("enable/disable")
 
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = external_interrupt_handler(eapis);
+    auto handler = external_interrupt_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.enable_exiting();
     CHECK(external_interrupt_exiting::is_enabled());
@@ -95,7 +95,7 @@ TEST_CASE("external interrupt log")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = external_interrupt_handler(eapis);
+    auto handler = external_interrupt_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.add_handler(
         external_interrupt_handler::handler_delegate_t::create<test_handler>()
@@ -114,7 +114,7 @@ TEST_CASE("external interrupt exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = external_interrupt_handler(eapis);
+    auto handler = external_interrupt_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.add_handler(
         external_interrupt_handler::handler_delegate_t::create<test_handler>()
@@ -130,7 +130,7 @@ TEST_CASE("external interrupt exit, no handler")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = external_interrupt_handler(eapis);
+    auto handler = external_interrupt_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_THROWS(handler.handle(vmcs));
 }
@@ -142,7 +142,7 @@ TEST_CASE("external interrupt exit, returns false")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = external_interrupt_handler(eapis);
+    auto handler = external_interrupt_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.add_handler(
         external_interrupt_handler::handler_delegate_t::create<test_handler_returns_false>()

@@ -31,6 +31,7 @@ namespace intel_x64
 {
 
 class apis;
+class eapis_vcpu_global_state_t;
 
 /// IO instruction
 ///
@@ -124,8 +125,11 @@ public:
     /// @ensures
     ///
     /// @param apis the apis object for this io instruction handler
+    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
     ///
-    io_instruction_handler(gsl::not_null<apis *> apis);
+    io_instruction_handler(
+        gsl::not_null<apis *> apis,
+        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
 
     /// Destructor
     ///
@@ -252,7 +256,10 @@ private:
     void load_operand(gsl::not_null<vmcs_t *> vmcs, info_t &info);
     void store_operand(gsl::not_null<vmcs_t *> vmcs, info_t &info);
 
-    gsl::span<uint8_t> m_io_bitmaps;
+private:
+
+    gsl::span<uint8_t> m_io_bitmap_a;
+    gsl::span<uint8_t> m_io_bitmap_b;
 
     std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_in_handlers;
     std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_out_handlers;

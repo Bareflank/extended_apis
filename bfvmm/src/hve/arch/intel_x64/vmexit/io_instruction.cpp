@@ -35,11 +35,14 @@ namespace intel_x64
 {
 
 io_instruction_handler::io_instruction_handler(
-    gsl::not_null<apis *> apis
+    gsl::not_null<apis *> apis,
+    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state
 ) :
-    m_io_bitmaps{apis->io_bitmaps()}
+    m_io_bitmap_a{apis->m_io_bitmap_a.get(), ::x64::pt::page_size},
+    m_io_bitmap_b{apis->m_io_bitmap_b.get(), ::x64::pt::page_size}
 {
     using namespace vmcs_n;
+    bfignored(eapis_vcpu_global_state);
 
     apis->add_handler(
         exit_reason::basic_exit_reason::io_instruction,
@@ -64,8 +67,6 @@ io_instruction_handler::add_handler(
     const handler_delegate_t &in_d,
     const handler_delegate_t &out_d)
 {
-    trap_on_access(port);
-
     m_in_handlers[port].push_front(std::move(in_d));
     m_out_handlers[port].push_front(std::move(out_d));
 }
@@ -73,8 +74,13 @@ io_instruction_handler::add_handler(
 void
 io_instruction_handler::trap_on_access(vmcs_n::value_type port)
 {
+    if (port < 0x8000) {
+        set_bit(m_io_bitmap_a, port);
+        return;
+    }
+
     if (port < 0x10000) {
-        set_bit(m_io_bitmaps, port);
+        set_bit(m_io_bitmap_b, port);
         return;
     }
 
@@ -83,13 +89,21 @@ io_instruction_handler::trap_on_access(vmcs_n::value_type port)
 
 void
 io_instruction_handler::trap_on_all_accesses()
-{ gsl::memset(m_io_bitmaps, 0xFF); }
+{
+    gsl::memset(m_io_bitmap_a, 0xFF);
+    gsl::memset(m_io_bitmap_b, 0xFF);
+}
 
 void
 io_instruction_handler::pass_through_access(vmcs_n::value_type port)
 {
+    if (port < 0x8000) {
+        clear_bit(m_io_bitmap_a, port);
+        return;
+    }
+
     if (port < 0x10000) {
-        clear_bit(m_io_bitmaps, port);
+        clear_bit(m_io_bitmap_b, port);
         return;
     }
 
@@ -98,7 +112,10 @@ io_instruction_handler::pass_through_access(vmcs_n::value_type port)
 
 void
 io_instruction_handler::pass_through_all_accesses()
-{ gsl::memset(m_io_bitmaps, 0x0); }
+{
+    gsl::memset(m_io_bitmap_a, 0x0);
+    gsl::memset(m_io_bitmap_b, 0x0);
+}
 
 // -----------------------------------------------------------------------------
 // Debug

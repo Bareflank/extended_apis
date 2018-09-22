@@ -19,6 +19,7 @@
 #ifndef INIT_SIGNAL_INTEL_X64_EAPIS_H
 #define INIT_SIGNAL_INTEL_X64_EAPIS_H
 
+#include "wrmsr.h"
 #include "../base.h"
 
 // -----------------------------------------------------------------------------
@@ -31,6 +32,7 @@ namespace intel_x64
 {
 
 class apis;
+class eapis_vcpu_global_state_t;
 
 /// INIT signal
 ///
@@ -40,22 +42,17 @@ class EXPORT_EAPIS_HVE init_signal_handler : public base
 {
 public:
 
-    /// Handler delegate type
-    ///
-    /// The type of delegate clients must use when registering
-    /// handlers
-    ///
-    using handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>)>;
-
     /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
     /// @param apis the apis object for this INIT signal handler
+    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
     ///
-    init_signal_handler(gsl::not_null<apis *> apis);
+    init_signal_handler(
+        gsl::not_null<apis *> apis,
+        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
 
     /// Destructor
     ///
@@ -63,17 +60,6 @@ public:
     /// @ensures
     ///
     ~init_signal_handler() final = default;
-
-public:
-
-    /// Add Handler
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param d the handler to call when an exit occurs
-    ///
-    void add_handler(const handler_delegate_t &d);
 
 public:
 
@@ -100,7 +86,14 @@ public:
 
 private:
 
-    std::list<handler_delegate_t> m_handlers;
+    gsl::not_null<eapis_vcpu_global_state_t *> m_eapis_vcpu_global_state;
+
+    bool handle_init_assert(
+        gsl::not_null<vmcs_t *> vmcs, wrmsr_handler::info_t &info);
+    bool handle_init_deassert(
+        gsl::not_null<vmcs_t *> vmcs, wrmsr_handler::info_t &info);
+    bool handle_icr_write(
+        gsl::not_null<vmcs_t *> vmcs, wrmsr_handler::info_t &info);
 
 public:
 

@@ -62,7 +62,7 @@ TEST_CASE("constructor/destruction")
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
 
-    CHECK_NOTHROW(ept_violation_handler(eapis));
+    CHECK_NOTHROW(ept_violation_handler(eapis, &g_eapis_vcpu_global_state));
 }
 
 TEST_CASE("add handlers")
@@ -71,7 +71,7 @@ TEST_CASE("add handlers")
 
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_NOTHROW(
         handler.add_read_handler(
@@ -99,7 +99,7 @@ TEST_CASE("ept violation log")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 1
@@ -122,7 +122,7 @@ TEST_CASE("ept read violation exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 1
@@ -142,7 +142,7 @@ TEST_CASE("ept read violation exit, ignore advance")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rip = 0;
 
@@ -169,7 +169,7 @@ TEST_CASE("ept read violation exit, no handler")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 1
@@ -185,7 +185,7 @@ TEST_CASE("ept read violation exit, returns false")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 1
@@ -205,7 +205,7 @@ TEST_CASE("ept write violation exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 2
@@ -225,7 +225,7 @@ TEST_CASE("ept write violation exit, ignore advance")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rip = 0;
 
@@ -252,7 +252,7 @@ TEST_CASE("ept write violation exit, no handler")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 2
@@ -268,7 +268,7 @@ TEST_CASE("ept write violation exit, returns false")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 2
@@ -288,7 +288,7 @@ TEST_CASE("ept execute violation exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 4
@@ -308,7 +308,7 @@ TEST_CASE("ept execute violation exit, ignore advance")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     g_save_state.rip = 0;
 
@@ -335,7 +335,7 @@ TEST_CASE("ept execute violation exit, no handler")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 4
@@ -351,7 +351,7 @@ TEST_CASE("ept execute violation exit, returns false")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 4
@@ -371,7 +371,7 @@ TEST_CASE("ept violation exit, invalid qualification")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = ept_violation_handler(eapis);
+    auto handler = ept_violation_handler(eapis, &g_eapis_vcpu_global_state);
 
     ::intel_x64::vm::write(
         vmcs_n::exit_qualification::addr, 0xF00

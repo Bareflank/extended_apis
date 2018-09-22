@@ -26,7 +26,6 @@ using namespace eapis::intel_x64;
 // -----------------------------------------------------------------------------
 
 uint64_t g_cr0;
-uint64_t g_cr0_handler;
 
 bool
 test_handler(
@@ -36,7 +35,7 @@ test_handler(
     bfignored(info);
 
     info.val = g_cr0;
-    g_cr0_handler = g_cr0;
+    info.shadow = g_cr0;
 
     return false;
 }
@@ -49,7 +48,7 @@ test_hlt_delegate(bfobject *obj)
     g_cr0 = ::intel_x64::cr0::get();
     ::intel_x64::cr0::set(0);
 
-    if (::intel_x64::cr0::get() == g_cr0_handler) {
+    if (::intel_x64::cr0::get() == g_cr0) {
         bfdebug_pass(0, "test");
     }
 }
@@ -71,11 +70,8 @@ public:
             hlt_delegate_t::create<test_hlt_delegate>()
         );
 
-        eapis()->enable_wrcr0_exiting(
-            0xFFFFFFFFFFFFFFFF, ::intel_x64::vmcs::guest_cr0::get()
-        );
-
         eapis()->add_wrcr0_handler(
+            0xFFFFFFFFFFFFFFFF,
             control_register_handler::handler_delegate_t::create<test_handler>()
         );
 

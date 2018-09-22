@@ -61,14 +61,14 @@ TEST_CASE("constructor/destruction")
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
 
-    CHECK_NOTHROW(interrupt_window_handler(eapis));
+    CHECK_NOTHROW(interrupt_window_handler(eapis, &g_eapis_vcpu_global_state));
 }
 
 TEST_CASE("add handlers")
 {
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = interrupt_window_handler(eapis);
+    auto handler = interrupt_window_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_NOTHROW(
         handler.add_handler(
@@ -86,7 +86,7 @@ TEST_CASE("enable/disable")
 
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = interrupt_window_handler(eapis);
+    auto handler = interrupt_window_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.enable_exiting();
     CHECK(interrupt_window_exiting::is_enabled());
@@ -113,7 +113,7 @@ TEST_CASE("is_open")
 
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = interrupt_window_handler(eapis);
+    auto handler = interrupt_window_handler(eapis, &g_eapis_vcpu_global_state);
 
     reset_window();
     guest_rflags::interrupt_enable_flag::disable();
@@ -139,7 +139,7 @@ TEST_CASE("inject")
 {
     MockRepository mocks;
     auto eapis = setup_eapis(mocks);
-    auto handler = interrupt_window_handler(eapis);
+    auto handler = interrupt_window_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_NOTHROW(handler.inject(0));
 }
@@ -151,7 +151,7 @@ TEST_CASE("interrupt window exit")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = interrupt_window_handler(eapis);
+    auto handler = interrupt_window_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.add_handler(
         interrupt_window_handler::handler_delegate_t::create<test_handler>()
@@ -167,7 +167,7 @@ TEST_CASE("interrupt window exit, no handler")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = interrupt_window_handler(eapis);
+    auto handler = interrupt_window_handler(eapis, &g_eapis_vcpu_global_state);
 
     CHECK_THROWS(handler.handle(vmcs));
 }
@@ -179,7 +179,7 @@ TEST_CASE("interrupt window exit, ignore disable")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = interrupt_window_handler(eapis);
+    auto handler = interrupt_window_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.add_handler(
         interrupt_window_handler::handler_delegate_t::create<test_handler_ignore_disable>()
@@ -188,7 +188,7 @@ TEST_CASE("interrupt window exit, ignore disable")
     using namespace vmcs_n::primary_processor_based_vm_execution_controls;
     handler.enable_exiting();
 
-    CHECK_THROWS(handler.handle(vmcs));
+    CHECK_NOTHROW(handler.handle(vmcs));
     CHECK(interrupt_window_exiting::is_enabled());
 }
 
@@ -199,7 +199,7 @@ TEST_CASE("interrupt window exit, returns false")
     MockRepository mocks;
     auto vmcs = setup_vmcs(mocks);
     auto eapis = setup_eapis(mocks);
-    auto handler = interrupt_window_handler(eapis);
+    auto handler = interrupt_window_handler(eapis, &g_eapis_vcpu_global_state);
 
     handler.add_handler(
         interrupt_window_handler::handler_delegate_t::create<test_handler_returns_false>()
