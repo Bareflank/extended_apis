@@ -3,9 +3,12 @@
 <br>
 <br>
 <br>
-[![GitHub version](https://badge.fury.io/gh/Bareflank%2Fextended_apis.svg)](https://badge.fury.io/gh/Bareflank%2Fextended_apis)
+
+[![GitHub Version](https://badge.fury.io/gh/bareflank%2Fextended_apis.svg)](https://badge.fury.io/gh/bareflank%2Fextended_apis)
 [![Build Status](https://travis-ci.org/Bareflank/extended_apis.svg?branch=master)](https://travis-ci.org/Bareflank/extended_apis)
+[![Build status](https://ci.appveyor.com/api/projects/status/xhnjkb9lh97tjagt?svg=true)](https://ci.appveyor.com/project/rianquinn/extended-apis)
 [![codecov](https://codecov.io/gh/Bareflank/extended_apis/branch/master/graph/badge.svg)](https://codecov.io/gh/Bareflank/extended_apis)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ca689e94dfed490da4eacce1c6a20ea0)](https://www.codacy.com/app/rianquinn/extended_apis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Bareflank/extended_apis&amp;utm_campaign=Badge_Grade)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/325/badge)](https://bestpractices.coreinfrastructure.org/projects/325)
 [![Join the chat at https://gitter.im/Bareflank-hypervisor/Lobby](https://badges.gitter.im/Bareflank-hypervisor/Lobby.svg)](https://gitter.im/Bareflank-hypervisor/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
