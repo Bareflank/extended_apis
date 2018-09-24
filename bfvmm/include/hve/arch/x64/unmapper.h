@@ -16,8 +16,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef VPID_INTEL_X64_EAPIS_H
-#define VPID_INTEL_X64_EAPIS_H
+#ifndef UNMAPPER_X64_EAPIS_H
+#define UNMAPPER_X64_EAPIS_H
+
+#include <memory>
+#include <intrinsics.h>
 
 // -----------------------------------------------------------------------------
 // Exports
@@ -39,76 +42,37 @@
 // Definitions
 // -----------------------------------------------------------------------------
 
-namespace eapis::intel_x64
+namespace eapis::x64
 {
 
-class vcpu;
-
-/// VPID
+/// Unmapper
 ///
-/// Provides an interface for enabling VPID
+/// This class is used by the mapping functions to unmap previously mapped
+/// memory. This unmapper adheres to the deleter concept for a
+/// std::unique_ptr so that a std::unique_ptr can be used for mapping memory.
 ///
-class EXPORT_EAPIS_HVE vpid_handler
+class unmapper
 {
-public:
-
-    /// Constructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param vcpu the vcpu object for this rdmsr handler
-    ///
-    vpid_handler(
-        gsl::not_null<vcpu *> vcpu);
-
-    /// Destructor
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    ~vpid_handler() = default;
-
-    /// Get ID
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return Returns the VPID
-    ///
-    vmcs_n::value_type id() const noexcept;
-
-    /// Enable
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void enable();
-
-    /// Disable
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable();
-
-private:
-
-    vcpu *m_vcpu;
-    vmcs_n::value_type m_id;
+    uintptr_t m_hva{};
+    std::size_t m_len{};
 
 public:
 
-    /// @cond
+    unmapper() = default;
 
-    vpid_handler(vpid_handler &&) = default;
-    vpid_handler &operator=(vpid_handler &&) = default;
+    explicit unmapper(
+        void *hva,
+        std::size_t len
+    ) :
+        m_hva{reinterpret_cast<uintptr_t>(hva)},
+        m_len{len}
+    { }
 
-    vpid_handler(const vpid_handler &) = delete;
-    vpid_handler &operator=(const vpid_handler &) = delete;
-
-    /// @endcond
+    void operator()(void *p) const;
 };
+
+template<typename T>
+using unique_map = std::unique_ptr<T, unmapper>;
 
 }
 

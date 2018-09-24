@@ -1,6 +1,6 @@
 #
-# Bareflank Hypervisor
-# Copyright (C) 2015 Assured Information Security, Inc.
+# Bareflank Extended APIs
+# Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,6 @@ project(eapis_bfvmm_main C CXX)
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
     INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../../include
-    INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../../../bfsdk/include
 )
 
 if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
@@ -39,5 +38,4 @@ add_vmm_executable(
     eapis_bfvmm
     SOURCES ${SOURCES}
     LIBRARIES eapis_hve
-    LIBRARIES capstone
 )

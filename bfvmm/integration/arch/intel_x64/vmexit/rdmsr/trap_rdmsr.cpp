@@ -27,8 +27,8 @@ using namespace eapis::intel_x64;
 
 bool
 test_handler(
-    gsl::not_null<vmcs_t *> vmcs, rdmsr_handler::info_t &info)
-{ bfignored(vmcs); bfignored(info); return true; }
+    gsl::not_null<vcpu_t *> vcpu, rdmsr_handler::info_t &info)
+{ bfignored(vcpu); bfignored(info); return true; }
 
 // -----------------------------------------------------------------------------
 // vCPU
@@ -49,12 +49,10 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        eapis()->add_rdmsr_handler(
+        this->add_rdmsr_handler(
             0x000000000000003B,
             rdmsr_handler::handler_delegate_t::create<test_handler>()
         );
-
-        eapis()->rdmsr()->enable_log();
     }
 
     /// @cond

@@ -1,6 +1,6 @@
 //
-// Bareflank Hypervisor
-// Copyright (C) 2015 Assured Information Security, Inc.
+// Bareflank Extended APIs
+// Copyright (C) 2018 Assured Information Security, Inc.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,5 +21,5 @@
 
 int main()
 {
-    std::clog << "ack: " << ::intel_x64::vm::call() << '\n';
+    std::clog << std::hex << "ack: " << _cpuid_eax(0xBF00) << '\n';
 }

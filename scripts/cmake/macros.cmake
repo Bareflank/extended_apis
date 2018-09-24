@@ -1,6 +1,6 @@
 #
-# Bareflank Hypervisor
-# Copyright (C) 2015 Assured Information Security, Inc.
+# Bareflank Extended APIs
+# Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -23,7 +23,7 @@
 function(eapis_add_vmm_executable NAME)
     list(APPEND ARGN
         LIBRARIES eapis_hve
-        LIBRARIES capstone
+        EXT_LIBRARIES Zydis
     )
 
     add_vmm_executable(

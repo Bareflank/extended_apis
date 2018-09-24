@@ -1,5 +1,5 @@
 #
-# Bareflank Hypervisor
+# Bareflank Extended APIs
 # Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ add_project_include(${EAPIS_SOURCE_CMAKE_DIR}/macros.cmake)
 # General Dependencies
 # ------------------------------------------------------------------------------
 
-include_dependency(EAPIS_SOURCE_DEPENDS_DIR capstone)
+include_dependency(EAPIS_SOURCE_DEPENDS_DIR zydis)
 
 # ------------------------------------------------------------------------------
 # VMM Components
@@ -43,7 +43,7 @@ if(ENABLE_BUILD_VMM)
         eapis_bfvmm vmm
         DEPENDS bfvmm
         DEPENDS bfintrinsics
-        DEPENDS capstone
+        DEPENDS zydis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src
     )
 
@@ -68,15 +68,8 @@ if(ENABLE_BUILD_TEST)
     add_subproject(
         eapis_bfvmm test
         DEPENDS bfvmm
-        DEPENDS capstone
+        DEPENDS zydis
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
-    )
-
-    add_subproject(
-        eapis_bfsdk test
-        DEPENDS bfvmm
-        DEPENDS capstone
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfsdk/tests/
     )
 endif()
 

@@ -1,5 +1,5 @@
 #
-# Bareflank Hypervisor
+# Bareflank Extended APIs
 # Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
@@ -21,7 +21,6 @@ list(APPEND ARGN
     DEPENDS bfvmm_hve
     DEPENDS bfvmm_vcpu
     DEPENDS bfvmm_memory_manager
-    DEPENDS capstone
     DEFINES STATIC_EAPIS_HVE
     DEFINES STATIC_HVE
     DEFINES STATIC_MEMORY_MANAGER

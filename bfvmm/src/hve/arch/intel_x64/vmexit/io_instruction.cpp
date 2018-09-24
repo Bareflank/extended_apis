@@ -24,41 +24,28 @@
 //     saying the lvalue (d) can't bind to the rvalue.
 //
 
-#include <bfdebug.h>
-#include <hve/arch/intel_x64/apis.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
-#include <bfvmm/memory_manager/arch/x64/unique_map.h>
-
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
 io_instruction_handler::io_instruction_handler(
-    gsl::not_null<apis *> apis,
-    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state
+    gsl::not_null<vcpu *> vcpu
 ) :
-    m_io_bitmap_a{apis->m_io_bitmap_a.get(), ::x64::pt::page_size},
-    m_io_bitmap_b{apis->m_io_bitmap_b.get(), ::x64::pt::page_size}
+    m_vcpu{vcpu},
+    m_io_bitmap_a{vcpu->m_io_bitmap_a.get(), ::x64::pt::page_size},
+    m_io_bitmap_b{vcpu->m_io_bitmap_b.get(), ::x64::pt::page_size}
 {
     using namespace vmcs_n;
-    bfignored(eapis_vcpu_global_state);
 
-    apis->add_handler(
+    vcpu->add_handler(
         exit_reason::basic_exit_reason::io_instruction,
         ::handler_delegate_t::create<io_instruction_handler, &io_instruction_handler::handle>(this)
     );
 }
 
-io_instruction_handler::~io_instruction_handler()
-{
-    if (!ndebug && m_log_enabled) {
-        dump_log();
-    }
-}
-
 // -----------------------------------------------------------------------------
-// Add Handler / Enablers
+// Add Handler
 // -----------------------------------------------------------------------------
 
 void
@@ -70,6 +57,19 @@ io_instruction_handler::add_handler(
     m_in_handlers[port].push_front(std::move(in_d));
     m_out_handlers[port].push_front(std::move(out_d));
 }
+
+void
+io_instruction_handler::emulate(vmcs_n::value_type port)
+{ m_emulate[port] = true; }
+
+void
+io_instruction_handler::set_default_handler(
+    const ::handler_delegate_t &d)
+{ m_default_handler = d; }
+
+// -----------------------------------------------------------------------------
+// Enablers
+// -----------------------------------------------------------------------------
 
 void
 io_instruction_handler::trap_on_access(vmcs_n::value_type port)
@@ -118,43 +118,18 @@ io_instruction_handler::pass_through_all_accesses()
 }
 
 // -----------------------------------------------------------------------------
-// Debug
-// -----------------------------------------------------------------------------
-
-void
-io_instruction_handler::dump_log()
-{
-    bfdebug_transaction(0, [&](std::string * msg) {
-        bfdebug_lnbr(0, msg);
-        bfdebug_info(0, "io instruction log", msg);
-        bfdebug_brk2(0, msg);
-
-        for (const auto &record : m_log) {
-            bfdebug_info(0, "record", msg);
-            bfdebug_subnhex(0, "port_number", record.port_number, msg);
-            bfdebug_subnhex(0, "size_of_access", record.size_of_access, msg);
-            bfdebug_subnhex(0, "direction_of_access", record.direction_of_access, msg);
-            bfdebug_subnhex(0, "address", record.address, msg);
-            bfdebug_subnhex(0, "val", record.val, msg);
-        }
-
-        bfdebug_lnbr(0, msg);
-    });
-}
-
-// -----------------------------------------------------------------------------
 // Handlers
 // -----------------------------------------------------------------------------
 
 bool
-io_instruction_handler::handle(gsl::not_null<vmcs_t *> vmcs)
+io_instruction_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 {
     namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
     auto eq = io_instruction::get();
 
     auto reps = 1ULL;
     if (io_instruction::rep_prefixed::is_enabled(eq)) {
-        reps = vmcs->save_state()->rcx & 0x00000000FFFFFFFFULL;
+        reps = vcpu->rcx() & 0x00000000FFFFFFFFULL;
     }
 
     struct info_t info = {
@@ -168,7 +143,7 @@ io_instruction_handler::handle(gsl::not_null<vmcs_t *> vmcs)
 
     switch (io_instruction::operand_encoding::get(eq)) {
         case io_instruction::operand_encoding::dx:
-            info.port_number = vmcs->save_state()->rdx & 0x000000000000FFFFULL;
+            info.port_number = vcpu->rdx() & 0x000000000000FFFFULL;
             break;
 
         default:
@@ -183,11 +158,11 @@ io_instruction_handler::handle(gsl::not_null<vmcs_t *> vmcs)
     for (auto i = 0ULL; i < reps; i++) {
         switch (io_instruction::direction_of_access::get(eq)) {
             case io_instruction::direction_of_access::in:
-                handle_in(vmcs, info);
+                handle_in(vcpu, info);
                 break;
 
             default:
-                handle_out(vmcs, info);
+                handle_out(vcpu, info);
                 break;
         }
 
@@ -198,7 +173,7 @@ io_instruction_handler::handle(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-io_instruction_handler::handle_in(gsl::not_null<vmcs_t *> vmcs, info_t &info)
+io_instruction_handler::handle_in(gsl::not_null<vcpu_t *> vcpu, info_t &info)
 {
     namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
 
@@ -206,27 +181,20 @@ io_instruction_handler::handle_in(gsl::not_null<vmcs_t *> vmcs, info_t &info)
         m_in_handlers.find(info.port_number);
 
     if (GSL_LIKELY(hdlrs != m_in_handlers.end())) {
-        emulate_in(info);
 
-        if (!ndebug && m_log_enabled) {
-            add_record(m_log, {
-                info.port_number,
-                info.size_of_access,
-                io_instruction::direction_of_access::in,
-                info.address,
-                info.val
-            });
+        if (!m_emulate[info.port_number]) {
+            emulate_in(info);
         }
 
         for (const auto &d : hdlrs->second) {
-            if (d(vmcs, info)) {
+            if (d(vcpu, info)) {
 
                 if (!info.ignore_write) {
-                    store_operand(vmcs, info);
+                    store_operand(vcpu, info);
                 }
 
                 if (!info.ignore_advance) {
-                    return advance(vmcs);
+                    return advance(vcpu);
                 }
 
                 return true;
@@ -234,40 +202,34 @@ io_instruction_handler::handle_in(gsl::not_null<vmcs_t *> vmcs, info_t &info)
         }
     }
 
-    throw std::runtime_error(
-        "io_instruction_handler::handle_in: unhandled io instruction #" + std::to_string(info.port_number));
+    if (m_default_handler.is_valid()) {
+        bffield_hex(info.port_number);
+        return m_default_handler(vcpu);
+    }
+
+    return false;
 }
 
 bool
-io_instruction_handler::handle_out(gsl::not_null<vmcs_t *> vmcs, info_t &info)
+io_instruction_handler::handle_out(gsl::not_null<vcpu_t *> vcpu, info_t &info)
 {
     namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
 
     const auto &hdlrs =
-        m_in_handlers.find(info.port_number);
+        m_out_handlers.find(info.port_number);
 
-    if (GSL_LIKELY(hdlrs != m_in_handlers.end())) {
-        load_operand(vmcs, info);
-
-        if (!ndebug && m_log_enabled) {
-            add_record(m_log, {
-                info.port_number,
-                info.size_of_access,
-                io_instruction::direction_of_access::out,
-                info.address,
-                info.val
-            });
-        }
+    if (GSL_LIKELY(hdlrs != m_out_handlers.end())) {
+        load_operand(vcpu, info);
 
         for (const auto &d : hdlrs->second) {
-            if (d(vmcs, info)) {
+            if (d(vcpu, info)) {
 
-                if (!info.ignore_write) {
+                if (!info.ignore_write && !m_emulate[info.port_number]) {
                     emulate_out(info);
                 }
 
                 if (!info.ignore_advance) {
-                    return advance(vmcs);
+                    return advance(vcpu);
                 }
 
                 return true;
@@ -275,8 +237,12 @@ io_instruction_handler::handle_out(gsl::not_null<vmcs_t *> vmcs, info_t &info)
         }
     }
 
-    throw std::runtime_error(
-        "io_instruction_handler::handle_out: unhandled io instruction #" + std::to_string(info.port_number));
+    if (m_default_handler.is_valid()) {
+        bffield_hex(info.port_number);
+        return m_default_handler(vcpu);
+    }
+
+    return false;
 }
 
 void
@@ -330,7 +296,7 @@ io_instruction_handler::emulate_out(info_t &info)
 
 void
 io_instruction_handler::load_operand(
-    gsl::not_null<vmcs_t *> vmcs, info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, info_t &info)
 {
     namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
 
@@ -338,9 +304,8 @@ io_instruction_handler::load_operand(
         switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte: {
                 auto map =
-                    bfvmm::x64::make_unique_map<uint8_t>(
+                    m_vcpu->map_gva_4k<uint8_t>(
                         info.address,
-                        vmcs_n::guest_cr3::get(),
                         info.size_of_access
                     );
 
@@ -350,9 +315,8 @@ io_instruction_handler::load_operand(
 
             case io_instruction::size_of_access::two_byte: {
                 auto map =
-                    bfvmm::x64::make_unique_map<uint16_t>(
+                    m_vcpu->map_gva_4k<uint16_t>(
                         info.address,
-                        vmcs_n::guest_cr3::get(),
                         info.size_of_access
                     );
 
@@ -362,9 +326,8 @@ io_instruction_handler::load_operand(
 
             default: {
                 auto map =
-                    bfvmm::x64::make_unique_map<uint32_t>(
+                    m_vcpu->map_gva_4k<uint32_t>(
                         info.address,
-                        vmcs_n::guest_cr3::get(),
                         info.size_of_access
                     );
 
@@ -376,15 +339,15 @@ io_instruction_handler::load_operand(
     else {
         switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte:
-                info.val = vmcs->save_state()->rax & 0x00000000000000FFULL;
+                info.val = vcpu->rax() & 0x00000000000000FFULL;
                 break;
 
             case io_instruction::size_of_access::two_byte:
-                info.val = vmcs->save_state()->rax & 0x000000000000FFFFULL;
+                info.val = vcpu->rax() & 0x000000000000FFFFULL;
                 break;
 
             default:
-                info.val = vmcs->save_state()->rax & 0x00000000FFFFFFFFULL;
+                info.val = vcpu->rax() & 0x00000000FFFFFFFFULL;
                 break;
         }
     }
@@ -392,7 +355,7 @@ io_instruction_handler::load_operand(
 
 void
 io_instruction_handler::store_operand(
-    gsl::not_null<vmcs_t *> vmcs, info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, info_t &info)
 {
     namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
 
@@ -400,9 +363,8 @@ io_instruction_handler::store_operand(
         switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte: {
                 auto map =
-                    bfvmm::x64::make_unique_map<uint8_t>(
+                    m_vcpu->map_gva_4k<uint8_t>(
                         info.address,
-                        vmcs_n::guest_cr3::get(),
                         info.size_of_access
                     );
 
@@ -412,9 +374,8 @@ io_instruction_handler::store_operand(
 
             case io_instruction::size_of_access::two_byte: {
                 auto map =
-                    bfvmm::x64::make_unique_map<uint16_t>(
+                    m_vcpu->map_gva_4k<uint16_t>(
                         info.address,
-                        vmcs_n::guest_cr3::get(),
                         info.size_of_access
                     );
 
@@ -424,9 +385,8 @@ io_instruction_handler::store_operand(
 
             default: {
                 auto map =
-                    bfvmm::x64::make_unique_map<uint32_t>(
+                    m_vcpu->map_gva_4k<uint32_t>(
                         info.address,
-                        vmcs_n::guest_cr3::get(),
                         info.size_of_access
                     );
 
@@ -438,22 +398,27 @@ io_instruction_handler::store_operand(
     else {
         switch (info.size_of_access) {
             case io_instruction::size_of_access::one_byte:
-                vmcs->save_state()->rax =
-                    set_bits(vmcs->save_state()->rax, 0x00000000000000FFULL, info.val);
+                vcpu->set_rax(
+                    set_bits(vcpu->rax(), 0x00000000000000FFULL, info.val)
+                );
+
                 break;
 
             case io_instruction::size_of_access::two_byte:
-                vmcs->save_state()->rax =
-                    set_bits(vmcs->save_state()->rax, 0x000000000000FFFFULL, info.val);
+                vcpu->set_rax(
+                    set_bits(vcpu->rax(), 0x000000000000FFFFULL, info.val)
+                );
+
                 break;
 
             default:
-                vmcs->save_state()->rax =
-                    set_bits(vmcs->save_state()->rax, 0x00000000FFFFFFFFULL, info.val);
+                vcpu->set_rax(
+                    set_bits(vcpu->rax(), 0x00000000FFFFFFFFULL, info.val)
+                );
+
                 break;
         }
     }
 }
 
-}
 }

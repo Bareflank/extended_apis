@@ -16,8 +16,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef VPID_INTEL_X64_EAPIS_H
-#define VPID_INTEL_X64_EAPIS_H
+#ifndef INTERRUPT_QUEUE_INTEL_X64_EAPIS_H
+#define INTERRUPT_QUEUE_INTEL_X64_EAPIS_H
+
+#include <queue>
 
 // -----------------------------------------------------------------------------
 // Exports
@@ -42,70 +44,72 @@
 namespace eapis::intel_x64
 {
 
-class vcpu;
-
-/// VPID
-///
-/// Provides an interface for enabling VPID
-///
-class EXPORT_EAPIS_HVE vpid_handler
+class EXPORT_EAPIS_HVE interrupt_queue
 {
 public:
+
+    using vector_t = uint64_t;
 
     /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param vcpu the vcpu object for this rdmsr handler
-    ///
-    vpid_handler(
-        gsl::not_null<vcpu *> vcpu);
+    interrupt_queue();
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~vpid_handler() = default;
+    ~interrupt_queue() = default;
 
-    /// Get ID
+    /// Push
+    ///
+    /// Add an interrupt vector to the queue
     ///
     /// @expects
     /// @ensures
     ///
-    /// @return Returns the VPID
+    /// @param vector the vector number to add to the queue
     ///
-    vmcs_n::value_type id() const noexcept;
+    void push(vector_t vector);
 
-    /// Enable
+    /// Pop
+    ///
+    /// Removes a vector from the queue, and returns it.
     ///
     /// @expects
     /// @ensures
     ///
-    void enable();
+    /// @return returns the removed vector or throws if the queue
+    ///     is empty
+    ///
+    vector_t pop();
 
-    /// Disable
+    /// Empty
     ///
     /// @expects
     /// @ensures
     ///
-    void disable();
+    /// @return returns the removed vector or throws if the queue
+    ///     is empty
+    ///
+    bool empty() const;
 
 private:
 
-    vcpu *m_vcpu;
-    vmcs_n::value_type m_id;
+    std::queue<uint64_t> m_vectors;
 
 public:
 
     /// @cond
 
-    vpid_handler(vpid_handler &&) = default;
-    vpid_handler &operator=(vpid_handler &&) = default;
+    interrupt_queue(interrupt_queue &&) = default;
+    interrupt_queue &operator=(interrupt_queue &&) = default;
 
-    vpid_handler(const vpid_handler &) = delete;
-    vpid_handler &operator=(const vpid_handler &) = delete;
+    interrupt_queue(const interrupt_queue &) = delete;
+    interrupt_queue &operator=(const interrupt_queue &) = delete;
 
     /// @endcond
 };

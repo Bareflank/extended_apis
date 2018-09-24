@@ -19,22 +19,33 @@
 #ifndef EAPIS_EPT_HANDLER_INTEL_X64_H
 #define EAPIS_EPT_HANDLER_INTEL_X64_H
 
-#include "base.h"
-
 #include "ept/mmap.h"
 #include "ept/helpers.h"
+
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
+#else
+#define EXPORT_EAPIS_HVE IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_HVE
+#endif
 
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
-class apis;
-class eapis_vcpu_global_state_t;
+class vcpu;
 
 /// EPT
 ///
@@ -49,12 +60,10 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param apis the apis object for this rdmsr handler
-    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
+    /// @param vcpu the vcpu object for this rdmsr handler
     ///
     ept_handler(
-        gsl::not_null<apis *> apis,
-        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
+        gsl::not_null<vcpu *> vcpu);
 
 
     /// Destructor
@@ -76,7 +85,7 @@ public:
 
 private:
 
-    gsl::not_null<eapis_vcpu_global_state_t *> m_eapis_vcpu_global_state;
+    vcpu *m_vcpu;
 
 public:
 
@@ -91,7 +100,6 @@ public:
     /// @endcond
 };
 
-}
 }
 
 #endif

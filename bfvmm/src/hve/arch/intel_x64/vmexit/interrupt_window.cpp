@@ -16,22 +16,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfdebug.h>
-#include <hve/arch/intel_x64/apis.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
 interrupt_window_handler::interrupt_window_handler(
-    gsl::not_null<apis *> apis,
-    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state)
+    gsl::not_null<vcpu *> vcpu
+) :
+    m_vcpu{vcpu}
 {
     using namespace vmcs_n;
-    bfignored(eapis_vcpu_global_state);
 
-    apis->add_handler(
+    vcpu->add_handler(
         exit_reason::basic_exit_reason::interrupt_window,
         ::handler_delegate_t::create<interrupt_window_handler, &interrupt_window_handler::handle>(this)
     );
@@ -42,9 +39,43 @@ interrupt_window_handler::interrupt_window_handler(
 // -----------------------------------------------------------------------------
 
 void
-interrupt_window_handler::add_handler(
-    const handler_delegate_t &d)
-{ m_handlers.push_front(d); }
+interrupt_window_handler::queue_external_interrupt(uint64_t vector)
+{
+    if (this->is_open() && m_interrupt_queue.empty()) {
+        this->inject_external_interrupt(vector);
+    }
+    else {
+        this->enable_exiting();
+        m_interrupt_queue.push(vector);
+    }
+}
+
+void
+interrupt_window_handler::inject_gpf()
+{
+    this->inject_exception(0);
+}
+
+// -----------------------------------------------------------------------------
+// Handlers
+// -----------------------------------------------------------------------------
+
+bool
+interrupt_window_handler::handle(gsl::not_null<vcpu_t *> vcpu)
+{
+    bfignored(vcpu);
+    this->inject_external_interrupt(m_interrupt_queue.pop());
+
+    if (m_interrupt_queue.empty()) {
+        this->disable_exiting();
+    }
+
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+// Private
+// -----------------------------------------------------------------------------
 
 void
 interrupt_window_handler::enable_exiting()
@@ -93,44 +124,34 @@ interrupt_window_handler::is_open()
     return true;
 }
 
+void
+interrupt_window_handler::inject_exception(uint64_t vector)
+{
+    namespace info_n = vmcs_n::vm_entry_interruption_information;
+    using namespace info_n::interruption_type;
+
+    uint64_t info = 0;
+
+    info_n::vector::set(info, vector);
+    info_n::interruption_type::set(info, hardware_exception);
+    info_n::valid_bit::enable(info);
+
+    info_n::set(info);
+}
 
 void
-interrupt_window_handler::inject(uint64_t vector)
+interrupt_window_handler::inject_external_interrupt(uint64_t vector)
 {
+    namespace info_n = vmcs_n::vm_entry_interruption_information;
+    using namespace info_n::interruption_type;
+
     uint64_t info = 0;
-    using namespace vmcs_n::vm_entry_interruption_information;
 
-    vector::set(info, vector);
-    interruption_type::set(info, interruption_type::external_interrupt);
-    valid_bit::enable(info);
+    info_n::vector::set(info, vector);
+    info_n::interruption_type::set(info, external_interrupt);
+    info_n::valid_bit::enable(info);
 
-    vmcs_n::vm_entry_interruption_information::set(info);
+    info_n::set(info);
 }
 
-// -----------------------------------------------------------------------------
-// Handlers
-// -----------------------------------------------------------------------------
-
-bool
-interrupt_window_handler::handle(gsl::not_null<vmcs_t *> vmcs)
-{
-    struct info_t info {};
-
-    for (const auto &d : m_handlers) {
-        if (d(vmcs, info)) {
-
-            if (!info.ignore_disable) {
-                this->disable_exiting();
-            }
-
-            return true;
-        }
-    }
-
-    throw std::runtime_error(
-        "Unhandled interrupt window"
-    );
-}
-
-}
 }

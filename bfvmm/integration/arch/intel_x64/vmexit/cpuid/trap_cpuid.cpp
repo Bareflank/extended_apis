@@ -27,9 +27,9 @@ using namespace eapis::intel_x64;
 
 bool
 test_cpuid_handler(
-    gsl::not_null<vmcs_t *> vmcs, cpuid_handler::info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, cpuid_handler::info_t &info)
 {
-    bfignored(vmcs);
+    bfignored(vcpu);
 
     info.rax = 42;
     info.rcx = 42;
@@ -72,11 +72,9 @@ public:
             hlt_delegate_t::create<test_hlt_delegate>()
         );
 
-        eapis()->add_cpuid_handler(
+        this->add_cpuid_handler(
             42, cpuid_handler::handler_delegate_t::create<test_cpuid_handler>()
         );
-
-        eapis()->cpuid()->enable_log();
     }
 };
 

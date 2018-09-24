@@ -19,26 +19,41 @@
 #ifndef INIT_SIGNAL_INTEL_X64_EAPIS_H
 #define INIT_SIGNAL_INTEL_X64_EAPIS_H
 
+#include <bfvmm/hve/arch/intel_x64/vmcs.h>
+#include <bfvmm/hve/arch/intel_x64/exit_handler.h>
+
 #include "wrmsr.h"
-#include "../base.h"
+
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
+#else
+#define EXPORT_EAPIS_HVE IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_HVE
+#endif
 
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
-class apis;
-class eapis_vcpu_global_state_t;
+class vcpu;
 
 /// INIT signal
 ///
 /// Provides an interface for registering handlers of the INIT signal exit.
 ///
-class EXPORT_EAPIS_HVE init_signal_handler : public base
+class EXPORT_EAPIS_HVE init_signal_handler
 {
 public:
 
@@ -47,53 +62,36 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param apis the apis object for this INIT signal handler
-    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
+    /// @param vcpu the vcpu object for this INIT signal handler
     ///
     init_signal_handler(
-        gsl::not_null<apis *> apis,
-        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
+        gsl::not_null<vcpu *> vcpu);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~init_signal_handler() final = default;
-
-public:
-
-    /// Dump Log
-    ///
-    /// Example:
-    /// @code
-    /// this->dump_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void dump_log() final
-    { }
+    ~init_signal_handler() = default;
 
 public:
 
     /// @cond
 
-    bool handle(gsl::not_null<vmcs_t *> vmcs);
+    bool handle(gsl::not_null<vcpu_t *> vcpu);
 
     /// @endcond
 
 private:
 
-    gsl::not_null<eapis_vcpu_global_state_t *> m_eapis_vcpu_global_state;
+    vcpu *m_vcpu;
 
     bool handle_init_assert(
-        gsl::not_null<vmcs_t *> vmcs, wrmsr_handler::info_t &info);
+        gsl::not_null<vcpu_t *> vcpu, wrmsr_handler::info_t &info);
     bool handle_init_deassert(
-        gsl::not_null<vmcs_t *> vmcs, wrmsr_handler::info_t &info);
+        gsl::not_null<vcpu_t *> vcpu, wrmsr_handler::info_t &info);
     bool handle_icr_write(
-        gsl::not_null<vmcs_t *> vmcs, wrmsr_handler::info_t &info);
+        gsl::not_null<vcpu_t *> vcpu, wrmsr_handler::info_t &info);
 
 public:
 
@@ -108,7 +106,6 @@ public:
     /// @endcond
 };
 
-}
 }
 
 #endif

@@ -1,5 +1,5 @@
 #
-# Bareflank Hypervisor
+# Bareflank Extended APIs
 # Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
@@ -42,11 +42,6 @@ set(EAPIS_SOURCE_DEPENDS_DIR ${CMAKE_CURRENT_LIST_DIR}/../depends
     "Cmake dependencies directory"
 )
 
-set(EAPIS_SOURCE_BFSDK_DIR ${CMAKE_SOURCE_DIR}/../../../bfsdk
-    CACHE INTERNAL
-    "bfsdk source dir"
-)
-
 set(EAPIS_SOURCE_BFVMM_DIR ${CMAKE_SOURCE_DIR}/../../../bfvmm
     CACHE INTERNAL
     "bfvmm source dir"
@@ -56,12 +51,12 @@ set(EAPIS_SOURCE_BFVMM_DIR ${CMAKE_SOURCE_DIR}/../../../bfvmm
 # Links
 # ------------------------------------------------------------------------------
 
-set(CAPSTONE_URL "https://github.com/bareflank/capstone/archive/v2.0.zip"
+set(ZYDIS_URL "https://github.com/Bareflank/zydis/archive/v2.0.2.zip"
     CACHE INTERNAL FORCE
-    "Capstone URL"
+    "Zydis URL"
 )
 
-set(CAPSTONE_URL_MD5 "2d3809e48b97d93e29e6b6ac7a0dd1aa"
+set(ZYDIS_URL_MD5 "2eeac4aa6c12684b579064518347dc95"
     CACHE INTERNAL FORCE
-    "Capstone URL MD5 hash"
+    "Zydis URL MD5 hash"
 )

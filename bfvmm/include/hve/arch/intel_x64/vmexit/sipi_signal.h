@@ -19,25 +19,39 @@
 #ifndef SIPI_SIGNAL_INTEL_X64_EAPIS_H
 #define SIPI_SIGNAL_INTEL_X64_EAPIS_H
 
-#include "../base.h"
+#include <bfvmm/hve/arch/intel_x64/vmcs.h>
+#include <bfvmm/hve/arch/intel_x64/exit_handler.h>
+
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
+#else
+#define EXPORT_EAPIS_HVE IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_HVE
+#endif
 
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
-class apis;
-class eapis_vcpu_global_state_t;
+class vcpu;
 
 /// SIPI handler
 ///
 /// Provides an interface for registering handlers of SIPI exits
 ///
-class EXPORT_EAPIS_HVE sipi_signal_handler : public base
+class EXPORT_EAPIS_HVE sipi_signal_handler
 {
 public:
 
@@ -46,42 +60,29 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param apis the apis object for this sipi handler
-    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
+    /// @param vcpu the vcpu object for this sipi handler
     ///
     sipi_signal_handler(
-        gsl::not_null<apis *> apis,
-        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
+        gsl::not_null<vcpu *> vcpu);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~sipi_signal_handler() final = default;
-
-public:
-
-    /// Dump Log
-    ///
-    /// Example:
-    /// @code
-    /// this->dump_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void dump_log() final
-    { }
+    ~sipi_signal_handler() = default;
 
 public:
 
     /// @cond
 
-    bool handle(gsl::not_null<vmcs_t *> vmcs);
+    bool handle(gsl::not_null<vcpu_t *> vcpu);
 
     /// @endcond
+
+private:
+
+    vcpu *m_vcpu;
 
 public:
 
@@ -96,7 +97,6 @@ public:
     /// @endcond
 };
 
-}
 }
 
 #endif

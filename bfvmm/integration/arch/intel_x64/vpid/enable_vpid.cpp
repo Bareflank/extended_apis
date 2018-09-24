@@ -45,7 +45,7 @@ public:
             hlt_delegate_t::create<test_hlt_delegate>()
         );
 
-        eapis()->enable_vpid();
+        this->enable_vpid();
     }
 };
 

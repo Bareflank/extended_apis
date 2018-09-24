@@ -1,5 +1,5 @@
 #
-# Bareflank Hypervisor
+# Bareflank Extended APIs
 # Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
@@ -27,16 +27,17 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/vmexit/interrupt_window.cpp
         arch/intel_x64/vmexit/io_instruction.cpp
         arch/intel_x64/vmexit/monitor_trap.cpp
-        arch/intel_x64/vmexit/mov_dr.cpp
         arch/intel_x64/vmexit/rdmsr.cpp
         arch/intel_x64/vmexit/sipi_signal.cpp
         arch/intel_x64/vmexit/wrmsr.cpp
         arch/intel_x64/vmexit/xsetbv.cpp
         arch/intel_x64/ept.cpp
+        arch/intel_x64/interrupt_queue.cpp
         arch/intel_x64/microcode.cpp
         arch/intel_x64/mtrrs.cpp
+        arch/intel_x64/vcpu.cpp
         arch/intel_x64/vpid.cpp
-        arch/intel_x64/apis.cpp
+        arch/x64/unmapper.cpp
     )
 
 elseif(${BUILD_TARGET_ARCH} STREQUAL "aarch64")
@@ -47,7 +48,6 @@ endif()
 
 add_shared_library(
     eapis_hve
-    DEPENDS capstone
     SOURCES ${SOURCES}
     DEFINES SHARED_EAPIS_HVE
     DEFINES SHARED_HVE
@@ -57,7 +57,6 @@ add_shared_library(
 
 add_static_library(
     eapis_hve
-    DEPENDS capstone
     SOURCES ${SOURCES}
     DEFINES STATIC_EAPIS_HVE
     DEFINES STATIC_HVE

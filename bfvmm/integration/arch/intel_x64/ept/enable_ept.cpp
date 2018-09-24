@@ -57,7 +57,7 @@ public:
             hlt_delegate_t::create<test_hlt_delegate>()
         );
 
-        eapis()->set_eptp(g_guest_map);
+        this->set_eptp(g_guest_map);
     }
 };
 

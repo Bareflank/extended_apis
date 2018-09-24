@@ -1,5 +1,5 @@
 //
-// Bareflank Hypervisor
+// Bareflank Extended APIs
 // Copyright (C) 2018 Assured Information Security, Inc.
 //
 // This library is free software; you can redistribute it and/or
@@ -21,9 +21,7 @@
 #include <intrinsics.h>
 #include <hve/arch/intel_x64/mtrrs.h>
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
 static inline auto
@@ -371,5 +369,4 @@ mtrrs::add_range(uint64_t ia32_mtrr_physbase, uint64_t ia32_mtrr_physmask)
     });
 }
 
-}
 }

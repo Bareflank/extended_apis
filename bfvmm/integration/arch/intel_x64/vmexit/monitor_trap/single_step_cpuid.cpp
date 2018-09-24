@@ -40,12 +40,12 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        eapis()->add_cpuid_handler(
+        this->add_cpuid_handler(
             42,
             cpuid_handler::handler_delegate_t::create<vcpu, &vcpu::cpuid_handler>(this)
         );
 
-        eapis()->add_monitor_trap_handler(
+        this->add_monitor_trap_handler(
             monitor_trap_handler::handler_delegate_t::create<vcpu, &vcpu::monitor_trap_handler>(this)
         );
     }
@@ -61,23 +61,23 @@ public:
     }
 
     bool cpuid_handler(
-        gsl::not_null<vmcs_t *> vmcs, cpuid_handler::info_t &info)
+        gsl::not_null<vcpu_t *> vcpu, cpuid_handler::info_t &info)
     {
-        bfignored(vmcs);
+        bfignored(vcpu);
 
         info.rax = 42;
         info.rbx = 42;
         info.rcx = 42;
         info.rdx = 42;
 
-        eapis()->enable_monitor_trap_flag();
+        this->enable_monitor_trap_flag();
         return false;
     }
 
     bool monitor_trap_handler(
-        gsl::not_null<vmcs_t *> vmcs, monitor_trap_handler::info_t &info)
+        gsl::not_null<vcpu_t *> vcpu, monitor_trap_handler::info_t &info)
     {
-        bfignored(vmcs);
+        bfignored(vcpu);
         bfignored(info);
 
         bfdebug_info(0, "instrution after cpuid trapped");

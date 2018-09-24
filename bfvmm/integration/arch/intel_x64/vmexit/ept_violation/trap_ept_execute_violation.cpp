@@ -57,22 +57,22 @@ public:
             hlt_delegate_t::create<test_hlt_delegate>()
         );
 
-        eapis()->add_ept_execute_violation_handler(
+        this->add_ept_execute_violation_handler(
             ept_violation_handler::handler_delegate_t::create<vcpu, &vcpu::test_execute_violation_handler>(this)
         );
 
-        eapis()->set_eptp(g_guest_map);
+        this->set_eptp(g_guest_map);
     }
 
     bool
     test_execute_violation_handler(
-        gsl::not_null<vmcs_t *> vmcs, ept_violation_handler::info_t &info)
+        gsl::not_null<vcpu_t *> vcpu, ept_violation_handler::info_t &info)
     {
-        bfignored(vmcs);
+        bfignored(vcpu);
         bfignored(info);
 
         bfdebug_pass(0, "test");
-        eapis()->disable_ept();
+        this->disable_ept();
 
         return true;
     }

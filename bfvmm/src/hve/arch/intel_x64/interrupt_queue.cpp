@@ -16,29 +16,39 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <hve/arch/intel_x64/vcpu.h>
+#include <bfdebug.h>
+#include <hve/arch/intel_x64/interrupt_queue.h>
 
 namespace eapis::intel_x64
 {
 
-vpid_handler::vpid_handler(
-    gsl::not_null<vcpu *> vcpu
-) :
-    m_vcpu{vcpu}
+interrupt_queue::interrupt_queue()
 {
-    static uint16_t s_id = 1;
-    m_id = s_id++;
-
-    vmcs_n::virtual_processor_identifier::set(m_id);
+    // For now, this is a simple first in, first out queue. In the future,
+    // we should implement the priority portion of the interrupt queue that
+    // the APIC is doing in hardware.
+    //
+    // It should be noted that the reason this works is that by the time
+    // the VMM sees the interrupt, the APIC has already released an interrupt
+    // with priority in mind, which means in theory, a simple queue is
+    // sufficient. Incomplete, but sufficient.
 }
 
-vmcs_n::value_type vpid_handler::id() const noexcept
-{ return m_id; }
+void
+interrupt_queue::push(vector_t vector)
+{ m_vectors.push(vector); }
 
-void vpid_handler::enable()
-{ vmcs_n::secondary_processor_based_vm_execution_controls::enable_vpid::enable(); }
+interrupt_queue::vector_t
+interrupt_queue::pop()
+{
+    auto vector = m_vectors.front();
+    m_vectors.pop();
 
-void vpid_handler::disable()
-{ vmcs_n::secondary_processor_based_vm_execution_controls::enable_vpid::disable(); }
+    return vector;
+}
+
+bool
+interrupt_queue::empty() const
+{ return m_vectors.empty(); }
 
 }

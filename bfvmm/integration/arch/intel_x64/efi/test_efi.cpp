@@ -46,23 +46,7 @@ public:
             );
         });
 
-        exit_handler()->add_handler(
-            vmcs_n::exit_reason::basic_exit_reason::vmcall,
-            ::handler_delegate_t::create<vcpu, &vcpu::vmcall_handler>(this)
-        );
-
-        eapis()->set_eptp(g_guest_map);
-    }
-
-    bool
-    vmcall_handler(
-        gsl::not_null<vmcs_t *> vmcs)
-    {
-        guard_exceptions([&] {
-            vmcs->save_state()->rax = 0x1;
-        });
-
-        return advance(vmcs);
+        this->set_eptp(g_guest_map);
     }
 };
 

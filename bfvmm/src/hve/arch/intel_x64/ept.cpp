@@ -16,22 +16,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfdebug.h>
 #include <hve/arch/intel_x64/vcpu.h>
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
 ept_handler::ept_handler(
-    gsl::not_null<apis *> apis,
-    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state
+    gsl::not_null<vcpu *> vcpu
 ) :
-    m_eapis_vcpu_global_state{eapis_vcpu_global_state}
-{
-    bfignored(apis);
-}
+    m_vcpu{vcpu}
+{ }
 
 void ept_handler::set_eptp(ept::mmap *map)
 {
@@ -40,8 +34,8 @@ void ept_handler::set_eptp(ept::mmap *map)
 
     if (map) {
         if (ept_pointer::phys_addr::get() == 0) {
-            m_eapis_vcpu_global_state->ia32_vmx_cr0_fixed0 &= ~::intel_x64::cr0::paging::mask;
-            m_eapis_vcpu_global_state->ia32_vmx_cr0_fixed0 &= ~::intel_x64::cr0::protection_enable::mask;
+            m_vcpu->global_state()->ia32_vmx_cr0_fixed0 &= ~::intel_x64::cr0::paging::mask;
+            m_vcpu->global_state()->ia32_vmx_cr0_fixed0 &= ~::intel_x64::cr0::protection_enable::mask;
 
             ept_pointer::memory_type::set(ept_pointer::memory_type::write_back);
             ept_pointer::accessed_and_dirty_flags::disable();
@@ -55,8 +49,8 @@ void ept_handler::set_eptp(ept::mmap *map)
     }
     else {
         if (ept_pointer::phys_addr::get() != 0) {
-            m_eapis_vcpu_global_state->ia32_vmx_cr0_fixed0 |= ::intel_x64::cr0::paging::mask;
-            m_eapis_vcpu_global_state->ia32_vmx_cr0_fixed0 |= ::intel_x64::cr0::protection_enable::mask;
+            m_vcpu->global_state()->ia32_vmx_cr0_fixed0 |= ::intel_x64::cr0::paging::mask;
+            m_vcpu->global_state()->ia32_vmx_cr0_fixed0 |= ::intel_x64::cr0::protection_enable::mask;
 
             ept_pointer::memory_type::set(0);
             ept_pointer::accessed_and_dirty_flags::disable();
@@ -70,5 +64,4 @@ void ept_handler::set_eptp(ept::mmap *map)
     }
 }
 
-}
 }

@@ -21,9 +21,6 @@
 #include <bfvmm/vcpu/vcpu_factory.h>
 #include <eapis/hve/arch/intel_x64/vcpu.h>
 
-#include <list>
-#include <bfvmm/memory_manager/object_allocator.h>
-
 using namespace eapis::intel_x64;
 
 // -----------------------------------------------------------------------------
@@ -38,8 +35,6 @@ ept::mmap g_guest_map;
 
 class vcpu : public eapis::intel_x64::vcpu
 {
-    std::list<uint64_t, object_allocator<uint64_t, 1>> m_vectors;
-
 public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
@@ -51,77 +46,33 @@ public:
             );
         });
 
-        eapis()->add_wrmsr_handler(
+        this->add_wrmsr_handler(
             ::intel_x64::msrs::ia32_apic_base::addr,
             wrmsr_handler::handler_delegate_t::create<vcpu, &vcpu::ia32_apic_base__wrmsr_handler>(this)
         );
 
-        exit_handler()->add_handler(
-            vmcs_n::exit_reason::basic_exit_reason::vmcall,
-            ::handler_delegate_t::create<vcpu, &vcpu::vmcall_handler>(this)
-        );
-
-        eapis()->set_eptp(g_guest_map);
-    }
-
-    bool
-    vmcall_handler(
-        gsl::not_null<vmcs_t *> vmcs)
-    {
-        guard_exceptions([&] {
-            vmcs->save_state()->rax = 0x1;
-        });
-
-        return advance(vmcs);
+        this->set_eptp(g_guest_map);
     }
 
     bool
     external_interrupt_handler(
-        gsl::not_null<vmcs_t *> vmcs, external_interrupt_handler::info_t &info)
+        gsl::not_null<vcpu_t *> v, external_interrupt_handler::info_t &info)
     {
-        bfignored(vmcs);
-
-        if (eapis()->is_interrupt_window_open()) {
-            eapis()->inject_external_interrupt(info.vector);
-        }
-        else {
-            eapis()->trap_on_next_interrupt_window();
-            m_vectors.push_back(info.vector);
-        }
-
-        return true;
-    }
-
-    bool
-    interrupt_window_handler(
-        gsl::not_null<vmcs_t *> vmcs, interrupt_window_handler::info_t &info)
-    {
-        bfignored(vmcs);
-        bfignored(info);
-
-        eapis()->inject_external_interrupt(m_vectors.back());
-        m_vectors.pop_back();
-
-        if (!m_vectors.empty()) {
-            info.ignore_disable = true;
-        }
+        bfignored(v);
+        this->queue_external_interrupt(info.vector);
 
         return true;
     }
 
     bool
     ia32_apic_base__wrmsr_handler(
-        gsl::not_null<vmcs_t *> vmcs, wrmsr_handler::info_t &info)
+        gsl::not_null<vcpu_t *> v, wrmsr_handler::info_t &info)
     {
-        bfignored(vmcs);
+        bfignored(v);
 
         if (::intel_x64::msrs::ia32_apic_base::extd::is_enabled(info.val)) {
-            eapis()->add_external_interrupt_handler(
+            this->add_external_interrupt_handler(
                 external_interrupt_handler::handler_delegate_t::create<vcpu, &vcpu::external_interrupt_handler>(this)
-            );
-
-            eapis()->add_interrupt_window_handler(
-                interrupt_window_handler::handler_delegate_t::create<vcpu, &vcpu::interrupt_window_handler>(this)
             );
         }
         else {
