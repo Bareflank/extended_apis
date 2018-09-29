@@ -38,7 +38,7 @@
 #include "microcode.h"
 #include "vpid.h"
 
-#include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
+#include <bfvmm/hve/arch/intel_x64/vcpu.h>
 
 namespace eapis
 {
