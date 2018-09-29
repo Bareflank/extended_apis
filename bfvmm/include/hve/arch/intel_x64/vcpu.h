@@ -20,7 +20,7 @@
 #define VCPU_INTEL_X64_EAPIS_H
 
 #include "apis.h"
-#include <bfvmm/hve/arch/intel_x64/vcpu/vcpu.h>
+#include <bfvmm/hve/arch/intel_x64/vcpu.h>
 
 namespace eapis
 {

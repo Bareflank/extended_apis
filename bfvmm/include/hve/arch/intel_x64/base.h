@@ -24,8 +24,8 @@
 #include <list>
 #include <unordered_map>
 
-#include <bfvmm/hve/arch/intel_x64/vmcs/vmcs.h>
-#include <bfvmm/hve/arch/intel_x64/exit_handler/exit_handler.h>
+#include <bfvmm/hve/arch/intel_x64/vmcs.h>
+#include <bfvmm/hve/arch/intel_x64/exit_handler.h>
 
 #ifndef EAPIS_LOG_MAX
 #define EAPIS_LOG_MAX 10
