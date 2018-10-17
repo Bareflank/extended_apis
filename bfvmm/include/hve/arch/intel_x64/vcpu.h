@@ -32,6 +32,7 @@
 #include "vmexit/monitor_trap.h"
 #include "vmexit/rdmsr.h"
 #include "vmexit/sipi_signal.h"
+#include "vmexit/vmx_preemption_timer.h"
 #include "vmexit/wrmsr.h"
 #include "vmexit/xsetbv.h"
 
@@ -595,6 +596,54 @@ public:
     ///
     VIRTUAL void add_xsetbv_handler(
         const xsetbv_handler::handler_delegate_t &d);
+
+    //--------------------------------------------------------------------------
+    // VMX preemption timer
+    //--------------------------------------------------------------------------
+
+    /// Add VMX preemption timer handler
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the delegate to call when a xsetbv exit occurs
+    ///
+    VIRTUAL void add_vmx_preemption_timer_handler(
+        const vmx_preemption_timer_handler::handler_delegate_t &d);
+
+    /// Set VMX preemption timer
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param time the value to write to the vmcs field before
+    /// the upcoming VM-entry
+    ///
+    VIRTUAL void set_vmx_preemption_timer(
+        const vmx_preemption_timer_handler::value_t val);
+
+    /// Get VMX preemption timer
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the value of the VMX-preemption timer field
+    ///
+    VIRTUAL vmx_preemption_timer_handler::value_t get_vmx_preemption_timer();
+
+    /// Enable VMX preemption timer exiting
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    VIRTUAL void enable_vmx_preemption_timer();
+
+    /// Disnable VMX preemption timer exiting
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    VIRTUAL void disable_vmx_preemption_timer();
 
     //==========================================================================
     // Resources
@@ -1328,6 +1377,7 @@ private:
     ept_handler m_ept_handler;
     microcode_handler m_microcode_handler;
     vpid_handler m_vpid_handler;
+    vmx_preemption_timer_handler m_vmx_preemption_timer_handler;
 
 private:
 

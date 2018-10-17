@@ -50,7 +50,8 @@ vcpu::vcpu(
 
     m_ept_handler{this},
     m_microcode_handler{this},
-    m_vpid_handler{this}
+    m_vpid_handler{this},
+    m_vmx_preemption_timer_handler{this}
 {
     using namespace vmcs_n;
 
@@ -97,6 +98,19 @@ vcpu::enable_vpid()
 void
 vcpu::disable_vpid()
 { m_vpid_handler.disable(); }
+
+
+//--------------------------------------------------------------------------
+// VMX preemption timer
+//--------------------------------------------------------------------------
+
+void
+vcpu::enable_vmx_preemption_timer()
+{ m_vmx_preemption_timer_handler.enable_exiting(); }
+
+void
+vcpu::disable_vmx_preemption_timer()
+{ m_vmx_preemption_timer_handler.disable_exiting(); }
 
 //==========================================================================
 // Helpers
@@ -376,6 +390,24 @@ void
 vcpu::add_xsetbv_handler(
     const xsetbv_handler::handler_delegate_t &d)
 { m_xsetbv_handler.add_handler(std::move(d)); }
+
+//--------------------------------------------------------------------------
+// VMX preemption timer
+//--------------------------------------------------------------------------
+
+void
+vcpu::add_vmx_preemption_timer_handler(
+    const vmx_preemption_timer_handler::handler_delegate_t &d)
+{ m_vmx_preemption_timer_handler.add_handler(std::move(d)); }
+
+void
+vcpu::set_vmx_preemption_timer(
+    const vmx_preemption_timer_handler::value_t val)
+{ m_vmx_preemption_timer_handler.set_timer(val); }
+
+vmx_preemption_timer_handler::value_t
+vcpu::get_vmx_preemption_timer()
+{ return m_vmx_preemption_timer_handler.get_timer(); }
 
 //==============================================================================
 // Memory Mapping

@@ -29,8 +29,10 @@ if(${BUILD_TARGET_ARCH} STREQUAL "x86_64")
         arch/intel_x64/vmexit/monitor_trap.cpp
         arch/intel_x64/vmexit/rdmsr.cpp
         arch/intel_x64/vmexit/sipi_signal.cpp
+        arch/intel_x64/vmexit/vmx_preemption_timer.cpp
         arch/intel_x64/vmexit/wrmsr.cpp
         arch/intel_x64/vmexit/xsetbv.cpp
+        arch/intel_x64/cpuid.cpp
         arch/intel_x64/ept.cpp
         arch/intel_x64/interrupt_queue.cpp
         arch/intel_x64/microcode.cpp
