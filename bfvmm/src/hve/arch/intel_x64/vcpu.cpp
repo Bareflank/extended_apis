@@ -263,6 +263,10 @@ vcpu::pass_through_all_io_instruction_accesses()
 { m_io_instruction_handler.pass_through_all_accesses(); }
 
 void
+vcpu::pass_through_io_accesses(vmcs_n::value_type port)
+{ m_io_instruction_handler.pass_through_access(port); }
+
+void
 vcpu::add_io_instruction_handler(
     vmcs_n::value_type port,
     const io_instruction_handler::handler_delegate_t &in_d,

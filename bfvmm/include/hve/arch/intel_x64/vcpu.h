@@ -361,6 +361,15 @@ public:
     ///
     VIRTUAL void pass_through_all_io_instruction_accesses();
 
+    /// Pass Through Accesses
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param port the port to pass through
+    ///
+    VIRTUAL void pass_through_io_accesses(vmcs_n::value_type port);
+
     /// Add IO Instruction Handler
     ///
     /// @expects

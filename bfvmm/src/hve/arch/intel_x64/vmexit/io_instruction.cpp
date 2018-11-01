@@ -203,7 +203,7 @@ io_instruction_handler::handle_in(gsl::not_null<vcpu_t *> vcpu, info_t &info)
     }
 
     if (m_default_handler.is_valid()) {
-        bffield_hex(info.port_number);
+        bfdebug_nhex(0, "handle_in", info.port_number);
         return m_default_handler(vcpu);
     }
 
@@ -238,7 +238,7 @@ io_instruction_handler::handle_out(gsl::not_null<vcpu_t *> vcpu, info_t &info)
     }
 
     if (m_default_handler.is_valid()) {
-        bffield_hex(info.port_number);
+        bfdebug_nhex(0, "handle_out", info.port_number);
         return m_default_handler(vcpu);
     }
 

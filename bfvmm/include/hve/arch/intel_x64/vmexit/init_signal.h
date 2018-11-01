@@ -86,13 +86,6 @@ private:
 
     vcpu *m_vcpu;
 
-    bool handle_init_assert(
-        gsl::not_null<vcpu_t *> vcpu, wrmsr_handler::info_t &info);
-    bool handle_init_deassert(
-        gsl::not_null<vcpu_t *> vcpu, wrmsr_handler::info_t &info);
-    bool handle_icr_write(
-        gsl::not_null<vcpu_t *> vcpu, wrmsr_handler::info_t &info);
-
 public:
 
     /// @cond
