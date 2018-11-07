@@ -29,12 +29,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/scripts/cmake/config/default.cmake)
 add_project_include(${EAPIS_SOURCE_CMAKE_DIR}/macros.cmake)
 
 # ------------------------------------------------------------------------------
-# General Dependencies
-# ------------------------------------------------------------------------------
-
-include_dependency(EAPIS_SOURCE_DEPENDS_DIR udis86)
-
-# ------------------------------------------------------------------------------
 # VMM Components
 # ------------------------------------------------------------------------------
 
@@ -43,21 +37,18 @@ if(ENABLE_BUILD_VMM)
         eapis_bfvmm vmm
         DEPENDS bfvmm
         DEPENDS bfintrinsics
-        DEPENDS udis86
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src
     )
 
     add_subproject(
         eapis_bfvmm_main vmm
         DEPENDS eapis_bfvmm
-        DEPENDS udis86
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src/main
     )
 
     add_subproject(
         eapis_integration vmm
         DEPENDS eapis_bfvmm
-        DEPENDS udis86
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/
     )
 endif()
@@ -70,7 +61,6 @@ if(ENABLE_BUILD_TEST)
     add_subproject(
         eapis_bfvmm test
         DEPENDS bfvmm
-        DEPENDS udis86
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
     )
 endif()

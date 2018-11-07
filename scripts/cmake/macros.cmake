@@ -23,7 +23,6 @@
 function(eapis_add_vmm_executable NAME)
     list(APPEND ARGN
         LIBRARIES eapis_hve
-        EXT_LIBRARIES udis86
     )
 
     add_vmm_executable(

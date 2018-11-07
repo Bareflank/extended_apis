@@ -46,17 +46,3 @@ set(EAPIS_SOURCE_BFVMM_DIR ${CMAKE_SOURCE_DIR}/../../../bfvmm
     CACHE INTERNAL
     "bfvmm source dir"
 )
-
-# ------------------------------------------------------------------------------
-# Links
-# ------------------------------------------------------------------------------
-
-set(UDIS86_URL "https://github.com/Bareflank/udis86/archive/master.zip"
-    CACHE INTERNAL FORCE
-    "Udis86 URL"
-)
-
-set(UDIS86_URL_MD5 "fda82e6bad4a0e55281a86cd40513143"
-    CACHE INTERNAL FORCE
-    "Udis86 URL MD5 hash"
-)
