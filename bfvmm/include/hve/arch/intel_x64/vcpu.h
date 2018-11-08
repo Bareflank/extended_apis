@@ -38,6 +38,7 @@
 
 #include "ept.h"
 #include "interrupt_queue.h"
+#include "lapic.h"
 #include "microcode.h"
 #include "vcpu_global_state.h"
 #include "vpid.h"

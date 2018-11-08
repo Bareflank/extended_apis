@@ -41,8 +41,16 @@ interrupt_window_handler::interrupt_window_handler(
 void
 interrupt_window_handler::queue_external_interrupt(uint64_t vector)
 {
-    if (this->is_open() && m_interrupt_queue.empty()) {
-        this->inject_external_interrupt(vector);
+    if (this->is_open()) {
+
+        if (m_interrupt_queue.empty()) {
+            this->inject_external_interrupt(vector);
+            return;
+        }
+
+        this->inject_external_interrupt(m_interrupt_queue.pop());
+        m_interrupt_queue.push(vector);
+        return;
     }
     else {
         this->enable_exiting();
