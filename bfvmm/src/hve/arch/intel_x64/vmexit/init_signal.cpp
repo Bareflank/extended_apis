@@ -60,7 +60,7 @@ init_signal_handler::handle(gsl::not_null<vcpu_t *> vcpu)
         vmcs_n::guest_activity_state::wait_for_sipi
     );
 
-    return (m_vcpu->global_state()->init_called = true);
+    return true;
 }
 
 }
