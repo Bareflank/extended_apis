@@ -125,7 +125,7 @@ public:
     /// @ensures
     ///
     void disable_log()
-    { m_log_enabled = true; }
+    { m_log_enabled = false; }
 
     /// Dump Log
     ///
