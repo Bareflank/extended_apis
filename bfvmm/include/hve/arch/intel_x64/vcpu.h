@@ -616,7 +616,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param d the delegate to call when a xsetbv exit occurs
+    /// @param d the delegate to call when a VMX PET exit occurs
     ///
     VIRTUAL void add_vmx_preemption_timer_handler(
         const vmx_preemption_timer_handler::handler_delegate_t &d);
@@ -648,7 +648,7 @@ public:
     ///
     VIRTUAL void enable_vmx_preemption_timer();
 
-    /// Disnable VMX preemption timer exiting
+    /// Disable VMX preemption timer exiting
     ///
     /// @expects
     /// @ensures
