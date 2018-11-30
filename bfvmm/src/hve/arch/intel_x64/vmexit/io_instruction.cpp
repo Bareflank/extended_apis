@@ -80,7 +80,7 @@ io_instruction_handler::trap_on_access(vmcs_n::value_type port)
     }
 
     if (port < 0x10000) {
-        set_bit(m_io_bitmap_b, port);
+        set_bit(m_io_bitmap_b, port - 0x8000);
         return;
     }
 
@@ -103,7 +103,7 @@ io_instruction_handler::pass_through_access(vmcs_n::value_type port)
     }
 
     if (port < 0x10000) {
-        clear_bit(m_io_bitmap_b, port);
+        clear_bit(m_io_bitmap_b, port - 0x8000);
         return;
     }
 
