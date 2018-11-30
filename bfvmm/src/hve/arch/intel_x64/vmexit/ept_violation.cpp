@@ -53,6 +53,21 @@ ept_violation_handler::add_execute_handler(
     const handler_delegate_t &d)
 { m_execute_handlers.push_front(d); }
 
+void
+ept_violation_handler::set_default_read_handler(
+    const ::handler_delegate_t &d)
+{ m_default_read_handler = d; }
+
+void
+ept_violation_handler::set_default_write_handler(
+    const ::handler_delegate_t &d)
+{ m_default_write_handler = d; }
+
+void
+ept_violation_handler::set_default_execute_handler(
+    const ::handler_delegate_t &d)
+{ m_default_execute_handler = d; }
+
 // -----------------------------------------------------------------------------
 // Handlers
 // -----------------------------------------------------------------------------
@@ -101,6 +116,10 @@ ept_violation_handler::handle_read(gsl::not_null<vcpu_t *> vcpu, info_t &info)
         }
     }
 
+    if (m_default_read_handler.is_valid()) {
+        return m_default_read_handler(vcpu);
+    }
+
     throw std::runtime_error(
         "ept_violation_handler: unhandled ept read violation"
     );
@@ -120,6 +139,10 @@ ept_violation_handler::handle_write(gsl::not_null<vcpu_t *> vcpu, info_t &info)
         }
     }
 
+    if (m_default_write_handler.is_valid()) {
+        return m_default_write_handler(vcpu);
+    }
+
     throw std::runtime_error(
         "ept_violation_handler: unhandled ept write violation"
     );
@@ -137,6 +160,10 @@ ept_violation_handler::handle_execute(gsl::not_null<vcpu_t *> vcpu, info_t &info
 
             return true;
         }
+    }
+
+    if (m_default_execute_handler.is_valid()) {
+        return m_default_execute_handler(vcpu);
     }
 
     throw std::runtime_error(

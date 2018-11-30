@@ -21,5 +21,10 @@
 
 int main()
 {
-    std::clog << std::hex << "ack: " << _cpuid_eax(0xBF00) << '\n';
+    if (_cpuid_eax(0xBF00) == 0xBF01) {
+        std::clog << "ack: success" << '\n';
+    }
+    else {
+        std::clog << "ack: failure" << '\n';
+    }
 }

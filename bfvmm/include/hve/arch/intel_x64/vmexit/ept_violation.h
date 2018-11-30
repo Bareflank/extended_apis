@@ -149,6 +149,60 @@ public:
     ///
     void add_execute_handler(const handler_delegate_t &d);
 
+    /// Add Default Read Handler
+    ///
+    /// This is called when no registered handlers have been called and
+    /// the internal implementation is needed. Note that this function
+    /// can still return false and let the internal implementation pass
+    /// the instruction through
+    ///
+    /// Also note that the handler registered here is a base exit handler
+    /// delegate. The info structure is not passed, and therefor,
+    /// no emulation is provided to this handler.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the handler to call when an exit occurs
+    ///
+    void set_default_read_handler(const ::handler_delegate_t &d);
+
+    /// Add Default Write Handler
+    ///
+    /// This is called when no registered handlers have been called and
+    /// the internal implementation is needed. Note that this function
+    /// can still return false and let the internal implementation pass
+    /// the instruction through
+    ///
+    /// Also note that the handler registered here is a base exit handler
+    /// delegate. The info structure is not passed, and therefor,
+    /// no emulation is provided to this handler.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the handler to call when an exit occurs
+    ///
+    void set_default_write_handler(const ::handler_delegate_t &d);
+
+    /// Add Default Execute Handler
+    ///
+    /// This is called when no registered handlers have been called and
+    /// the internal implementation is needed. Note that this function
+    /// can still return false and let the internal implementation pass
+    /// the instruction through
+    ///
+    /// Also note that the handler registered here is a base exit handler
+    /// delegate. The info structure is not passed, and therefor,
+    /// no emulation is provided to this handler.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the handler to call when an exit occurs
+    ///
+    void set_default_execute_handler(const ::handler_delegate_t &d);
+
 public:
 
     /// @cond
@@ -166,6 +220,10 @@ private:
 private:
 
     vcpu *m_vcpu;
+
+    ::handler_delegate_t m_default_read_handler;
+    ::handler_delegate_t m_default_write_handler;
+    ::handler_delegate_t m_default_execute_handler;
 
     std::list<handler_delegate_t> m_read_handlers;
     std::list<handler_delegate_t> m_write_handlers;

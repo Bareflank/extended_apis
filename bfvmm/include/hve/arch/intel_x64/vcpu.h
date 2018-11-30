@@ -292,6 +292,36 @@ public:
     VIRTUAL void add_ept_execute_violation_handler(
         const ept_violation_handler::handler_delegate_t &d);
 
+    /// Add EPT Read Violation Default Handler
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the delegate to call when an exit occurs
+    ///
+    VIRTUAL void add_default_ept_read_violation_handler(
+        const ::handler_delegate_t &d);
+
+    /// Add EPT Write Violation Default Handler
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the delegate to call when an exit occurs
+    ///
+    VIRTUAL void add_default_ept_write_violation_handler(
+        const ::handler_delegate_t &d);
+
+    /// Add EPT Execute Violation Default Handler
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the delegate to call when an exit occurs
+    ///
+    VIRTUAL void add_default_ept_execute_violation_handler(
+        const ::handler_delegate_t &d);
+
     //--------------------------------------------------------------------------
     // External Interrupt
     //--------------------------------------------------------------------------

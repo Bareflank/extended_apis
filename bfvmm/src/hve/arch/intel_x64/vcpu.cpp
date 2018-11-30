@@ -221,6 +221,21 @@ vcpu::add_ept_execute_violation_handler(
     const ept_violation_handler::handler_delegate_t &d)
 { m_ept_violation_handler.add_execute_handler(d); }
 
+void
+vcpu::add_default_ept_read_violation_handler(
+    const ::handler_delegate_t &d)
+{ m_ept_violation_handler.set_default_read_handler(std::move(d)); }
+
+void
+vcpu::add_default_ept_write_violation_handler(
+    const ::handler_delegate_t &d)
+{ m_ept_violation_handler.set_default_write_handler(std::move(d)); }
+
+void
+vcpu::add_default_ept_execute_violation_handler(
+    const ::handler_delegate_t &d)
+{ m_ept_violation_handler.set_default_execute_handler(std::move(d)); }
+
 //--------------------------------------------------------------------------
 // External Interrupt
 //--------------------------------------------------------------------------
