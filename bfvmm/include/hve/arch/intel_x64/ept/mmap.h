@@ -172,6 +172,9 @@ public:
         std::lock_guard lock(m_mutex);
         using namespace ::intel_x64::ept;
 
+        expects(bfn::lower(virt_addr, pdpt::from) == 0);
+        expects(bfn::lower(phys_addr, pdpt::from) == 0);
+
         this->map_pdpt(pml4::index(virt_addr));
         return this->map_pdpte(virt_addr, phys_addr, attr, cache);
     }
@@ -219,6 +222,9 @@ public:
     {
         std::lock_guard lock(m_mutex);
         using namespace ::intel_x64::ept;
+
+        expects(bfn::lower(virt_addr, pd::from) == 0);
+        expects(bfn::lower(phys_addr, pd::from) == 0);
 
         this->map_pdpt(pml4::index(virt_addr));
         this->map_pd(pdpt::index(virt_addr));
@@ -269,6 +275,9 @@ public:
     {
         std::lock_guard lock(m_mutex);
         using namespace ::intel_x64::ept;
+
+        expects(bfn::lower(virt_addr, pt::from) == 0);
+        expects(bfn::lower(phys_addr, pt::from) == 0);
 
         this->map_pdpt(pml4::index(virt_addr));
         this->map_pd(pdpt::index(virt_addr));
