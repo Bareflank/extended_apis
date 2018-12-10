@@ -22,11 +22,11 @@
 namespace eapis::intel_x64::cpuid
 {
 
-uint64_t display_family(uint64_t feat_eax)
+uint32_t display_family(uint32_t feat_eax)
 {
     namespace version = ::intel_x64::cpuid::feature_information::eax;
 
-    const auto family_id = version::family_id::get(feat_eax);
+    uint32_t family_id = version::family_id::get(feat_eax);
     if (family_id != 0x0F) {
         return family_id;
     }
@@ -34,7 +34,7 @@ uint64_t display_family(uint64_t feat_eax)
     return version::extended_family_id::get(feat_eax) + family_id;
 }
 
-uint64_t display_model(uint64_t feat_eax)
+uint32_t display_model(uint32_t feat_eax)
 {
     namespace version = ::intel_x64::cpuid::feature_information::eax;
 

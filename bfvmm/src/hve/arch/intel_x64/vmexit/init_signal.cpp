@@ -41,6 +41,8 @@ init_signal_handler::init_signal_handler(
 bool
 init_signal_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 {
+    bfignored(vcpu);
+
     // NOTE:
     //
     // Linux has a default setting for new CPUs that disables the delay

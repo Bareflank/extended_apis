@@ -122,7 +122,7 @@ rdmsr_handler::handle(gsl::not_null<vcpu_t *> vcpu)
     if (GSL_LIKELY(hdlrs != m_handlers.end())) {
 
         struct info_t info = {
-            vcpu->rcx(),
+            gsl::narrow_cast<uint32_t>(vcpu->rcx()),
             0,
             false,
             false

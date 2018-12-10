@@ -35,14 +35,14 @@ namespace eapis::intel_x64::cpuid
 /// @param feat_eax the value returned from cpuid at leaf
 ///        feature_information.
 /// @return the value of the display family
-uint64_t display_family(uint64_t feat_eax);
+uint32_t display_family(uint32_t feat_eax);
 
 /// display_model
 ///
 /// @param feat_eax the value returned from cpuid at leaf
 ///        feature_information.
 /// @return the value of the display model
-uint64_t display_model(uint64_t feat_eax);
+uint32_t display_model(uint32_t feat_eax);
 
 }
 

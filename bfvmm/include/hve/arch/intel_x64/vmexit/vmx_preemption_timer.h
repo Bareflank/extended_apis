@@ -58,7 +58,7 @@ class EXPORT_EAPIS_HVE vmx_preemption_timer_handler
 {
 public:
 
-    using value_t = uint32_t;
+    using value_t = uint64_t;
 
     /// Handler delegate type
     ///

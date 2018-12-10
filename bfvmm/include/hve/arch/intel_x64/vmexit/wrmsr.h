@@ -72,7 +72,7 @@ public:
         ///
         /// default: vmcs->save_state()->rcx
         ///
-        uint64_t msr;
+        uint32_t msr;
 
         /// Value (in/out)
         ///

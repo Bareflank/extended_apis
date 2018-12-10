@@ -83,7 +83,6 @@ public:
         bfignored(info);
 
         bfn::call_once(flag, [&] {
-            auto cr3 = intel_x64::vmcs::guest_cr3::get();
             auto [gpa1, unused1] = this->gva_to_gpa(buffer1.data());
             auto [gpa2, unused2] = this->gva_to_gpa(buffer2.data());
 

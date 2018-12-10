@@ -83,7 +83,11 @@ public:
 
     ~vcpu()
     {
-        uint64_t sum = std::accumulate(m_sample.begin(), m_sample.end(), 0);
+        uint64_t sum = 0;
+        for (const auto &sample : m_sample) {
+            sum += sample;
+        }
+
         uint64_t tsc = sum >> 8; // Divide by SAMPLE_SIZE
         uint64_t ticks_per_usec = eapis::intel_x64::time::pet_freq_MHz();
         uint64_t div = ::intel_x64::msrs::ia32_vmx_misc::preemption_timer_decrement::get();

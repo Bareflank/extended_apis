@@ -1390,12 +1390,12 @@ private:
 
 private:
 
+    ept::mmap *m_mmap{};
+    vcpu_global_state_t *m_vcpu_global_state;
+
     std::unique_ptr<uint8_t, void(*)(void *)> m_msr_bitmap;
     std::unique_ptr<uint8_t, void(*)(void *)> m_io_bitmap_a;
     std::unique_ptr<uint8_t, void(*)(void *)> m_io_bitmap_b;
-
-    ept::mmap *m_mmap;
-    vcpu_global_state_t *m_vcpu_global_state;
 
 private:
 
