@@ -312,7 +312,7 @@ control_register_handler::handle_wrcr0(gsl::not_null<vcpu_t *> vcpu)
     }
 
     if (!info.ignore_advance) {
-        return advance(vcpu);
+        return vcpu->advance();
     }
 
     return true;
@@ -339,7 +339,7 @@ control_register_handler::handle_rdcr3(gsl::not_null<vcpu_t *> vcpu)
     }
 
     if (!info.ignore_advance) {
-        return advance(vcpu);
+        return vcpu->advance();
     }
 
     return true;
@@ -366,7 +366,7 @@ control_register_handler::handle_wrcr3(gsl::not_null<vcpu_t *> vcpu)
     }
 
     if (!info.ignore_advance) {
-        return advance(vcpu);
+        return vcpu->advance();
     }
 
     return true;
@@ -397,7 +397,7 @@ control_register_handler::handle_wrcr4(gsl::not_null<vcpu_t *> vcpu)
     }
 
     if (!info.ignore_advance) {
-        return advance(vcpu);
+        return vcpu->advance();
     }
 
     return true;

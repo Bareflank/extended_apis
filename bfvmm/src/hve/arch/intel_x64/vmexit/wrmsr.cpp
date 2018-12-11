@@ -143,7 +143,7 @@ wrmsr_handler::handle(gsl::not_null<vcpu_t *> vcpu)
                 }
 
                 if (!info.ignore_advance) {
-                    return advance(vcpu);
+                    return vcpu->advance();
                 }
 
                 return true;

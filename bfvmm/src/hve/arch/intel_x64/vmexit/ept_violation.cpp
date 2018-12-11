@@ -109,7 +109,7 @@ ept_violation_handler::handle_read(gsl::not_null<vcpu_t *> vcpu, info_t &info)
         if (d(vcpu, info)) {
 
             if (!info.ignore_advance) {
-                return advance(vcpu);
+                return vcpu->advance();
             }
 
             return true;
@@ -132,7 +132,7 @@ ept_violation_handler::handle_write(gsl::not_null<vcpu_t *> vcpu, info_t &info)
         if (d(vcpu, info)) {
 
             if (!info.ignore_advance) {
-                return advance(vcpu);
+                return vcpu->advance();
             }
 
             return true;
@@ -155,7 +155,7 @@ ept_violation_handler::handle_execute(gsl::not_null<vcpu_t *> vcpu, info_t &info
         if (d(vcpu, info)) {
 
             if (!info.ignore_advance) {
-                return advance(vcpu);
+                return vcpu->advance();
             }
 
             return true;

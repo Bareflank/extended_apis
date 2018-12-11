@@ -59,7 +59,7 @@ ept_misconfiguration_handler::handle(gsl::not_null<vcpu_t *> vcpu)
         if (d(vcpu, info)) {
 
             if (!info.ignore_advance) {
-                return advance(vcpu);
+                return vcpu->advance();
             }
 
             return true;

@@ -194,7 +194,7 @@ io_instruction_handler::handle_in(gsl::not_null<vcpu_t *> vcpu, info_t &info)
                 }
 
                 if (!info.ignore_advance) {
-                    return advance(vcpu);
+                    return vcpu->advance();
                 }
 
                 return true;
@@ -229,7 +229,7 @@ io_instruction_handler::handle_out(gsl::not_null<vcpu_t *> vcpu, info_t &info)
                 }
 
                 if (!info.ignore_advance) {
-                    return advance(vcpu);
+                    return vcpu->advance();
                 }
 
                 return true;
