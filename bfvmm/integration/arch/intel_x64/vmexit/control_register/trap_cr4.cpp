@@ -75,6 +75,20 @@ public:
             control_register_handler::handler_delegate_t::create<test_handler>()
         );
     }
+
+    ~vcpu() override = default;
+
+public:
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

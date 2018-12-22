@@ -32,7 +32,7 @@ void ept_handler::set_eptp(ept::mmap *map)
     using namespace vmcs_n;
     using namespace vmcs_n::secondary_processor_based_vm_execution_controls;
 
-    if (map) {
+    if (map != nullptr) {
         if (ept_pointer::phys_addr::get() == 0) {
             m_vcpu->global_state()->ia32_vmx_cr0_fixed0 &= ~::intel_x64::cr0::paging::mask;
             m_vcpu->global_state()->ia32_vmx_cr0_fixed0 &= ~::intel_x64::cr0::protection_enable::mask;

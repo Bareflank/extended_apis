@@ -24,9 +24,9 @@ init_project(
     INCLUDES ${PROJECT_SOURCE_DIR}/../include
 )
 
-add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
+# add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
 
-add_subdirectory(hve)
+# add_subdirectory(hve)
 
 # -----------------------------------------------------------------------------
 # Install

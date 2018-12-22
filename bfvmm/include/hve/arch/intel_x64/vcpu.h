@@ -943,9 +943,9 @@ public:
         g_cr3->map_1g(hva, hpa);
 
         return x64::unique_map<T>(
-            static_cast<T *>(hva),
-            x64::unmapper(hva, page_size)
-        );
+                   static_cast<T *>(hva),
+                   x64::unmapper(hva, page_size)
+               );
     }
 
     /// Map HPA (1g)
@@ -990,9 +990,9 @@ public:
         g_cr3->map_2m(hva, hpa);
 
         return x64::unique_map<T>(
-            static_cast<T *>(hva),
-            x64::unmapper(hva, page_size)
-        );
+                   static_cast<T *>(hva),
+                   x64::unmapper(hva, page_size)
+               );
     }
 
     /// Map HPA (2m)
@@ -1037,9 +1037,9 @@ public:
         g_cr3->map_4k(hva, hpa);
 
         return x64::unique_map<T>(
-            static_cast<T *>(hva),
-            x64::unmapper(hva, page_size)
-        );
+                   static_cast<T *>(hva),
+                   x64::unmapper(hva, page_size)
+               );
     }
 
     /// Map HPA (4k)
@@ -1229,9 +1229,9 @@ public:
         }
 
         return x64::unique_map<T>(
-            reinterpret_cast<T *>(reinterpret_cast<uintptr_t>(hva) + gpa_offset),
-            x64::unmapper(hva, len)
-        );
+                   reinterpret_cast<T *>(reinterpret_cast<uintptr_t>(hva) + gpa_offset),
+                   x64::unmapper(hva, len)
+               );
     }
 
     /// Map GPA (4k)
@@ -1309,9 +1309,9 @@ public:
         }
 
         return x64::unique_map<T>(
-            reinterpret_cast<T *>(reinterpret_cast<uintptr_t>(hva) + gva_offset),
-            x64::unmapper(hva, len)
-        );
+                   reinterpret_cast<T *>(reinterpret_cast<uintptr_t>(hva) + gva_offset),
+                   x64::unmapper(hva, len)
+               );
     }
 
     /// Map GVA (4k)
@@ -1424,6 +1424,18 @@ private:
     friend class io_instruction_handler;
     friend class rdmsr_handler;
     friend class wrmsr_handler;
+
+public:
+
+    /// @cond
+
+    vcpu(vcpu &&) = default;
+    vcpu &operator=(vcpu &&) = default;
+
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 //------------------------------------------------------------------------------

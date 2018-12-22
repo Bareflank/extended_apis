@@ -82,10 +82,13 @@ public:
         bfdebug_nhex(0, "PCI Configuration Space (data)", data[0]);
     }
 
+public:
+
     /// @cond
 
     vcpu(vcpu &&) = delete;
     vcpu &operator=(vcpu &&) = delete;
+
     vcpu(const vcpu &) = delete;
     vcpu &operator=(const vcpu &) = delete;
 

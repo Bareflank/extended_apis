@@ -175,8 +175,6 @@ io_instruction_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 bool
 io_instruction_handler::handle_in(gsl::not_null<vcpu_t *> vcpu, info_t &info)
 {
-    namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
-
     const auto &hdlrs =
         m_in_handlers.find(info.port_number);
 
@@ -213,8 +211,6 @@ io_instruction_handler::handle_in(gsl::not_null<vcpu_t *> vcpu, info_t &info)
 bool
 io_instruction_handler::handle_out(gsl::not_null<vcpu_t *> vcpu, info_t &info)
 {
-    namespace io_instruction = vmcs_n::exit_qualification::io_instruction;
-
     const auto &hdlrs =
         m_out_handlers.find(info.port_number);
 

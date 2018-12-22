@@ -27,7 +27,7 @@ vcpu::vcpu(
 ) :
     bfvmm::intel_x64::vcpu(id),
 
-    m_vcpu_global_state{vcpu_global_state != nullptr ? vcpu_global_state : &g_vcpu_global_state},
+    m_vcpu_global_state{vcpu_global_state != nullptr ? vcpu_global_state : & g_vcpu_global_state},
 
     m_msr_bitmap{static_cast<uint8_t *>(alloc_page()), free_page},
     m_io_bitmap_a{static_cast<uint8_t *>(alloc_page()), free_page},
@@ -178,7 +178,7 @@ vcpu::add_wrcr4_handler(
 void
 vcpu::add_cpuid_handler(
     cpuid_handler::leaf_t leaf, const cpuid_handler::handler_delegate_t &d)
-{ m_cpuid_handler.add_handler(leaf, std::move(d)); }
+{ m_cpuid_handler.add_handler(leaf, d); }
 
 void
 vcpu::emulate_cpuid(
@@ -191,7 +191,7 @@ vcpu::emulate_cpuid(
 void
 vcpu::add_default_cpuid_handler(
     const ::handler_delegate_t &d)
-{ m_cpuid_handler.set_default_handler(std::move(d)); }
+{ m_cpuid_handler.set_default_handler(d); }
 
 //--------------------------------------------------------------------------
 // EPT Misconfiguration
@@ -224,17 +224,17 @@ vcpu::add_ept_execute_violation_handler(
 void
 vcpu::add_default_ept_read_violation_handler(
     const ::handler_delegate_t &d)
-{ m_ept_violation_handler.set_default_read_handler(std::move(d)); }
+{ m_ept_violation_handler.set_default_read_handler(d); }
 
 void
 vcpu::add_default_ept_write_violation_handler(
     const ::handler_delegate_t &d)
-{ m_ept_violation_handler.set_default_write_handler(std::move(d)); }
+{ m_ept_violation_handler.set_default_write_handler(d); }
 
 void
 vcpu::add_default_ept_execute_violation_handler(
     const ::handler_delegate_t &d)
-{ m_ept_violation_handler.set_default_execute_handler(std::move(d)); }
+{ m_ept_violation_handler.set_default_execute_handler(d); }
 
 //--------------------------------------------------------------------------
 // External Interrupt
@@ -303,7 +303,7 @@ vcpu::emulate_io_instruction(
 void
 vcpu::add_default_io_instruction_handler(
     const ::handler_delegate_t &d)
-{ m_io_instruction_handler.set_default_handler(std::move(d)); }
+{ m_io_instruction_handler.set_default_handler(d); }
 
 //--------------------------------------------------------------------------
 // Monitor Trap
@@ -343,7 +343,7 @@ vcpu::add_rdmsr_handler(
     vmcs_n::value_type msr, const rdmsr_handler::handler_delegate_t &d)
 {
     m_rdmsr_handler.trap_on_access(msr);
-    m_rdmsr_handler.add_handler(msr, std::move(d));
+    m_rdmsr_handler.add_handler(msr, d);
 }
 
 void
@@ -357,7 +357,7 @@ vcpu::emulate_rdmsr(
 void
 vcpu::add_default_rdmsr_handler(
     const ::handler_delegate_t &d)
-{ m_rdmsr_handler.set_default_handler(std::move(d)); }
+{ m_rdmsr_handler.set_default_handler(d); }
 
 //--------------------------------------------------------------------------
 // Write MSR
@@ -384,7 +384,7 @@ vcpu::add_wrmsr_handler(
     vmcs_n::value_type msr, const wrmsr_handler::handler_delegate_t &d)
 {
     m_wrmsr_handler.trap_on_access(msr);
-    m_wrmsr_handler.add_handler(msr, std::move(d));
+    m_wrmsr_handler.add_handler(msr, d);
 }
 
 void
@@ -398,7 +398,7 @@ vcpu::emulate_wrmsr(
 void
 vcpu::add_default_wrmsr_handler(
     const ::handler_delegate_t &d)
-{ m_wrmsr_handler.set_default_handler(std::move(d)); }
+{ m_wrmsr_handler.set_default_handler(d); }
 
 //--------------------------------------------------------------------------
 // XSetBV
@@ -407,7 +407,7 @@ vcpu::add_default_wrmsr_handler(
 void
 vcpu::add_xsetbv_handler(
     const xsetbv_handler::handler_delegate_t &d)
-{ m_xsetbv_handler.add_handler(std::move(d)); }
+{ m_xsetbv_handler.add_handler(d); }
 
 //--------------------------------------------------------------------------
 // VMX preemption timer
@@ -416,7 +416,7 @@ vcpu::add_xsetbv_handler(
 void
 vcpu::add_vmx_preemption_timer_handler(
     const vmx_preemption_timer_handler::handler_delegate_t &d)
-{ m_vmx_preemption_timer_handler.add_handler(std::move(d)); }
+{ m_vmx_preemption_timer_handler.add_handler(d); }
 
 void
 vcpu::set_vmx_preemption_timer(
@@ -529,9 +529,8 @@ vcpu::gva_to_hpa(uint64_t gva)
     if (m_mmap == nullptr) {
         return ret;
     }
-    else {
-        return this->gpa_to_hpa(ret.first);
-    }
+
+    return this->gpa_to_hpa(ret.first);
 }
 
 void

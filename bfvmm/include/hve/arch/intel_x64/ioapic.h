@@ -40,91 +40,91 @@ constexpr const auto win_offset = 0x10;
 
 namespace id
 {
-    constexpr const auto name = "id";
-    constexpr const auto indx = 0;
-    constexpr const auto mask = 0xF000000U;
-    constexpr const auto from = 24;
-    constexpr const auto reset_val = 0;
+constexpr const auto name = "id";
+constexpr const auto indx = 0;
+constexpr const auto mask = 0xF000000U;
+constexpr const auto from = 24;
+constexpr const auto reset_val = 0;
 
-    inline auto get(reg_t val) noexcept
-    { return get_bits(val, mask) >> from; }
+inline auto get(reg_t val) noexcept
+{ return get_bits(val, mask) >> from; }
 
-    inline void set(reg_t &reg, reg_t val) noexcept
-    { reg = set_bits(reg, mask, val << from); }
+inline void set(reg_t &reg, reg_t val) noexcept
+{ reg = set_bits(reg, mask, val << from); }
 
-    inline void dump(int lev, reg_t val, std::string *msg = nullptr)
-    { bfdebug_subnhex(lev, name, get(val), msg); }
+inline void dump(int lev, reg_t val, std::string *msg = nullptr)
+{ bfdebug_subnhex(lev, name, get(val), msg); }
 }
 
 namespace version
 {
-    constexpr const auto name = "version";
-    constexpr const auto indx = 1;
-    constexpr const auto reset_val = 0x00170011U;
+constexpr const auto name = "version";
+constexpr const auto indx = 1;
+constexpr const auto reset_val = 0x00170011U;
 
-    namespace version
-    {
-        constexpr const auto name = "version";
-        constexpr const auto mask = 0xFFU;
-        constexpr const auto from = 0;
+namespace version
+{
+constexpr const auto name = "version";
+constexpr const auto mask = 0xFFU;
+constexpr const auto from = 0;
 
-        inline auto get(reg_t val) noexcept
-        { return get_bits(val, mask) >> from; }
+inline auto get(reg_t val) noexcept
+{ return get_bits(val, mask) >> from; }
 
-        inline void set(reg_t &reg, reg_t val) noexcept
-        { reg = set_bits(reg, mask, val << from); }
+inline void set(reg_t &reg, reg_t val) noexcept
+{ reg = set_bits(reg, mask, val << from); }
 
-        inline void dump(int lev, reg_t val, std::string *msg = nullptr)
-        { bfdebug_subnhex(lev, name, get(val), msg); }
-    }
+inline void dump(int lev, reg_t val, std::string *msg = nullptr)
+{ bfdebug_subnhex(lev, name, get(val), msg); }
+}
 
-    namespace max_rte
-    {
-        constexpr const auto name = "max_rte";
-        constexpr const auto mask = 0xFF0000U;
-        constexpr const auto from = 16;
+namespace max_rte
+{
+constexpr const auto name = "max_rte";
+constexpr const auto mask = 0xFF0000U;
+constexpr const auto from = 16;
 
-        inline auto get(reg_t val) noexcept
-        { return get_bits(val, mask) >> from; }
+inline auto get(reg_t val) noexcept
+{ return get_bits(val, mask) >> from; }
 
-        inline void set(reg_t &reg, reg_t val) noexcept
-        { reg = set_bits(reg, mask, val << from); }
+inline void set(reg_t &reg, reg_t val) noexcept
+{ reg = set_bits(reg, mask, val << from); }
 
-        inline void dump(int lev, reg_t val, std::string *msg = nullptr)
-        { bfdebug_subnhex(lev, name, get(val), msg); }
-    }
+inline void dump(int lev, reg_t val, std::string *msg = nullptr)
+{ bfdebug_subnhex(lev, name, get(val), msg); }
+}
 
-    inline void dump(int lev, reg_t val, std::string *msg = nullptr)
-    {
-        version::dump(lev, val, msg);
-        max_rte::dump(lev, val, msg);
-    }
+inline void dump(int lev, reg_t val, std::string *msg = nullptr)
+{
+    version::dump(lev, val, msg);
+    max_rte::dump(lev, val, msg);
+}
 }
 
 namespace arbid
 {
-    constexpr const auto name = "arbid";
-    constexpr const auto indx = 2;
+constexpr const auto name = "arbid";
+constexpr const auto indx = 2;
 
-    constexpr const auto mask = 0xF000000U;
-    constexpr const auto from = 24;
-    constexpr const auto reset_val = 0;
+constexpr const auto mask = 0xF000000U;
+constexpr const auto from = 24;
+constexpr const auto reset_val = 0;
 
-    inline auto get(reg_t val) noexcept
-    { return get_bits(val, mask) >> from; }
+inline auto get(reg_t val) noexcept
+{ return get_bits(val, mask) >> from; }
 
-    inline void set(reg_t &reg, reg_t val) noexcept
-    { reg = set_bits(reg, mask, val << from); }
+inline void set(reg_t &reg, reg_t val) noexcept
+{ reg = set_bits(reg, mask, val << from); }
 
-    inline void dump(int lev, reg_t val, std::string *msg = nullptr)
-    { bfdebug_subnhex(lev, name, get(val), msg); }
+inline void dump(int lev, reg_t val, std::string *msg = nullptr)
+{ bfdebug_subnhex(lev, name, get(val), msg); }
 }
 
 namespace redtbl
 {
-    constexpr const auto name = "redtbl";
-    constexpr const auto indx = 16;
-    constexpr const auto size = 24;
+constexpr const auto name = "redtbl";
+constexpr const auto indx = 16;
+constexpr const auto size = 24;
 }
 }
 

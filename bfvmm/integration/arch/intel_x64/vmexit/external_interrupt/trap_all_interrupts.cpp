@@ -39,6 +39,8 @@ public:
         );
     }
 
+    ~vcpu() override = default;
+
     bool
     test_external_interrupt_handler(
         gsl::not_null<vcpu_t *> vcpu, external_interrupt_handler::info_t &info)
@@ -48,6 +50,18 @@ public:
         this->queue_external_interrupt(info.vector);
         return true;
     }
+
+public:
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

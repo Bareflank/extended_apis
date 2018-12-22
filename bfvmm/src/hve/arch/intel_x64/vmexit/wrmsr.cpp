@@ -100,7 +100,6 @@ wrmsr_handler::pass_through_all_accesses()
 bool
 wrmsr_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 {
-
     // TODO: IMPORTANT!!!
     //
     // We need to create a list of MSRs that are implemented and GP when the

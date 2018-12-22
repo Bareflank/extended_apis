@@ -118,7 +118,8 @@ mtrrs::mtrrs() noexcept
 
         dump(1, "original mtrrs");
 
-        while (this->make_continuous() == false);
+        while (!this->make_continuous())
+        { }
 
         ept::mmap::memory_type type;
         switch (ia32_mtrr_def_type::type::get()) {
@@ -147,7 +148,8 @@ mtrrs::mtrrs() noexcept
             type, 0, 0xFFFFFFFFFFFFFFFF
         });
 
-        while (this->make_continuous() == false);
+        while (!this->make_continuous())
+        { }
 
         dump(1, "corrected mtrrs");
     },
@@ -315,10 +317,9 @@ mtrrs::make_continuous()
             m_num--;
             return false;
         }
-        else {
-            if (is_intersecting(r1, r2)) {
-                throw std::runtime_error("Unable to create mutually exclusive MTRRs");
-            }
+
+        if (is_intersecting(r1, r2)) {
+            throw std::runtime_error("Unable to create mutually exclusive MTRRs");
         }
     }
 

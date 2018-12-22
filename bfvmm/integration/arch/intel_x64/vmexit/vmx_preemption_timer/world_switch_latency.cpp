@@ -38,9 +38,9 @@ namespace test
 
 class vcpu : public eapis::intel_x64::vcpu
 {
-    uint64_t m_start{0};
-    uint64_t m_end{0};
-    uint64_t m_count;
+    uint64_t m_start{};
+    uint64_t m_end{};
+    uint64_t m_count{};
 
     std::list<uint64_t> m_sample;
 
@@ -49,8 +49,8 @@ public:
         eapis::intel_x64::vcpu{id}
     {
         this->add_vmx_preemption_timer_handler(
-            vmx_preemption_timer_handler::handler_delegate_t::create<
-            vcpu, &vcpu::handler>(this)
+            vmx_preemption_timer_handler::handler_delegate_t::create <
+            vcpu, &vcpu::handler > (this)
         );
 
         if (!eapis::intel_x64::time::invariant_tsc_supported()) {
@@ -81,7 +81,7 @@ public:
         return true;
     }
 
-    ~vcpu()
+    ~vcpu() override
     {
         uint64_t sum = 0;
         for (const auto &sample : m_sample) {
@@ -98,12 +98,26 @@ public:
         // assign a conversion function that has compile-time constants so the compiler
         // will do the mult/shift for us.
 
-        bfdebug_ndec(0, "BUS (MHz)", bus);
-        bfdebug_ndec(0, "TSC (MHz)", eapis::intel_x64::time::tsc_freq_MHz(bus));
-        bfdebug_ndec(0, "Avg vmentry->vmexit latency (us)", tsc / ticks_per_usec);
-        bfdebug_ndec(0, "Avg vmentry->vmexit latency TSC ticks", tsc);
-        bfdebug_ndec(0, "Avg vmentry->vmexit latency PET ticks", tsc >> div);
+        if (ticks_per_usec != 0) {
+            bfdebug_ndec(0, "BUS (MHz)", bus);
+            bfdebug_ndec(0, "TSC (MHz)", eapis::intel_x64::time::tsc_freq_MHz(bus));
+            bfdebug_ndec(0, "Avg vmentry->vmexit latency (us)", tsc / ticks_per_usec);
+            bfdebug_ndec(0, "Avg vmentry->vmexit latency TSC ticks", tsc);
+            bfdebug_ndec(0, "Avg vmentry->vmexit latency PET ticks", tsc >> div);
+        }
     }
+
+public:
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

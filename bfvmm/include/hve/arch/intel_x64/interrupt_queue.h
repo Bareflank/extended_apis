@@ -55,7 +55,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    interrupt_queue();
+    interrupt_queue() = default;
 
     /// Destructor
     ///

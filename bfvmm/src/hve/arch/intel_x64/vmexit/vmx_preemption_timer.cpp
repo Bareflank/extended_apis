@@ -30,8 +30,8 @@ vmx_preemption_timer_handler::vmx_preemption_timer_handler(
 
     vcpu->add_handler(
         exit_reason::basic_exit_reason::vmx_preemption_timer_expired,
-        ::handler_delegate_t::create<
-        vmx_preemption_timer_handler, &vmx_preemption_timer_handler::handle>(this)
+        ::handler_delegate_t::create <
+        vmx_preemption_timer_handler, &vmx_preemption_timer_handler::handle > (this)
     );
 }
 

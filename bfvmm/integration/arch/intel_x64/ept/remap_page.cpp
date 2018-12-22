@@ -16,6 +16,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-cert-err58-cpp
+//
+// Reason:
+//     This test triggers on the use of a std::mutex being globally defined
+//     from the EPT map.
+//
+
 #include <bfcallonce.h>
 
 #include <bfvmm/vcpu/vcpu_factory.h>
@@ -75,6 +82,8 @@ public:
         bfdebug_ndec(0, "B: buffer2.at(0)", buffer2.at(0));
     }
 
+    ~vcpu() override = default;
+
     bool
     test_cpuid_handler(
         gsl::not_null<vcpu_t *> vcpu, cpuid_handler::info_t &info)
@@ -108,6 +117,18 @@ public:
 
         return true;
     }
+
+public:
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

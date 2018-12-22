@@ -41,6 +41,13 @@ interrupt_window_handler::interrupt_window_handler(
 void
 interrupt_window_handler::queue_external_interrupt(uint64_t vector)
 {
+    /// TODO:
+    ///
+    /// We need to actually make sure this code is correct as there has been
+    /// some issues with it. There are likely edge case bugs in this
+    /// implementation
+    ///
+
     if (this->is_open()) {
 
         if (m_interrupt_queue.empty()) {
@@ -52,10 +59,9 @@ interrupt_window_handler::queue_external_interrupt(uint64_t vector)
         m_interrupt_queue.push(vector);
         return;
     }
-    else {
-        this->enable_exiting();
-        m_interrupt_queue.push(vector);
-    }
+
+    this->enable_exiting();
+    m_interrupt_queue.push(vector);
 }
 
 void

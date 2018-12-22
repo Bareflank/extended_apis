@@ -57,13 +57,13 @@ endif()
 # Unit Tests
 # ------------------------------------------------------------------------------
 
-if(ENABLE_BUILD_TEST)
-    add_subproject(
-        eapis_bfvmm test
-        DEPENDS bfvmm
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
-    )
-endif()
+# if(ENABLE_BUILD_TEST)
+#     add_subproject(
+#         eapis_bfvmm test
+#         DEPENDS bfvmm
+#         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/tests/
+#     )
+# endif()
 
 # ------------------------------------------------------------------------------
 # Extensions

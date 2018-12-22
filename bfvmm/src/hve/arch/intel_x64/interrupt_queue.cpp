@@ -22,17 +22,14 @@
 namespace eapis::intel_x64
 {
 
-interrupt_queue::interrupt_queue()
-{
-    // For now, this is a simple first in, first out queue. In the future,
-    // we should implement the priority portion of the interrupt queue that
-    // the APIC is doing in hardware.
-    //
-    // It should be noted that the reason this works is that by the time
-    // the VMM sees the interrupt, the APIC has already released an interrupt
-    // with priority in mind, which means in theory, a simple queue is
-    // sufficient. Incomplete, but sufficient.
-}
+// For now, this is a simple first in, first out queue. In the future,
+// we should implement the priority portion of the interrupt queue that
+// the APIC is doing in hardware.
+//
+// It should be noted that the reason this works is that by the time
+// the VMM sees the interrupt, the APIC has already released an interrupt
+// with priority in mind, which means in theory, a simple queue is
+// sufficient. Incomplete, but sufficient.
 
 void
 interrupt_queue::push(vector_t vector)
