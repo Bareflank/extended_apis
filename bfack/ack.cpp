@@ -16,12 +16,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+#include <bfack.h>
 #include <iostream>
-#include <intrinsics.h>
 
 int main()
 {
-    if (_cpuid_eax(0xBF00) == 0xBF01) {
+    if (bfack() != 0) {
         std::clog << "ack: success" << '\n';
     }
     else {
