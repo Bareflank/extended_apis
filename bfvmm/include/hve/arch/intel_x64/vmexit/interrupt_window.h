@@ -90,13 +90,14 @@ public:
 
     /// Inject General Protection Fault
     ///
-    /// Queues a general protection fault (ec = 0). The injection of a GPF can
-    /// occur at any time, and so no window is needed.
+    /// Injects a general protection fault exception with a 0 error code.
+    /// Note that exceptions cannot be blocked and as a result, it is always
+    /// safe to inject so no window is needed. A
     ///
     /// @expects
     /// @ensures
     ///
-    VIRTUAL void inject_gpf();
+    VIRTUAL void inject_general_protection_fault();
 
 public:
 
@@ -111,14 +112,14 @@ private:
     void enable_exiting();
     void disable_exiting();
 
-    bool is_open();
-
-    void inject_exception(uint64_t vector);
+    void inject_exception(uint64_t vector, uint64_t ec = 0);
     void inject_external_interrupt(uint64_t vector);
 
 private:
 
     vcpu *m_vcpu;
+
+    bool m_enabled{false};
     interrupt_queue m_interrupt_queue;
 
 public:

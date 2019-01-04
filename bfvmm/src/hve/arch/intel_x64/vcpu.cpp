@@ -261,8 +261,8 @@ vcpu::queue_external_interrupt(uint64_t vector)
 { m_interrupt_window_handler.queue_external_interrupt(vector); }
 
 void
-vcpu::inject_gpf()
-{ m_interrupt_window_handler.inject_gpf(); }
+vcpu::inject_general_protection_fault()
+{ m_interrupt_window_handler.inject_general_protection_fault(); }
 
 //--------------------------------------------------------------------------
 // IO Instruction

@@ -366,13 +366,13 @@ public:
 
     /// Inject General Protection Fault
     ///
-    /// Queues a general protection fault (ec = 0). The injection of a GPF can
-    /// occur at any time, and so no window is needed.
+    /// Injects an exception. Note that exceptions cannot be blocked and as a
+    /// result, it is always safe to inject so no window is needed.
     ///
     /// @expects
     /// @ensures
     ///
-    VIRTUAL void inject_gpf();
+    VIRTUAL void inject_general_protection_fault();
 
     //--------------------------------------------------------------------------
     // IO Instruction
