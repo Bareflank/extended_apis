@@ -32,7 +32,7 @@
 #include "vmexit/monitor_trap.h"
 #include "vmexit/rdmsr.h"
 #include "vmexit/sipi_signal.h"
-#include "vmexit/vmx_preemption_timer.h"
+#include "vmexit/preemption_timer.h"
 #include "vmexit/wrmsr.h"
 #include "vmexit/xsetbv.h"
 
@@ -364,15 +364,32 @@ public:
     ///
     VIRTUAL void queue_external_interrupt(uint64_t vector);
 
-    /// Inject General Protection Fault
+    /// Inject Exception
     ///
-    /// Injects an exception. Note that exceptions cannot be blocked and as a
-    /// result, it is always safe to inject so no window is needed.
+    /// Inject an exception on the next VM entry. Note that this will overwrite
+    /// any interrupts that are already injected for the next VM entry so
+    /// care should be taken when using this function
     ///
     /// @expects
     /// @ensures
     ///
-    VIRTUAL void inject_general_protection_fault();
+    /// @param vector the vector to inject into the guest
+    /// @param ec the error code associated with the exception if applicable
+    ///
+    VIRTUAL void inject_exception(uint64_t vector, uint64_t ec = 0);
+
+    /// Inject External Interrupt
+    ///
+    /// Inject an external interrupt on the next VM entry. Note that this will
+    /// overwriteany interrupts that are already injected for the next VM entry
+    /// so care should be taken when using this function
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector the vector to inject into the guest
+    ///
+    VIRTUAL void inject_external_interrupt(uint64_t vector);
 
     //--------------------------------------------------------------------------
     // IO Instruction
@@ -648,8 +665,8 @@ public:
     ///
     /// @param d the delegate to call when a VMX PET exit occurs
     ///
-    VIRTUAL void add_vmx_preemption_timer_handler(
-        const vmx_preemption_timer_handler::handler_delegate_t &d);
+    VIRTUAL void add_preemption_timer_handler(
+        const preemption_timer_handler::handler_delegate_t &d);
 
     /// Set VMX preemption timer
     ///
@@ -659,8 +676,8 @@ public:
     /// @param time the value to write to the vmcs field before
     /// the upcoming VM-entry
     ///
-    VIRTUAL void set_vmx_preemption_timer(
-        const vmx_preemption_timer_handler::value_t val);
+    VIRTUAL void set_preemption_timer(
+        const preemption_timer_handler::value_t val);
 
     /// Get VMX preemption timer
     ///
@@ -669,21 +686,21 @@ public:
     ///
     /// @return the value of the VMX-preemption timer field
     ///
-    VIRTUAL vmx_preemption_timer_handler::value_t get_vmx_preemption_timer();
+    VIRTUAL preemption_timer_handler::value_t get_preemption_timer();
 
     /// Enable VMX preemption timer exiting
     ///
     /// @expects
     /// @ensures
     ///
-    VIRTUAL void enable_vmx_preemption_timer();
+    VIRTUAL void enable_preemption_timer();
 
     /// Disable VMX preemption timer exiting
     ///
     /// @expects
     /// @ensures
     ///
-    VIRTUAL void disable_vmx_preemption_timer();
+    VIRTUAL void disable_preemption_timer();
 
     //==========================================================================
     // Resources
@@ -1417,7 +1434,7 @@ private:
     ept_handler m_ept_handler;
     microcode_handler m_microcode_handler;
     vpid_handler m_vpid_handler;
-    vmx_preemption_timer_handler m_vmx_preemption_timer_handler;
+    preemption_timer_handler m_preemption_timer_handler;
 
 private:
 

@@ -48,8 +48,8 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        this->add_vmx_preemption_timer_handler(
-            vmx_preemption_timer_handler::handler_delegate_t::create <
+        this->add_preemption_timer_handler(
+            preemption_timer_handler::handler_delegate_t::create <
             vcpu, &vcpu::handler > (this)
         );
 
@@ -57,8 +57,8 @@ public:
             return;
         }
 
-        this->enable_vmx_preemption_timer();
-        this->set_vmx_preemption_timer(0);
+        this->enable_preemption_timer();
+        this->set_preemption_timer(0);
 
         m_start = ::x64::read_tsc::get();
     }
@@ -71,7 +71,7 @@ public:
         m_count++;
 
         if (m_count > SAMPLE_SIZE) {
-            this->disable_vmx_preemption_timer();
+            this->disable_preemption_timer();
             return true;
         }
 

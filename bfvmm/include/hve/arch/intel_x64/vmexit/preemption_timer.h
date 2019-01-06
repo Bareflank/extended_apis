@@ -16,8 +16,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#ifndef VMX_PREEMPTION_TIMER_INTEL_X64_EAPIS_H
-#define VMX_PREEMPTION_TIMER_INTEL_X64_EAPIS_H
+#ifndef PREEMPTION_TIMER_INTEL_X64_EAPIS_H
+#define PREEMPTION_TIMER_INTEL_X64_EAPIS_H
 
 #include <list>
 
@@ -54,7 +54,7 @@ class vcpu;
 /// Provides an interface for registering handlers for VMX-preemption timer
 /// exits.
 ///
-class EXPORT_EAPIS_HVE vmx_preemption_timer_handler
+class EXPORT_EAPIS_HVE preemption_timer_handler
 {
 public:
 
@@ -75,14 +75,14 @@ public:
     /// @param apis the apis object for this VMX-preemption timer handler
     /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
     ///
-    vmx_preemption_timer_handler(gsl::not_null<vcpu *> vcpu);
+    preemption_timer_handler(gsl::not_null<vcpu *> vcpu);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~vmx_preemption_timer_handler() = default;
+    ~preemption_timer_handler() = default;
 
 public:
 
@@ -150,11 +150,11 @@ public:
 
     /// @cond
 
-    vmx_preemption_timer_handler(vmx_preemption_timer_handler &&) = default;
-    vmx_preemption_timer_handler &operator=(vmx_preemption_timer_handler &&) = default;
+    preemption_timer_handler(preemption_timer_handler &&) = default;
+    preemption_timer_handler &operator=(preemption_timer_handler &&) = default;
 
-    vmx_preemption_timer_handler(const vmx_preemption_timer_handler &) = delete;
-    vmx_preemption_timer_handler &operator=(const vmx_preemption_timer_handler &) = delete;
+    preemption_timer_handler(const preemption_timer_handler &) = delete;
+    preemption_timer_handler &operator=(const preemption_timer_handler &) = delete;
 
     /// @endcond
 };

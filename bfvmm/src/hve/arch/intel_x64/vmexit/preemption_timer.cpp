@@ -21,7 +21,7 @@
 namespace eapis::intel_x64
 {
 
-vmx_preemption_timer_handler::vmx_preemption_timer_handler(
+preemption_timer_handler::preemption_timer_handler(
     gsl::not_null<vcpu *> vcpu
 ) :
     m_vcpu{vcpu}
@@ -29,9 +29,9 @@ vmx_preemption_timer_handler::vmx_preemption_timer_handler(
     using namespace vmcs_n;
 
     vcpu->add_handler(
-        exit_reason::basic_exit_reason::vmx_preemption_timer_expired,
+        exit_reason::basic_exit_reason::preemption_timer_expired,
         ::handler_delegate_t::create <
-        vmx_preemption_timer_handler, &vmx_preemption_timer_handler::handle > (this)
+        preemption_timer_handler, &preemption_timer_handler::handle > (this)
     );
 }
 
@@ -40,39 +40,39 @@ vmx_preemption_timer_handler::vmx_preemption_timer_handler(
 // -----------------------------------------------------------------------------
 
 void
-vmx_preemption_timer_handler::add_handler(const handler_delegate_t &d)
+preemption_timer_handler::add_handler(const handler_delegate_t &d)
 { m_handlers.push_front(d); }
 
 void
-vmx_preemption_timer_handler::enable_exiting()
+preemption_timer_handler::enable_exiting()
 {
     using namespace ::intel_x64::vmcs;
 
-    pin_based_vm_execution_controls::activate_vmx_preemption_timer::enable();
-    vm_exit_controls::save_vmx_preemption_timer_value::enable();
+    pin_based_vm_execution_controls::activate_preemption_timer::enable();
+    vm_exit_controls::save_preemption_timer_value::enable();
 }
 
 void
-vmx_preemption_timer_handler::disable_exiting()
+preemption_timer_handler::disable_exiting()
 {
     using namespace ::intel_x64::vmcs;
 
-    vm_exit_controls::save_vmx_preemption_timer_value::disable();
-    pin_based_vm_execution_controls::activate_vmx_preemption_timer::disable();
+    vm_exit_controls::save_preemption_timer_value::disable();
+    pin_based_vm_execution_controls::activate_preemption_timer::disable();
 }
 
 void
-vmx_preemption_timer_handler::set_timer(value_t val)
+preemption_timer_handler::set_timer(value_t val)
 {
     using namespace ::intel_x64::vmcs;
-    vmx_preemption_timer_value::set(val);
+    preemption_timer_value::set(val);
 }
 
-vmx_preemption_timer_handler::value_t
-vmx_preemption_timer_handler::get_timer() const
+preemption_timer_handler::value_t
+preemption_timer_handler::get_timer() const
 {
     using namespace ::intel_x64::vmcs;
-    return vmx_preemption_timer_value::get();
+    return preemption_timer_value::get();
 }
 
 // -----------------------------------------------------------------------------
@@ -80,7 +80,7 @@ vmx_preemption_timer_handler::get_timer() const
 // -----------------------------------------------------------------------------
 
 bool
-vmx_preemption_timer_handler::handle(gsl::not_null<vcpu_t *> vcpu)
+preemption_timer_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 {
     for (const auto &d : m_handlers) {
         if (d(vcpu)) {
@@ -89,7 +89,7 @@ vmx_preemption_timer_handler::handle(gsl::not_null<vcpu_t *> vcpu)
     }
 
     throw std::runtime_error(
-        "vmx_preemption_timer_handler::handle: unhandled vmx-preemption timer exit"
+        "preemption_timer_handler::handle: unhandled vmx-preemption timer exit"
     );
 }
 

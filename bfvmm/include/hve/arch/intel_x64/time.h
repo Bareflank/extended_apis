@@ -116,7 +116,7 @@ inline uint64_t bus_freq_MHz()
 }
 
 inline uint64_t tsc_freq_MHz(uint64_t bus_freq_MHz)
-{ return bus_freq_MHz * ::intel_x64::msrs::platform_info::max_nonturbo_ratio::get(); }
+{ return bus_freq_MHz * ::intel_x64::msrs::ia32_platform_info::max_nonturbo_ratio::get(); }
 
 //
 // According to section 25.5.1, the VMX preemption timer (pet)

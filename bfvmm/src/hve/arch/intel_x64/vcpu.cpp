@@ -51,7 +51,7 @@ vcpu::vcpu(
     m_ept_handler{this},
     m_microcode_handler{this},
     m_vpid_handler{this},
-    m_vmx_preemption_timer_handler{this}
+    m_preemption_timer_handler{this}
 {
     using namespace vmcs_n;
 
@@ -104,12 +104,12 @@ vcpu::disable_vpid()
 //--------------------------------------------------------------------------
 
 void
-vcpu::enable_vmx_preemption_timer()
-{ m_vmx_preemption_timer_handler.enable_exiting(); }
+vcpu::enable_preemption_timer()
+{ m_preemption_timer_handler.enable_exiting(); }
 
 void
-vcpu::disable_vmx_preemption_timer()
-{ m_vmx_preemption_timer_handler.disable_exiting(); }
+vcpu::disable_preemption_timer()
+{ m_preemption_timer_handler.disable_exiting(); }
 
 //==========================================================================
 // Helpers
@@ -261,8 +261,12 @@ vcpu::queue_external_interrupt(uint64_t vector)
 { m_interrupt_window_handler.queue_external_interrupt(vector); }
 
 void
-vcpu::inject_general_protection_fault()
-{ m_interrupt_window_handler.inject_general_protection_fault(); }
+vcpu::inject_exception(uint64_t vector, uint64_t ec)
+{ m_interrupt_window_handler.inject_exception(vector, ec); }
+
+void
+vcpu::inject_external_interrupt(uint64_t vector)
+{ m_interrupt_window_handler.inject_external_interrupt(vector); }
 
 //--------------------------------------------------------------------------
 // IO Instruction
@@ -414,18 +418,21 @@ vcpu::add_xsetbv_handler(
 //--------------------------------------------------------------------------
 
 void
-vcpu::add_vmx_preemption_timer_handler(
-    const vmx_preemption_timer_handler::handler_delegate_t &d)
-{ m_vmx_preemption_timer_handler.add_handler(d); }
+vcpu::add_preemption_timer_handler(
+    const preemption_timer_handler::handler_delegate_t &d)
+{ m_preemption_timer_handler.add_handler(d); }
 
 void
-vcpu::set_vmx_preemption_timer(
-    const vmx_preemption_timer_handler::value_t val)
-{ m_vmx_preemption_timer_handler.set_timer(val); }
+vcpu::set_preemption_timer(
+    const preemption_timer_handler::value_t val)
+{
+    m_preemption_timer_handler.enable_exiting();
+    m_preemption_timer_handler.set_timer(val);
+}
 
-vmx_preemption_timer_handler::value_t
-vcpu::get_vmx_preemption_timer()
-{ return m_vmx_preemption_timer_handler.get_timer(); }
+preemption_timer_handler::value_t
+vcpu::get_preemption_timer()
+{ return m_preemption_timer_handler.get_timer(); }
 
 //==============================================================================
 // Memory Mapping

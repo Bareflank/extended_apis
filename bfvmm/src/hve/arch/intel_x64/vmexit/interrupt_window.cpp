@@ -77,53 +77,6 @@ interrupt_window_handler::queue_external_interrupt(uint64_t vector)
 }
 
 void
-interrupt_window_handler::inject_general_protection_fault()
-{ this->inject_exception(13); }
-
-// -----------------------------------------------------------------------------
-// Handlers
-// -----------------------------------------------------------------------------
-
-bool
-interrupt_window_handler::handle(gsl::not_null<vcpu_t *> vcpu)
-{
-    bfignored(vcpu);
-    this->inject_external_interrupt(m_interrupt_queue.pop());
-
-    if (m_interrupt_queue.empty()) {
-        this->disable_exiting();
-    }
-
-    return true;
-}
-
-// -----------------------------------------------------------------------------
-// Private
-// -----------------------------------------------------------------------------
-
-void
-interrupt_window_handler::enable_exiting()
-{
-    using namespace vmcs_n;
-
-    if (m_enabled == false) {
-        primary_processor_based_vm_execution_controls::interrupt_window_exiting::enable();
-        m_enabled = true;
-    }
-}
-
-void
-interrupt_window_handler::disable_exiting()
-{
-    using namespace vmcs_n;
-
-    if (m_enabled == true) {
-        primary_processor_based_vm_execution_controls::interrupt_window_exiting::disable();
-        m_enabled = false;
-    }
-}
-
-void
 interrupt_window_handler::inject_exception(uint64_t vector, uint64_t ec)
 {
     namespace info_n = vmcs_n::vm_entry_interruption_information;
@@ -167,6 +120,49 @@ interrupt_window_handler::inject_external_interrupt(uint64_t vector)
     info_n::valid_bit::enable(info);
 
     info_n::set(info);
+}
+
+// -----------------------------------------------------------------------------
+// Handlers
+// -----------------------------------------------------------------------------
+
+bool
+interrupt_window_handler::handle(gsl::not_null<vcpu_t *> vcpu)
+{
+    bfignored(vcpu);
+    this->inject_external_interrupt(m_interrupt_queue.pop());
+
+    if (m_interrupt_queue.empty()) {
+        this->disable_exiting();
+    }
+
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+// Private
+// -----------------------------------------------------------------------------
+
+void
+interrupt_window_handler::enable_exiting()
+{
+    using namespace vmcs_n;
+
+    if (m_enabled == false) {
+        primary_processor_based_vm_execution_controls::interrupt_window_exiting::enable();
+        m_enabled = true;
+    }
+}
+
+void
+interrupt_window_handler::disable_exiting()
+{
+    using namespace vmcs_n;
+
+    if (m_enabled == true) {
+        primary_processor_based_vm_execution_controls::interrupt_window_exiting::disable();
+        m_enabled = false;
+    }
 }
 
 }

@@ -88,16 +88,32 @@ public:
     ///
     void queue_external_interrupt(uint64_t vector);
 
-    /// Inject General Protection Fault
+    /// Inject Exception
     ///
-    /// Injects a general protection fault exception with a 0 error code.
-    /// Note that exceptions cannot be blocked and as a result, it is always
-    /// safe to inject so no window is needed. A
+    /// Inject an exception on the next VM entry. Note that this will overwrite
+    /// any interrupts that are already injected for the next VM entry so
+    /// care should be taken when using this function
     ///
     /// @expects
     /// @ensures
     ///
-    VIRTUAL void inject_general_protection_fault();
+    /// @param vector the vector to inject into the guest
+    /// @param ec the error code associated with the exception if applicable
+    ///
+    void inject_exception(uint64_t vector, uint64_t ec = 0);
+
+    /// Inject External Interrupt
+    ///
+    /// Inject an external interrupt on the next VM entry. Note that this will
+    /// overwriteany interrupts that are already injected for the next VM entry
+    /// so care should be taken when using this function
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector the vector to inject into the guest
+    ///
+    void inject_external_interrupt(uint64_t vector);
 
 public:
 
@@ -111,9 +127,6 @@ private:
 
     void enable_exiting();
     void disable_exiting();
-
-    void inject_exception(uint64_t vector, uint64_t ec = 0);
-    void inject_external_interrupt(uint64_t vector);
 
 private:
 
