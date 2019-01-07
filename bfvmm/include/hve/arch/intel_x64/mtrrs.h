@@ -25,22 +25,6 @@
 #include "ept/mmap.h"
 
 // -----------------------------------------------------------------------------
-// Exports
-// -----------------------------------------------------------------------------
-
-#include <bfexports.h>
-
-#ifndef STATIC_EAPIS_HVE
-#ifdef SHARED_EAPIS_HVE
-#define EXPORT_EAPIS_HVE EXPORT_SYM
-#else
-#define EXPORT_EAPIS_HVE IMPORT_SYM
-#endif
-#else
-#define EXPORT_EAPIS_HVE
-#endif
-
-// -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
