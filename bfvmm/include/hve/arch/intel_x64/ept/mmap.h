@@ -66,7 +66,7 @@ namespace eapis::intel_x64::ept
 /// information on how EPT page tables work, please see the Intel SDM. This
 /// implementation attempts to map directly to the SDM text.
 ///
-class EXPORT_MEMORY_MANAGER mmap
+class mmap
 {
 
 public:

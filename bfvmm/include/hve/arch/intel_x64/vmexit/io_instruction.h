@@ -56,7 +56,7 @@ class vcpu;
 ///
 /// Provides an interface for handling port I/O exits base on the port number
 ///
-class EXPORT_EAPIS_HVE io_instruction_handler
+class io_instruction_handler
 {
 public:
 

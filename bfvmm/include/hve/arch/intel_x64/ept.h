@@ -54,7 +54,7 @@ class vcpu;
 ///
 /// Provides an interface for enabling EPT
 ///
-class EXPORT_EAPIS_HVE ept_handler
+class ept_handler
 {
 public:
 

@@ -57,7 +57,7 @@ class vcpu;
 /// Provides an interface for registering handlers for rdmsr exits
 /// Handlers can be registered a specific MSR address.
 ///
-class EXPORT_EAPIS_HVE rdmsr_handler
+class rdmsr_handler
 {
 public:
 

@@ -54,7 +54,7 @@ class vcpu;
 ///
 /// Provides an interface for registering handlers of SIPI exits
 ///
-class EXPORT_EAPIS_HVE sipi_signal_handler
+class sipi_signal_handler
 {
 public:
 

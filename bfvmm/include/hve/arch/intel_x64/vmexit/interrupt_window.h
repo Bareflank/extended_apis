@@ -56,7 +56,7 @@ class vcpu;
 ///
 /// Provides an interface for registering handlers of the interrupt-window exit.
 ///
-class EXPORT_EAPIS_HVE interrupt_window_handler
+class interrupt_window_handler
 {
 public:
 

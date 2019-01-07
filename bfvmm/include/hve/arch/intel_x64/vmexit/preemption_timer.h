@@ -57,7 +57,7 @@ class vcpu;
 /// Provides an interface for registering handlers for VMX-preemption timer
 /// exits.
 ///
-class EXPORT_EAPIS_HVE preemption_timer_handler
+class preemption_timer_handler
 {
 public:
 

@@ -56,7 +56,7 @@ class vcpu;
 ///
 /// Provides an interface for registering handlers of the INIT signal exit.
 ///
-class EXPORT_EAPIS_HVE init_signal_handler
+class init_signal_handler
 {
 public:
 

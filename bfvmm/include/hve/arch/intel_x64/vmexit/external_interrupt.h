@@ -57,7 +57,7 @@ class vcpu;
 /// Provides an interface for registering handlers for external-interrupt
 /// exits.
 ///
-class EXPORT_EAPIS_HVE external_interrupt_handler
+class external_interrupt_handler
 {
 public:
 

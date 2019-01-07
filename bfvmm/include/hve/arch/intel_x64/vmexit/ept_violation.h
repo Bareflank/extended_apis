@@ -57,7 +57,7 @@ class vcpu;
 /// Provides an interface for registering handlers for EPT violation
 /// exits.
 ///
-class EXPORT_EAPIS_HVE ept_violation_handler
+class ept_violation_handler
 {
 public:
 

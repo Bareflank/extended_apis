@@ -66,7 +66,7 @@ namespace eapis::intel_x64
 /// match what is in the MSRs, but instead provides a corrected version that
 /// is continuous and non-overlapping.
 ///
-class EXPORT_EAPIS_HVE mtrrs
+class mtrrs
 {
 public:
 

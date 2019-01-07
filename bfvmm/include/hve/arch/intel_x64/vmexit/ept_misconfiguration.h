@@ -41,7 +41,7 @@ class vcpu;
 /// Provides an interface for registering handlers for EPT misconfiguration
 /// exits.
 ///
-class EXPORT_EAPIS_HVE ept_misconfiguration_handler
+class ept_misconfiguration_handler
 {
 public:
 

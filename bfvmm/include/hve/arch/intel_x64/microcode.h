@@ -61,7 +61,7 @@ class vcpu;
 ///   own microcode from the VMM's point of view. This way, you can package
 ///   your own microcode, or vmcall to load microcode as needed.
 ///
-class EXPORT_EAPIS_HVE microcode_handler
+class microcode_handler
 {
 public:
 

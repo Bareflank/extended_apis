@@ -51,7 +51,7 @@ class vcpu;
 ///
 /// Provides an interface for enabling VPID
 ///
-class EXPORT_EAPIS_HVE vpid_handler
+class vpid_handler
 {
 public:
 

@@ -56,7 +56,7 @@ class vcpu;
 /// access. Users may supply handlers and specify shadow values (for CR0 and
 /// CR4).
 ///
-class EXPORT_EAPIS_HVE control_register_handler
+class control_register_handler
 {
 public:
 

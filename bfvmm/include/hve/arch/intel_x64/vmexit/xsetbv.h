@@ -56,7 +56,7 @@ class vcpu;
 ///
 /// Provides an interface for registering handlers for mov-dr exits.
 ///
-class EXPORT_EAPIS_HVE xsetbv_handler
+class xsetbv_handler
 {
 public:
 

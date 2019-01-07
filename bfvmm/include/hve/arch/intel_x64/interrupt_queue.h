@@ -51,7 +51,7 @@ namespace eapis::intel_x64
 ///
 /// Simple queue designed to work with external interrupts.
 ///
-class EXPORT_EAPIS_HVE interrupt_queue
+class interrupt_queue
 {
 public:
 

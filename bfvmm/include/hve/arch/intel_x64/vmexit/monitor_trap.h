@@ -57,7 +57,7 @@ class vcpu;
 /// Provides an interface for registering handlers for monitor-trap flag
 /// exits.
 ///
-class EXPORT_EAPIS_HVE monitor_trap_handler
+class monitor_trap_handler
 {
 public:
 
