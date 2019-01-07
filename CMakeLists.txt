@@ -35,7 +35,7 @@ add_project_include(${EAPIS_SOURCE_CMAKE_DIR}/macros.cmake)
 # VMM Components
 # ------------------------------------------------------------------------------
 
-if(ENABLE_BUILD_VMM)
+if(BUILD_VMM)
     add_subproject(
         eapis_bfvmm vmm
         DEPENDS bfvmm
@@ -60,7 +60,7 @@ endif()
 # Unit Tests
 # ------------------------------------------------------------------------------
 
-# if(ENABLE_BUILD_TEST)
+# if(BUILD_TEST)
 #     add_subproject(
 #         eapis_bfvmm test
 #         DEPENDS bfvmm

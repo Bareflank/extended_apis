@@ -178,7 +178,7 @@ public:
     ///
     void dump(int level = 0, const char *str = "mtrrs") const;
 
-#ifndef ENABLE_BUILD_TEST
+#ifndef BUILD_TEST
 private:
 #endif
 

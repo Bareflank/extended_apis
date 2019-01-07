@@ -51,7 +51,7 @@ for:
     - git clone https://github.com/bareflank/hypervisor.git hypervisor
     - mkdir build_msbuild
     - cd build_msbuild
-    - cmake -G "Visual Studio 15 2017 Win64" -DEXTENSION=.. -DENABLE_BUILD_VMM=OFF -DENABLE_BUILD_USERSPACE=OFF -DENABLE_BUILD_TEST=ON ../hypervisor
+    - cmake -G "Visual Studio 15 2017 Win64" -DEXTENSION=.. -DBUILD_VMM=OFF -DBUILD_USERSPACE=OFF -DBUILD_TEST=ON ../hypervisor
     - msbuild /m:3 hypervisor.sln
     - cmake --build . --target unittest
 
