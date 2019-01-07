@@ -24,11 +24,6 @@ list(APPEND ARGN
     DEPENDS bfvmm_hve
     DEPENDS bfvmm_vcpu
     DEPENDS bfvmm_memory_manager
-    DEFINES STATIC_EAPIS_HVE
-    DEFINES STATIC_HVE
-    DEFINES STATIC_MEMORY_MANAGER
-    DEFINES STATIC_INTRINSICS
-    DEFINES STATIC_DEBUG
 )
 
 do_test(test_helpers

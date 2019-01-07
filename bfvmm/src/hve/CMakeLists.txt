@@ -51,20 +51,7 @@ else()
     message(FATAL_ERROR "Unsupported architecture")
 endif()
 
-add_shared_library(
-    eapis_hve
-    SOURCES ${SOURCES}
-    DEFINES SHARED_EAPIS_HVE
-    DEFINES SHARED_HVE
-    DEFINES SHARED_MEMORY_MANAGER
-    DEFINES SHARED_INTRINSICS
-)
-
 add_static_library(
     eapis_hve
     SOURCES ${SOURCES}
-    DEFINES STATIC_EAPIS_HVE
-    DEFINES STATIC_HVE
-    DEFINES STATIC_MEMORY_MANAGER
-    DEFINES STATIC_INTRINSICS
 )
