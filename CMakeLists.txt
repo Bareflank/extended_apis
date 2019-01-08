@@ -37,23 +37,16 @@ add_project_include(${EAPIS_SOURCE_CMAKE_DIR}/macros.cmake)
 
 if(BUILD_VMM)
     add_subproject(
-        eapis_bfvmm vmm
+        eapis vmm
         DEPENDS bfvmm
-        DEPENDS bfintrinsics
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm
     )
 
-    add_subproject(
-        eapis_bfvmm_main vmm
-        DEPENDS eapis_bfvmm
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/src/main
-    )
-
-    add_subproject(
-        eapis_integration vmm
-        DEPENDS eapis_bfvmm
-        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/
-    )
+#    add_subproject(
+#        eapis_integration vmm
+#        DEPENDS eapis_bfvmm
+#        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfvmm/integration/
+#    )
 endif()
 
 # ------------------------------------------------------------------------------
@@ -72,24 +65,24 @@ endif()
 # Extensions
 # ------------------------------------------------------------------------------
 
-userspace_extension(
-    ack
-    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfack
-    DEPENDS bfintrinsics
-)
-
-# ------------------------------------------------------------------------------
-# Custom Target
-# ------------------------------------------------------------------------------
-
-add_custom_target_category("EAPI Commands")
-
-add_custom_target(ack
-    COMMAND ${USERSPACE_PREFIX_PATH}/bin/ack
-    USES_TERMINAL
-)
-
-add_custom_target_info(
-    TARGET ack
-    COMMENT "Ack the hypervisor"
-)
+#userspace_extension(
+#    ack
+#    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/bfack
+#    DEPENDS bfintrinsics
+#)
+#
+## ------------------------------------------------------------------------------
+## Custom Target
+## ------------------------------------------------------------------------------
+#
+#add_custom_target_category("EAPI Commands")
+#
+#add_custom_target(ack
+#    COMMAND ${USERSPACE_PREFIX_PATH}/bin/ack
+#    USES_TERMINAL
+#)
+#
+#add_custom_target_info(
+#    TARGET ack
+#    COMMENT "Ack the hypervisor"
+#)

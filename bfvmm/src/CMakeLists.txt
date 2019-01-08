@@ -22,9 +22,9 @@
 cmake_minimum_required(VERSION 3.6)
 project(eapis C CXX)
 
-include(${SOURCE_CMAKE_DIR}/project.cmake)
-init_project(
-    INCLUDES ${PROJECT_SOURCE_DIR}/../include
+init_project(eapis INTERFACE)
+target_include_directories(eapis PUBLIC
+    ${PROJECT_SOURCE_DIR}/../include
 )
 
 add_subdirectory(hve)
