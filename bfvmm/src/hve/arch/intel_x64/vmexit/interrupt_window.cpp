@@ -88,7 +88,7 @@ interrupt_window_handler::inject_exception(uint64_t vector, uint64_t ec)
     info_n::interruption_type::set(info, hardware_exception);
     info_n::valid_bit::enable(info);
 
-    switch(vector) {
+    switch (vector) {
         case 8:
         case 10:
         case 11:
