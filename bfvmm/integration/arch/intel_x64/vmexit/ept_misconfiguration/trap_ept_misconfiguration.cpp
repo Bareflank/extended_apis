@@ -16,6 +16,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-cert-err58-cpp
+//
+// Reason:
+//     This test triggers on the use of a std::mutex being globally defined
+//     from the EPT map.
+//
+
 #include <bfcallonce.h>
 
 #include <bfvmm/vcpu/vcpu_factory.h>
@@ -47,26 +54,39 @@ public:
             );
         });
 
-        eapis()->add_ept_misconfiguration_handler(
+        this->add_ept_misconfiguration_handler(
             ept_misconfiguration_handler::handler_delegate_t::create<vcpu, &vcpu::test_misconfiguration_handler>(this)
         );
 
-        eapis()->set_eptp(g_guest_map);
-        eapis()->ept_misconfiguration()->enable_log();
+        this->set_eptp(g_guest_map);
     }
+
+    ~vcpu() override = default;
 
     bool
     test_misconfiguration_handler(
-        gsl::not_null<vmcs_t *> vmcs, ept_misconfiguration_handler::info_t &info)
+        gsl::not_null<vcpu_t *> vcpu, ept_misconfiguration_handler::info_t &info)
     {
-        bfignored(vmcs);
+        bfignored(vcpu);
         bfignored(info);
 
         bfdebug_pass(0, "test");
-        eapis()->disable_ept();
+        this->disable_ept();
 
         return true;
     }
+
+public:
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

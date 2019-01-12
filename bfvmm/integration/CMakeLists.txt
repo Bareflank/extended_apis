@@ -1,5 +1,5 @@
 #
-# Bareflank Hypervisor
+# Bareflank Extended APIs
 # Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or

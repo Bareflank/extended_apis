@@ -1,5 +1,5 @@
 #
-# Bareflank Hypervisor
+# Bareflank Extended APIs
 # Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
@@ -22,16 +22,14 @@ project(eapis_test C CXX)
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
     INCLUDES ${PROJECT_SOURCE_DIR}/../include
-    INCLUDES ${PROJECT_SOURCE_DIR}/../../bfsdk/include
 )
 
-add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
+# add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
 
-add_subdirectory(hve)
+# add_subdirectory(hve)
 
 # -----------------------------------------------------------------------------
 # Install
 # -----------------------------------------------------------------------------
 
 install(DIRECTORY ../include/ DESTINATION include/eapis)
-install(DIRECTORY ../../bfsdk/include/ DESTINATION include)

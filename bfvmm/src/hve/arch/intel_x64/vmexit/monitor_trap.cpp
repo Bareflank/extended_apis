@@ -16,22 +16,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfdebug.h>
-#include <hve/arch/intel_x64/apis.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
 monitor_trap_handler::monitor_trap_handler(
-    gsl::not_null<apis *> apis,
-    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state)
+    gsl::not_null<vcpu *> vcpu
+) :
+    m_vcpu{vcpu}
 {
     using namespace vmcs_n;
-    bfignored(eapis_vcpu_global_state);
 
-    apis->add_handler(
+    vcpu->add_handler(
         exit_reason::basic_exit_reason::monitor_trap_flag,
         ::handler_delegate_t::create<monitor_trap_handler, &monitor_trap_handler::handle>(this)
     );
@@ -57,7 +54,7 @@ monitor_trap_handler::enable()
 // -----------------------------------------------------------------------------
 
 bool
-monitor_trap_handler::handle(gsl::not_null<vmcs_t *> vmcs)
+monitor_trap_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 {
     using namespace vmcs_n;
 
@@ -66,7 +63,7 @@ monitor_trap_handler::handle(gsl::not_null<vmcs_t *> vmcs)
     };
 
     for (const auto &d : m_handlers) {
-        if (d(vmcs, info)) {
+        if (d(vcpu, info)) {
             break;
         }
     }
@@ -78,5 +75,4 @@ monitor_trap_handler::handle(gsl::not_null<vmcs_t *> vmcs)
     return true;
 }
 
-}
 }

@@ -16,22 +16,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfdebug.h>
-#include <hve/arch/intel_x64/apis.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
 interrupt_window_handler::interrupt_window_handler(
-    gsl::not_null<apis *> apis,
-    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state)
+    gsl::not_null<vcpu *> vcpu
+) :
+    m_vcpu{vcpu}
 {
     using namespace vmcs_n;
-    bfignored(eapis_vcpu_global_state);
 
-    apis->add_handler(
+    vcpu->add_handler(
         exit_reason::basic_exit_reason::interrupt_window,
         ::handler_delegate_t::create<interrupt_window_handler, &interrupt_window_handler::handle>(this)
     );
@@ -42,69 +39,87 @@ interrupt_window_handler::interrupt_window_handler(
 // -----------------------------------------------------------------------------
 
 void
-interrupt_window_handler::add_handler(
-    const handler_delegate_t &d)
-{ m_handlers.push_front(d); }
-
-void
-interrupt_window_handler::enable_exiting()
+interrupt_window_handler::queue_external_interrupt(uint64_t vector)
 {
-    using namespace vmcs_n;
-    primary_processor_based_vm_execution_controls::interrupt_window_exiting::enable();
+    // Note:
+    //
+    // There are two ways to handle injection. Currently, we inject using an
+    // interrupt window. This means that an interrupt is always queued, and it
+    // is only injected when the VM has an open window. The downside to this
+    // approach is that when this function is called, it is possible that the
+    // window is actually open, which means that we needlessly generate an
+    // extra VM exit.
+    //
+    // The other approach is to check to see if the window is open and inject.
+    // The issue with this approach is that we always have to check to see if
+    // the window is open which is expensive, and then we have to have a lot of
+    // extra logic to handle injecting without overwritting existing
+    // interrupts, getting interrupts out of order, etc... There are a lot
+    // more edge cases. The beauty of our current approach is that our window
+    // handler is the only thing that can inject an interrupt, which is
+    // mutually exclusive with queueing (as queueing occurs on any VM exit
+    // other than our window) which means there are no race conditions, or
+    // overwritting, etc... And, we do not have to make several vmreads per
+    // injection. Since we leverage vpid, a VM exit that occurs before an entry
+    // has a minimum performance hit as the VMM is still in the cache so this
+    // approach is both reliable and performant.
+    //
+    // Also note that our approach also works fine with exceptions. Exceptions
+    // do not need to be queued since they cannot be blocked. This means that
+    // exceptions can be injected on any VM exit without fear of overwritting
+    // an external interrupt as they are only injected on an open window exit
+    // which once again, will not attempt to inject an exception at the same
+    // time since that code is managed here, and is very small.
+    //
+
+    this->enable_exiting();
+    m_interrupt_queue.push(vector);
 }
 
 void
-interrupt_window_handler::disable_exiting()
+interrupt_window_handler::inject_exception(uint64_t vector, uint64_t ec)
 {
-    using namespace vmcs_n;
-    primary_processor_based_vm_execution_controls::interrupt_window_exiting::disable();
-}
+    namespace info_n = vmcs_n::vm_entry_interruption_information;
+    using namespace info_n::interruption_type;
 
-bool
-interrupt_window_handler::is_open()
-{
-    using namespace vmcs_n;
+    uint64_t info = 0;
 
-    if (guest_rflags::interrupt_enable_flag::is_disabled()) {
-        return false;
-    }
+    info_n::vector::set(info, vector);
+    info_n::interruption_type::set(info, hardware_exception);
+    info_n::valid_bit::enable(info);
 
-    switch (guest_activity_state::get()) {
-        case guest_activity_state::active:
-        case guest_activity_state::hlt:
+    switch (vector) {
+        case 8:
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+        case 17:
+            info_n::deliver_error_code_bit::enable(info);
+            vmcs_n::vm_entry_exception_error_code::set(ec);
             break;
 
-        case guest_activity_state::shutdown:
-        case guest_activity_state::wait_for_sipi:
         default:
-            return false;
+            break;
     }
 
-    const auto state = guest_interruptibility_state::get();
-
-    if (guest_interruptibility_state::blocking_by_sti::is_enabled(state)) {
-        return false;
-    }
-
-    if (guest_interruptibility_state::blocking_by_mov_ss::is_enabled(state)) {
-        return false;
-    }
-
-    return true;
+    info_n::set(info);
 }
 
-
 void
-interrupt_window_handler::inject(uint64_t vector)
+interrupt_window_handler::inject_external_interrupt(uint64_t vector)
 {
+    namespace info_n = vmcs_n::vm_entry_interruption_information;
+    using namespace info_n::interruption_type;
+
     uint64_t info = 0;
-    using namespace vmcs_n::vm_entry_interruption_information;
 
-    vector::set(info, vector);
-    interruption_type::set(info, interruption_type::external_interrupt);
-    valid_bit::enable(info);
+    info_n::vector::set(info, vector);
+    info_n::interruption_type::set(info, external_interrupt);
+    info_n::valid_bit::enable(info);
 
-    vmcs_n::vm_entry_interruption_information::set(info);
+    info_n::set(info);
 }
 
 // -----------------------------------------------------------------------------
@@ -112,25 +127,42 @@ interrupt_window_handler::inject(uint64_t vector)
 // -----------------------------------------------------------------------------
 
 bool
-interrupt_window_handler::handle(gsl::not_null<vmcs_t *> vmcs)
+interrupt_window_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 {
-    struct info_t info {};
+    bfignored(vcpu);
+    this->inject_external_interrupt(m_interrupt_queue.pop());
 
-    for (const auto &d : m_handlers) {
-        if (d(vmcs, info)) {
-
-            if (!info.ignore_disable) {
-                this->disable_exiting();
-            }
-
-            return true;
-        }
+    if (m_interrupt_queue.empty()) {
+        this->disable_exiting();
     }
 
-    throw std::runtime_error(
-        "Unhandled interrupt window"
-    );
+    return true;
 }
 
+// -----------------------------------------------------------------------------
+// Private
+// -----------------------------------------------------------------------------
+
+void
+interrupt_window_handler::enable_exiting()
+{
+    using namespace vmcs_n;
+
+    if (m_enabled == false) {
+        primary_processor_based_vm_execution_controls::interrupt_window_exiting::enable();
+        m_enabled = true;
+    }
 }
+
+void
+interrupt_window_handler::disable_exiting()
+{
+    using namespace vmcs_n;
+
+    if (m_enabled == true) {
+        primary_processor_based_vm_execution_controls::interrupt_window_exiting::disable();
+        m_enabled = false;
+    }
+}
+
 }

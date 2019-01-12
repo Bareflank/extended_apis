@@ -29,9 +29,9 @@ uint64_t g_cr4;
 
 bool
 test_handler(
-    gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, control_register_handler::info_t &info)
 {
-    bfignored(vmcs);
+    bfignored(vcpu);
     bfignored(info);
 
     info.val = g_cr4;
@@ -70,13 +70,25 @@ public:
             hlt_delegate_t::create<test_hlt_delegate>()
         );
 
-        eapis()->add_wrcr4_handler(
+        this->add_wrcr4_handler(
             0xFFFFFFFFFFFFFFFF,
             control_register_handler::handler_delegate_t::create<test_handler>()
         );
-
-        eapis()->control_register()->enable_log();
     }
+
+    ~vcpu() override = default;
+
+public:
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

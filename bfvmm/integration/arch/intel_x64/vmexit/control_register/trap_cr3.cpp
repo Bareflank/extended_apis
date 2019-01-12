@@ -30,9 +30,9 @@ auto wrcr3_called = false;
 
 bool
 test_rdcr3_handler(
-    gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, control_register_handler::info_t &info)
 {
-    bfignored(vmcs);
+    bfignored(vcpu);
     bfignored(info);
 
     rdcr3_called = true;
@@ -41,9 +41,9 @@ test_rdcr3_handler(
 
 bool
 test_wrcr3_handler(
-    gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, control_register_handler::info_t &info)
 {
-    bfignored(vmcs);
+    bfignored(vcpu);
     bfignored(info);
 
     wrcr3_called = true;
@@ -80,16 +80,28 @@ public:
             hlt_delegate_t::create<test_hlt_delegate>()
         );
 
-        eapis()->add_rdcr3_handler(
+        this->add_rdcr3_handler(
             control_register_handler::handler_delegate_t::create<test_rdcr3_handler>()
         );
 
-        eapis()->add_wrcr3_handler(
+        this->add_wrcr3_handler(
             control_register_handler::handler_delegate_t::create<test_wrcr3_handler>()
         );
-
-        eapis()->control_register()->enable_log();
     }
+
+    ~vcpu() override = default;
+
+public:
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

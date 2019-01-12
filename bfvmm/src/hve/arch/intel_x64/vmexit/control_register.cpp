@@ -16,12 +16,9 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfdebug.h>
-#include <hve/arch/intel_x64/apis.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
 static bool
@@ -53,10 +50,10 @@ emulate_ia_32e_mode_switch(
 
 static bool
 default_wrcr0_handler(
-    gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, control_register_handler::info_t &info)
 {
     using namespace vmcs_n::guest_cr0;
-    bfignored(vmcs);
+    bfignored(vcpu);
 
     if (paging::is_enabled() != paging::is_enabled(info.val)) {
         return emulate_ia_32e_mode_switch(info);
@@ -67,9 +64,9 @@ default_wrcr0_handler(
 
 static bool
 default_rdcr3_handler(
-    gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, control_register_handler::info_t &info)
 {
-    bfignored(vmcs);
+    bfignored(vcpu);
     bfignored(info);
 
     return true;
@@ -77,9 +74,9 @@ default_rdcr3_handler(
 
 static bool
 default_wrcr3_handler(
-    gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, control_register_handler::info_t &info)
 {
-    bfignored(vmcs);
+    bfignored(vcpu);
     bfignored(info);
 
     ::intel_x64::vmx::invept_global();
@@ -88,23 +85,22 @@ default_wrcr3_handler(
 
 static bool
 default_wrcr4_handler(
-    gsl::not_null<vmcs_t *> vmcs, control_register_handler::info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, control_register_handler::info_t &info)
 {
-    bfignored(vmcs);
+    bfignored(vcpu);
     bfignored(info);
 
     return true;
 }
 
 control_register_handler::control_register_handler(
-    gsl::not_null<apis *> apis,
-    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state
+    gsl::not_null<vcpu *> vcpu
 ) :
-    m_eapis_vcpu_global_state{eapis_vcpu_global_state}
+    m_vcpu{vcpu}
 {
     using namespace vmcs_n;
 
-    apis->add_handler(
+    vcpu->add_handler(
         exit_reason::basic_exit_reason::control_register_accesses,
         ::handler_delegate_t::create<control_register_handler, &control_register_handler::handle>(this)
     );
@@ -127,13 +123,6 @@ control_register_handler::control_register_handler(
 
     this->enable_wrcr0_exiting(0);
     this->enable_wrcr4_exiting(0);
-}
-
-control_register_handler::~control_register_handler()
-{
-    if (!ndebug && m_log_enabled) {
-        dump_log();
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -165,7 +154,7 @@ control_register_handler::enable_wrcr0_exiting(
     vmcs_n::value_type mask)
 {
     using namespace vmcs_n;
-    mask |= m_eapis_vcpu_global_state->ia32_vmx_cr0_fixed0;
+    mask |= m_vcpu->global_state()->ia32_vmx_cr0_fixed0;
 
     cr0_guest_host_mask::set(mask);
     cr0_read_shadow::set(guest_cr0::get());
@@ -190,66 +179,10 @@ control_register_handler::enable_wrcr4_exiting(
     vmcs_n::value_type mask)
 {
     using namespace vmcs_n;
-    mask |= m_eapis_vcpu_global_state->ia32_vmx_cr4_fixed0;
+    mask |= m_vcpu->global_state()->ia32_vmx_cr4_fixed0;
 
     cr4_guest_host_mask::set(mask);
     cr4_read_shadow::set(guest_cr4::get());
-}
-
-// -----------------------------------------------------------------------------
-// Debug
-// -----------------------------------------------------------------------------
-
-void
-control_register_handler::dump_log()
-{
-    if (!m_cr0_log.empty()) {
-        bfdebug_transaction(0, [&](std::string * msg) {
-            bfdebug_lnbr(0, msg);
-            bfdebug_info(0, "cr0 log", msg);
-            bfdebug_brk2(0, msg);
-
-            for (const auto &record : m_cr0_log) {
-                bfdebug_info(0, "record", msg);
-                bfdebug_subnhex(0, "val", record.val, msg);
-                bfdebug_subnhex(0, "shadow", record.shadow, msg);
-            }
-
-            bfdebug_lnbr(0, msg);
-        });
-    }
-
-    if (!m_cr3_log.empty()) {
-        bfdebug_transaction(0, [&](std::string * msg) {
-            bfdebug_lnbr(0, msg);
-            bfdebug_info(0, "cr3 log", msg);
-            bfdebug_brk2(0, msg);
-
-            for (const auto &record : m_cr3_log) {
-                bfdebug_info(0, "record", msg);
-                bfdebug_subnhex(0, "val", record.val, msg);
-                bfdebug_subnhex(0, "shadow", record.shadow, msg);
-            }
-
-            bfdebug_lnbr(0, msg);
-        });
-    }
-
-    if (!m_cr4_log.empty()) {
-        bfdebug_transaction(0, [&](std::string * msg) {
-            bfdebug_lnbr(0, msg);
-            bfdebug_info(0, "cr4 log", msg);
-            bfdebug_brk2(0, msg);
-
-            for (const auto &record : m_cr4_log) {
-                bfdebug_info(0, "record", msg);
-                bfdebug_subnhex(0, "val", record.val, msg);
-                bfdebug_subnhex(0, "shadow", record.shadow, msg);
-            }
-
-            bfdebug_lnbr(0, msg);
-        });
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -257,19 +190,19 @@ control_register_handler::dump_log()
 // -----------------------------------------------------------------------------
 
 bool
-control_register_handler::handle(gsl::not_null<vmcs_t *> vmcs)
+control_register_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 {
     using namespace vmcs_n::exit_qualification::control_register_access;
 
     switch (control_register_number::get()) {
         case 0:
-            return handle_cr0(vmcs);
+            return handle_cr0(vcpu);
 
         case 3:
-            return handle_cr3(vmcs);
+            return handle_cr3(vcpu);
 
         case 4:
-            return handle_cr4(vmcs);
+            return handle_cr4(vcpu);
 
         default:
             throw std::runtime_error(
@@ -279,13 +212,13 @@ control_register_handler::handle(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-control_register_handler::handle_cr0(gsl::not_null<vmcs_t *> vmcs)
+control_register_handler::handle_cr0(gsl::not_null<vcpu_t *> vcpu)
 {
     using namespace vmcs_n::exit_qualification::control_register_access;
 
     switch (access_type::get()) {
         case access_type::mov_to_cr:
-            return handle_wrcr0(vmcs);
+            return handle_wrcr0(vcpu);
 
         case access_type::mov_from_cr:
             throw std::runtime_error(
@@ -305,16 +238,16 @@ control_register_handler::handle_cr0(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-control_register_handler::handle_cr3(gsl::not_null<vmcs_t *> vmcs)
+control_register_handler::handle_cr3(gsl::not_null<vcpu_t *> vcpu)
 {
     using namespace vmcs_n::exit_qualification::control_register_access;
 
     switch (access_type::get()) {
         case access_type::mov_to_cr:
-            return handle_wrcr3(vmcs);
+            return handle_wrcr3(vcpu);
 
         case access_type::mov_from_cr:
-            return handle_rdcr3(vmcs);
+            return handle_rdcr3(vcpu);
 
         case access_type::clts:
             throw std::runtime_error(
@@ -329,13 +262,13 @@ control_register_handler::handle_cr3(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-control_register_handler::handle_cr4(gsl::not_null<vmcs_t *> vmcs)
+control_register_handler::handle_cr4(gsl::not_null<vcpu_t *> vcpu)
 {
     using namespace vmcs_n::exit_qualification::control_register_access;
 
     switch (access_type::get()) {
         case access_type::mov_to_cr:
-            return handle_wrcr4(vmcs);
+            return handle_wrcr4(vcpu);
 
         case access_type::mov_from_cr:
             throw std::runtime_error(
@@ -355,35 +288,23 @@ control_register_handler::handle_cr4(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-control_register_handler::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
+control_register_handler::handle_wrcr0(gsl::not_null<vcpu_t *> vcpu)
 {
     struct info_t info = {
-        emulate_rdgpr(vmcs),
+        emulate_rdgpr(vcpu),
         vmcs_n::cr0_read_shadow::get(),
         false,
         false
     };
 
-    if (!ndebug && m_log_enabled) {
-        add_record(m_cr0_log, {
-            info.val, info.shadow
-        });
-    }
-
     info.shadow = info.val;
-    info.val |= m_eapis_vcpu_global_state->ia32_vmx_cr0_fixed0;
+    info.val |= m_vcpu->global_state()->ia32_vmx_cr0_fixed0;
 
     for (const auto &d : m_wrcr0_handlers) {
-        if (d(vmcs, info)) {
+        if (d(vcpu, info)) {
             break;
         }
     }
-
-    // bfdebug_transaction(0, [&](std::string * msg) {
-    //     bfdebug_info(0, "handle_wrcr0", msg);
-    //     bfdebug_subnhex(0, "val", info.val, msg);
-    //     bfdebug_subnhex(0, "shadow", info.shadow, msg);
-    // });
 
     if (!info.ignore_write) {
         vmcs_n::guest_cr0::set(info.val);
@@ -391,14 +312,14 @@ control_register_handler::handle_wrcr0(gsl::not_null<vmcs_t *> vmcs)
     }
 
     if (!info.ignore_advance) {
-        return advance(vmcs);
+        return vcpu->advance();
     }
 
     return true;
 }
 
 bool
-control_register_handler::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
+control_register_handler::handle_rdcr3(gsl::not_null<vcpu_t *> vcpu)
 {
     struct info_t info = {
         vmcs_n::guest_cr3::get(),
@@ -407,47 +328,35 @@ control_register_handler::handle_rdcr3(gsl::not_null<vmcs_t *> vmcs)
         false
     };
 
-    if (!ndebug && m_log_enabled) {
-        add_record(m_cr3_log, {
-            info.val, info.shadow
-        });
-    }
-
     for (const auto &d : m_rdcr3_handlers) {
-        if (d(vmcs, info)) {
+        if (d(vcpu, info)) {
             break;
         }
     }
 
     if (!info.ignore_write) {
-        emulate_wrgpr(vmcs, info.val);
+        emulate_wrgpr(vcpu, info.val);
     }
 
     if (!info.ignore_advance) {
-        return advance(vmcs);
+        return vcpu->advance();
     }
 
     return true;
 }
 
 bool
-control_register_handler::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
+control_register_handler::handle_wrcr3(gsl::not_null<vcpu_t *> vcpu)
 {
     struct info_t info = {
-        emulate_rdgpr(vmcs),
+        emulate_rdgpr(vcpu),
         0,
         false,
         false
     };
 
-    if (!ndebug && m_log_enabled) {
-        add_record(m_cr3_log, {
-            info.val, info.shadow
-        });
-    }
-
     for (const auto &d : m_wrcr3_handlers) {
-        if (d(vmcs, info)) {
+        if (d(vcpu, info)) {
             break;
         }
     }
@@ -457,42 +366,30 @@ control_register_handler::handle_wrcr3(gsl::not_null<vmcs_t *> vmcs)
     }
 
     if (!info.ignore_advance) {
-        return advance(vmcs);
+        return vcpu->advance();
     }
 
     return true;
 }
 
 bool
-control_register_handler::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
+control_register_handler::handle_wrcr4(gsl::not_null<vcpu_t *> vcpu)
 {
     struct info_t info = {
-        emulate_rdgpr(vmcs),
+        emulate_rdgpr(vcpu),
         vmcs_n::cr4_read_shadow::get(),
         false,
         false
     };
 
-    if (!ndebug && m_log_enabled) {
-        add_record(m_cr4_log, {
-            info.val, info.shadow
-        });
-    }
-
     info.shadow = info.val;
-    info.val |= m_eapis_vcpu_global_state->ia32_vmx_cr4_fixed0;
+    info.val |= m_vcpu->global_state()->ia32_vmx_cr4_fixed0;
 
     for (const auto &d : m_wrcr4_handlers) {
-        if (d(vmcs, info)) {
+        if (d(vcpu, info)) {
             break;
         }
     }
-
-    // bfdebug_transaction(0, [&](std::string * msg) {
-    //     bfdebug_info(0, "handle_wrcr4", msg);
-    //     bfdebug_subnhex(0, "val", info.val, msg);
-    //     bfdebug_subnhex(0, "shadow", info.shadow, msg);
-    // });
 
     if (!info.ignore_write) {
         vmcs_n::guest_cr4::set(info.val);
@@ -500,11 +397,10 @@ control_register_handler::handle_wrcr4(gsl::not_null<vmcs_t *> vmcs)
     }
 
     if (!info.ignore_advance) {
-        return advance(vmcs);
+        return vcpu->advance();
     }
 
     return true;
 }
 
-}
 }

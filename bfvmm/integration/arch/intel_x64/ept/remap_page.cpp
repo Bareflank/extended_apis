@@ -16,11 +16,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-cert-err58-cpp
+//
+// Reason:
+//     This test triggers on the use of a std::mutex being globally defined
+//     from the EPT map.
+//
+
 #include <bfcallonce.h>
 
 #include <bfvmm/vcpu/vcpu_factory.h>
 #include <eapis/hve/arch/intel_x64/vcpu.h>
-#include <bfvmm/memory_manager/arch/x64/unique_map.h>
 
 using namespace eapis::intel_x64;
 
@@ -56,7 +62,7 @@ public:
     explicit vcpu(vcpuid::type id) :
         eapis::intel_x64::vcpu{id}
     {
-        eapis()->add_cpuid_handler(
+        this->add_cpuid_handler(
             42, cpuid_handler::handler_delegate_t::create<vcpu, &vcpu::test_cpuid_handler>(this)
         );
 
@@ -76,17 +82,18 @@ public:
         bfdebug_ndec(0, "B: buffer2.at(0)", buffer2.at(0));
     }
 
+    ~vcpu() override = default;
+
     bool
     test_cpuid_handler(
-        gsl::not_null<vmcs_t *> vmcs, cpuid_handler::info_t &info)
+        gsl::not_null<vcpu_t *> vcpu, cpuid_handler::info_t &info)
     {
-        bfignored(vmcs);
+        bfignored(vcpu);
         bfignored(info);
 
         bfn::call_once(flag, [&] {
-            auto cr3 = intel_x64::vmcs::guest_cr3::get();
-            auto gpa1 = bfvmm::x64::virt_to_phys_with_cr3(buffer1.data(), cr3);
-            auto gpa2 = bfvmm::x64::virt_to_phys_with_cr3(buffer2.data(), cr3);
+            auto [gpa1, unused1] = this->gva_to_gpa(buffer1.data());
+            auto [gpa2, unused2] = this->gva_to_gpa(buffer2.data());
 
             auto gpa1_2m = bfn::upper(gpa1, ::intel_x64::ept::pd::from);
             auto gpa1_4k = bfn::upper(gpa1, ::intel_x64::ept::pt::from);
@@ -102,14 +109,26 @@ public:
                 gpa1_2m
             );
 
-            auto &pte = g_guest_map.entry(gpa1_4k);
+            auto [pte, unused] = g_guest_map.entry(gpa1_4k);
             ::intel_x64::ept::pt::entry::phys_addr::set(pte, gpa2_4k);
         });
 
-        eapis()->set_eptp(g_guest_map);
+        this->set_eptp(g_guest_map);
 
         return true;
     }
+
+public:
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

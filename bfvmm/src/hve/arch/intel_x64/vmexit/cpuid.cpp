@@ -16,143 +16,108 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfdebug.h>
-#include <hve/arch/intel_x64/apis.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
-bool
+static bool
 handle_cpuid_feature_information(
-    gsl::not_null<vmcs_t *> vmcs, cpuid_handler::info_t &info)
+    gsl::not_null<vcpu_t *> vcpu, cpuid_handler::info_t &info)
 {
-    bfignored(vmcs);
+    bfignored(vcpu);
 
     // Currently, we do not support nested virtualization. As a result,
     // the EAPIs adds a default handler to disable support for VMXE here.
     //
 
-    info.rcx = clear_bit(
-                   info.rcx, ::intel_x64::cpuid::feature_information::ecx::vmx::from
-               );
+    info.rcx =
+        clear_bit(
+            info.rcx, ::intel_x64::cpuid::feature_information::ecx::vmx::from
+        );
 
     return true;
 }
 
 cpuid_handler::cpuid_handler(
-    gsl::not_null<apis *> apis,
-    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state)
+    gsl::not_null<vcpu *> vcpu
+) :
+    m_vcpu{vcpu}
 {
     using namespace vmcs_n;
-    bfignored(eapis_vcpu_global_state);
 
-    apis->add_handler(
+    vcpu->add_handler(
         exit_reason::basic_exit_reason::cpuid,
         ::handler_delegate_t::create<cpuid_handler, &cpuid_handler::handle>(this)
     );
 
     this->add_handler(
         ::intel_x64::cpuid::feature_information::addr,
-        handler_delegate_t::create<handle_cpuid_feature_information>()
+        cpuid_handler::handler_delegate_t::create<handle_cpuid_feature_information>()
     );
-}
-
-cpuid_handler::~cpuid_handler()
-{
-    if (!ndebug && m_log_enabled) {
-        dump_log();
-    }
 }
 
 // -----------------------------------------------------------------------------
 // Add Handler / Enablers
 // -----------------------------------------------------------------------------
 
-void cpuid_handler::add_handler(
+void
+cpuid_handler::add_handler(
     leaf_t leaf, const handler_delegate_t &d)
 { m_handlers[leaf].push_front(d); }
 
-// -----------------------------------------------------------------------------
-// Debug
-// -----------------------------------------------------------------------------
+void
+cpuid_handler::emulate(leaf_t leaf)
+{ m_emulate[leaf] = true; }
 
 void
-cpuid_handler::dump_log()
-{
-    bfdebug_transaction(0, [&](std::string * msg) {
-        bfdebug_lnbr(0, msg);
-        bfdebug_info(0, "cpuid_handler log", msg);
-        bfdebug_brk2(0, msg);
-
-        for (const auto &record : m_log) {
-            bfdebug_info(0, "record", msg);
-            bfdebug_subnhex(0, "rax_in", record.rax_in, msg);
-            bfdebug_subnhex(0, "rbx_in", record.rbx_in, msg);
-            bfdebug_subnhex(0, "rcx_in", record.rcx_in, msg);
-            bfdebug_subnhex(0, "rdx_in", record.rdx_in, msg);
-            bfdebug_subnhex(0, "rax_out", record.rax_out, msg);
-            bfdebug_subnhex(0, "rbx_out", record.rbx_out, msg);
-            bfdebug_subnhex(0, "rcx_out", record.rcx_out, msg);
-            bfdebug_subnhex(0, "rdx_out", record.rdx_out, msg);
-        }
-
-        bfdebug_lnbr(0, msg);
-    });
-}
+cpuid_handler::set_default_handler(
+    const ::handler_delegate_t &d)
+{ m_default_handler = d; }
 
 // -----------------------------------------------------------------------------
 // Handlers
 // -----------------------------------------------------------------------------
 
 bool
-cpuid_handler::handle(gsl::not_null<vmcs_t *> vmcs)
+cpuid_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 {
     const auto &hdlrs =
-        m_handlers.find(vmcs->save_state()->rax);
+        m_handlers.find(vcpu->rax());
 
     if (hdlrs != m_handlers.end()) {
 
-        auto ret =
-            ::x64::cpuid::get(
-                gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rax),
-                gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rbx),
-                gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rcx),
-                gsl::narrow_cast<::x64::cpuid::field_type>(vmcs->save_state()->rdx)
-            );
-
         struct info_t info = {
-            ret.rax,
-            ret.rbx,
-            ret.rcx,
-            ret.rdx,
-            false,
-            false
+            0, 0, 0, 0, false, false
         };
 
-        if (!ndebug && m_log_enabled) {
-            add_record(m_log, {
-                vmcs->save_state()->rax,
-                vmcs->save_state()->rbx,
-                vmcs->save_state()->rcx,
-                vmcs->save_state()->rdx,
-                info.rax, info.rbx, info.rcx, info.rdx
-            });
+        if (!m_emulate[vcpu->rax()]) {
+            auto [rax, rbx, rcx, rdx] =
+                ::x64::cpuid::get(
+                    gsl::narrow_cast<::x64::cpuid::field_type>(vcpu->rax()),
+                    gsl::narrow_cast<::x64::cpuid::field_type>(vcpu->rbx()),
+                    gsl::narrow_cast<::x64::cpuid::field_type>(vcpu->rcx()),
+                    gsl::narrow_cast<::x64::cpuid::field_type>(vcpu->rdx())
+                );
+
+            info.rax = rax;
+            info.rbx = rbx;
+            info.rcx = rcx;
+            info.rdx = rdx;
         }
 
         for (const auto &d : hdlrs->second) {
-            if (d(vmcs, info)) {
+            if (d(vcpu, info)) {
 
                 if (!info.ignore_write) {
-                    vmcs->save_state()->rax = set_bits(vmcs->save_state()->rax, 0x00000000FFFFFFFFULL, info.rax);
-                    vmcs->save_state()->rbx = set_bits(vmcs->save_state()->rbx, 0x00000000FFFFFFFFULL, info.rbx);
-                    vmcs->save_state()->rcx = set_bits(vmcs->save_state()->rcx, 0x00000000FFFFFFFFULL, info.rcx);
-                    vmcs->save_state()->rdx = set_bits(vmcs->save_state()->rdx, 0x00000000FFFFFFFFULL, info.rdx);
+                    vcpu->set_rax(set_bits(vcpu->rax(), 0x00000000FFFFFFFFULL, info.rax));
+                    vcpu->set_rbx(set_bits(vcpu->rbx(), 0x00000000FFFFFFFFULL, info.rbx));
+                    vcpu->set_rcx(set_bits(vcpu->rcx(), 0x00000000FFFFFFFFULL, info.rcx));
+                    vcpu->set_rdx(set_bits(vcpu->rdx(), 0x00000000FFFFFFFFULL, info.rdx));
                 }
 
                 if (!info.ignore_advance) {
-                    return advance(vmcs);
+                    return vcpu->advance();
                 }
 
                 return true;
@@ -160,8 +125,11 @@ cpuid_handler::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
+    if (m_default_handler.is_valid()) {
+        return m_default_handler(vcpu);
+    }
+
     return false;
 }
 
-}
 }

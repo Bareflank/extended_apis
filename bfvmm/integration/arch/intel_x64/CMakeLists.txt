@@ -1,5 +1,5 @@
 #
-# Bareflank Hypervisor
+# Bareflank Extended APIs
 # Copyright (C) 2018 Assured Information Security, Inc.
 #
 # This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ add_subdirectory(vmexit/ept_violation)
 add_subdirectory(vmexit/external_interrupt)
 add_subdirectory(vmexit/io_instruction)
 add_subdirectory(vmexit/monitor_trap)
-add_subdirectory(vmexit/mov_dr)
 add_subdirectory(vmexit/rdmsr)
 add_subdirectory(vmexit/wrmsr)
+add_subdirectory(vmexit/vmx_preemption_timer)
 add_subdirectory(vpid)

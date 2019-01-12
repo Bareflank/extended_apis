@@ -16,21 +16,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfdebug.h>
 #include <hve/arch/intel_x64/vcpu.h>
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
 vpid_handler::vpid_handler(
-    gsl::not_null<apis *> apis,
-    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state)
+    gsl::not_null<vcpu *> vcpu
+) :
+    m_vcpu{vcpu}
 {
-    bfignored(apis);
-    bfignored(eapis_vcpu_global_state);
-
     static uint16_t s_id = 1;
     m_id = s_id++;
 
@@ -46,5 +41,4 @@ void vpid_handler::enable()
 void vpid_handler::disable()
 { vmcs_n::secondary_processor_based_vm_execution_controls::enable_vpid::disable(); }
 
-}
 }

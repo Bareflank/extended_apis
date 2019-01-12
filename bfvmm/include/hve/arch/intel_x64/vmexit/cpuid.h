@@ -19,26 +19,42 @@
 #ifndef CPUID_INTEL_X64_EAPIS_H
 #define CPUID_INTEL_X64_EAPIS_H
 
-#include "../base.h"
+#include <unordered_map>
+
+#include <bfvmm/hve/arch/intel_x64/vmcs.h>
+#include <bfvmm/hve/arch/intel_x64/exit_handler.h>
+
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
+#else
+#define EXPORT_EAPIS_HVE IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_HVE
+#endif
 
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
-class apis;
-class eapis_vcpu_global_state_t;
+class vcpu;
 
 /// CPUID
 ///
 /// Provides an interface for registering handlers for cpuid exits
 /// at a given (leaf, subleaf).
 ///
-class EXPORT_EAPIS_HVE cpuid_handler : public base
+class EXPORT_EAPIS_HVE cpuid_handler
 {
 public:
 
@@ -97,35 +113,28 @@ public:
     /// handlers
     ///
     using handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
+        delegate<bool(gsl::not_null<vcpu_t *>, info_t &)>;
 
     /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param apis the apis object for this cpuid_handler
-    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
+    /// @param vcpu the vcpu object for this cpuid_handler
     ///
     cpuid_handler(
-        gsl::not_null<apis *> apis,
-        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
+        gsl::not_null<vcpu *> vcpu);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~cpuid_handler() final;
+    ~cpuid_handler() = default;
 
 public:
 
-    /// Add CPUID Handler
-    ///
-    /// @note the handler is called only for the (leaf, subleaf)
-    ///       pairs passed into this function. If you need to handle
-    ///       accesses to leaf not at subleaf, you will need to make
-    ///       additional calls with the appropriate subleaves
+    /// Add Handler
     ///
     /// @expects
     /// @ensures
@@ -135,46 +144,53 @@ public:
     ///
     void add_handler(leaf_t leaf, const handler_delegate_t &d);
 
-public:
-
-    /// Dump Log
+    /// Emulate
     ///
-    /// Example:
-    /// @code
-    /// this->dump_log();
-    /// @endcode
+    /// Prevents the APIs from talking to physical hardware which means that
+    /// no reads or writes are happening with the actual hardware, and
+    /// everything must be emulated. This should be used for guests to
+    /// prevent guest operations from leaking to the host.
     ///
     /// @expects
     /// @ensures
     ///
-    void dump_log() final;
+    /// @param leaf the address to emulate
+    ///
+    void emulate(leaf_t leaf);
+
+    /// Add Default Handler
+    ///
+    /// This is called when no registered handlers have been called and
+    /// the internal implementation is needed. Note that this function
+    /// can still return false and let the internal implementation pass
+    /// the instruction through
+    ///
+    /// Also note that the handler registered here is a base exit handler
+    /// delegate. The info structure is not passed, and therefor,
+    /// no emulation is provided to this handler.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the handler to call when an exit occurs
+    ///
+    void set_default_handler(const ::handler_delegate_t &d);
 
 public:
 
     /// @cond
 
-    bool handle(gsl::not_null<vmcs_t *> vmcs);
+    bool handle(gsl::not_null<vcpu_t *> vcpu);
 
     /// @endcond
 
 private:
 
+    vcpu *m_vcpu;
+
+    ::handler_delegate_t m_default_handler;
+    std::unordered_map<leaf_t, bool> m_emulate;
     std::unordered_map<leaf_t, std::list<handler_delegate_t>> m_handlers;
-
-private:
-
-    struct record_t {
-        uint64_t rax_in;
-        uint64_t rbx_in;
-        uint64_t rcx_in;
-        uint64_t rdx_in;
-        uint64_t rax_out;
-        uint64_t rbx_out;
-        uint64_t rcx_out;
-        uint64_t rdx_out;
-    };
-
-    std::list<record_t> m_log;
 
 public:
 
@@ -189,7 +205,6 @@ public:
     /// @endcond
 };
 
-}
 }
 
 #endif

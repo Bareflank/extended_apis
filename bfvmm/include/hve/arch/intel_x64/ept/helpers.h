@@ -1,7 +1,6 @@
 //
 // Bareflank Extended APIs
-//
-// Copyright (C) 2015 Assured Information Security, Inc.
+// Copyright (C) 2018 Assured Information Security, Inc.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,11 +22,7 @@
 #include "mmap.h"
 #include "../mtrrs.h"
 
-namespace eapis
-{
-namespace intel_x64
-{
-namespace ept
+namespace eapis::intel_x64::ept
 {
 
 //--------------------------------------------------------------------------
@@ -515,8 +510,6 @@ identity_map(
     mmap::attr_type attr = mmap::attr_type::read_write_execute)
 { identity_map(map, 0, eaddr, attr); }
 
-}
-}
 }
 
 #endif

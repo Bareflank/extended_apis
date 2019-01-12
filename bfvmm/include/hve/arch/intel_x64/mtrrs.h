@@ -1,6 +1,6 @@
 //
-// Bareflank Hypervisor
-// Copyright (C) 2017 Assured Information Security, Inc.
+// Bareflank Extended APIs
+// Copyright (C) 2018 Assured Information Security, Inc.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,12 +19,29 @@
 #ifndef PHYS_MTRR_INTEL_X64_EAPIS_H
 #define PHYS_MTRR_INTEL_X64_EAPIS_H
 
-#include "base.h"
 #include "ept/mmap.h"
 
-namespace eapis
-{
-namespace intel_x64
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
+#else
+#define EXPORT_EAPIS_HVE IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_HVE
+#endif
+
+// -----------------------------------------------------------------------------
+// Definitions
+// -----------------------------------------------------------------------------
+
+namespace eapis::intel_x64
 {
 
 /// MTRRs
@@ -197,7 +214,6 @@ public:
 inline bool operator==(const mtrrs::range_t &lhs, const mtrrs::range_t &rhs)
 { return (lhs.type == rhs.type) && (lhs.base == rhs.base) && (lhs.size == rhs.size); }
 
-}
 }
 
 /// Global MTRRs

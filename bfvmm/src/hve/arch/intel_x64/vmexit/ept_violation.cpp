@@ -16,32 +16,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfdebug.h>
-#include <hve/arch/intel_x64/apis.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
 ept_violation_handler::ept_violation_handler(
-    gsl::not_null<apis *> apis,
-    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state)
+    gsl::not_null<vcpu *> vcpu
+) :
+    m_vcpu{vcpu}
 {
     using namespace vmcs_n;
-    bfignored(eapis_vcpu_global_state);
 
-    apis->add_handler(
+    vcpu->add_handler(
         exit_reason::basic_exit_reason::ept_violation,
         ::handler_delegate_t::create<ept_violation_handler, &ept_violation_handler::handle>(this)
     );
-}
-
-ept_violation_handler::~ept_violation_handler()
-{
-    if (!ndebug && m_log_enabled) {
-        dump_log();
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -63,35 +53,27 @@ ept_violation_handler::add_execute_handler(
     const handler_delegate_t &d)
 { m_execute_handlers.push_front(d); }
 
-// -----------------------------------------------------------------------------
-// Debug
-// -----------------------------------------------------------------------------
+void
+ept_violation_handler::set_default_read_handler(
+    const ::handler_delegate_t &d)
+{ m_default_read_handler = d; }
 
 void
-ept_violation_handler::dump_log()
-{
-    bfdebug_transaction(0, [&](std::string * msg) {
-        bfdebug_lnbr(0, msg);
-        bfdebug_info(0, "ept violation log", msg);
-        bfdebug_brk2(0, msg);
+ept_violation_handler::set_default_write_handler(
+    const ::handler_delegate_t &d)
+{ m_default_write_handler = d; }
 
-        for (const auto &record : m_log) {
-            bfdebug_info(0, "record", msg);
-            bfdebug_subnhex(0, "guest virtual address", record.gva, msg);
-            bfdebug_subnhex(0, "guest physical address", record.gpa, msg);
-            bfdebug_subnhex(0, "exit qualification", record.exit_qualification, msg);
-        }
-
-        bfdebug_lnbr(0, msg);
-    });
-}
+void
+ept_violation_handler::set_default_execute_handler(
+    const ::handler_delegate_t &d)
+{ m_default_execute_handler = d; }
 
 // -----------------------------------------------------------------------------
 // Handlers
 // -----------------------------------------------------------------------------
 
 bool
-ept_violation_handler::handle(gsl::not_null<vmcs_t *> vmcs)
+ept_violation_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 {
     using namespace vmcs_n;
     auto qual = exit_qualification::ept_violation::get();
@@ -103,20 +85,16 @@ ept_violation_handler::handle(gsl::not_null<vmcs_t *> vmcs)
         true
     };
 
-    if (!ndebug && m_log_enabled) {
-        add_record(m_log, {info.gva, info.gpa, info.exit_qualification});
-    }
-
     if (exit_qualification::ept_violation::data_read::is_enabled(qual)) {
-        return handle_read(vmcs, info);
+        return handle_read(vcpu, info);
     }
 
     if (exit_qualification::ept_violation::data_write::is_enabled(qual)) {
-        return handle_write(vmcs, info);
+        return handle_write(vcpu, info);
     }
 
     if (exit_qualification::ept_violation::instruction_fetch::is_enabled(qual)) {
-        return handle_execute(vmcs, info);
+        return handle_execute(vcpu, info);
     }
 
     throw std::runtime_error(
@@ -125,17 +103,21 @@ ept_violation_handler::handle(gsl::not_null<vmcs_t *> vmcs)
 }
 
 bool
-ept_violation_handler::handle_read(gsl::not_null<vmcs_t *> vmcs, info_t &info)
+ept_violation_handler::handle_read(gsl::not_null<vcpu_t *> vcpu, info_t &info)
 {
     for (const auto &d : m_read_handlers) {
-        if (d(vmcs, info)) {
+        if (d(vcpu, info)) {
 
             if (!info.ignore_advance) {
-                return advance(vmcs);
+                return vcpu->advance();
             }
 
             return true;
         }
+    }
+
+    if (m_default_read_handler.is_valid()) {
+        return m_default_read_handler(vcpu);
     }
 
     throw std::runtime_error(
@@ -144,17 +126,21 @@ ept_violation_handler::handle_read(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 }
 
 bool
-ept_violation_handler::handle_write(gsl::not_null<vmcs_t *> vmcs, info_t &info)
+ept_violation_handler::handle_write(gsl::not_null<vcpu_t *> vcpu, info_t &info)
 {
     for (const auto &d : m_write_handlers) {
-        if (d(vmcs, info)) {
+        if (d(vcpu, info)) {
 
             if (!info.ignore_advance) {
-                return advance(vmcs);
+                return vcpu->advance();
             }
 
             return true;
         }
+    }
+
+    if (m_default_write_handler.is_valid()) {
+        return m_default_write_handler(vcpu);
     }
 
     throw std::runtime_error(
@@ -163,17 +149,21 @@ ept_violation_handler::handle_write(gsl::not_null<vmcs_t *> vmcs, info_t &info)
 }
 
 bool
-ept_violation_handler::handle_execute(gsl::not_null<vmcs_t *> vmcs, info_t &info)
+ept_violation_handler::handle_execute(gsl::not_null<vcpu_t *> vcpu, info_t &info)
 {
     for (const auto &d : m_execute_handlers) {
-        if (d(vmcs, info)) {
+        if (d(vcpu, info)) {
 
             if (!info.ignore_advance) {
-                return advance(vmcs);
+                return vcpu->advance();
             }
 
             return true;
         }
+    }
+
+    if (m_default_execute_handler.is_valid()) {
+        return m_default_execute_handler(vcpu);
     }
 
     throw std::runtime_error(
@@ -181,5 +171,4 @@ ept_violation_handler::handle_execute(gsl::not_null<vmcs_t *> vmcs, info_t &info
     );
 }
 
-}
 }

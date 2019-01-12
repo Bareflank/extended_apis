@@ -16,6 +16,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
+// TIDY_EXCLUSION=-cert-err58-cpp
+//
+// Reason:
+//     This test triggers on the use of a std::mutex being globally defined
+//     from the EPT map.
+//
+
 #include <bfcallonce.h>
 
 #include <bfvmm/vcpu/vcpu_factory.h>
@@ -46,24 +53,22 @@ public:
             );
         });
 
-        exit_handler()->add_handler(
-            vmcs_n::exit_reason::basic_exit_reason::vmcall,
-            ::handler_delegate_t::create<vcpu, &vcpu::vmcall_handler>(this)
-        );
-
-        eapis()->set_eptp(g_guest_map);
+        this->set_eptp(g_guest_map);
     }
 
-    bool
-    vmcall_handler(
-        gsl::not_null<vmcs_t *> vmcs)
-    {
-        guard_exceptions([&] {
-            vmcs->save_state()->rax = 0x1;
-        });
+    ~vcpu() override = default;
 
-        return advance(vmcs);
-    }
+public:
+
+    /// @cond
+
+    vcpu(vcpu &&) = delete;
+    vcpu &operator=(vcpu &&) = delete;
+
+    vcpu(const vcpu &) = delete;
+    vcpu &operator=(const vcpu &) = delete;
+
+    /// @endcond
 };
 
 }

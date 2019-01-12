@@ -16,44 +16,46 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-#include <bfdebug.h>
-#include <hve/arch/intel_x64/apis.h>
+#include <hve/arch/intel_x64/vcpu.h>
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
 wrmsr_handler::wrmsr_handler(
-    gsl::not_null<apis *> apis,
-    gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state
+    gsl::not_null<vcpu *> vcpu
 ) :
-    m_msr_bitmap{apis->m_msr_bitmap.get(), ::x64::pt::page_size}
+    m_vcpu{vcpu},
+    m_msr_bitmap{vcpu->m_msr_bitmap.get(), ::x64::pt::page_size}
 {
     using namespace vmcs_n;
-    bfignored(eapis_vcpu_global_state);
 
-    apis->add_handler(
+    vcpu->add_handler(
         exit_reason::basic_exit_reason::wrmsr,
         ::handler_delegate_t::create<wrmsr_handler, &wrmsr_handler::handle>(this)
     );
 }
 
-wrmsr_handler::~wrmsr_handler()
-{
-    if (!ndebug && m_log_enabled) {
-        dump_log();
-    }
-}
-
 // -----------------------------------------------------------------------------
-// Add Handler / Enablers
+// Add Handler
 // -----------------------------------------------------------------------------
 
 void
 wrmsr_handler::add_handler(
     vmcs_n::value_type msr, const handler_delegate_t &d)
 { m_handlers[msr].push_front(d); }
+
+void
+wrmsr_handler::emulate(vmcs_n::value_type msr)
+{ m_emulate[msr] = true; }
+
+void
+wrmsr_handler::set_default_handler(
+    const ::handler_delegate_t &d)
+{ m_default_handler = d; }
+
+// -----------------------------------------------------------------------------
+// Enablers
+// -----------------------------------------------------------------------------
 
 void
 wrmsr_handler::trap_on_access(vmcs_n::value_type msr)
@@ -92,35 +94,12 @@ wrmsr_handler::pass_through_all_accesses()
 { gsl::memset(m_msr_bitmap.subspan(2048, m_msr_bitmap.size() >> 1), 0x00); }
 
 // -----------------------------------------------------------------------------
-// Debug
-// -----------------------------------------------------------------------------
-
-void
-wrmsr_handler::dump_log()
-{
-    bfdebug_transaction(0, [&](std::string * msg) {
-        bfdebug_lnbr(0, msg);
-        bfdebug_info(0, "wrmsr_handler log", msg);
-        bfdebug_brk2(0, msg);
-
-        for (const auto &record : m_log) {
-            bfdebug_info(0, "record", msg);
-            bfdebug_subnhex(0, "msr", record.msr, msg);
-            bfdebug_subnhex(0, "val", record.val, msg);
-        }
-
-        bfdebug_lnbr(0, msg);
-    });
-}
-
-// -----------------------------------------------------------------------------
 // Handlers
 // -----------------------------------------------------------------------------
 
 bool
-wrmsr_handler::handle(gsl::not_null<vmcs_t *> vmcs)
+wrmsr_handler::handle(gsl::not_null<vcpu_t *> vcpu)
 {
-
     // TODO: IMPORTANT!!!
     //
     // We need to create a list of MSRs that are implemented and GP when the
@@ -136,32 +115,26 @@ wrmsr_handler::handle(gsl::not_null<vmcs_t *> vmcs)
 
     const auto &hdlrs =
         m_handlers.find(
-            vmcs->save_state()->rcx
+            vcpu->rcx()
         );
 
     if (GSL_LIKELY(hdlrs != m_handlers.end())) {
 
         struct info_t info = {
-            vmcs->save_state()->rcx,
+            gsl::narrow_cast<uint32_t>(vcpu->rcx()),
             0,
             false,
             false
         };
 
         info.val =
-            ((vmcs->save_state()->rax & 0x00000000FFFFFFFF) << 0) |
-            ((vmcs->save_state()->rdx & 0x00000000FFFFFFFF) << 32);
-
-        if (!ndebug && m_log_enabled) {
-            add_record(m_log, {
-                info.msr, info.val
-            });
-        }
+            ((vcpu->rax() & 0x00000000FFFFFFFF) << 0) |
+            ((vcpu->rdx() & 0x00000000FFFFFFFF) << 32);
 
         for (const auto &d : hdlrs->second) {
-            if (d(vmcs, info)) {
+            if (d(vcpu, info)) {
 
-                if (!info.ignore_write) {
+                if (!info.ignore_write && !m_emulate[vcpu->rcx()]) {
                     emulate_wrmsr(
                         gsl::narrow_cast<::x64::msrs::field_type>(info.msr),
                         info.val
@@ -169,7 +142,7 @@ wrmsr_handler::handle(gsl::not_null<vmcs_t *> vmcs)
                 }
 
                 if (!info.ignore_advance) {
-                    return advance(vmcs);
+                    return vcpu->advance();
                 }
 
                 return true;
@@ -177,8 +150,11 @@ wrmsr_handler::handle(gsl::not_null<vmcs_t *> vmcs)
         }
     }
 
+    if (m_default_handler.is_valid()) {
+        return m_default_handler(vcpu);
+    }
+
     return false;
 }
 
-}
 }

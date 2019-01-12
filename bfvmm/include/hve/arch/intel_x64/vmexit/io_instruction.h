@@ -19,25 +19,41 @@
 #ifndef IO_INSTRUCTION_INTEL_X64_EAPIS_H
 #define IO_INSTRUCTION_INTEL_X64_EAPIS_H
 
-#include "../base.h"
+#include <list>
+
+#include <bfvmm/hve/arch/intel_x64/vmcs.h>
+#include <bfvmm/hve/arch/intel_x64/exit_handler.h>
+
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
+#else
+#define EXPORT_EAPIS_HVE IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_HVE
+#endif
 
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
-class apis;
-class eapis_vcpu_global_state_t;
+class vcpu;
 
 /// IO instruction
 ///
 /// Provides an interface for handling port I/O exits base on the port number
 ///
-class EXPORT_EAPIS_HVE io_instruction_handler : public base
+class EXPORT_EAPIS_HVE io_instruction_handler
 {
 public:
 
@@ -117,26 +133,24 @@ public:
     /// handlers
     ///
     using handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
+        delegate<bool(gsl::not_null<vcpu_t *>, info_t &)>;
 
     /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param apis the apis object for this io instruction handler
-    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
+    /// @param vcpu the vcpu object for this io instruction handler
     ///
     io_instruction_handler(
-        gsl::not_null<apis *> apis,
-        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
+        gsl::not_null<vcpu *> vcpu);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~io_instruction_handler() final;
+    ~io_instruction_handler() = default;
 
 public:
 
@@ -154,6 +168,40 @@ public:
         const handler_delegate_t &in_d,
         const handler_delegate_t &out_d
     );
+
+    /// Emulate
+    ///
+    /// Prevents the APIs from talking to physical hardware which means that
+    /// no reads or writes are happening with the actual hardware, and
+    /// everything must be emulated. This should be used for guests to
+    /// prevent guest operations from leaking to the host.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param port the address to ignore
+    ///
+    void emulate(vmcs_n::value_type port);
+
+    /// Add Default Handler
+    ///
+    /// This is called when no registered handlers have been called and
+    /// the internal implementation is needed. Note that this function
+    /// can still return false and let the internal implementation pass
+    /// the instruction through
+    ///
+    /// Also note that the handler registered here is a base exit handler
+    /// delegate. The info structure is not passed, and therefor,
+    /// no emulation is provided to this handler.
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param d the handler to call when an exit occurs
+    ///
+    void set_default_handler(const ::handler_delegate_t &d);
+
+public:
 
     /// Trap On Access
     ///
@@ -225,56 +273,34 @@ public:
 
 public:
 
-    /// Dump Log
-    ///
-    /// Example:
-    /// @code
-    /// this->dump_log();
-    /// @endcode
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void dump_log() final;
-
-public:
-
     /// @cond
 
-    bool handle(gsl::not_null<vmcs_t *> vmcs);
+    bool handle(gsl::not_null<vcpu_t *> vcpu);
 
     /// @endcond
 
 private:
 
-    bool handle_in(gsl::not_null<vmcs_t *> vmcs, info_t &info);
-    bool handle_out(gsl::not_null<vmcs_t *> vmcs, info_t &info);
+    bool handle_in(gsl::not_null<vcpu_t *> vcpu, info_t &info);
+    bool handle_out(gsl::not_null<vcpu_t *> vcpu, info_t &info);
 
     void emulate_in(info_t &info);
     void emulate_out(info_t &info);
 
-    void load_operand(gsl::not_null<vmcs_t *> vmcs, info_t &info);
-    void store_operand(gsl::not_null<vmcs_t *> vmcs, info_t &info);
+    void load_operand(gsl::not_null<vcpu_t *> vcpu, info_t &info);
+    void store_operand(gsl::not_null<vcpu_t *> vcpu, info_t &info);
 
 private:
+
+    vcpu *m_vcpu;
 
     gsl::span<uint8_t> m_io_bitmap_a;
     gsl::span<uint8_t> m_io_bitmap_b;
 
+    ::handler_delegate_t m_default_handler;
+    std::unordered_map<vmcs_n::value_type, bool> m_emulate;
     std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_in_handlers;
     std::unordered_map<vmcs_n::value_type, std::list<handler_delegate_t>> m_out_handlers;
-
-private:
-
-    struct record_t {
-        uint64_t port_number;
-        uint64_t size_of_access;
-        uint64_t direction_of_access;
-        uint64_t address;
-        uint64_t val;
-    };
-
-    std::list<record_t> m_log;
 
 public:
 
@@ -289,7 +315,6 @@ public:
     /// @endcond
 };
 
-}
 }
 
 #endif

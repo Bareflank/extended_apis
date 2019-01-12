@@ -19,149 +19,121 @@
 #ifndef INTERRUPT_WINDOW_INTEL_X64_EAPIS_H
 #define INTERRUPT_WINDOW_INTEL_X64_EAPIS_H
 
-#include "../base.h"
+#include <bfvmm/hve/arch/intel_x64/vmcs.h>
+#include <bfvmm/hve/arch/intel_x64/exit_handler.h>
+
+#include "../interrupt_queue.h"
+
+// -----------------------------------------------------------------------------
+// Exports
+// -----------------------------------------------------------------------------
+
+#include <bfexports.h>
+
+#ifndef STATIC_EAPIS_HVE
+#ifdef SHARED_EAPIS_HVE
+#define EXPORT_EAPIS_HVE EXPORT_SYM
+#else
+#define EXPORT_EAPIS_HVE IMPORT_SYM
+#endif
+#else
+#define EXPORT_EAPIS_HVE
+#endif
 
 // -----------------------------------------------------------------------------
 // Definitions
 // -----------------------------------------------------------------------------
 
-namespace eapis
-{
-namespace intel_x64
+namespace eapis::intel_x64
 {
 
-class apis;
-class eapis_vcpu_global_state_t;
+class vcpu;
 
 /// Interrupt window
 ///
 /// Provides an interface for registering handlers of the interrupt-window exit.
 ///
-class EXPORT_EAPIS_HVE interrupt_window_handler : public base
+class EXPORT_EAPIS_HVE interrupt_window_handler
 {
 public:
-
-    ///
-    /// Info
-    ///
-    /// This struct is created by external_interrupt_handler::handle before being
-    /// passed to each registered handler.
-    ///
-    struct info_t {
-
-        /// Ignore disable (out)
-        ///
-        /// If true, do not update the guest's register state with the value
-        /// from the default base::emulation_wrgpr. Set this to true if your
-        /// handler returns true and has already update the guest register
-        /// state.
-        ///
-        /// default: false
-        ///
-        bool ignore_disable{false};
-    };
-
-    /// Handler delegate type
-    ///
-    /// The type of delegate clients must use when registering
-    /// handlers
-    ///
-    using handler_delegate_t =
-        delegate<bool(gsl::not_null<vmcs_t *>, info_t &)>;
 
     /// Constructor
     ///
     /// @expects
     /// @ensures
     ///
-    /// @param apis the apis object for this interrupt window handler
-    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
+    /// @param vcpu the vcpu object for this interrupt window handler
     ///
     interrupt_window_handler(
-        gsl::not_null<apis *> apis,
-        gsl::not_null<eapis_vcpu_global_state_t *> eapis_vcpu_global_state);
+        gsl::not_null<vcpu *> vcpu);
 
     /// Destructor
     ///
     /// @expects
     /// @ensures
     ///
-    ~interrupt_window_handler() final = default;
+    ~interrupt_window_handler() = default;
 
 public:
 
-    /// Add Handler
+    /// Queue External Interrupt
     ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @param d the handler to call when an exit occurs
-    ///
-    void add_handler(const handler_delegate_t &d);
-
-public:
-
-    /// Enable exiting
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void enable_exiting();
-
-    /// Disable exiting
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    void disable_exiting();
-
-    /// Is open
-    ///
-    /// @expects
-    /// @ensures
-    ///
-    /// @return true iff the external interrupt window is open
-    ///
-    bool is_open();
-
-    /// Inject
-    ///
-    /// Inject an external interrupt at the given vector on the upcoming
-    /// VM-entry
+    /// Queue an external interrupt at the given vector on the
+    /// next upcoming open interrupt window.
     ///
     /// @expects
     /// @ensures
     ///
     /// @param vector the vector to inject into the guest
     ///
-    void inject(uint64_t vector);
+    void queue_external_interrupt(uint64_t vector);
 
-public:
-
-    /// Dump Log
+    /// Inject Exception
     ///
-    /// Example:
-    /// @code
-    /// this->dump_log();
-    /// @endcode
+    /// Inject an exception on the next VM entry. Note that this will overwrite
+    /// any interrupts that are already injected for the next VM entry so
+    /// care should be taken when using this function
     ///
     /// @expects
     /// @ensures
     ///
-    void dump_log() final
-    { }
+    /// @param vector the vector to inject into the guest
+    /// @param ec the error code associated with the exception if applicable
+    ///
+    void inject_exception(uint64_t vector, uint64_t ec = 0);
+
+    /// Inject External Interrupt
+    ///
+    /// Inject an external interrupt on the next VM entry. Note that this will
+    /// overwriteany interrupts that are already injected for the next VM entry
+    /// so care should be taken when using this function
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @param vector the vector to inject into the guest
+    ///
+    void inject_external_interrupt(uint64_t vector);
 
 public:
 
     /// @cond
 
-    bool handle(gsl::not_null<vmcs_t *> vmcs);
+    bool handle(gsl::not_null<vcpu_t *> vcpu);
 
     /// @endcond
 
 private:
 
-    std::list<handler_delegate_t> m_handlers;
+    void enable_exiting();
+    void disable_exiting();
+
+private:
+
+    vcpu *m_vcpu;
+
+    bool m_enabled{false};
+    interrupt_queue m_interrupt_queue;
 
 public:
 
@@ -176,7 +148,6 @@ public:
     /// @endcond
 };
 
-}
 }
 
 #endif
