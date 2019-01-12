@@ -52,6 +52,8 @@
 namespace eapis::intel_x64
 {
 
+/// Extended APIs vCPU
+///
 class vcpu :
     public bfvmm::intel_x64::vcpu
 {
@@ -673,8 +675,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param time the value to write to the vmcs field before
-    /// the upcoming VM-entry
+    /// @param val the value to write to the preemption timer
     ///
     VIRTUAL void set_preemption_timer(
         const preemption_timer_handler::value_t val);
@@ -706,6 +707,13 @@ public:
     // Resources
     //==========================================================================
 
+    /// Global State
+    ///
+    /// @expects
+    /// @ensures
+    ///
+    /// @return the global state object associated with this vCPU.
+    ///
     VIRTUAL gsl::not_null<vcpu_global_state_t *> global_state() const
     { return m_vcpu_global_state; }
 
@@ -778,8 +786,8 @@ public:
     /// @param gva the guest virtual address
     /// @return the resulting guest physical address
     ///
-    std::pair<uintptr_t, uintptr_t> gva_to_gpa(void *gpa)
-    { return gva_to_gpa(reinterpret_cast<uintptr_t>(gpa)); }
+    std::pair<uintptr_t, uintptr_t> gva_to_gpa(void *gva)
+    { return gva_to_gpa(reinterpret_cast<uintptr_t>(gva)); }
 
     /// Convert GVA to HPA
     ///
@@ -815,8 +823,8 @@ public:
     /// @param gva the guest virtual address
     /// @return the resulting host physical address
     ///
-    std::pair<uintptr_t, uintptr_t> gva_to_hpa(void *gpa)
-    { return gva_to_hpa(reinterpret_cast<uintptr_t>(gpa)); }
+    std::pair<uintptr_t, uintptr_t> gva_to_hpa(void *gva)
+    { return gva_to_hpa(reinterpret_cast<uintptr_t>(gva)); }
 
     /// Map 1g GPA to HPA (Read-Only)
     ///

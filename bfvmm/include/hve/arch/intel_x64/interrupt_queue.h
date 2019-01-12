@@ -44,11 +44,15 @@
 namespace eapis::intel_x64
 {
 
+/// Interrupt Queue
+///
+/// Simple queue designed to work with external interrupts.
+///
 class EXPORT_EAPIS_HVE interrupt_queue
 {
 public:
 
-    using vector_t = uint64_t;
+    using vector_t = uint64_t;              ///< Vector type
 
     /// Constructor
     ///

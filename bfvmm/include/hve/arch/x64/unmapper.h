@@ -60,6 +60,13 @@ public:
 
     unmapper() = default;
 
+    /// Constructor
+    ///
+    /// Create an unmapper that can unmap previous mapped memory
+    ///
+    /// @param hva the host virtual address to unmap
+    /// @param len the length of the buffer that was previous mapped
+    ///
     explicit unmapper(
         void *hva,
         std::size_t len
@@ -68,6 +75,10 @@ public:
         m_len{len}
     { }
 
+    /// Unmap Functor
+    ///
+    /// @param p unused
+    ///
     void operator()(void *p) const;
 };
 

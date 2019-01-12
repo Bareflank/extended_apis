@@ -58,7 +58,7 @@ class EXPORT_EAPIS_HVE preemption_timer_handler
 {
 public:
 
-    using value_t = uint64_t;
+    using value_t = uint64_t;           ///< Timer value type
 
     /// Handler delegate type
     ///
@@ -72,8 +72,7 @@ public:
     /// @expects
     /// @ensures
     ///
-    /// @param apis the apis object for this VMX-preemption timer handler
-    /// @param eapis_vcpu_global_state a pointer to the vCPUs global state
+    /// @param vcpu the vcpu object for this VMX-preemption timer handler
     ///
     preemption_timer_handler(gsl::not_null<vcpu *> vcpu);
 
@@ -124,12 +123,16 @@ public:
     /// @expects
     /// @ensures
     ///
+    /// @param val the value to set the timer too
+    ///
     void set_timer(value_t val);
 
     /// Get timer
     ///
     /// @expects
     /// @ensures
+    ///
+    /// @return the current value of the preemption timer
     ///
     value_t get_timer() const;
 
