@@ -15,7 +15,6 @@ The config must be set to build the extended APIs with the NDEBUG
 flag NOT defined in the CXX flags. The script will build the eapis
 integration test VMMs, build and load bfdriver, and run the VMMs in sequence.
 
-
 Adding new tests
 ----------------
 To add a new integration test:
