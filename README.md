@@ -36,7 +36,7 @@ To setup our extension, run the following:
 git clone https://github.com/Bareflank/hypervisor
 git clone https://github.com/Bareflank/extended_apis
 mkdir build; cd build
-cmake ../hypervisor -DDEFAULT_VMM=eapis_vmm -DEXTENSION=../extended_apis
+cmake ../hypervisor -DDEFAULT_VMM=eapis_bfvmm -DEXTENSION=../extended_apis
 make -j<# cores + 1>
 ```
 
