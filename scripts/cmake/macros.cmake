@@ -23,7 +23,6 @@
 function(eapis_add_vmm_executable NAME)
     list(APPEND ARGN
         LIBRARIES eapis_hve
-        LIBRARIES capstone
     )
 
     add_vmm_executable(

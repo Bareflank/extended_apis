@@ -42,26 +42,8 @@ set(EAPIS_SOURCE_DEPENDS_DIR ${CMAKE_CURRENT_LIST_DIR}/../depends
     "Cmake dependencies directory"
 )
 
-set(EAPIS_SOURCE_BFSDK_DIR ${CMAKE_SOURCE_DIR}/../../../bfsdk
-    CACHE INTERNAL
-    "bfsdk source dir"
-)
-
 set(EAPIS_SOURCE_BFVMM_DIR ${CMAKE_SOURCE_DIR}/../../../bfvmm
     CACHE INTERNAL
     "bfvmm source dir"
 )
 
-# ------------------------------------------------------------------------------
-# Links
-# ------------------------------------------------------------------------------
-
-set(CAPSTONE_URL "https://github.com/bareflank/capstone/archive/v2.0.zip"
-    CACHE INTERNAL FORCE
-    "Capstone URL"
-)
-
-set(CAPSTONE_URL_MD5 "2d3809e48b97d93e29e6b6ac7a0dd1aa"
-    CACHE INTERNAL FORCE
-    "Capstone URL MD5 hash"
-)

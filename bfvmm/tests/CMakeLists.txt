@@ -22,7 +22,6 @@ project(eapis_test C CXX)
 include(${SOURCE_CMAKE_DIR}/project.cmake)
 init_project(
     INCLUDES ${PROJECT_SOURCE_DIR}/../include
-    INCLUDES ${PROJECT_SOURCE_DIR}/../../bfsdk/include
 )
 
 add_subdirectory(../src/hve ${CMAKE_CURRENT_BINARY_DIR}/src/hve)
@@ -34,4 +33,3 @@ add_subdirectory(hve)
 # -----------------------------------------------------------------------------
 
 install(DIRECTORY ../include/ DESTINATION include/eapis)
-install(DIRECTORY ../../bfsdk/include/ DESTINATION include)
